@@ -12,6 +12,15 @@ LD      := $(CROSS)ld
 OBJCOPY := $(CROSS)objcopy
 PYTHON  ?= python3
 
+KMC_DIR := tools/gcc_2.7.2
+KMC_CC  := $(KMC_DIR)/gcc
+
+# Opciones por archivo: el juego mezcla -O2 y -O0
+OPTFLAGS := -O2
+CFLAGS   := -G0 -mips3 -mgp32 -mfp32 -Iinclude
+
+$(BUILD)/src/lz.o: OPTFLAGS := -O0
+
 ASFLAGS := -EB -march=vr4300 -mtune=vr4300 -mabi=32 -Iinclude
 LDFLAGS := -EB -T $(LD_SCRIPT) -T undefined_syms_auto.txt -T undefined_funcs_auto.txt \
            -Map $(BUILD)/$(BASENAME).map --no-check-sections
@@ -38,6 +47,10 @@ $(ROM): $(ELF)
 
 $(ELF): $(OBJECTS) $(LD_SCRIPT)
 	$(LD) $(LDFLAGS) -o $@
+
+$(BUILD)/src/%.o: src/%.c
+	@mkdir -p $(dir $@)
+	$(KMC_CC) -B$(KMC_DIR)/ -c $(OPTFLAGS) $(CFLAGS) -o $@ $<
 
 $(BUILD)/asm/%.o: asm/%.s
 	@mkdir -p $(dir $@)
