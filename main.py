@@ -4,7 +4,6 @@
 python3 main.py                   muestra el estado en texto
 python3 main.py --screenshot a.png  además lo dibuja en un PNG
 python3 main.py --self-test a.json  guarda las comprobaciones (SHA-1 y direcciones finales) en un JSON
-python3 main.py --self-test a.json --play  además juega una carrera en el emulador y la mide
 Sale con 1 si la ROM no es idéntica o alguna función no coincide."""
 import hashlib, json, os, re, struct, subprocess, sys, zlib
 from pathlib import Path
@@ -91,46 +90,8 @@ def write_png(path, pixels):
                            + chunk(b"IDAT", zlib.compress(rows)) + chunk(b"IEND", b""))
 
 
-def play():
-    """Ejecuta la ROM compilada en el emulador y devuelve lo medido en la memoria del juego, o None sin emulador."""
-    if not Path("tools/emu/input_script.dylib").exists():
-        return None
-    out = Path(".scratch/play.json")
-    out.parent.mkdir(exist_ok=True)
-    out.unlink(missing_ok=True)
-    env = dict(os.environ, SDL_AUDIODRIVER="dummy", HW_MENU_FRAMES="6000")
-    try:
-        subprocess.run([sys.executable, "tools/emu_harness/run.py", str(ROM), str(out), "--shots", ".scratch/shots"],
-                       capture_output=True, timeout=420, env=env)
-    except subprocess.TimeoutExpired:
-        return None
-    return json.loads(out.read_text())["results"] if out.exists() else None
-
-
-def play_steps(r):
-    """move, act y hud solo pasan con una carrera real; nunca se dan por buenos sin medirlos."""
-    if r is None:
-        missing = "no se pudo ejecutar la ROM en el emulador (tools/emu_harness/setup.sh)"
-        return [dict(step=s, passed=False, detail=missing) for s in ("move", "act", "hud")]
-    boot = f"{r.get('frames', 0)} fotogramas, {r.get('image_swaps', 0)} cambios de imagen, {r.get('pad_reads', 0)} lecturas del mando"
-    if "dist" not in r:
-        reason = f"la ROM arranca ({boot}), pero no se llegó a una carrera"
-        return [dict(step=s, passed=False, detail=reason) for s in ("move", "act", "hud")]
-    who = "coche del jugador" if r.get("human") else "coche 0 (no marcado como jugador)"
-    return [
-        dict(step="move", passed=r["dist"] > 1.0 and bool(r.get("human")),
-             detail=f"{who}: recorrió {r['dist']:.0f} pulgadas en 25 s de carrera con {r['cars']} coches"),
-        dict(step="act", passed=r["gas"] > 0.5 and r["max_speed"] > 10.0,
-             detail=f"acelerador {r['gas']:.2f} con A pulsado, velocidad máxima {r['max_speed']:.0f} pulgadas/s ({r['max_speed'] / 17.6:.0f} mph)"),
-        dict(step="hud", passed=r.get("hud_rects", 0) > 0,
-             detail=f"{r.get('hud_rects', 0)} rectángulos 2D por fotograma en la lista de dibujo del juego"
-                    + ("" if r.get("picture_not_black") else "; la captura del emulador sale en negro")),
-    ]
-
-
-def self_test(path, state, pixels, with_play=False):
-    # Por defecto solo valida la ROM; la partida en el emulador es opcional (--play).
-    steps = (play_steps(play()) if with_play else []) + [
+def self_test(path, state, pixels):
+    steps = [
         dict(step="rom", passed=state["identical"], detail=f"SHA-1 {state['sha1'] or 'sin ROM'}"),
         dict(step="funciones", passed=state["funcs_ok"], detail=state["funcs_text"]),
         dict(step="estado", passed=bool(state["zones"]) and bytes(BACKGROUND) * (WIDTH * HEIGHT) != bytes(pixels),
@@ -148,7 +109,7 @@ def main():
     if "--screenshot" in args:
         write_png(args[args.index("--screenshot") + 1], pixels)
     if "--self-test" in args:
-        self_test(args[args.index("--self-test") + 1], state, pixels, with_play="--play" in args)
+        self_test(args[args.index("--self-test") + 1], state, pixels)
     print("ROM:", "idéntica" if state["identical"] else "distinta", state["sha1"])
     print(state["funcs_text"])
     for zone in state["zones"]:

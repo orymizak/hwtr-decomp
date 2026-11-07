@@ -12,4 +12,4 @@ Esta copia de trabajo usa archivos del juego original, sacados de la copia de la
 | `build/hotwheelsturbo.z64` | Compilado desde esta copia | ROM recompilada, idéntica a la original |
 | `ghidra_work/` | Exportado con Ghidra del proyecto original | Contexto de tipos para m2c y pseudocódigo de referencia |
 
-Herramientas de terceros usadas sin modificar y sin versionar: GCC 2.7.2 y binutils 2.6 de decompals, en `tools/gcc_2.7.2/`, y el emulador mupen64plus 2.6.0, con licencia GPL, en `tools/emu/`.
+Herramientas de terceros usadas sin modificar y sin versionar: GCC 2.7.2 y binutils 2.6 de decompals, en `tools/gcc_2.7.2/`.
