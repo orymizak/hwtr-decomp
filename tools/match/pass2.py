@@ -283,8 +283,9 @@ def nm_map():
 
 
 def make(unit):
-    # El make de macOS compara mtimes con resolución de 1 s: sin esto el .o puede quedar obsoleto.
-    Path(f"build/src/{unit}.o").unlink(missing_ok=True)
+    # El make de macOS compara mtimes con resolución de 1 s: sin esto el .o o el ELF pueden quedar obsoletos.
+    for f in (f"build/src/{unit}.o", "build/hotwheelsturbo.elf", "build/hotwheelsturbo.z64"):
+        Path(f).unlink(missing_ok=True)
     subprocess.run("make -j8 >/dev/null 2>&1", shell=True)
     p = Path("build/hotwheelsturbo.z64")
     return p.read_bytes() if p.exists() else b""
