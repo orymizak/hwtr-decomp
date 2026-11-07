@@ -84,6 +84,8 @@ segments:
       - [0x20020, c, util]
       - [0x20830, c, unit_20830]
       - [0x21150, asm]
+      - [0x27950, c, unit_27950]
+      - [0x27A40, asm]
       - [0x28320, c, game_config]
       - [0x28590, c, anim_track]
       - [0x28C10, asm]
