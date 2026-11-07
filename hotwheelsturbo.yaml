@@ -73,6 +73,7 @@ segments:
       - [0x19800, c, heap]
       - [0x19A70, c, memory]
       - [0x19D40, asm]
+      - [0x1F7F0, c, sys_table]
       - [0x1FC50, c, lz]
       - [0x20020, asm]
       - [0x6E200, asm, audio_driver] # sin identificar: quizá librería de audio externa
