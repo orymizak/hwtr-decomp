@@ -247,7 +247,7 @@ segments:
       - [0x827D0, c, unit_827D0]
       - [0x82830, c, unit_82830]
       - [0x82A40, c, unit_82A40]
-      - [0x82AB0, asm]
+      - [0x82AB0, c, unit_82AB0]
       - [0x83540, c, unit_83540]
       - [0x83730, c, unit_83730]
       - [0x83940, c, unit_83940]
