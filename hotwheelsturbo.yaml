@@ -138,6 +138,7 @@ segments:
       - [0x76F40, c, unit_76F40]
       - [0x76F90, c, unit_76F90]
       - [0x76FC0, asm]
+      - [0x772D0, c, unit_772D0]
       - [0x77330, c, unit_77330]
       - [0x77370, asm]
       - [0x77480, c, unit_77480]
