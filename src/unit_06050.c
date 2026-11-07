@@ -1,5 +1,7 @@
 #include "common.h"
 #include "include_asm.h"
+s32 Memory_Alloc();
+extern u8 D_80101E80;
 s32 func_800682A4(s32, s32,s32,s32);
 
 extern void *D_8013816C;
@@ -13,7 +15,15 @@ extern s32 D_800F2138;
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80065450);
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80065514);
+s32 func_80065514(void) {
+    if ((*(s32 *)((u8 *)&D_80101E80 + 0x0)) == 0) {
+        (*(s32 *)((u8 *)&D_80101E80 + 0x0)) = Memory_Alloc(0x12C00);
+    }
+    if ((*(s32 *)((u8 *)&D_80101E80 + 0x4)) == 0) {
+        (*(s32 *)((u8 *)&D_80101E80 + 0x4)) = Memory_Alloc(0x12C00);
+    }
+    return ((*(s32 *)((u8 *)&D_80101E80 + 0x0)) == 0) + ((*(s32 *)((u8 *)&D_80101E80 + 0x4)) == 0);
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80065584);
 
