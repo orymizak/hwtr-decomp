@@ -33,8 +33,8 @@ def main():
     symbols = []
     for line in subprocess.check_output([NM, "-n", ELF], text=True).splitlines():
         parts = line.split()
-        # El macro nonmatching de splat añade un segundo símbolo por función
-        if len(parts) == 3 and parts[1] == "T" and "NON_MATCHING" not in parts[2] and CODE_START <= int(parts[0], 16) < CODE_END:
+        # nonmatching añade un segundo símbolo por función; jtbl_L son etiquetas de jump tables
+        if len(parts) == 3 and parts[1] == "T" and "NON_MATCHING" not in parts[2] and not parts[2].startswith("jtbl_L") and CODE_START <= int(parts[0], 16) < CODE_END:
             symbols.append((int(parts[0], 16), parts[2]))
 
     done = c_functions()
