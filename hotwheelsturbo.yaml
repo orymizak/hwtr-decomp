@@ -67,6 +67,8 @@ segments:
     bss_size: 0x4CE60
     subsegments:
       - [0x1050, asm, game]
+      - [0x5BC0, c, debug_text]
+      - [0x6050, asm]
       - [0xEC60, c, file_table]
       - [0xFDE0, c, font]
       - [0x103B0, asm]
