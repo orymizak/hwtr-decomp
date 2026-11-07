@@ -302,7 +302,12 @@ segments:
       - [0xA0420, rodata, unit_19D40]
       - [0xA05E0, rodata, unit_1CC80]
       - [0xA0620, rodata, unit_21150]
-      - [0xA0670, rodata]
+      - [0xA0670, rodata, unit_22440]
+      - [0xA06B0, rodata, unit_277E0]
+      - [0xA06C0, rodata, unit_27A40]
+      - [0xA1310, rodata, anim_track]
+      - [0xA1320, rodata, unit_28C10]
+      - [0xA1410, rodata]
       - { type: bss, vram: 0x80101E70 }
 
   # 201 archivos contiguos (gFileTable), tal como están guardados en la ROM
