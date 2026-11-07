@@ -12,3 +12,15 @@ Se ejecutan desde la raíz del repo, con `TMP_DIR` apuntando a un directorio tem
 - `chk.py <vram_ini> <vram_fin> [--show nombre]`: compara funciones con la ROM. Necesita `funcs.json`, el mapa de funciones generado desde un árbol con todo en asm.
 - `ExportDecomp.java` y `gen_context.py`: exportan firmas de Ghidra a `ghidra_work/` y generan el contexto de m2c que usa `pass2.py`.
 - `DecompileNamed.java`: script de Ghidra para imprimir el pseudocódigo de funciones por nombre.
+
+Lo que sigue trabaja sobre la compilación con `tools/cc.py`, que resuelve dobles y tablas de saltos contra `rodata_refs.txt`:
+
+- `targets.py`: lista lo pendiente con tablas de saltos, argumentos en pila o dobles de .rodata.
+- `show.py <función>...`: prepara una función para escribirla a mano (tamaño y salida de m2c).
+- `hand.py <lote.c> [--apply]`: comprueba un lote escrito a mano y pasa a `src/` lo que coincide.
+- `try.py <unidad> <función> [archivo.c]`: compara un candidato instrucción a instrucción.
+- `gen_rodata_refs.py`: genera `rodata_refs.txt` mientras el código sigue en ensamblador.
+- `rodata_owners.py`, `split_rodata.py`, `rodata_cuts.txt`: dividen .rodata por unidad.
+- `verify_funcs.py`: comprueba cada función en C ya enlazada, en su dirección final.
+- `commit_unit.sh "<mensaje>" <archivos>`: confirma como mucho cada 5 minutos, con ROM idéntica tras `make clean && make`.
+- `PATTERNS.md`: patrones de GCC 2.7.2 encontrados.

@@ -66,11 +66,11 @@ La ROM se reconstruye idéntica, pero casi todo el código sigue en ensamblador 
 <!-- progress -->
 | Zona | Funciones | Bytes de código | Avance |
 |---|---|---|---|
-| total | 712/1917 | 48028/554576 | 8.66 % |
-| juego | 544/1373 | 38976/446896 | 8.72 % |
-| audio | 75/188 | 3892/32608 | 11.94 % |
-| sistema | 43/87 | 2092/10064 | 20.79 % |
-| libultra | 50/244 | 3068/60640 | 5.06 % |
+| total | 742/1917 | 54232/554576 | 9.78 % |
+| juego | 562/1373 | 42792/446896 | 9.58 % |
+| audio | 77/188 | 4424/32608 | 13.57 % |
+| sistema | 45/87 | 2396/10064 | 23.81 % |
+| libultra | 58/244 | 4620/60640 | 7.62 % |
 | libc | 0/25 | 0/4368 | 0.00 % |
 <!-- /progress -->
 
@@ -80,4 +80,5 @@ La ROM se reconstruye idéntica, pero casi todo el código sigue en ensamblador 
   de compilación aún son provisionales, y varían por archivo (`-O2` y `-O0`).
 - **Librerías:** libultra (probablemente SDK 2.0J), libc y un driver de audio están separados del juego en
   el mapa de la ROM. Los nombres de libultra se asignaron por análisis del código.
+- **.rodata:** empieza en la ROM en `0x9F3B0` y está dividida por unidad en `asm/data/`. `tools/cc.py` hace que el C use esos símbolos en lugar de duplicarlos.
 - **Por hacer:** el resto del código, y la comparación del SHA-1 contra No-Intro.
