@@ -1,5 +1,7 @@
 #include "common.h"
 #include "include_asm.h"
+f32 sqrtf(f32);
+extern f64 D_800FF8E0;
 
 s32 Memory_Alloc(s32);
 f32 func_8007ADF0(f32, f32);
@@ -57,7 +59,29 @@ f32 func_8007AC64(f32 arg0) {
     return var_fv0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_8007AD24);
+f32 func_8007AD24(f32 arg0) {
+  f32 temp_fv0;
+  f32 var_fv0;
+  if (fabsf(arg0) > 1.0f) {
+    return 0.0f;
+  }
+  temp_fv0 = sqrtf(1.0f - (arg0 * arg0));
+  if (temp_fv0 != 0.0f) {
+    return (f32) (D_800FF8E0 - ((f64) func_8007ADF0(arg0, temp_fv0)));
+  }
+  if (arg0) {
+ do { } while (0);
+    var_fv0 = 0.0f;
+  }
+  else
+  {
+    var_fv0 = 0.0f;
+  }
+  if (!(arg0 > 0.0f)) {
+    var_fv0 = 3.1415927f;
+  }
+  return var_fv0;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_8007ADF0);
 

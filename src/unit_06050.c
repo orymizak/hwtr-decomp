@@ -115,7 +115,13 @@ INCLUDE_ASM("asm/nonmatchings/unit_06050", func_8006695C);
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80066A2C);
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80066B94);
+s32 func_80066B94(u32 arg0) {
+  s32 *temp_s0;
+  ;
+  func_800741D8((void *) (*(&((s32 *)&D_80138174)[arg0 & 0xFF])));
+  *(&((s32 *)&D_80138174)[arg0 & 0xFF]) = 0;
+  return 1;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80066BD4);
 

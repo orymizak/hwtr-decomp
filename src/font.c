@@ -1,5 +1,6 @@
 #include "common.h"
 #include "include_asm.h"
+extern s32 D_801415E0[];
 
 #define FONT_NO_GLYPH 0xFF
 #define FONT_SPACE 0x2E
@@ -50,7 +51,17 @@ s32 Font_Init(void) {
 
 INCLUDE_ASM("asm/nonmatchings/font", Font_Load);
 
-INCLUDE_ASM("asm/nonmatchings/font", Font_Free);
+s32 Font_Free(u32 arg0) {
+  s32 *temp_s0;
+  s32 temp_a0;
+  ;
+  temp_a0 = *temp_s0;
+  if ((*(&D_801415E0[arg0 & 0xFF])) != 0) {
+    Memory_Free((u32) (*(&D_801415E0[arg0 & 0xFF])));
+    *(&D_801415E0[arg0 & 0xFF]) = 0;
+  }
+  return 1;
+}
 
 inline f32 Font_GetCharWidthF(u8 id, u8 c) {
     Font *font = D_801415C0.fonts[id];
