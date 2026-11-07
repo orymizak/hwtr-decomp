@@ -1,5 +1,6 @@
 #include "common.h"
 #include "include_asm.h"
+s32 func_800B133C(s32);
 extern u8 D_801206D0;
 
 extern s32 (*D_8014104C)(s32);
@@ -161,7 +162,20 @@ void func_800B2AFC(s32 arg0) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B2B28);
 
-INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B2BAC);
+void func_800B2BAC(void *arg0) {
+    u16 var_v0;
+    s32 var_s0;
+
+    var_s0 = 0;
+    if ((*(u8 *)((u8 *)(arg0) + 0x0)) != 0) {
+        var_v0 = 0 & 0xFF;
+        do {
+            var_v0 = var_s0 & 0xFF;
+            func_800B133C((*(s32 *)((u8 *)(arg0) + 0x4)) + (var_v0 * 0x2C));
+            var_s0 += 1;
+        } while ((u32) (var_s0 & 0xFF) < (*(u8 *)((u8 *)(arg0) + 0x0)));
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B2C1C);
 
