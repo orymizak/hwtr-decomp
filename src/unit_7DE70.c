@@ -1,8 +1,8 @@
 #include "common.h"
 #include "include_asm.h"
+void guMtxIdentF(f32 mf[4][4]);
 f32 cosf(f32);
 f32 sinf(f32);
-void guMtxIdentF(f32 (*)[4]);
 
 
 
@@ -10,7 +10,19 @@ INCLUDE_ASM("asm/nonmatchings/unit_7DE70", func_800DD270);
 
 INCLUDE_ASM("asm/nonmatchings/unit_7DE70", func_800DD308);
 
-INCLUDE_ASM("asm/nonmatchings/unit_7DE70", guMtxIdentF);
+void guMtxIdentF(f32 mf[4][4]) {
+    s32 i, j;
+
+    for (i = 0; i < 4; i++) {
+        for (j = 0; j < 4; j++) {
+            if (i == j) {
+                mf[i][j] = 1.0;
+            } else {
+                mf[i][j] = 0.0;
+            }
+        }
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_7DE70", func_800DD400);
 

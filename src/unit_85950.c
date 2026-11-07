@@ -1,5 +1,7 @@
 #include "common.h"
 #include "include_asm.h"
+s32 __osSpDeviceBusy(void);
+u32 osVirtualToPhysical(void *);
 
 
 
@@ -21,4 +23,16 @@ s32 __osSpSetPc(u32 pc) {
     return 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_85950", __osSpRawStartDma);
+s32 __osSpRawStartDma(s32 direction, u32 devAddr, void *dramAddr, u32 size) {
+    if (__osSpDeviceBusy()) {
+        return -1;
+    }
+    *(volatile u32 *)0xA4040000 = devAddr;
+    *(volatile u32 *)0xA4040004 = osVirtualToPhysical(dramAddr);
+    if (direction == 0) {
+        *(volatile u32 *)0xA404000C = size - 1;
+    } else {
+        *(volatile u32 *)0xA4040008 = size - 1;
+    }
+    return 0;
+}

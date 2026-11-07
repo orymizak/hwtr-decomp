@@ -13,7 +13,27 @@ extern s8 D_801417C8;
 
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_839C0", osGetMemSize);
+u32 osGetMemSize(void) {
+    volatile u32 *ptr;
+    u32 size = 0x400000;
+    u32 data0;
+    u32 data1;
+
+    while (size < 0x800000) {
+        ptr = (volatile u32 *)(0xA0000000 + size);
+        data0 = *ptr;
+        data1 = ptr[0x100000 / 4 - 1];
+        *ptr ^= ~0;
+        ptr[0x100000 / 4 - 1] ^= ~0;
+        if ((*ptr != (data0 ^ ~0)) || (ptr[0x100000 / 4 - 1] != (data1 ^ ~0))) {
+            return size;
+        }
+        *ptr = data0;
+        ptr[0x100000 / 4 - 1] = data1;
+        size += 0x100000;
+    }
+    return size;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_839C0", osInitialize);
 

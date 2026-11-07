@@ -1,5 +1,8 @@
 #include "common.h"
 #include "include_asm.h"
+u32 osVirtualToPhysical(void *);
+void osWritebackDCache(void *, s32);
+void osInvalDCache(void *, s32);
 u32 func_800DEE5C(s32, void *, void *, u32);
 
 s32 osSetIntMask(s32);
@@ -80,4 +83,21 @@ void func_800DEE24(void *arg0) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_7F260", func_800DEE5C);
 
-INCLUDE_ASM("asm/nonmatchings/unit_7F260", __osSiRawStartDma);
+s32 __osSiRawStartDma(s32 direction, void *dramAddr) {
+    if (*(volatile u32 *)0xA4800018 & 3) {
+        return -1;
+    }
+    if (direction == 1) {
+        osWritebackDCache(dramAddr, 64);
+    }
+    *(volatile u32 *)0xA4800000 = osVirtualToPhysical(dramAddr);
+    if (direction == 0) {
+        *(volatile u32 *)0xA4800004 = 0x1FC007C0;
+    } else {
+        *(volatile u32 *)0xA4800010 = 0x1FC007C0;
+    }
+    if (direction == 0) {
+        osInvalDCache(dramAddr, 64);
+    }
+    return 0;
+}

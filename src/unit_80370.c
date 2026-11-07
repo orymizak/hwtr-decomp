@@ -1,5 +1,6 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct TimerI_ { struct TimerI_ *next; struct TimerI_ *prev; u64 interval; u64 remaining; void *mq; void *msg; } TimerI_;
 extern u32 D_80145560;
 u32 __osDisableInt(void);
 void __osRestoreInt(u32);
@@ -38,4 +39,23 @@ void __osSetTimerIntr(u64 tim) {
     __osRestoreInt(savedMask);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_80370", __osInsertTimer);
+u64 __osInsertTimer(TimerI_ *t) {
+    TimerI_ *timep;
+    u64 tim;
+    u32 savedMask;
+
+    savedMask = __osDisableInt();
+    for (timep = (*(TimerI_ * *)&D_800FB620)->next, tim = t->remaining; timep != (*(TimerI_ * *)&D_800FB620) && tim > timep->remaining;
+         tim -= timep->remaining, timep = timep->next) {
+    }
+    t->remaining = tim;
+    if (timep != (*(TimerI_ * *)&D_800FB620)) {
+        timep->remaining -= tim;
+    }
+    t->next = timep;
+    t->prev = timep->prev;
+    timep->prev->next = t;
+    timep->prev = t;
+    __osRestoreInt(savedMask);
+    return tim;
+}
