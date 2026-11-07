@@ -27,9 +27,22 @@ LDFLAGS := -EB -T $(LD_SCRIPT) -T undefined_syms_auto.txt -T undefined_funcs_aut
 
 OBJECTS = $(shell grep -oE 'build/[^ ]+\.o' $(LD_SCRIPT) 2>/dev/null | sort -u)
 
-.PHONY: all split extract verify clean
+ifeq ($(shell uname -s),Darwin)
+    TOOLCHAIN_OS := mac
+else
+    TOOLCHAIN_OS := linux
+endif
+GCC_URL      := https://github.com/decompals/mips-gcc-2.7.2/releases/download/v0.1/gcc-2.7.2-$(TOOLCHAIN_OS).tar.gz
+BINUTILS_URL := https://github.com/decompals/mips-binutils-2.6/releases/download/v0.3/binutils-2.6-$(TOOLCHAIN_OS).tar.gz
+
+.PHONY: all split extract verify clean toolchain
 
 all: verify
+
+toolchain:
+	mkdir -p $(KMC_DIR)
+	curl -fsSL $(GCC_URL) | tar -xz -C $(KMC_DIR)
+	curl -fsSL $(BINUTILS_URL) | tar -xz -C $(KMC_DIR)
 
 split:
 	$(PYTHON) -m splat split $(YAML)

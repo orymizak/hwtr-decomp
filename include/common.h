@@ -8,6 +8,8 @@ typedef unsigned short u16;
 typedef int s32;
 typedef unsigned int u32;
 
+#define NULL ((void *)0)
+
 void *memset(void *dst, int value, u32 size);
 
 #endif
