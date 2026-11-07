@@ -48,4 +48,38 @@ void func_800A8218(s32 *arg0) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_48B00", func_800A8268);
 
-INCLUDE_ASM("asm/nonmatchings/unit_48B00", func_800A82F8);
+void func_800A82F8(void *arg0, s32 arg1) {
+    u16 temp_v0;
+    void *temp_v1;
+    void *temp_v1_2;
+    void *var_a0;
+
+    var_a0 = (*(s32 *)arg0);
+    if (var_a0 != NULL) {
+loop_1:
+        if ((*(s32 *)((u8 *)(var_a0) + 0x0)) != arg1) {
+            var_a0 = (*(s32 *)((u8 *)(var_a0) + 0x8));
+            if (var_a0 != NULL) {
+                goto loop_1;
+            }
+        }
+        if (var_a0 != NULL) {
+            temp_v0 = (*(s16 *)((u8 *)(var_a0) + 0xC)) - 1;
+            (*(s16 *)((u8 *)(var_a0) + 0xC)) = temp_v0;
+            if (!(temp_v0 & 0xFFFF)) {
+                temp_v1 = (*(s32 *)((u8 *)(var_a0) + 0x8));
+                if (temp_v1 != NULL) {
+                    (*(s32 *)((u8 *)(temp_v1) + 0x4)) = (void *) (*(s32 *)((u8 *)(var_a0) + 0x4));
+                }
+                temp_v1_2 = (*(s32 *)((u8 *)(var_a0) + 0x4));
+                if (temp_v1_2 != NULL) {
+                    (*(s32 *)((u8 *)(temp_v1_2) + 0x8)) = (void *) (*(s32 *)((u8 *)(var_a0) + 0x8));
+                }
+                if (var_a0 == (*(s32 *)arg0)) {
+                    (*(s32 *)arg0) = (void *) (*(s32 *)((u8 *)(var_a0) + 0x8));
+                }
+                Memory_Free((u32) var_a0);
+            }
+        }
+    }
+}
