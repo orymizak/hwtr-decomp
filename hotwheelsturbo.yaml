@@ -66,7 +66,11 @@ segments:
     follows_vram: entry
     bss_size: 0x4CE60
     subsegments:
-      - [0x1050, asm]
+      - [0x1050, asm, game]
+      - [0x6E200, asm, audio_driver] # sin identificar: quizá librería de audio externa
+      - [0x76160, asm, system] # planificador, DMA, Controller Pak
+      - [0x788B0, asm, libultra] # incluye audio (al*), gu y _Printf
+      - [0x87590, asm, libc] # ANSI C y aritmética de 64 bits
       - [0x886A0, bin, rsp_text] # rspboot + microcódigos RSP (texto)
       - [0x90860, data] # incluye la tabla de archivos en 0x911F0
       - { type: bss, vram: 0x80101E70 }
