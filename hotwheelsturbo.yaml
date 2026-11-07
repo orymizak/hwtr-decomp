@@ -73,7 +73,7 @@ segments:
       - [0xD1F0, c, unit_0D1F0]
       - [0xEC60, c, file_table]
       - [0xFDE0, c, font]
-      - [0x103B0, asm]
+      - [0x103B0, c, unit_103B0]
       - [0x12750, c, gfx_pools]
       - [0x13490, asm]
       - [0x18BB0, c, screen]
