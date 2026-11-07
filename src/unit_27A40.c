@@ -19,7 +19,9 @@ INCLUDE_ASM("asm/nonmatchings/unit_27A40", func_8008711C);
 
 INCLUDE_ASM("asm/nonmatchings/unit_27A40", func_80087260);
 
-INCLUDE_ASM("asm/nonmatchings/unit_27A40", func_8008744C);
+void func_8008744C(void *arg0) {
+    (*(f32 *)((u8 *)(arg0) + 0x18)) = (f32) (*(s32 *)((u8 *)(arg0) + 0x14));
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_27A40", func_8008745C);
 
