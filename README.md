@@ -66,10 +66,10 @@ La ROM se reconstruye idéntica, pero casi todo el código sigue en ensamblador 
 <!-- progress -->
 | Zona | Funciones | Bytes de código | Avance |
 |---|---|---|---|
-| total | 376/1911 | 24884/554576 | 4.49 % |
+| total | 377/1911 | 24932/554576 | 4.50 % |
 | juego | 368/1373 | 24644/446896 | 5.51 % |
 | audio | 1/188 | 48/32608 | 0.15 % |
-| sistema | 1/87 | 32/10064 | 0.32 % |
+| sistema | 2/87 | 80/10064 | 0.79 % |
 | libultra | 6/238 | 160/60640 | 0.26 % |
 | libc | 0/25 | 0/4368 | 0.00 % |
 <!-- /progress -->
