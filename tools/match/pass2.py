@@ -15,6 +15,14 @@ ROM = Path("baserom.z64").read_bytes()
 R = lambda v: v - 0x80060400 + 0x1000
 CFLAGS = ["-G0", "-mips3", "-mgp32", "-mfp32", "-Iinclude"]
 M2C_VARIANTS = [[], ["--no-andor"], ["--reg-vars", "saved"], ["--no-andor", "--reg-vars", "saved"]]
+CONTEXT = Path("ghidra_work/context.h")
+PROTOS = {}
+if CONTEXT.exists():
+    for line in CONTEXT.read_text().splitlines():
+        m = re.match(r"^[\w \*]+?\b(\w+)\(.*\);$", line)
+        if m:
+            PROTOS[m.group(1)] = line
+    M2C_VARIANTS = [["--context", str(CONTEXT)] + v for v in M2C_VARIANTS] + M2C_VARIANTS
 MAX_WIDTH_COMBOS = 8
 WIDTH = {"lw": "s32", "sw": "s32", "lb": "s8", "lbu": "u8", "sb": "u8", "lh": "s16", "lhu": "u16", "sh": "s16",
          "lwc1": "f32", "swc1": "f32", "ldc1": "f64", "sdc1": "f64"}
@@ -222,6 +230,13 @@ def clean(text, choice, syms, ptr):
     return "\n".join(l.rstrip() for l in t.splitlines())
 
 
+def add_protos(text, name):
+    """Con contexto m2c no repite los prototipos conocidos, pero el candidato los necesita."""
+    used = [n for n in set(re.findall(r"\b(\w+)\(", text)) if n in PROTOS and n != name]
+    missing = [PROTOS[n] for n in sorted(used) if not re.search(r"^[\w \*]+\b%s\(.*\);$" % n, text, re.M)]
+    return "\n".join(missing) + "\n" + text if missing else text
+
+
 def compile_to(src, d, opt):
     f, o = d / "a.c", d / "a.o"
     o.unlink(missing_ok=True)
@@ -277,11 +292,12 @@ def convert(job):
         if r.returncode or r.stdout in seen:
             continue
         seen.add(r.stdout)
+        text = add_protos(r.stdout, name) if "--context" in flags else r.stdout
         for combo in combos:
             choice = {k: w[0] for k, w in opts.items()}
             choice.update(combo)
             for ptr in ("void", "s32"):
-                c = clean(r.stdout, choice, syms, ptr)
+                c = clean(text, choice, syms, ptr)
                 if c is None:
                     continue
                 o = compile_to(c, d, opt)
@@ -471,51 +487,63 @@ def process(unit, commit, converter=None):
     opt = opt_of(unit)
     with ThreadPoolExecutor(8) as ex:
         res = list(ex.map(converter or convert, [(i, unit, n, opt) for i, n in enumerate(names)]))
-    c, added = orig, []
-    found = sum(r[1] is not None for r in res)
-    for name, cand, best, size, _ in res:
-        if cand is None:
-            if best is not None and best * 4 <= size * 0.15:
-                near.append(dict(unit=unit, name=name, dif=best, size=size))
-            continue
-        m = merge(c, name, cand, opt)
-        if m:
-            c = m
-            added.append(name)
-    merged = len(added)
-    if found:
-        print(f"{unit}: {found} candidatas, {merged} unidas", flush=True)
-    if not added:
+    cands = {r[0]: r[1] for r in res if r[1] is not None}
+    if not cands:
         return 0
-    for _ in range(10):
+
+    def build(names):
+        c = orig
+        for n in sorted(names, key=names_order.index):
+            c = merge(c, n, cands[n], opt) or c
+        return c
+
+    names_order = list(names)
+
+    def rom_ok(c):
         path.write_text(c)
-        b = make(unit)
-        if b == ROM:
-            break
-        if not b or not added:
-            added = []
-            break
-        nm = nm_map()
-        allsym = sorted(set(nm.values()))
-        drop = []
-        for n in added:
-            v = nm.get(n)
-            if v is None:
-                drop.append(n)
-                continue
-            nxt = next((x for x in allsym if x > v), v + 4)
-            if ROM[R(v):R(nxt)] != b[R(v):R(nxt)]:
-                drop.append(n)
-        drop = drop or added[-1:]
-        c = degrade(c, unit, drop)
-        added = [n for n in added if n not in drop]
+        return make(unit) == ROM
+
+    # Primero lo que el enlazado permita descartar de golpe; luego bisección: uno malo no debe tumbar la unidad.
+    todo = [n for n in names_order if n in cands]
+    c = build(todo)
+    todo = [n for n in todo if f'", {n});' not in c]
+    print(f"{unit}: {len(cands)} candidatas, {len(todo)} unidas", flush=True)
+    if not todo:
+        path.write_text(orig)
+        return 0
+    good = []
+    if rom_ok(c):
+        good = todo
     else:
-        added = []
-    if not added or make(unit) != ROM:
+        b = Path("build/hotwheelsturbo.z64").read_bytes() if Path("build/hotwheelsturbo.z64").exists() else b""
+        if b and len(b) == len(ROM):
+            nm = nm_map()
+            allsym = sorted(set(nm.values()))
+            def same(n):
+                v = nm.get(n)
+                if v is None:
+                    return False
+                nxt = next((x for x in allsym if x > v), v + 4)
+                return ROM[R(v):R(nxt)] == b[R(v):R(nxt)]
+            todo = [n for n in todo if same(n)]
+
+        def solve(ns):
+            if not ns:
+                return
+            if rom_ok(build(good + ns)):
+                good.extend(ns)
+            elif len(ns) > 1:
+                mid = len(ns) // 2
+                solve(ns[:mid])
+                solve(ns[mid:])
+        solve(todo)
+    if not good or not rom_ok(build(good)):
         path.write_text(orig)
         if make(unit) != ROM:
             sys.exit(f"{unit}: la ROM no coincide tras restaurar")
         return 0
+    c = build(good)
+    added = good
     if commit:
         subprocess.run(["python3", "tools/progress.py", "--readme"], capture_output=True)
         subprocess.run(["git", "add", "src", "README.md"])
