@@ -238,7 +238,7 @@ segments:
       - [0x85BC0, c, unit_85BC0]
       - [0x85CA0, c, unit_85CA0]
       - [0x85D00, c, unit_85D00]
-      - [0x85D50, asm]
+      - [0x85D50, c, unit_85D50]
       - [0x85E60, c, unit_85E60]
       - [0x85E70, asm]
       - [0x87550, c, unit_87550]
