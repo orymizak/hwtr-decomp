@@ -631,7 +631,17 @@ void func_800B8334(void) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800B8358);
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800B83B0);
+void func_800B83B0(void) {
+    u8 temp_v0;
+
+    if (D_80124C71 == 2) {
+        D_80124C72 = (*(u8 *)&D_800F6464);
+        return;
+    }
+    temp_v0 = D_8014104C(7);
+    D_80124C72 = temp_v0;
+    (*(u8 *)&D_800F6464) = temp_v0;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800B8408);
 
