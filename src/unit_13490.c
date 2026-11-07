@@ -1,5 +1,14 @@
 #include "common.h"
 #include "include_asm.h"
+extern u8 D_8014D184;
+extern u8 D_8014D188;
+extern u8 D_8014D18C;
+extern u8 D_8014D190;
+extern u8 D_8014D194;
+extern u8 D_8014D195;
+extern u8 D_8014D196;
+extern s32 D_8014C64C;
+extern u8 D_8014D180;
 s32 func_80079140(void *, s32 *, s32,s32, s32);
 s32 func_80079BD4(void *, s32);
 s32 func_80079E48(void *);
@@ -155,13 +164,42 @@ u8 func_80075564(void *arg0) {
     return var_v0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_13490", func_80075580);
+void func_80075580(void) {
+    s32 var_v0;
+
+    var_v0 = 0x168;
+    D_80134798 = 0;
+    D_8014C64C = 0;
+    do {
+        *(s32 *)(&D_8014D180 + var_v0) = 0;
+        var_v0 -= 0x18;
+    } while (var_v0 >= 0);
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_13490", func_800755B4);
 
-INCLUDE_ASM("asm/nonmatchings/unit_13490", func_80075600);
+void func_80075600(s32 arg0, s8 arg1, s8 arg2, s8 arg3) {
+    s32 temp_v0;
 
-INCLUDE_ASM("asm/nonmatchings/unit_13490", func_80075640);
+    if (arg0 != -1) {
+        temp_v0 = arg0 * 0x18;
+        *(u8 *)(&D_8014D194 + temp_v0) = arg1;
+        *(u8 *)(&D_8014D195 + temp_v0) = arg2;
+        *(u8 *)(&D_8014D196 + temp_v0) = arg3;
+    }
+}
+
+void func_80075640(s32 arg0, f32 arg1, f32 arg2, f32 arg3, f32 arg4) {
+    s32 temp_v0;
+
+    if (arg0 != -1) {
+        temp_v0 = arg0 * 0x18;
+        *(f32 *)(&D_8014D184 + temp_v0) = arg1;
+        *(f32 *)(&D_8014D188 + temp_v0) = arg2;
+        *(f32 *)(&D_8014D18C + temp_v0) = arg3;
+        *(f32 *)(&D_8014D190 + temp_v0) = arg4;
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_13490", func_800756A0);
 
