@@ -77,10 +77,28 @@ def expand_fields(t, choose):
         t = f"{t[:b]}(*({choose(int(off, 16))} *)((u8 *)({t[b:m.start()]}) + 0x{off})){t[m.end():]}"
 
 
-def clean(text, choice):
+def symbol_widths(asm):
+    w = {}
+    for op, sym in re.findall(r"\*/\s+(lw|sw|lbu|lb|sb|lhu|lh|sh|lwc1|swc1|ldc1|sdc1)\s+\S+\s+%lo\((\w+)", asm):
+        w.setdefault(sym, WIDTH[op])
+    return w
+
+
+def byte_symbols(t, syms):
+    """m2c escala en bytes lo que tipa `?`: esos símbolos pasan a u8 con cast en cada acceso."""
+    for sym in re.findall(r"^extern \? (\w+);$", t, re.M):
+        t = t.replace(f"extern ? {sym};", f"extern u8 {sym};")
+        t = t.replace(f"*(&{sym}", f"*({syms.get(sym, 's32')} *)(&{sym}")
+    return t
+
+
+def clean(text, choice, syms, ptr):
     t = re.sub(r"\s*/\*.*?\*/", "", text)
     if re.search(r"M2C_|saved_reg|\.unk[0-9A-Fa-f]", t):
         return None
+    if ptr == "void":
+        t = byte_symbols(t, syms)
+        t = re.sub(r"\? \*", "void *", t)
     t = re.sub(r"\(\?\)", "()", t)
     t = re.sub(r"\?\s*\(\*", "s32 (*", t)
     t = re.sub(r"(^|[\s(,])\?( \*| )", lambda m: m.group(1) + "s32" + m.group(2), t, flags=re.M)
@@ -137,7 +155,7 @@ def convert(job):
     d.mkdir(parents=True, exist_ok=True)
     v, size, asm = asm_of(unit, name)
     (d / "f.s").write_text(asm)
-    opts = width_options(asm)
+    opts, syms = width_options(asm), symbol_widths(asm)
     multi = [k for k, w in opts.items() if len(w) > 1]
     combos = [dict(zip(multi, c)) for c in itertools.islice(itertools.product(*(opts[k] for k in multi)), MAX_WIDTH_COMBOS)]
     best, seen = None, set()
@@ -149,17 +167,18 @@ def convert(job):
         for combo in combos:
             choice = {k: w[0] for k, w in opts.items()}
             choice.update(combo)
-            c = clean(r.stdout, choice)
-            if c is None:
-                continue
-            o = compile_to(c, d, opt)
-            if o is None:
-                continue
-            dif, rodata = compare(o, v, size, d)
-            if not rodata and dif == 0:
-                return name, c, 0, size
-            if not rodata and (best is None or dif < best):
-                best = dif
+            for ptr in ("void", "s32"):
+                c = clean(r.stdout, choice, syms, ptr)
+                if c is None:
+                    continue
+                o = compile_to(c, d, opt)
+                if o is None:
+                    continue
+                dif, rodata = compare(o, v, size, d)
+                if not rodata and dif == 0:
+                    return name, c, 0, size
+                if not rodata and (best is None or dif < best):
+                    best = dif
     return name, None, best, size
 
 
