@@ -20,6 +20,7 @@ OPTFLAGS := -O2
 CFLAGS   := -G0 -mips3 -mgp32 -mfp32 -Iinclude
 
 $(BUILD)/src/lz.o: OPTFLAGS := -O0
+$(BUILD)/src/unit_6E0C0.o: OPTFLAGS := -O0
 
 ASFLAGS := -EB -march=vr4300 -mtune=vr4300 -mabi=32 -Iinclude
 LDFLAGS := -EB -T $(LD_SCRIPT) -T undefined_syms_auto.txt -T undefined_funcs_auto.txt \
