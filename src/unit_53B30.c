@@ -204,7 +204,30 @@ s32 strcpy(s32 *, s32);
 extern s32 D_801345B8;
 extern s32 D_80138D20;
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800B2F30);
+extern u32 D_800F6050[];
+extern s32 (*D_80141048)();
+
+f32 func_800B2F30(u8 arg0) {
+    u32 now;
+    u32 delta;
+    f32 ret;
+
+    if (D_800F6050[arg0] == 0) {
+        ret = 0.15f;
+        D_800F6050[arg0] = D_80141048();
+    } else {
+        now = D_80141048();
+        delta = now - D_800F6050[arg0];
+        if (delta > 100) {
+            ret = 0.1f;
+        } else {
+            ret = (f32)delta / 100.0f;
+        }
+        D_800F6050[arg0] = now;
+    }
+    return ret;
+}
+
 
 INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800B3024);
 
