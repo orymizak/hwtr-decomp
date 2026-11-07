@@ -117,7 +117,7 @@ segments:
       - [0x6AE90, c, unit_6AE90]
       - [0x6C240, c, unit_6C240]
       - [0x6E0C0, c, unit_6E0C0]
-      - [0x6E200, asm, audio_driver] # sin identificar: quizá librería de audio externa
+      - [0x6E200, c, unit_6E200]
       - [0x6E480, c, unit_6E480]
       - [0x6E4B0, c, unit_6E4B0]
       - [0x6E4F0, c, unit_6E4F0]
