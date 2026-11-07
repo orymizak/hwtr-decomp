@@ -69,6 +69,7 @@ segments:
       - [0x1050, asm, game]
       - [0x5BC0, c, debug_text]
       - [0x6050, asm]
+      - [0xD1F0, c, unit_0D1F0]
       - [0xEC60, c, file_table]
       - [0xFDE0, c, font]
       - [0x103B0, asm]
