@@ -1,5 +1,8 @@
 #include "common.h"
 #include "include_asm.h"
+extern u8 D_801185AC;
+extern u8 D_801185A4;
+extern u8 D_801185A2;
 
 
 
@@ -17,7 +20,9 @@ INCLUDE_ASM("asm/nonmatchings/unit_2F4F0", func_80090410);
 
 INCLUDE_ASM("asm/nonmatchings/unit_2F4F0", func_800904C4);
 
-INCLUDE_ASM("asm/nonmatchings/unit_2F4F0", func_80090550);
+void func_80090550(s32 arg0, s8 arg1) {
+    *(u8 *)(&D_801185A2 + ((arg0 & 0xFF) * 0x64)) = arg1;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_2F4F0", func_80090578);
 
@@ -37,6 +42,10 @@ INCLUDE_ASM("asm/nonmatchings/unit_2F4F0", func_80090D80);
 
 INCLUDE_ASM("asm/nonmatchings/unit_2F4F0", func_80090FA8);
 
-INCLUDE_ASM("asm/nonmatchings/unit_2F4F0", func_800911B4);
+void func_800911B4(s32 arg0) {
+    *(u8 *)(&D_801185A4 + ((arg0 & 0xFF) * 0x64)) = 1;
+}
 
-INCLUDE_ASM("asm/nonmatchings/unit_2F4F0", func_800911E0);
+void func_800911E0(s32 arg0) {
+    *(s32 *)(&D_801185AC + ((arg0 & 0xFF) * 0x64)) = 0xFA;
+}
