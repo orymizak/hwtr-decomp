@@ -1,5 +1,9 @@
 #include "common.h"
 #include "include_asm.h"
+extern s16 D_800F610C[];
+extern s16 D_800F6170[];
+extern u8 D_801240D4;
+void func_800B3C18(u32 arg0);
 u8 func_80086D50(s32);
 extern u8 D_80100FDC;
 extern u8 D_801240D6;
@@ -30,7 +34,6 @@ extern u8 D_800F6490;
 extern u8 D_80100F60;
 extern s8 D_80124C81;
 extern s8 D_80124C9E;
-s32 func_800B3C18();
 s32 func_800B3E24(s32,s32,s32,s32);
 extern u8 D_80100F58;
 extern s8 D_80124C80;
@@ -255,7 +258,17 @@ s32 func_800B3BE4(u32 arg0) {
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800B3C18);
+void func_800B3C18(u32 arg0) {
+    u32 temp_a0;
+
+    temp_a0 = arg0 & 0xFF;
+    if (temp_a0 < 2U) {
+        ((s32 *)&D_800F60A0)[temp_a0] = 0;
+        *(u8 *)((u8 *)&D_800F60C0 + temp_a0) = 0;
+        ((f32 *)&D_800F60A8)[temp_a0] = 1.0f;
+        ((f32 *)&D_800F60B8)[temp_a0] = 2.2689264f;
+    }
+}
 
 void func_800B3C74(u32 arg0) {
     u32 temp_a0;
@@ -277,7 +290,16 @@ void func_800B3CA4(u32 arg0) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800B3CDC);
+void func_800B3CDC(u32 arg0) {
+    u32 temp_a0;
+
+    temp_a0 = arg0 & 0xFF;
+    if (temp_a0 < 2U) {
+        *(u8 *)((u8 *)&D_800F60C0 + temp_a0) = 0;
+        ((f32 *)&D_800F60A8)[temp_a0] = 1.0f;
+        ((f32 *)&D_800F60B8)[temp_a0] = 2.2689264f;
+    }
+}
 
 void func_800B3D2C(u32 arg0) {
     u32 temp_a0;
@@ -1925,7 +1947,17 @@ void func_800C3C34(void) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800C3C58);
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800C3DA8);
+void func_800C3DA8(void) {
+    s32 temp_v0;
+    u8 temp_v1;
+
+    if (D_801240D4 != 0) {
+        temp_v1 = D_801240D4 - 1;
+        temp_v0 = temp_v1 & 0xFF;
+        D_801240D4 = temp_v1;
+        func_800C3560((s32) D_800F610C[temp_v0], (s32) D_800F6170[temp_v0]);
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800C3DF8);
 

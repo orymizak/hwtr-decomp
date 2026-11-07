@@ -1,5 +1,11 @@
 #include "common.h"
 #include "include_asm.h"
+extern u8 D_800F2090;
+typedef struct { s32 f0; s32 f4; u8 p8[0x208]; s32 f210; s32 f214; u8 p218[0xFC]; s32 f314; s32 f318; u8 p31C[0x4]; } S_D_8014C740;
+extern S_D_8014C740 D_8014C740[];
+extern u8 D_800F2060;
+extern s32 D_8014C540;
+extern s32 D_8014EC78;
 extern u8 D_8014D184;
 extern u8 D_8014D188;
 extern u8 D_8014D18C;
@@ -258,11 +264,35 @@ INCLUDE_ASM("asm/nonmatchings/unit_13490", func_80076CF8);
 
 INCLUDE_ASM("asm/nonmatchings/unit_13490", func_80076D6C);
 
-INCLUDE_ASM("asm/nonmatchings/unit_13490", func_80077228);
+void func_80077228(void) {
+    s32 temp_v1;
+
+    if ((u32) (D_8014EC78 + 8) >= (u32) D_8014C740[D_8014C540].f4) {
+        D_8014C740[D_8014C540].f0 = D_8014EC78;
+        GfxPool_Grow(&D_8014C740[D_8014C540], 1U);
+        D_8014EC78 = D_8014C740[D_8014C540].f0;
+    }
+    temp_v1 = D_8014EC78;
+    D_8014EC78 = temp_v1 + 8;
+    (*(s32 *)((u8 *)(temp_v1) + 0x0)) = 0xDE000000;
+    (*(s32 *)((u8 *)(temp_v1) + 0x4)) = &D_800F2060;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_13490", func_800772F4);
 
-INCLUDE_ASM("asm/nonmatchings/unit_13490", func_800778A4);
+void func_800778A4(void) {
+    s32 temp_v1;
+
+    if ((u32) (D_8014EC78 + 8) >= (u32) D_8014C740[D_8014C540].f4) {
+        D_8014C740[D_8014C540].f0 = D_8014EC78;
+        GfxPool_Grow(&D_8014C740[D_8014C540], 1U);
+        D_8014EC78 = D_8014C740[D_8014C540].f0;
+    }
+    temp_v1 = D_8014EC78;
+    D_8014EC78 = temp_v1 + 8;
+    (*(s32 *)((u8 *)(temp_v1) + 0x0)) = 0xDE000000;
+    (*(s32 *)((u8 *)(temp_v1) + 0x4)) = &D_800F2090;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_13490", func_80077970);
 

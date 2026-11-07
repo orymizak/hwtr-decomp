@@ -1,5 +1,8 @@
 #include "common.h"
 #include "include_asm.h"
+s32 func_800D0444(s32, s32, s16, s16, s32);
+typedef struct { s32 f0; s32 f4; s32 f8; s32 fC; u16 f10; u16 f12; s32 f14; s32 f18; s32 f1C; s32 f20; s32 f24; s32 f28; s32 f2C; s32 f30; s32 f34; s32 f38; s32 f3C; s32 f40; s32 f44; u8 p48[0xC]; s32 f54; s32 f58; s32 f5C; s32 f60; s32 f64; s32 f68; s32 f6C; u8 p70[0x1C]; s32 f8C; u8 p90[0x4]; s32 f94; s32 f98; u8 p9C[0xA0]; } S_D_8012793C;
+extern S_D_8012793C D_8012793C[];
 extern u8 D_800FACF8;
 extern s32 D_800FB170;
 extern s32 D_800FB174;
@@ -51,7 +54,28 @@ s32 func_800CDE10(void) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CDE40);
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CE090);
+s32 func_800CE090(s32 arg0) {
+    s32 temp_v0;
+    s32 var_a0;
+
+    var_a0 = D_8012793C->f30;
+    if (var_a0 == 0) {
+        var_a0 = D_8012793C->f2C;
+        if (var_a0 == 0) {
+            D_8012793C->f1C = 0;
+            return 0;
+        }
+        goto block_4;
+    }
+    D_8012793C->f30 = 0;
+block_4:
+    if (D_8012793C->f1C == 0) {
+        D_8012793C->f1C = (*(s32 *)((u8 *)(var_a0) + 0x10));
+    }
+    temp_v0 = func_800D0444(var_a0, arg0, 0x80, 0x80, -1);
+    D_8012793C->f1C = 0;
+    return temp_v0;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CE110);
 
