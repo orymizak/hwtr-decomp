@@ -91,9 +91,9 @@ def symbol_widths(asm):
 def global_fields(t, syms):
     """D_X.unk4 sobre un símbolo sin tipo: acceso por bytes con el ancho que usa el ensamblador."""
     def rep(m):
-        ty = syms.get((m.group(1), int(m.group(2), 16)), "s32")
-        return f"(*({ty} *)((u8 *)&{m.group(1)} + 0x{m.group(2)}))"
-    return re.sub(r"\b(D_[0-9A-F]+)\.unk([0-9A-F]+)\b", rep, t)
+        ty = "s32 (**)()" if m.group(3) else syms.get((m.group(1), int(m.group(2), 16)), "s32") + " *"
+        return f"(*({ty})((u8 *)&{m.group(1)} + 0x{m.group(2)})){m.group(3)}"
+    return re.sub(r"\b(D_[0-9A-F]+)\.unk([0-9A-F]+)\b(\(?)", rep, t)
 
 
 def byte_symbols(t, syms):
@@ -121,8 +121,8 @@ def void_derefs(t, choice):
     """`*x` sobre `void *x` no compila: usa el ancho visto en el desplazamiento 0."""
     for x in set(re.findall(r"\bvoid \*(\w+)[;,)]", t)):
         ty = choice.get(0, "s32")
-        t = re.sub(r"(?<![\w)\]])\*\*%s\b" % x, f"(*({ty} *)(*(s32 *){x}))", t)
-        t = re.sub(r"(?<![\w)\]])\*%s\b(?!\s*[,;)]\s*$)" % x, f"(*({ty} *){x})", t)
+        t = re.sub(r"(?<![\w)\]])(?<!void )\*\*%s\b" % x, f"(*({ty} *)(*(s32 *){x}))", t)
+        t = re.sub(r"(?<![\w)\]])(?<!void )\*%s\b" % x, f"(*({ty} *){x})", t)
     return t
 
 
@@ -134,6 +134,37 @@ def declare_stack(t):
     body = t[head.end():]
     names = sorted(n for n in set(re.findall(r"\bsp[0-9A-F]+\b", body)) if not re.search(r"^\s+[\w \*]+\b%s\b[^=]*;$" % n, body, re.M))
     return t[:head.end()] + "".join(f"    s32 {n};\n" for n in names) + body
+
+
+SIZES = {"s32": 4, "u32": 4, "f32": 4, "s16": 2, "u16": 2, "f64": 8}
+
+
+def scale_steps(t):
+    """m2c da en bytes el paso de un puntero tipado: `s32 *p; p += 4` es avanzar uno."""
+    for ty, name in set(re.findall(r"^\s+(\w+) \*(\w+);$", t, re.M)):
+        size = SIZES.get(ty)
+        if size:
+            t = re.sub(r"\b%s ([+-])= (0x[0-9A-Fa-f]+|\d+);" % name,
+                       lambda m: f"{name} {m.group(1)}= {int(m.group(2), 0) // size};" if int(m.group(2), 0) % size == 0 else m.group(0), t)
+    return t
+
+
+def fill_params(t):
+    """m2c omite los argumentos sin usar anteriores a uno usado, y cambiaría el registro."""
+    head = re.search(r"^([\w \*]+\b\w+)\((.*)\) \{$", t, re.M)
+    if not head:
+        return t
+    used = [int(n) for n in re.findall(r"\barg(\d+)\b", head.group(2))]
+    if not used or sorted(used) == list(range(max(used) + 1)):
+        return t
+    parts = dict((int(m.group(1)), p.strip()) for p in head.group(2).split(",") for m in [re.search(r"\barg(\d+)\b", p)] if m)
+    sig = ", ".join(parts.get(i, f"s32 arg{i}") for i in range(max(used) + 1))
+    return t[:head.start()] + f"{head.group(1)}({sig}) {{" + t[head.end():]
+
+
+def volatile_io(t):
+    """Los registros de hardware son volátiles: gcc no une la dirección con el desplazamiento."""
+    return re.sub(r"\*\((\w+) \*\)(0x[0-9A-Fa-f]{8})\b", r"*(volatile \1 *)\2", t)
 
 
 def unspecified_protos(t):
@@ -163,6 +194,7 @@ def clean(text, choice, syms, ptr):
     except IndexError:
         return None
     t = declare_stack(void_derefs(t, choice))
+    t = volatile_io(fill_params(scale_steps(t)))
     return "\n".join(l.rstrip() for l in t.splitlines())
 
 
