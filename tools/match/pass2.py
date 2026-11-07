@@ -30,6 +30,7 @@ MAX_WIDTH_COMBOS = 8
 WIDTH = {"lw": "s32", "sw": "s32", "lb": "s8", "lbu": "u8", "sb": "u8", "lh": "s16", "lhu": "u16", "sh": "s16",
          "lwc1": "f32", "swc1": "f32", "ldc1": "f64", "sdc1": "f64"}
 near = []
+KNOWN = {m.group(1): int(m.group(2), 16) for m in re.finditer(r"^(\w+) = 0x([0-9A-Fa-f]+);", Path("symbol_addrs.txt").read_text(), re.M)}
 
 
 def opt_of(unit):
@@ -294,17 +295,49 @@ def compare(o, v, size, d):
     if len(x) < size or any(x[size:size + 16]):
         return size, False
     out = subprocess.run(["mips-linux-gnu-objdump", "-r", "-j", ".text", str(o)], capture_output=True, text=True).stdout
-    rel = {int(m.group(1), 16) for m in re.finditer(r"^([0-9a-f]{8}) R_MIPS", out, re.M)}
+    relocs = [(int(m.group(1), 16), m.group(2), m.group(3)) for m in re.finditer(r"^([0-9a-f]{8}) R_MIPS_(\w+)\s+(\S+)", out, re.M)]
+    rel = {r[0]: r for r in relocs}
     dif = 0
     for k in range(0, size, 4):
         a, b = struct.unpack_from(">I", ROM, R(v) + k)[0], struct.unpack_from(">I", x, k)[0]
-        if a == b:
+        if a == b and k not in rel:
             continue
         op = a >> 26
         mask = 0xFC000000 if op in (2, 3) else 0xFFFF0000
-        if k not in rel or (a & mask) != (b & mask):
+        if k not in rel or (a & mask) != (b & mask) or not reloc_ok(k, rel[k], a, b, relocs, x, v):
             dif += 1
     return dif, False
+
+
+def symbol_addr(sym):
+    m = re.fullmatch(r"(?:func|D)_([0-9A-F]{8})", sym)
+    return int(m.group(1), 16) if m else KNOWN.get(sym)
+
+
+def reloc_ok(k, r, a, b, relocs, x, v):
+    """Comprueba que la reubicación lleve a la misma dirección que la ROM; un símbolo desconocido no se puede comprobar."""
+    _, kind, sym = r
+    if sym.startswith("."):
+        return kind != "26" or (a & 0x3FFFFFF) == ((v + ((b & 0x3FFFFFF) << 2)) >> 2 & 0x3FFFFFF)
+    base = symbol_addr(sym)
+    if base is None:
+        return True
+    if kind == "26":
+        return (a & 0x3FFFFFF) == (base + ((b & 0x3FFFFFF) << 2)) >> 2 & 0x3FFFFFF
+    if kind == "LO16":
+        return (a & 0xFFFF) == (base + sext(b)) & 0xFFFF
+    if kind == "HI16":
+        lo = next((rr for rr in relocs if rr[0] > k and rr[1] == "LO16" and rr[2] == sym), None)
+        if lo is None:
+            return True
+        add = ((b & 0xFFFF) << 16) + sext(struct.unpack_from(">I", x, lo[0])[0])
+        return (a & 0xFFFF) == ((base + add + 0x8000) >> 16) & 0xFFFF
+    return True
+
+
+def sext(w):
+    w &= 0xFFFF
+    return w - 0x10000 if w & 0x8000 else w
 
 
 def convert(job):

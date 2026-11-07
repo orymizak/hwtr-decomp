@@ -2,6 +2,7 @@
 #include "include_asm.h"
 typedef struct { s32 x; s32 y; s32 z; } Pos_;
 extern u8 D_80118558[];
+s32 func_800A5894(void);
 extern u8 D_801185AC;
 extern u8 D_801185A4;
 extern u8 D_801185A2;
@@ -48,7 +49,20 @@ void func_800908A0(void) {
 
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_2F4F0", func_800908A8);
+s32 func_800908A8(void) {
+  s32 temp_v0;
+  temp_v0 = func_800A5894();
+  if (temp_v0 != 0) {
+    if (temp_v0) {
+      return (temp_v0 - 1) * 0xC8;
+    }
+    else
+    {
+      return (temp_v0 - 1) * 0xC8;
+    }
+  }
+  return 0;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_2F4F0", func_800908E8);
 

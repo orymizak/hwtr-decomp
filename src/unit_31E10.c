@@ -1,5 +1,6 @@
 #include "common.h"
 #include "include_asm.h"
+extern s32 (*D_80141698)();
 s32 func_80099434(void *);
 s32 func_8009951C(void *);
 extern u8 D_80118634;
@@ -13,7 +14,23 @@ INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_80091B20);
 
 INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_80091BA0);
 
-INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_80091DC4);
+void func_80091DC4(s32 arg0) {
+  s32 temp_v0;
+  u32 temp_v1;
+  temp_v0 = D_80141698();
+  temp_v1 = temp_v0 - (*((s32 *) (((u8 *) arg0) + 0x4A8)));
+  if (!(temp_v1 >= 0x65U)) {
+    *((s32 *) (((u8 *) arg0) + 0x4AC)) = (u32) ((*((s32 *) (((u8 *) arg0) + 0x4AC))) + temp_v1);
+  }
+  else
+  {
+    *((s32 *) (((u8 *) arg0) + 0x4AC)) = 0U;
+  }
+  *((s32 *) (((u8 *) arg0) + 0x4A8)) = temp_v0;
+  if (((*((u8 *) (((u8 *) arg0) + 0x4B4))) != 0) && (((u32) (*((s32 *) (((u8 *) arg0) + 0x4AC)))) >= 0x1F5U)) {
+    *((u8 *) (((u8 *) arg0) + 0x4B4)) = 0U;
+  }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_80091E30);
 
