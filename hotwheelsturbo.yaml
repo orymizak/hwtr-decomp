@@ -122,6 +122,8 @@ segments:
       - [0x788B0, asm, libultra] # incluye audio (al*), gu y _Printf
       - [0x7CFA0, c, unit_7CFA0]
       - [0x7CFB0, asm]
+      - [0x7D720, c, unit_7D720]
+      - [0x7D730, asm]
       - [0x87590, asm, libc] # ANSI C y aritmética de 64 bits
       - [0x886A0, bin, rsp_text] # rspboot + microcódigos RSP (texto)
       - [0x90860, data]
