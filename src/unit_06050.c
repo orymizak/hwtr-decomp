@@ -47,7 +47,23 @@ void func_800664A4(s32 arg0) {
     D_8013818C = arg0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_800664B0);
+void func_800664B0(void) {
+    s32 *var_s0;
+    s32 temp_a0;
+    u32 var_s1;
+
+    GfxPools_Shutdown();
+    var_s1 = 0;
+    var_s0 = &D_80138174;
+    do {
+        temp_a0 = *var_s0;
+        var_s1 += 1;
+        if (temp_a0 != 0) {
+            func_800741D8(temp_a0);
+        }
+        var_s0 += 1;
+    } while (var_s1 < 6U);
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80066504);
 
