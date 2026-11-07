@@ -122,6 +122,8 @@ segments:
       - [0x6E4B0, c, unit_6E4B0]
       - [0x6E4F0, c, unit_6E4F0]
       - [0x6E530, asm]
+      - [0x6E5A0, c, unit_6E5A0]
+      - [0x6E610, asm]
       - [0x75520, c, unit_75520]
       - [0x75570, asm]
       - [0x76040, c, unit_76040]
