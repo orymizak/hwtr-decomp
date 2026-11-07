@@ -225,6 +225,7 @@ segments:
       - [0x80E00, asm]
       - [0x81110, c, unit_81110]
       - [0x81170, asm]
+      - [0x82130, c, unit_82130]
       - [0x822F0, c, unit_822F0]
       - [0x82400, asm]
       - [0x827D0, c, unit_827D0]
