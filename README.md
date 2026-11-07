@@ -61,7 +61,8 @@ make extract
 
 ## Estado
 
-La ROM se reconstruye idéntica, pero casi todo el código sigue en ensamblador generado.
+La ROM se reconstruye idéntica, pero casi todo el código sigue en ensamblador generado. `make progress`
+muestra el avance por zona, en funciones y bytes de código.
 
 - **Compilador:** GCC 2.7.2 compatible con KMC reproduce exactamente las funciones probadas. Las opciones
   de compilación aún son provisionales, y varían por archivo (`-O2` y `-O0`).
