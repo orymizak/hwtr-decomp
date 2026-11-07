@@ -151,8 +151,8 @@ SIZES = {"s32": 4, "u32": 4, "f32": 4, "s16": 2, "u16": 2, "f64": 8}
 
 def scale_steps(t):
     """m2c da en bytes el paso de un puntero tipado: `s32 *p; p += 4` es avanzar uno."""
-    for ty, name in set(re.findall(r"^\s+(\w+) \*(\w+);$", t, re.M)):
-        size = SIZES.get(ty)
+    for ty, stars, name in set(re.findall(r"^\s+(\w+) (\*+)(\w+);$", t, re.M)):
+        size = 4 if len(stars) > 1 else SIZES.get(ty)
         if size:
             t = re.sub(r"\b%s ([+-])= (0x[0-9A-Fa-f]+|\d+);" % name,
                        lambda m: f"{name} {m.group(1)}= {int(m.group(2), 0) // size};" if int(m.group(2), 0) % size == 0 else m.group(0), t)

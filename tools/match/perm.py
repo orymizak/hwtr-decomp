@@ -101,13 +101,77 @@ def m_swap_stmts(c, r):
     return c[:b] + "\n".join(lines)
 
 
+def operand_left(t, i):
+    """Inicio de la expresión primaria que termina justo antes de i."""
+    j = i
+    if t[j - 1] == ")":
+        depth = 0
+        while j > 0:
+            j -= 1
+            depth += (t[j] == ")") - (t[j] == "(")
+            if depth == 0:
+                break
+    else:
+        while j > 0 and (t[j - 1].isalnum() or t[j - 1] in "_."):
+            j -= 1
+    while j > 0 and t[j - 1] in "&*":
+        j -= 1
+    return j
+
+
+def operand_right(t, i):
+    j = i
+    while j < len(t) and t[j] in "&*":
+        j += 1
+    if t[j] == "(":
+        depth = 0
+        while j < len(t):
+            depth += (t[j] == "(") - (t[j] == ")")
+            j += 1
+            if depth == 0:
+                break
+        if t[j:j + 1] == "(" or t[j:j + 1].isalnum() or t[j:j + 1] in ("_", "&", "*"):
+            return operand_right(t, j)  # era un cast
+    else:
+        while j < len(t) and (t[j].isalnum() or t[j] in "_."):
+            j += 1
+    return j
+
+
 def m_commute(c, r):
     b = body_span(c)
-    ms = list(re.finditer(r"([\w\.]+|\([^()]*\)) (\+|\*|&|\||\^|==|!=) ([\w\.]+|\([^()]*\))", c[b:]))
+    body = c[b:]
+    ms = list(re.finditer(r" (\+|\*|&|\||\^|==|!=) ", body))
     if not ms:
         return None
     m = r.choice(ms)
-    return c[:b + m.start()] + f"{m.group(3)} {m.group(2)} {m.group(1)}" + c[b + m.end():]
+    i, j = operand_left(body, m.start()), operand_right(body, m.end())
+    left, right = body[i:m.start()], body[m.end():j]
+    if not left or not right:
+        return None
+    return c[:b] + body[:i] + right + m.group(0) + left + body[j:]
+
+
+def m_field_width(c, r):
+    """El ancho de un campo se dedujo por desplazamiento y puede corresponder a otra base."""
+    b = body_span(c)
+    ms = list(re.finditer(r"\*\((s32|u32|s16|u16|s8|u8|f32) \*\)\(\(u8 \*\)", c[b:]))
+    if not ms:
+        return None
+    m = r.choice(ms)
+    return c[:b + m.start(1)] + r.choice(["s32", "u32", "s16", "u16", "s8", "u8"]) + c[b + m.end(1):]
+
+
+def m_retype_proto(c, r):
+    """Los tipos de los argumentos de una llamada deciden el orden en que se cargan."""
+    b = body_span(c)
+    ps = [m for m in re.finditer(r"^[\w \*]+\b\w+\((.*)\);$", c[:b], re.M) if m.group(1).strip() not in ("", "void")]
+    if not ps:
+        return None
+    m = r.choice(ps)
+    args = [a.strip() for a in m.group(1).split(",")]
+    args[r.randrange(len(args))] = r.choice(["s32", "u32", "s16", "u16", "s8", "u8", "void *"])
+    return c[:m.start(1)] + ", ".join(args) + c[m.end(1):]
 
 
 def m_inline_temp(c, r):
@@ -268,7 +332,7 @@ def m_true_array(c, r):
     return head + body
 
 
-MUTS = [m_true_array] * 6 + [m_struct_array] * 4 + [m_merge_syms] + [m_array_index] * 3 + [m_no_unsigned_counter] * 2 + [m_swap_decls] * 4 + [m_retype] * 2 + [m_retype_param, m_swap_stmts, m_swap_stmts, m_commute, m_inline_temp, m_cast, m_unsigned, m_register]
+MUTS = [m_field_width] * 3 + [m_retype_proto] * 2 + [m_true_array] * 6 + [m_struct_array] * 4 + [m_merge_syms] + [m_array_index] * 3 + [m_no_unsigned_counter] * 2 + [m_swap_decls] * 4 + [m_retype] * 2 + [m_retype_param, m_swap_stmts, m_swap_stmts, m_commute, m_inline_temp, m_cast, m_unsigned, m_register]
 
 
 def permute(job):
