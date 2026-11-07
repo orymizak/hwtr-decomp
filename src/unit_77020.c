@@ -1,5 +1,8 @@
 #include "common.h"
 #include "include_asm.h"
+s32 func_800E1BD0();
+s32 func_800E1800();
+s32 func_800E0D30();
 s32 bcopy(void *, s32,s32);
 s32 func_800D7664();
 s32 func_800D768C();
@@ -53,7 +56,12 @@ INCLUDE_ASM("asm/nonmatchings/unit_77020", func_800D6518);
 
 INCLUDE_ASM("asm/nonmatchings/unit_77020", func_800D6558);
 
-INCLUDE_ASM("asm/nonmatchings/unit_77020", func_800D6610);
+void func_800D6610(void *arg0) {
+    void *temp_v0;
+
+    temp_v0 = (*(s32 *)((u8 *)(arg0) + 0xC));
+    func_800E0D30(*(s32 *)(*(s32 *)((u8 *)(temp_v0) + 0x0)), D_800FB1B0, D_800FB1B4, (*(s32 *)((u8 *)(temp_v0) + 0x4)), (*(s32 *)((u8 *)(temp_v0) + 0x8)));
+}
 
 void func_800D6650(void *arg0) {
     void *temp_v0;
@@ -64,6 +72,13 @@ void func_800D6650(void *arg0) {
     func_800E1390(*(s32 *)((u8 *)temp_v0 + 0x0), *(s32 *)((u8 *)temp_v0 + 0x4), *(s32 *)((u8 *)temp_v1 + 0x4));
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_77020", func_800D667C);
+void func_800D667C(void *arg0) {
+    void *temp_v0;
 
-INCLUDE_ASM("asm/nonmatchings/unit_77020", func_800D66A8);
+    temp_v0 = (*(s32 *)((u8 *)(arg0) + 0xC));
+    func_800E1800(*(s32 *)(*(s32 *)((u8 *)(temp_v0) + 0x0)), (*(s32 *)((u8 *)(temp_v0) + 0x4)), (*(s32 *)((u8 *)(temp_v0) + 0x8)));
+}
+
+void func_800D66A8(void *arg0) {
+    func_800E1BD0(*(s32 *)(*(s32 *)((u8 *)(arg0) + 0xC)));
+}
