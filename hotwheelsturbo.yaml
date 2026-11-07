@@ -124,6 +124,8 @@ segments:
       - [0x7CFB0, asm]
       - [0x7D720, c, unit_7D720]
       - [0x7D730, asm]
+      - [0x7EFA0, c, unit_7EFA0]
+      - [0x7EFB0, asm]
       - [0x87590, asm, libc] # ANSI C y aritmética de 64 bits
       - [0x886A0, bin, rsp_text] # rspboot + microcódigos RSP (texto)
       - [0x90860, data]
