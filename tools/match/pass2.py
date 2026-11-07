@@ -247,7 +247,7 @@ def convert(job):
     opts, syms = width_options(asm), symbol_widths(asm)
     multi = [k for k, w in opts.items() if len(w) > 1]
     combos = [dict(zip(multi, c)) for c in itertools.islice(itertools.product(*(opts[k] for k in multi)), MAX_WIDTH_COMBOS)]
-    best, seen = None, set()
+    best, best_c, seen = None, None, set()
     for flags in M2C_VARIANTS:
         r = subprocess.run(["m2c", "--target", "mips-gcc-c", *flags, str(d / "f.s")], capture_output=True, text=True)
         if r.returncode or r.stdout in seen:
@@ -268,10 +268,10 @@ def convert(job):
                     continue
                 dif, rodata = compare(o, v, size, d)
                 if not rodata and dif == 0:
-                    return name, c, 0, size
-                if not rodata and (best is None or dif < best):
-                    best = dif
-    return name, None, best, size
+                    return name, c, 0, size, c
+                if not rodata and (best is None or dif < best or best_c is None):
+                    best, best_c = dif, c
+    return name, None, best, size, best_c
 
 
 def split(c):
@@ -391,7 +391,7 @@ def degrade(c, unit, names):
     return c
 
 
-def process(unit, commit):
+def process(unit, commit, converter=None):
     path = Path(f"src/{unit}.c")
     orig = path.read_text()
     names = re.findall(r'INCLUDE_ASM\("asm/nonmatchings/\w+", (\w+)\)', orig)
@@ -399,9 +399,9 @@ def process(unit, commit):
         return 0
     opt = opt_of(unit)
     with ThreadPoolExecutor(8) as ex:
-        res = list(ex.map(convert, [(i, unit, n, opt) for i, n in enumerate(names)]))
+        res = list(ex.map(converter or convert, [(i, unit, n, opt) for i, n in enumerate(names)]))
     c, added = orig, []
-    for name, cand, best, size in res:
+    for name, cand, best, size, _ in res:
         if cand is None:
             if best is not None and best * 4 <= size * 0.15:
                 near.append(dict(unit=unit, name=name, dif=best, size=size))
@@ -461,4 +461,5 @@ def main():
         print(f"{u}: +{n} (total {total})", flush=True)
 
 
-main()
+if __name__ == "__main__":
+    main()
