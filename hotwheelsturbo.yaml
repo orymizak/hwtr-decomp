@@ -66,7 +66,7 @@ segments:
     follows_vram: entry
     bss_size: 0x4CE60
     subsegments:
-      - [0x1050, asm, game]
+      - [0x1050, c, unit_01050]
       - [0x5BC0, c, debug_text]
       - [0x6050, asm]
       - [0xB140, c, unit_0B140]
