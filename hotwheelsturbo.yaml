@@ -222,7 +222,7 @@ segments:
       - [0x80770, c, unit_80770]
       - [0x807B0, c, unit_807B0]
       - [0x807F0, c, unit_807F0]
-      - [0x80800, asm]
+      - [0x80800, c, unit_80800]
       - [0x80B40, c, unit_80B40]
       - [0x80BA0, c, unit_80BA0]
       - [0x80BF0, c, unit_80BF0]

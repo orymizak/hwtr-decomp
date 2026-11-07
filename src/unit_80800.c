@@ -1,0 +1,8 @@
+#include "common.h"
+#include "include_asm.h"
+
+
+
+INCLUDE_ASM("asm/nonmatchings/unit_80800", osCreateViManager);
+
+INCLUDE_ASM("asm/nonmatchings/unit_80800", viMgrMain);
