@@ -1,5 +1,7 @@
 #include "common.h"
 #include "include_asm.h"
+s32 alLink(s32, void *);
+s32 alUnlink(s32);
 
 extern void *D_800FB5B0;
 extern f64 D_80101A30;
@@ -27,9 +29,25 @@ s32 *func_800DC1DC(void) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_7C960", func_800DC208);
 
-INCLUDE_ASM("asm/nonmatchings/unit_7C960", func_800DC220);
+void func_800DC220(void *arg0) {
+    s32 var_s0;
+    void *var_s1;
 
-INCLUDE_ASM("asm/nonmatchings/unit_7C960", func_800DC274);
+    var_s1 = arg0;
+    var_s0 = (*(s32 *)((u8 *)(var_s1) + 0x14));
+    if (var_s0 != 0) {
+        do {
+            alUnlink(var_s0);
+            alLink(var_s0, var_s1 + 4);
+            var_s0 = (*(s32 *)((u8 *)(var_s1) + 0x14));
+        } while (var_s0 != 0);
+    }
+}
+
+void func_800DC274(s32 arg0, s32 arg1) {
+    ((s32 (*)())alUnlink)(arg1);
+    ((s32 (*)(s32, s32))alLink)(arg1, arg0 + 0x14);
+}
 
 s32 func_800DC2B4(void *arg0, s32 arg1) {
     return (s32) (f32) (((f64) ((f32) arg1 * (f32) *(s32 *)((u8 *)arg0 + 0x44)) / D_80101A30) + D_80101A38);
