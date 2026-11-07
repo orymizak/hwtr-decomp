@@ -32,7 +32,7 @@ void func_8006B2A0(void);
 void func_8006C468(void);
 void func_8006DA88(void);
 void func_8006DC90(void);
-void func_8006F1E0(void);
+void Font_Init(void);
 void func_80072018(void);
 void func_80077FB0(void);
 void func_80077FD0(void);
@@ -84,7 +84,7 @@ void Game_Init(void) {
     FileTable_Init();
     func_80060C50();
     func_80065450();
-    func_8006F1E0();
+    Font_Init();
     func_8007BE30();
     func_80077FD0();
     func_800D5F70(func_80078BD0);
