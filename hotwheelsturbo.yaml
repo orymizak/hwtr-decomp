@@ -123,7 +123,7 @@ segments:
       - [0x6E4F0, c, unit_6E4F0]
       - [0x6E530, c, unit_6E530]
       - [0x6E5A0, c, unit_6E5A0]
-      - [0x6E610, asm]
+      - [0x6E610, c, unit_6E610]
       - [0x726E0, c, unit_726E0]
       - [0x72B40, c, unit_72B40]
       - [0x72CF0, c, unit_72CF0]
