@@ -3,9 +3,13 @@
 
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_85950", __osSpGetStatus);
+s32 __osSpGetStatus(void) {
+    return *(volatile s32 *)0xA4040010;
+}
 
-INCLUDE_ASM("asm/nonmatchings/unit_85950", __osSpSetStatus);
+void __osSpSetStatus(s32 arg0) {
+    *(volatile s32 *)0xA4040010 = arg0;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_85950", __osSpSetPc);
 
