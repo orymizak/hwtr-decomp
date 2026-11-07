@@ -179,6 +179,8 @@ segments:
       - [0x80D60, c, unit_80D60]
       - [0x80DB0, c, unit_80DB0]
       - [0x80E00, asm]
+      - [0x827D0, c, unit_827D0]
+      - [0x82830, asm]
       - [0x839A0, c, unit_839A0]
       - [0x839C0, asm]
       - [0x84BB0, c, unit_84BB0]
