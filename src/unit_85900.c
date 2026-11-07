@@ -9,4 +9,6 @@ INCLUDE_ASM("asm/nonmatchings/unit_85900", __osSetSR);
 
 INCLUDE_ASM("asm/nonmatchings/unit_85900", __osSetWatchLo);
 
-INCLUDE_ASM("asm/nonmatchings/unit_85900", __osSpDeviceBusy);
+s32 __osSpDeviceBusy(void) {
+    return (*(volatile s32 *)0xA4040010 & 0x1C) != 0;
+}
