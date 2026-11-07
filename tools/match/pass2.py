@@ -282,7 +282,9 @@ def nm_map():
     return {l.split()[2]: int(l.split()[0], 16) for l in out.splitlines() if len(l.split()) == 3}
 
 
-def make():
+def make(unit):
+    # El make de macOS compara mtimes con resolución de 1 s: sin esto el .o puede quedar obsoleto.
+    Path(f"build/src/{unit}.o").unlink(missing_ok=True)
     subprocess.run("make -j8 >/dev/null 2>&1", shell=True)
     p = Path("build/hotwheelsturbo.z64")
     return p.read_bytes() if p.exists() else b""
@@ -319,7 +321,7 @@ def process(unit, commit):
         return 0
     for _ in range(10):
         path.write_text(c)
-        b = make()
+        b = make(unit)
         if b == ROM:
             break
         if not b or not added:
@@ -341,9 +343,10 @@ def process(unit, commit):
         added = [n for n in added if n not in drop]
     else:
         added = []
-    if not added or make() != ROM:
+    if not added or make(unit) != ROM:
         path.write_text(orig)
-        make()
+        if make(unit) != ROM:
+            sys.exit(f"{unit}: la ROM no coincide tras restaurar")
         return 0
     if commit:
         subprocess.run(["python3", "tools/progress.py", "--readme"], capture_output=True)
