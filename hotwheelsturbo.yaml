@@ -119,6 +119,7 @@ segments:
       - [0x6E0C0, c, unit_6E0C0]
       - [0x6E200, asm, audio_driver] # sin identificar: quizá librería de audio externa
       - [0x76160, asm, system] # planificador, DMA, Controller Pak
+      - [0x76BF0, c, unit_76BF0]
       - [0x76C10, c, unit_76C10]
       - [0x76C30, asm]
       - [0x788B0, asm, libultra] # incluye audio (al*), gu y _Printf
