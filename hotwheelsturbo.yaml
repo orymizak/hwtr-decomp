@@ -337,7 +337,12 @@ segments:
       - [0xA24C0, rodata, unit_7AA80]
       - [0xA25B0, rodata, unit_7B750]
       - [0xA25E0, rodata, unit_7BB70]
-      - [0xA2630, rodata]
+      - [0xA2630, rodata, unit_7C960]
+      - [0xA26C0, rodata, unit_7DE70]
+      - [0xA2760, rodata, unit_7F260]
+      - [0xA2780, rodata, unit_80E00]
+      - [0xA2790, rodata, unit_83D50]
+      - [0xA27F0, rodata]
       - { type: bss, vram: 0x80101E70 }
 
   # 201 archivos contiguos (gFileTable), tal como están guardados en la ROM
