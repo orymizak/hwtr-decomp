@@ -1,5 +1,7 @@
 #include "common.h"
 #include "include_asm.h"
+extern s32 D_800F36D0[];
+extern s32 D_8014C1A8;
 
 extern s32 D_800F36F4;
 extern s32 D_801184B4;
@@ -13,7 +15,19 @@ INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", func_8008BAA0);
 
 INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", func_8008BE7C);
 
-INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", func_8008C08C);
+s32 func_8008C08C(void) {
+  if (D_8014C1A8 != 2) {
+    ((s32 (*)()) D_800F36D0[D_8014C1A8])();
+    return 0;
+  }
+  if (D_8014C1A8) {
+    return 1;
+  }
+  else
+  {
+    return 1;
+  }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", func_8008C0D4);
 
