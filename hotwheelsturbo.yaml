@@ -201,6 +201,8 @@ segments:
       - [0x82AB0, asm]
       - [0x839A0, c, unit_839A0]
       - [0x839C0, asm]
+      - [0x84750, c, unit_84750]
+      - [0x847E0, asm]
       - [0x84BB0, c, unit_84BB0]
       - [0x84BD0, c, unit_84BD0]
       - [0x84C50, c, unit_84C50]
