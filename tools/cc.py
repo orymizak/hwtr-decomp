@@ -146,7 +146,9 @@ def compile_c(opt, src, obj, db=None):
         r = subprocess.run(cmd + ["-c", "-o", str(obj), tmp], capture_output=True, text=True)
         return r.returncode, r.stderr
     finally:
-        os.unlink(tmp)
+        # gcc borra su salida si falla
+        if os.path.exists(tmp):
+            os.unlink(tmp)
 
 
 def main():

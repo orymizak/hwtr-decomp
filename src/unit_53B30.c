@@ -1,5 +1,7 @@
 #include "common.h"
 #include "include_asm.h"
+extern void func_800C9F18(void *, s32);
+extern u8 *D_800F641C;
 extern s16 D_800F610C[];
 extern s16 D_800F6170[];
 extern u8 D_801240D4;
@@ -916,9 +918,68 @@ INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800BAFE0);
 
 INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800BB020);
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800BB060);
+void func_800BB060(void) {
+    switch (*(s32 *)(D_800F641C + 0x878)) {
+    case 0:
+        func_800C9F18(&(*(s32 *)&D_800F9F70), 0x40);
+        break;
+    case 1:
+        func_800C9F18(&(*(s32 *)&D_800F9F70), 0x41);
+        break;
+    case 2:
+        func_800C9F18(&(*(s32 *)&D_800F9F70), 0x42);
+        break;
+    case 3:
+        func_800C9F18(&(*(s32 *)&D_800F9F70), 0x43);
+        break;
+    case 4:
+        func_800C9F18(&(*(s32 *)&D_800F9F70), 0x44);
+        break;
+    default:
+        func_800C9F18(&(*(s32 *)&D_800F9F70), 0x3F);
+        break;
+    }
+}
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800BB104);
+void func_800BB104(void) {
+    switch (D_800F61D2) {
+    case 0:
+        switch (*(s32 *)(D_800F641C + 0x878)) {
+        case 0:
+            func_800C9F18(&(*(s32 *)&D_800F9F70), 0x40);
+            break;
+        case 1:
+            func_800C9F18(&(*(s32 *)&D_800F9F70), 0x41);
+            break;
+        case 2:
+            func_800C9F18(&(*(s32 *)&D_800F9F70), 0x42);
+            break;
+        case 3:
+            func_800C9F18(&(*(s32 *)&D_800F9F70), 0x43);
+            break;
+        case 4:
+            func_800C9F18(&(*(s32 *)&D_800F9F70), 0x44);
+            break;
+        default:
+            func_800C9F18(&(*(s32 *)&D_800F9F70), 0x3F);
+            break;
+        }
+        break;
+    case 1:
+        func_800C9F18(&(*(s32 *)&D_800F9F70), 0x46);
+        break;
+    case 3:
+        (*(s8 *)&D_801240B8) = 0;
+        func_800C9F18(&(*(s32 *)&D_800F9F70), 0x45);
+        break;
+    case 4:
+        func_800C9F18(&(*(s32 *)&D_800F9F70), 0x47);
+        break;
+    default:
+        func_800C9F18(&(*(s32 *)&D_800F9F70), 0x3F);
+        break;
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800BB224);
 
@@ -1014,7 +1075,28 @@ INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800BC464);
 
 INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800BC550);
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800BC648);
+void func_800BC648(void) {
+    switch ((*(u8 *)&D_800F61D3)) {
+    case 0:
+        func_800C9F18(&(*(s32 *)&D_800F9F70), 0x4C);
+        break;
+    case 1:
+        func_800C9F18(&(*(s32 *)&D_800F9F70), 0x4E);
+        break;
+    case 2:
+        func_800C9F18(&(*(s32 *)&D_800F9F70), 0x46);
+        break;
+    case 3:
+        func_800C9F18(&(*(s32 *)&D_800F9F70), 0x45);
+        break;
+    case 4:
+        func_800C9F18(&(*(s32 *)&D_800F9F70), 0x47);
+        break;
+    default:
+        func_800C9F18(&(*(s32 *)&D_800F9F70), 0x3F);
+        break;
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800BC6E8);
 
@@ -2175,7 +2257,24 @@ INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800C6814);
 
 INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800C6860);
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800C68CC);
+void func_800C68CC(void) {
+    switch (*(s32 *)(D_800F641C + 0x878)) {
+    case 0:
+    case 1:
+        func_800C9F18(&(*(s32 *)&D_800F9F70), 0x7E);
+        break;
+    case 2:
+        func_800C9F18(&(*(s32 *)&D_800F9F70), 0x7F);
+        break;
+    case 3:
+        func_800C9F18(&(*(s32 *)&D_800F9F70), 0x80);
+        break;
+    case 4:
+    default:
+        func_800C9F18(&(*(s32 *)&D_800F9F70), 0x81);
+        break;
+    }
+}
 
 void func_800C6950(void) {
     func_800C8554(0x50);
