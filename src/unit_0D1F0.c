@@ -1,12 +1,13 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { s32 f0; s32 f4; u8 p8[0x548]; } S_D_801455C0;
+extern S_D_801455C0 D_801455C0[];
 s32 func_8007F5C4(s32,s32);
 s32 func_8006DD60(s32 *,s32,s32);
 extern s32 D_8014D980;
 
 s32 func_800757E8(s32);
 s32 func_8006CF10(s32 *, s32);
-extern s32 D_801455C0;
 s32 func_8006D15C(s32 *, s32, s32);
 s32 Memory_Free(s32);
 extern s32 D_800F05E0;
@@ -36,7 +37,16 @@ void func_8006DA40(void *arg0) {
     *(s32 *)((u8 *)arg0 + 0x4) = -1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_0D1F0", func_8006DA88);
+void func_8006DA88(void) {
+    u32 var_a0;
+
+    var_a0 = 0;
+    do {
+        D_801455C0[var_a0].f0 = 0;
+        D_801455C0[var_a0].f4 = -1;
+        var_a0 += 1;
+    } while (var_a0 < 8U);
+}
 
 void func_8006DAC4(s32 arg0) {
     void *var_s0;
