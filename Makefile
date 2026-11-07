@@ -68,7 +68,7 @@ $(ELF): $(OBJECTS) $(LD_SCRIPT)
 
 $(BUILD)/src/%.o: src/%.c
 	@mkdir -p $(dir $@)
-	$(KMC_CC) -B$(KMC_DIR)/ -c $(OPTFLAGS) $(CFLAGS) -o $@ $<
+	$(PYTHON) tools/cc.py $(OPTFLAGS) $< $@
 
 $(BUILD)/asm/%.o: asm/%.s
 	@mkdir -p $(dir $@)

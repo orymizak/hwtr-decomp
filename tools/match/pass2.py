@@ -9,6 +9,9 @@ import glob, itertools, json, os, re, struct, subprocess, sys
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
+sys.path.insert(0, "tools")
+import cc
+
 TC = "tools/gcc_2.7.2/"
 TMP = Path(os.environ["TMP_DIR"]).resolve()
 ROM = Path("baserom.z64").read_bytes()
@@ -272,8 +275,8 @@ def compile_to(src, d, opt):
     f, o = d / "a.c", d / "a.o"
     o.unlink(missing_ok=True)
     f.write_text('#include "common.h"\n' + src)
-    r = subprocess.run([TC + "gcc", "-B" + TC, "-c", opt, *CFLAGS, "-o", str(o), str(f)], capture_output=True, text=True)
-    return o if r.returncode == 0 and o.exists() else None
+    code, _ = cc.compile_c(opt, f, o)
+    return o if code == 0 and o.exists() else None
 
 
 def section(o, name, d):
@@ -398,8 +401,7 @@ def compile_tu(src, opt):
     d.mkdir(exist_ok=True)
     f = d / "tu.c"
     f.write_text(src.replace('#include "include_asm.h"\n', "#define INCLUDE_ASM(a, b)\n"))
-    r = subprocess.run([TC + "gcc", "-B" + TC, "-c", opt, *CFLAGS, "-o", str(d / "tu.o"), str(f)], capture_output=True, text=True)
-    return r.returncode == 0
+    return cc.compile_c(opt, f, d / "tu.o")[0] == 0
 
 
 def known_decls(c):
