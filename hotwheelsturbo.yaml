@@ -75,7 +75,7 @@ segments:
       - [0xFDE0, c, font]
       - [0x103B0, c, unit_103B0]
       - [0x12750, c, gfx_pools]
-      - [0x13490, asm]
+      - [0x13490, c, unit_13490]
       - [0x18BB0, c, screen]
       - [0x195B0, c, game_init]
       - [0x19800, c, heap]
