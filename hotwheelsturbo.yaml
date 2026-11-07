@@ -123,6 +123,7 @@ segments:
       - [0x6E4F0, c, unit_6E4F0]
       - [0x6E530, asm]
       - [0x76160, asm, system] # planificador, DMA, Controller Pak
+      - [0x76B30, c, unit_76B30]
       - [0x76B70, c, unit_76B70]
       - [0x76BB0, c, unit_76BB0]
       - [0x76BF0, c, unit_76BF0]
