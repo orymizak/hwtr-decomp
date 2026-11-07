@@ -187,6 +187,8 @@ segments:
       - [0x7EAF0, c, unit_7EAF0]
       - [0x7EB20, c, unit_7EB20]
       - [0x7EB50, asm]
+      - [0x7EC90, c, unit_7EC90]
+      - [0x7EDC0, asm]
       - [0x7EFA0, c, unit_7EFA0]
       - [0x7EFB0, asm]
       - [0x7F1F0, c, unit_7F1F0]
