@@ -47,13 +47,39 @@ INCLUDE_ASM("asm/nonmatchings/unit_06050", func_800665D0);
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_800665F8);
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_8006673C);
+void func_8006673C(s32 arg0) {
+    (*(u8 *)((u8 *)((*(s32 *)(&(*(u8 *)&D_80138174) + ((arg0 & 0xFF) * 4)))) + 0x105)) = 0;
+}
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80066758);
+void func_80066758(s32 arg0) {
+    (*(u8 *)((u8 *)((*(s32 *)(&(*(u8 *)&D_80138174) + ((arg0 & 0xFF) * 4)))) + 0x105)) = 0xFF;
+}
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80066778);
+void func_80066778(s32 arg0, s8 arg1) {
+    void *temp_v0;
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_800667A8);
+    temp_v0 = *(s32 *)(&(*(u8 *)&D_80138174) + ((arg0 & 0xFF) * 4));
+    if (temp_v0 != NULL) {
+        (*(u8 *)((u8 *)((*(s32 *)((u8 *)((*(s32 *)((u8 *)(temp_v0) + 0x2C))) + 0x3C))) + 0x9)) = arg1;
+    }
+}
+
+void func_800667A8(s32 arg0, s32 arg1) {
+    void *temp_v0;
+    void *temp_v1;
+    void *temp_v1_2;
+
+    temp_v1 = *(s32 *)(&(*(u8 *)&D_80138174) + ((arg0 & 0xFF) * 4));
+    if (temp_v1 != NULL) {
+        if (arg1 & 0xFF) {
+            temp_v1_2 = (*(s32 *)((u8 *)(temp_v1) + 0x2C));
+            (*(s32 *)((u8 *)(temp_v1_2) + 0x30)) = (s32) ((*(s32 *)((u8 *)(temp_v1_2) + 0x30)) | 0x40);
+            return;
+        }
+        temp_v0 = (*(s32 *)((u8 *)(temp_v1) + 0x2C));
+        (*(s32 *)((u8 *)(temp_v0) + 0x30)) = (s32) ((*(s32 *)((u8 *)(temp_v0) + 0x30)) & ~0x40);
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_800667F8);
 
@@ -76,7 +102,14 @@ INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80066C9C);
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80066D80);
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80066ECC);
+void func_80066ECC(s32 arg0, u8 *arg1, u8 *arg2, u8 *arg3) {
+    void *temp_v1;
+
+    temp_v1 = *(s32 *)(&(*(u8 *)&D_80138174) + ((arg0 & 0xFF) * 4));
+    *arg1 = (*(u8 *)((u8 *)(temp_v1) + 0x14D));
+    *arg2 = (*(u8 *)((u8 *)(temp_v1) + 0x14E));
+    *arg3 = (*(u8 *)((u8 *)(temp_v1) + 0x14F));
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80066EFC);
 
