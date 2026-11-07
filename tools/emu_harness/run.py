@@ -122,6 +122,24 @@ def main():
             t = r32(t + 0xC)
             n += 1
 
+    def count_2d():
+        """Rectángulos 2D (G_TEXRECT 0xE4/0xE5 y G_FILLRECT 0xF6) en las listas de dibujo del juego (GfxPool D_8014C740[2])."""
+        best = (0, 0)
+        for pool in (0x8014C740, 0x8014C740 + 0x320):
+            start, cur = r32(pool + 0x210), r32(pool)
+            cap = r32(pool + 0x314)
+            if not (0x80000000 <= start < 0x80800000):
+                continue
+            end = cur if start <= cur <= start + cap * 8 else start + cap * 8
+            rects = total = 0
+            for a in range(start, end, 8):
+                op = r32(a) >> 24
+                total += 1
+                if op in (0xE4, 0xE5, 0xF6):
+                    rects += 1
+            best = max(best, (rects, total))
+        return best
+
     def on_frame(index):
         f = state["frame"] = state["frame"] + 1
         origin_now = C.cast(core.DebugMemGetPointer(4), C.POINTER(C.c_uint32))[1]
@@ -163,12 +181,14 @@ def main():
                     print(f"f={f} pantalla={screen:08x} coches={cars}", flush=True)
                     state["screen"] = screen
                     state["log"].append(dict(frame=f, screen=f"{screen:08x}"))
-                # Start en la portada; después, A para aceptar. La cruceta cambia la opción de cada menú.
-                phase = f % 80
-                if screen == 0x800F668C:
-                    set_keys(START if phase < 20 else 0)
-                else:
-                    set_keys(A if phase < 20 else 0)
+                # Recorre los menús: en cada pantalla prueba A y, si no cambia, mueve la cruceta antes de
+                # aceptar (así se elige "Sí" en el aviso del Controller Pak). Nunca pulsa B, que vuelve atrás.
+                if screen != state.get("seen"):
+                    state["seen"], state["since"] = screen, f
+                step = (f - state["since"]) // 40
+                plan = (START, A, A, 0x04, A, 0x08, A, 0x01, A, 0x02, A, START)
+                key = START if screen == 0x800F668C else plan[step % len(plan)]
+                set_keys(key if (f - state["since"]) % 40 < 12 else 0)
             elif os.environ.get("HW_SWEEP"):
                 bit = (f // 60) % 16
                 set_keys((1 << bit) if f % 60 < 20 else 0)
@@ -190,6 +210,10 @@ def main():
                 core.CoreDoCommand(STOP, 0, None)
             return
         rel = f - state["race_frame"]
+        if rel % 30 == 0 and rel > 0:
+            rects, total = count_2d()
+            state["hud_rects"] = max(state.get("hud_rects", 0), rects)
+            state["dl_cmds"] = max(state.get("dl_cmds", 0), total)
         speed, pos = rf(CAR + 0xBC), (rf(CAR + 0x98), rf(CAR + 0x9C), rf(CAR + 0xA0))
         if rel == 1:
             state["start_pos"] = pos
@@ -206,7 +230,9 @@ def main():
         if rel == 1500:
             screenshot("race_1500.png")
             dist = sum((a - b) ** 2 for a, b in zip(pos, state["start_pos"])) ** 0.5
-            state["results"].update(dist=dist, max_speed=state["max_speed"], gas=state["gas_seen"], cars=cars)
+            state["results"].update(dist=dist, max_speed=state["max_speed"], gas=state["gas_seen"], cars=cars,
+                                    hud_rects=state.get("hud_rects", 0), dl_cmds=state.get("dl_cmds", 0),
+                                    human=bool(r32(CAR + 4) & 3))
             state["phase"] = "done"
             core.CoreDoCommand(STOP, 0, None)
 

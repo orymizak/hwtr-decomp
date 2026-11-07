@@ -7,7 +7,9 @@ Fuentes:
 - Pseudocódigo de Ghidra en `ghidra_work/decomp.jsonl`, exportado de tu proyecto, porque la herramienta de Craft Anything no decodifica MIPS.
 - Ensamblador en `asm/`, donde había dudas.
 
-Lo marcado como *interpretación* es mi lectura del uso del valor; el número y la dirección sí están comprobados. `mechanics.json` se genera de los archivos con `tools/match/gen_mechanics.py`.
+Lo marcado como *interpretación* es mi lectura del uso del valor; el número y la dirección sí están comprobados.
+
+`mechanics.json` recoge solo constantes escritas en el código: `tools/match/gen_mechanics.py` comprueba que cada una aparece como `f32` inmediato en su función. Los valores de `Tuning.prm`, `.CWH` y `.DUP` son datos que el juego lee de sus archivos, y están en las tablas de abajo.
 
 ## Unidades
 

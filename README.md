@@ -43,7 +43,7 @@ make
 
 `python3 main.py` compila, comprueba la ROM y cada función en C, y muestra el avance. No es el juego: para jugar, la ROM compilada necesita un emulador de Nintendo 64.
 
-`sh tools/emu_harness/setup.sh` deja `mupen64plus` en `tools/emu/`, sin instalarlo en el sistema. Con él, `python3 main.py --self-test salida.json` ejecuta la ROM y mide la carrera en la memoria del juego. Ahora la ROM arranca, cambia de imagen y lee el mando, pero las capturas salen negras y el guion aún no llega a una carrera, así que `move`, `act` y `hud` no pasan.
+`sh tools/emu_harness/setup.sh` deja `mupen64plus` en `tools/emu/`, sin instalarlo en el sistema. `python3 main.py --self-test salida.json` solo valida el SHA-1 y las direcciones finales; con `--play` además ejecuta la ROM y mide la carrera en la memoria del juego. El guion recorre los menús hasta una carrera de 6 coches, acelera con A y mide, en la memoria del juego, la distancia y la velocidad del coche del jugador y los rectángulos 2D del marcador en la lista de dibujo. Las capturas del emulador salen en negro en este Mac.
 
 Para extraer y descomprimir los 201 archivos del juego en `assets/files/`:
 

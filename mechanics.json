@@ -4,338 +4,107 @@
     {
       "name": "gravedad",
       "group": "física",
-      "value": 386,
+      "value": 386.0,
       "unit": "pulgadas/s²",
-      "source": "func_80095970"
-    },
-    {
-      "name": "densidad del aire",
-      "group": "física",
-      "value": 0.002377,
-      "unit": "slug/pie³",
-      "source": "func_800946DC"
+      "source": "func_80095970, f32 inmediato 0x43C10000"
     },
     {
       "name": "conversión de mph",
       "group": "física",
       "value": 17.6,
       "unit": "pulgadas/s por mph",
-      "source": "func_8008D060"
+      "source": "func_8008D060, f32 inmediato 0x418CCCCD"
     },
     {
-      "name": "velocidad de referencia de dirección",
+      "name": "velocidad de referencia de la dirección",
       "group": "controles",
-      "value": 2304,
+      "value": 2304.0,
       "unit": "pulgadas/s",
-      "source": "func_8008D060"
+      "source": "func_8008D060, f32 inmediato 0x45100000"
     },
     {
       "name": "límite base de choque",
       "group": "física",
-      "value": 2112,
+      "value": 2112.0,
       "unit": "pulgadas/s",
-      "source": "func_800A66C0"
+      "source": "func_800A66C0, f32 inmediato 0x45040000"
+    },
+    {
+      "name": "pendiente del límite de choque por debajo de 1",
+      "group": "física",
+      "value": 938.6667,
+      "unit": "pulgadas/s",
+      "source": "func_800A66C0, f32 inmediato 0x446AAAAB"
+    },
+    {
+      "name": "pendiente del límite de choque por encima de 1",
+      "group": "física",
+      "value": 821.3333,
+      "unit": "pulgadas/s",
+      "source": "func_800A66C0, f32 inmediato 0x444D5555"
     },
     {
       "name": "resistencia máxima",
       "group": "física",
       "value": 4.0,
       "unit": "factor",
-      "source": "func_80091210"
+      "source": "func_80091210, f32 inmediato 0x40800000"
     },
     {
-      "name": "velocidad de la IA, dificultad mínima",
+      "name": "densidad del aire",
+      "group": "física",
+      "value": 2.377,
+      "unit": "milésimas de slug/pie³",
+      "source": "func_800946DC, f32 inmediato 0x401820C5"
+    },
+    {
+      "name": "pulgadas a pies",
+      "group": "física",
+      "value": 0.083333336,
+      "unit": "factor",
+      "source": "func_800946DC, f32 inmediato 0x3DAAAAAB"
+    },
+    {
+      "name": "escala de la dificultad",
       "group": "ia",
-      "value": 85,
-      "unit": "%",
-      "source": "TUNING.PRM +0x00, func_800853F4"
+      "value": 255.0,
+      "unit": "pasos",
+      "source": "func_800853F4, f32 inmediato 0x437F0000"
     },
     {
-      "name": "velocidad de la IA, dificultad máxima",
-      "group": "ia",
-      "value": 121,
-      "unit": "%",
-      "source": "TUNING.PRM +0x01, func_800853F4"
+      "name": "velocidad mínima del ajuste en el aire",
+      "group": "física",
+      "value": 264.0,
+      "unit": "pulgadas/s",
+      "source": "func_80092534, f32 inmediato 0x43840000"
     },
     {
-      "name": "mínimo de corrección, dificultad mínima",
-      "group": "ia",
-      "value": 82,
-      "unit": "%",
-      "source": "TUNING.PRM +0x02, func_800853F4"
-    },
-    {
-      "name": "mínimo de corrección, dificultad máxima",
-      "group": "ia",
-      "value": 97,
-      "unit": "%",
-      "source": "TUNING.PRM +0x03, func_800853F4"
-    },
-    {
-      "name": "separación objetivo, dificultad mínima",
-      "group": "ia",
-      "value": 15,
-      "unit": "décimas",
-      "source": "TUNING.PRM +0x04, func_800853F4"
-    },
-    {
-      "name": "separación objetivo, dificultad máxima",
-      "group": "ia",
-      "value": 5,
-      "unit": "décimas",
-      "source": "TUNING.PRM +0x05, func_800853F4"
-    },
-    {
-      "name": "máximo de corrección, dificultad mínima",
-      "group": "ia",
-      "value": 122,
-      "unit": "%",
-      "source": "TUNING.PRM +0x0C, func_800853F4"
-    },
-    {
-      "name": "máximo de corrección, dificultad máxima",
-      "group": "ia",
-      "value": 112,
-      "unit": "%",
-      "source": "TUNING.PRM +0x0D, func_800853F4"
-    },
-    {
-      "name": "margen de separación, dificultad mínima",
-      "group": "ia",
-      "value": 15,
-      "unit": "décimas",
-      "source": "TUNING.PRM +0x2E, func_800853F4"
-    },
-    {
-      "name": "margen de separación, dificultad máxima",
-      "group": "ia",
-      "value": 9,
-      "unit": "décimas",
-      "source": "TUNING.PRM +0x2F, func_800853F4"
-    },
-    {
-      "name": "ajuste en la última vuelta",
-      "group": "ia",
-      "value": 10,
-      "unit": "décimas",
-      "source": "TUNING.PRM +0x34, func_800853F4"
-    },
-    {
-      "name": "periodo de corrección",
-      "group": "ia",
-      "value": 20,
-      "unit": "×10 ms",
-      "source": "TUNING.PRM +0x1B, func_80081840"
-    },
-    {
-      "name": "paso al alejarse la IA",
-      "group": "ia",
-      "value": 2,
-      "unit": "centésimas",
-      "source": "TUNING.PRM +0x1C, func_80081840"
-    },
-    {
-      "name": "paso dentro del margen, hacia arriba",
-      "group": "ia",
-      "value": 4,
-      "unit": "centésimas",
-      "source": "TUNING.PRM +0x1D, func_80081840"
-    },
-    {
-      "name": "paso dentro del margen, hacia abajo",
-      "group": "ia",
-      "value": 2,
-      "unit": "centésimas",
-      "source": "TUNING.PRM +0x1E, func_80081840"
-    },
-    {
-      "name": "paso al quedarse atrás la IA",
-      "group": "ia",
-      "value": 3,
-      "unit": "centésimas",
-      "source": "TUNING.PRM +0x1F, func_80081840"
-    },
-    {
-      "name": "velocidad de inicio de reducción de dirección",
+      "name": "zona muerta del eje en el aire",
       "group": "controles",
-      "value": 30,
-      "unit": "mph",
-      "source": "TUNING.PRM +0x08, func_8008D060"
-    },
-    {
-      "name": "dirección a velocidad máxima",
-      "group": "controles",
-      "value": 30,
-      "unit": "%",
-      "source": "TUNING.PRM +0x09, func_8008D060"
-    },
-    {
-      "name": "dirección al empezar la reducción",
-      "group": "controles",
-      "value": 50,
-      "unit": "%",
-      "source": "TUNING.PRM +0x3A, func_8008D060"
-    },
-    {
-      "name": "viento aerodinámico",
-      "group": "física",
-      "value": 40,
-      "unit": "mph",
-      "source": "TUNING.PRM +0x0A, func_800946DC"
-    },
-    {
-      "name": "resistencia de la IA, dificultad mínima",
-      "group": "física",
-      "value": 90,
-      "unit": "%",
-      "source": "TUNING.PRM +0x0E, func_80091210"
-    },
-    {
-      "name": "resistencia de la IA, dificultad máxima",
-      "group": "física",
-      "value": 100,
-      "unit": "%",
-      "source": "TUNING.PRM +0x0F, func_80091210"
-    },
-    {
-      "name": "resistencia del jugador, dificultad mínima",
-      "group": "física",
-      "value": 190,
-      "unit": "%",
-      "source": "TUNING.PRM +0x10, func_80091210"
-    },
-    {
-      "name": "resistencia del jugador, dificultad máxima",
-      "group": "física",
-      "value": 110,
-      "unit": "%",
-      "source": "TUNING.PRM +0x11, func_80091210"
-    },
-    {
-      "name": "DEORA dirección máxima",
-      "group": "coches",
-      "value": 0.6632,
-      "unit": "",
-      "source": "DEORA.CWH +0x08 (campo +0x4CC)"
-    },
-    {
-      "name": "DEORA masa",
-      "group": "coches",
-      "value": 4.2098,
-      "unit": "",
-      "source": "DEORA.CWH +0x0C (campo +0x4D0)"
-    },
-    {
-      "name": "DEORA empuje",
-      "group": "coches",
-      "value": 3.8,
-      "unit": "",
-      "source": "DEORA.CWH +0x18 (campo +0x4DC)"
-    },
-    {
-      "name": "DEORA reparto del empuje",
-      "group": "coches",
-      "value": 0.45,
-      "unit": "",
-      "source": "DEORA.CWH +0x1C (campo +0x4E0)"
-    },
-    {
-      "name": "DEORA arrastre",
-      "group": "coches",
-      "value": 0.7,
-      "unit": "",
-      "source": "DEORA.CWH +0x20 (campo +0x4E4)"
-    },
-    {
-      "name": "DEORA agarre eje 1",
-      "group": "coches",
-      "value": 6.3,
-      "unit": "",
-      "source": "DEORA.CWH +0x38 (campo +0x4FC)"
-    },
-    {
-      "name": "DEORA agarre eje 2",
-      "group": "coches",
-      "value": 10.3,
-      "unit": "",
-      "source": "DEORA.CWH +0x50 (campo +0x514)"
-    },
-    {
-      "name": "DEORA ritmo de la IA",
-      "group": "coches",
-      "value": 0.95,
-      "unit": "",
-      "source": "DEORA.CWH +0x70 (campo +0x534)"
-    },
-    {
-      "name": "DEORA resistencia a choques",
-      "group": "coches",
-      "value": 3.0,
-      "unit": "",
-      "source": "DEORA.CWH +0x78 (campo +0x53C)"
-    },
-    {
-      "name": "TWINMILL dirección máxima",
-      "group": "coches",
-      "value": 0.6981,
-      "unit": "",
-      "source": "TWINMILL.CWH +0x08 (campo +0x4CC)"
-    },
-    {
-      "name": "TWINMILL masa",
-      "group": "coches",
-      "value": 4.2098,
-      "unit": "",
-      "source": "TWINMILL.CWH +0x0C (campo +0x4D0)"
-    },
-    {
-      "name": "TWINMILL empuje",
-      "group": "coches",
-      "value": 5.0,
-      "unit": "",
-      "source": "TWINMILL.CWH +0x18 (campo +0x4DC)"
-    },
-    {
-      "name": "TWINMILL reparto del empuje",
-      "group": "coches",
-      "value": 0.13,
-      "unit": "",
-      "source": "TWINMILL.CWH +0x1C (campo +0x4E0)"
-    },
-    {
-      "name": "TWINMILL arrastre",
-      "group": "coches",
       "value": 0.2,
-      "unit": "",
-      "source": "TWINMILL.CWH +0x20 (campo +0x4E4)"
+      "unit": "fracción",
+      "source": "func_80092534, f32 inmediato 0x3E4CCCCD"
     },
     {
-      "name": "TWINMILL agarre eje 1",
-      "group": "coches",
-      "value": 8.8,
-      "unit": "",
-      "source": "TWINMILL.CWH +0x38 (campo +0x4FC)"
+      "name": "límite de la dirección de la IA al reaccionar",
+      "group": "ia",
+      "value": 80.0,
+      "unit": "unidades",
+      "source": "func_80084B9C, f32 inmediato 0x42A00000"
     },
     {
-      "name": "TWINMILL agarre eje 2",
-      "group": "coches",
-      "value": 11.7,
-      "unit": "",
-      "source": "TWINMILL.CWH +0x50 (campo +0x514)"
+      "name": "límite de la corrección de la dirección de la IA",
+      "group": "ia",
+      "value": 200.0,
+      "unit": "unidades",
+      "source": "func_80081840, f32 inmediato 0x43480000"
     },
     {
-      "name": "TWINMILL ritmo de la IA",
-      "group": "coches",
-      "value": 1.015,
-      "unit": "",
-      "source": "TWINMILL.CWH +0x70 (campo +0x534)"
-    },
-    {
-      "name": "TWINMILL resistencia a choques",
-      "group": "coches",
-      "value": 3.825,
-      "unit": "",
-      "source": "TWINMILL.CWH +0x78 (campo +0x53C)"
+      "name": "desplazamiento fijo en la referencia de la IA",
+      "group": "ia",
+      "value": 36.0,
+      "unit": "pulgadas",
+      "source": "func_80081840, f32 inmediato 0x42100000"
     }
   ]
 }
