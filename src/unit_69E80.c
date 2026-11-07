@@ -19,7 +19,26 @@ INCLUDE_ASM("asm/nonmatchings/unit_69E80", func_800C96DC);
 
 INCLUDE_ASM("asm/nonmatchings/unit_69E80", func_800C9848);
 
-INCLUDE_ASM("asm/nonmatchings/unit_69E80", func_800C9978);
+void func_800C9978(void) {
+    s32 var_s1;
+    u8 temp_v1;
+    void **var_s0;
+    void *temp_v0;
+
+    func_800C9280();
+    var_s1 = 0;
+    var_s0 = &D_800F5F08;
+    do {
+        temp_v0 = *var_s0;
+        temp_v1 = (*(u8 *)((u8 *)(temp_v0) + 0x20));
+        if ((temp_v1 != 0) && ((*(s32 *)((u8 *)(temp_v0) + 0x28)) == 0)) {
+            (*(s32 *)((u8 *)((*var_s0)) + 0x28)) = Memory_Alloc(temp_v1 * 0x34);
+        }
+        var_s1 += 1;
+        var_s0 += 1;
+    } while (var_s1 < 0x21);
+    func_800C96DC();
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_69E80", func_800C9A00);
 
