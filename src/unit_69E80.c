@@ -1,5 +1,6 @@
 #include "common.h"
 #include "include_asm.h"
+s32 func_8008E510(u8);
 
 s32 Memory_Alloc(s32);
 s32 func_800C9280();
@@ -35,7 +36,31 @@ void func_800C9B40(void) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_69E80", func_800C9B84);
 
-INCLUDE_ASM("asm/nonmatchings/unit_69E80", func_800C9D00);
+void func_800C9D00(s32 arg0) {
+    u16 *temp_s0;
+    u16 temp_a0;
+    u8 temp_a0_2;
+    u8 temp_a0_3;
+    void *temp_s1;
+
+    temp_s0 = D_800F9F94 + (arg0 * 0xC);
+    temp_a0 = *temp_s0;
+    temp_s1 = D_800F9F98 + (arg0 * 2);
+    if (temp_a0 & 2) {
+        if (temp_a0 & 0x10) {
+            temp_a0_2 = (*(u8 *)((u8 *)(temp_s1) + 0x0));
+            if (temp_a0_2 != 0xFF) {
+                func_8008E510(temp_a0_2);
+            }
+            if (*temp_s0 & 4) {
+                temp_a0_3 = (*(u8 *)((u8 *)(temp_s1) + 0x1));
+                if (temp_a0_3 != 0xFF) {
+                    func_8008E510(temp_a0_3);
+                }
+            }
+        }
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_69E80", func_800C9DA0);
 
