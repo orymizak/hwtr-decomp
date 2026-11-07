@@ -94,6 +94,7 @@ segments:
       - [0x28320, c, game_config]
       - [0x28590, c, anim_track]
       - [0x28C10, asm]
+      - [0x2F4F0, c, unit_2F4F0]
       - [0x31E10, c, unit_31E10]
       - [0x39C90, asm]
       - [0x464D0, c, unit_464D0]
