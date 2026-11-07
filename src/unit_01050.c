@@ -1,5 +1,15 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { f32 f0; } S_D_800F01B4;
+extern S_D_800F01B4 D_800F01B4[];
+typedef struct { f32 f0; u8 p4[0x48]; } S_D_800EFF54;
+extern S_D_800EFF54 D_800EFF54[];
+extern f64 D_800FE868;
+typedef struct { s32 f0; } S_D_800EFC78;
+extern S_D_800EFC78 D_800EFC78[];
+s32 func_800CD8CC(s32, s32,s32,s32, s32);
+extern s32 D_800EFC68;
+extern f32 D_800EFC6C;
 extern u8 D_800EFF60;
 extern u8 D_800EFF4C;
 extern u8 D_800EFF48;
@@ -185,7 +195,20 @@ INCLUDE_ASM("asm/nonmatchings/unit_01050", func_800616A0);
 
 INCLUDE_ASM("asm/nonmatchings/unit_01050", func_8006185C);
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80061A84);
+s32 func_80061A84(u32 arg0) {
+    register s32 temp_s0;
+    register s32 temp_s1;
+
+    temp_s0 = D_800EFC78[arg0].f0;
+    temp_s1 = (128.0f * D_800EFC6C);
+    if (func_800CE428(D_800EFC68) != 0) {
+        func_800CE374(D_800EFC68, 0);
+        D_800EFC68 = 0;
+    }
+    D_800EFC68 = func_800CD8CC(temp_s0, temp_s1, 0x80, 0, 0xFF);
+    (*(s8 *)&D_800F0105) = arg0;
+    return 1;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80061B40);
 
@@ -220,7 +243,21 @@ s32 func_800639EC(s32 arg0, s32 arg1) {
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80063A18);
+s32 func_80063A18(u32 arg0, f32 arg1) {
+    register u8 temp_v1;
+    u8 var_v0;
+
+    temp_v1 = 0xFF & arg0;
+    if ((D_800F01B4[temp_v1].f0 < arg1) || ((f64) arg1 == D_800FE868)) {
+        var_v0 = 0xFF & arg0;
+        D_800EFF54[temp_v1].f0 = 1.0f;
+    } else {
+        D_800EFF54[temp_v1].f0 = 0;
+        var_v0 = arg0 & 0xFF;
+    }
+    D_800F01B4[var_v0].f0 = arg1;
+    return 1;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80063AC0);
 
