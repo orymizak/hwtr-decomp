@@ -1,5 +1,10 @@
 #include "common.h"
 #include "include_asm.h"
+s32 osCartRomInit();
+s32 osCreatePiManager(s32, void *, void *,s32);
+extern u8 D_8012FD90;
+extern u8 D_8012FDA8;
+extern s32 D_80148040;
 
 extern s32 D_80140E44;
 s32 func_800D6460();
@@ -11,7 +16,10 @@ void func_800D61F0(void) {
     D_80140E44 = 0x80;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_76DF0", func_800D6200);
+void func_800D6200(void) {
+    osCreatePiManager(0x96, &D_8012FD90, &D_8012FDA8, 0x32);
+    D_80148040 = osCartRomInit();
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_76DF0", func_800D6240);
 
