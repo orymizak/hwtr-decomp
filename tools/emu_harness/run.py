@@ -130,6 +130,21 @@ def main():
             state["swaps"] = state.get("swaps", 0) + 1
         cars = r32(NUM_CARS)
         if state["phase"] == "menu":
+            if os.environ.get("HW_WATCH") and f % int(os.environ.get("HW_EVERY", "150")) == 0:
+                print(f"f={f} " + " ".join(f"{a}={r32(int(a, 16)):08x}" for a in os.environ["HW_WATCH"].split(",")), flush=True)
+            if os.environ.get("HW_TEXT") and f == int(os.environ["HW_TEXT"]):
+                for sym in (0x80141234, 0x8014124C, 0x80141238, 0x80141250, 0x80141254, 0x80141248):
+                    a, s = sym, ""
+                    while len(s) < 60 and r8(a):
+                        s += chr(r8(a))
+                        a += 1
+                    p = r32(sym)
+                    s2 = ""
+                    if 0x80000000 <= p < 0x80800000:
+                        while len(s2) < 60 and r8(p):
+                            s2 += chr(r8(p))
+                            p += 1
+                    print(f"texto {sym:08x}: {s!r} -> {s2!r}", flush=True)
             if os.environ.get("HW_STATE") and f % 150 == 0:
                 print(f"f={f} menu61D2={r8(0x800F61D2)} 61D3={r8(0x800F61D3)} 3EA0={r8(0x80123EA0)} 4C94={r8(0x80124C94)} 4146={r8(0x80124146)} 5F28={r32(0x800F5F28):08x} 2102={r8(0x800F2102)}", flush=True)
             if f % 600 == 0:
@@ -142,8 +157,27 @@ def main():
                 screenshot(f"menu_{f:05d}.png")
                 if os.environ.get("HW_THREADS"):
                     dump_threads()
-            pulse = f % 60 < 6
-            set_keys(keys_for(a=pulse and f % 120 < 60, start=pulse and f % 120 >= 60))
+            if not os.environ.get("HW_SWEEP") and not os.environ.get("HW_HOLD"):
+                screen = r32(0x800F9F78)
+                if screen != state.get("screen"):
+                    print(f"f={f} pantalla={screen:08x} coches={cars}", flush=True)
+                    state["screen"] = screen
+                    state["log"].append(dict(frame=f, screen=f"{screen:08x}"))
+                # Start en la portada; después, A para aceptar. La cruceta cambia la opción de cada menú.
+                phase = f % 80
+                if screen == 0x800F668C:
+                    set_keys(START if phase < 20 else 0)
+                else:
+                    set_keys(A if phase < 20 else 0)
+            elif os.environ.get("HW_SWEEP"):
+                bit = (f // 60) % 16
+                set_keys((1 << bit) if f % 60 < 20 else 0)
+                cur = (r32(0x800F9F78), r32(0x800F64B0), r32(0x800F64B4), r32(0x800F64B8), r32(0x800F61D4))
+                if cur != state.get("sweep"):
+                    print(f"f={f} bit={bit} pantalla={cur[0]:08x} teclas={cur[1]:08x} {cur[2]:08x} {cur[3]:08x} 61D4={cur[4]:08x}", flush=True)
+                    state["sweep"] = cur
+            elif os.environ.get("HW_HOLD"):
+                set_keys(int(os.environ["HW_HOLD"], 16) if f % 40 < 20 else 0)
             if 0 < cars <= 8 and rf(CAR + 0x98) != 0.0:
                 state["phase"] = "wait_go"
                 state["race_frame"] = f

@@ -1,5 +1,6 @@
 #include "common.h"
 #include "include_asm.h"
+f32 func_8007AD24(f32);
 f32 cosf(f32);
 f32 sinf(f32);
 typedef struct { f32 x; f32 y; f32 z; f32 w; } Quat_;
@@ -45,7 +46,33 @@ void func_800A8E14(void *arg0) {
     *(f32 *)((u8 *)arg0 + 0x8) = (f32) (*(f32 *)((u8 *)arg0 + 0x8) * temp_fv1_2);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_48FA0", func_800A8EBC);
+Quat_ func_800A8EBC(f32 t, Quat_ a, Quat_ b) {
+    Quat_ r;
+    f32 c = a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
+    f32 s0, s1, om, sinom;
+
+    if (c < 0.0f) {
+        c = -c;
+        a.x = -a.x;
+        a.y = -a.y;
+        a.z = -a.z;
+        a.w = -a.w;
+    }
+    if ((1.0f - c) > 0.001f) {
+        om = func_8007AD24(c);
+        sinom = sinf(om);
+        s0 = sinf((1.0f - t) * om) / sinom;
+        s1 = sinf(t * om) / sinom;
+    } else {
+        s0 = 1.0f - t;
+        s1 = t;
+    }
+    r.x = s0 * a.x + s1 * b.x;
+    r.y = s0 * a.y + s1 * b.y;
+    r.z = s0 * a.z + s1 * b.z;
+    r.w = s0 * a.w + s1 * b.w;
+    return r;
+}
 
 Vec3_ func_800A9068(f32 t, Vec3_ a, Vec3_ b) {
     f32 s = 1.0f - t;

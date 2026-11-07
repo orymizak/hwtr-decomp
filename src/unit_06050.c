@@ -1,5 +1,6 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { u16 unk0; s16 x; s16 y; s16 z; s32 unk8; s32 unkC; s32 unk10; s32 unk14; } Node_;
 typedef struct { f32 x; f32 y; f32 z; } Vec3_;
 typedef struct { s32 x; s32 y; s32 z; } Pos_;
 typedef struct { Pos_ p; f32 m[9]; s32 d; f32 e; } Cam_;
@@ -184,7 +185,30 @@ u16 func_800687D8(void) {
     return *(u16 *)((u8 *)D_8013816C + 0x6);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_800687E8);
+void func_800687E8(s32 i, f32 *pos, f32 *rot, f32 *a3, s32 *a4, s32 *a5, s32 *a6, s32 *a7) {
+    Node_ *n = (Node_ *)*(u8 **)((*(u8 * *)&D_8013816C) + 0x38) + i;
+    f32 *m = (f32 *)(*(u8 **)((*(u8 * *)&D_8013816C) + 0x2C) + n->unk0 * 0x54);
+
+    rot[0] = m[0];
+    rot[1] = m[1];
+    rot[2] = m[2];
+    rot[3] = m[4];
+    rot[4] = m[5];
+    rot[5] = m[6];
+    rot[6] = m[8];
+    rot[7] = m[9];
+    rot[8] = m[10];
+    pos[0] = m[3];
+    pos[1] = m[7];
+    pos[2] = m[11];
+    a3[0] = n->x;
+    a3[1] = n->y;
+    a3[2] = n->z;
+    *a4 = n->unkC;
+    *a5 = n->unk8;
+    *a6 = n->unk10;
+    *a7 = n->unk14;
+}
 
 void func_800688F4(s32 idx, Vec3_ pos, f32 *m) {
     f32 *q = (f32 *)(*(u8 **)((*(u8 * *)&D_8013816C) + 0x2C) + *(u16 *)(*(u8 **)((*(u8 * *)&D_8013816C) + 0x38) + idx * 0x18) * 0x54);

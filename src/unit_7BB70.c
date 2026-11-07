@@ -1,5 +1,8 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { u32 w0; u32 w1; } Acmd_;
+typedef struct { u8 p0[0x14]; s16 *base; u8 p18[4]; s32 length; } Fx_;
+u32 osVirtualToPhysical(void *);
 typedef struct { u16 fc; } LP_;
 typedef struct { u32 input; u32 output; s16 ffcoef; s16 fbcoef; s16 gain; s16 pad; f32 rsinc; f32 rsval; s32 rsdelta; f32 rsgain; LP_ *lp; s32 pad24; } ALDelay_;
 typedef struct { u8 pad0[0x20]; ALDelay_ *delay; } ALFx_;
@@ -57,9 +60,55 @@ s32 func_800DB2F8(void *filter, s32 paramID, void *param) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_7BB70", func_800DB4E8);
 
-INCLUDE_ASM("asm/nonmatchings/unit_7BB70", func_800DB700);
+Acmd_ *func_800DB700(Fx_ *r, s16 *curr_ptr, s32 buff, s32 count, Acmd_ *p) {
+    Acmd_ *ptr = p;
+    s32 after_end, before_end;
+    s16 *updated_ptr, *delay_end;
 
-INCLUDE_ASM("asm/nonmatchings/unit_7BB70", func_800DB870);
+    delay_end = &r->base[r->length];
+    if (curr_ptr < r->base) {
+        curr_ptr += r->length;
+    }
+    updated_ptr = curr_ptr + count;
+    if (updated_ptr > delay_end) {
+        after_end = updated_ptr - delay_end;
+        before_end = delay_end - curr_ptr;
+        { Acmd_ *a = ptr++; a->w0 = (8 << 24) | (buff & 0xFFFF); a->w1 = (before_end << 1) & 0xFFFF; }
+        { Acmd_ *a = ptr++; a->w0 = 4 << 24; a->w1 = osVirtualToPhysical(curr_ptr); }
+        { Acmd_ *a = ptr++; a->w0 = (8 << 24) | ((buff + (before_end << 1)) & 0xFFFF); a->w1 = (after_end << 1) & 0xFFFF; }
+        { Acmd_ *a = ptr++; a->w0 = 4 << 24; a->w1 = osVirtualToPhysical(r->base); }
+    } else {
+        { Acmd_ *a = ptr++; a->w0 = (8 << 24) | (buff & 0xFFFF); a->w1 = (count << 1) & 0xFFFF; }
+        { Acmd_ *a = ptr++; a->w0 = 4 << 24; a->w1 = osVirtualToPhysical(curr_ptr); }
+    }
+    { Acmd_ *a = ptr++; a->w0 = 8 << 24; a->w1 = (count << 1) & 0xFFFF; }
+    return ptr;
+}
+
+Acmd_ *func_800DB870(Fx_ *r, s16 *curr_ptr, s32 buff, s32 count, Acmd_ *p) {
+    Acmd_ *ptr = p;
+    s32 after_end, before_end;
+    s16 *updated_ptr, *delay_end;
+
+    delay_end = &r->base[r->length];
+    if (curr_ptr < r->base) {
+        curr_ptr += r->length;
+    }
+    updated_ptr = curr_ptr + count;
+    if (updated_ptr > delay_end) {
+        after_end = updated_ptr - delay_end;
+        before_end = delay_end - curr_ptr;
+        { Acmd_ *a = ptr++; a->w0 = 8 << 24; a->w1 = (buff << 16) | ((before_end << 1) & 0xFFFF); }
+        { Acmd_ *a = ptr++; a->w0 = 6 << 24; a->w1 = osVirtualToPhysical(curr_ptr); }
+        { Acmd_ *a = ptr++; a->w0 = 8 << 24; a->w1 = ((buff + (before_end << 1)) << 16) | ((after_end << 1) & 0xFFFF); }
+        { Acmd_ *a = ptr++; a->w0 = 6 << 24; a->w1 = osVirtualToPhysical(r->base); }
+        { Acmd_ *a = ptr++; a->w0 = 8 << 24; a->w1 = (count << 1) & 0xFFFF; }
+    } else {
+        { Acmd_ *a = ptr++; a->w0 = 8 << 24; a->w1 = (buff << 16) | ((count << 1) & 0xFFFF); }
+        { Acmd_ *a = ptr++; a->w0 = 6 << 24; a->w1 = osVirtualToPhysical(curr_ptr); }
+    }
+    return ptr;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_7BB70", func_800DB9E0);
 
