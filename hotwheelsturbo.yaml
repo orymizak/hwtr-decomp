@@ -159,6 +159,8 @@ segments:
       - [0x77560, c, unit_77560]
       - [0x775A0, c, unit_775A0]
       - [0x775E0, asm]
+      - [0x77BA0, c, unit_77BA0]
+      - [0x77D30, asm]
       - [0x784B0, c, unit_784B0]
       - [0x78510, asm]
       - [0x787F0, c, unit_787F0]
