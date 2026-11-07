@@ -145,7 +145,7 @@ segments:
       - [0x76C30, c, unit_76C30]
       - [0x76CB0, c, unit_76CB0]
       - [0x76DC0, c, unit_76DC0]
-      - [0x76DF0, asm]
+      - [0x76DF0, c, unit_76DF0]
       - [0x76F40, c, unit_76F40]
       - [0x76F90, c, unit_76F90]
       - [0x76FC0, c, unit_76FC0]
