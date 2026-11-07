@@ -11,7 +11,7 @@ from pass2 import ROM, R, TMP, asm_of, compare, compile_to, convert, section
 
 INTS = ["s32", "u32", "s16", "u16", "s8", "u8"]
 MAX_SIZE = 1600
-MAX_RATIO = 0.5
+MAX_RATIO = 0.85
 ITERS = 300
 
 
@@ -212,7 +212,63 @@ def m_struct_array(c, r):
     return t and re.sub(r"\(\(u8 \*\)&(D_\w+) \+ (0x\w+)\) \+ (\(var_\w+ \* \w+\))", r"(u8 *)&\1 + \3 + \2", t)
 
 
-MUTS = [m_struct_array] * 4 + [m_merge_syms] + [m_array_index] * 3 + [m_no_unsigned_counter] * 2 + [m_swap_decls] * 4 + [m_retype] * 2 + [m_retype_param, m_swap_stmts, m_swap_stmts, m_commute, m_inline_temp, m_cast, m_unsigned, m_register]
+IDX = r"\(((?:[^()]|\((?:[^()]|\([^()]*\))*\))*?) \* (0x[0-9A-Fa-f]+|\d+)\)"
+ACCESS = [
+    r"\*\((\w+) \*\)\(\(u8 \*\)&(D_\w+) \+ " + IDX + r"(?: \+ (0x[0-9A-Fa-f]+))?\)",
+    r"\*\((\w+) \*\)\(\(u8 \*\)\(+\(u8 \*\)\(?&(D_\w+)\)? \+ " + IDX + r"\)+(?: \+ (0x[0-9A-Fa-f]+))?\)",
+]
+TSIZE = {"s32": 4, "u32": 4, "f32": 4, "s16": 2, "u16": 2, "s8": 1, "u8": 1, "f64": 8}
+
+
+def m_true_array(c, r):
+    """Un array tipado de verdad (a[i].campo) da `lui at; addu at; sw %lo(a)(at)`; un cast no."""
+    t = m_struct_array(c, r) or c
+    b = body_span(t)
+    body = t[b:]
+    found = [m for pat in ACCESS for m in re.finditer(pat, body)]
+    if not found:
+        return None
+    bases = {}
+    for m in found:
+        ty, sym, _, n, off = m.groups()
+        if ty in TSIZE:
+            bases.setdefault(sym, {"n": int(n, 0), "f": {}})
+            if bases[sym]["n"] == int(n, 0):
+                bases[sym]["f"][int(off or "0", 0)] = ty
+    decl = []
+    for sym, info in bases.items():
+        n, fields, pos, parts = info["n"], sorted(info["f"].items()), 0, []
+        if any(o % TSIZE[ty] for o, ty in fields) or fields[-1][0] + TSIZE[fields[-1][1]] > n:
+            return None
+        for o, ty in fields:
+            if o > pos:
+                parts.append(f"u8 p{pos:X}[0x{o - pos:X}];")
+            parts.append(f"{ty} f{o:X};")
+            pos = o + TSIZE[ty]
+        if n > pos:
+            parts.append(f"u8 p{pos:X}[0x{n - pos:X}];")
+        decl.append(f"typedef struct {{ {' '.join(parts)} }} S_{sym};\nextern S_{sym} {sym}[];")
+
+    def rep(m):
+        ty, sym, x, n, off = m.groups()
+        if sym not in bases or bases[sym]["n"] != int(n, 0) or ty not in TSIZE:
+            return m.group(0)
+        return f"{sym}[{x}].f{int(off or '0', 0):X}"
+    for pat in ACCESS:
+        body = re.sub(pat, rep, body)
+    for sym in bases:
+        body = re.sub(r"\(u8 \*\)&%s \+ %s" % (sym, IDX), lambda m: f"(u8 *)&{sym}[{m.group(1)}]", body)
+    head = t[:b]
+    for sym in bases:
+        head = re.sub(r"^extern [\w \*]+\b%s(\[\])?;\n" % sym, "", head, flags=re.M)
+    head = "\n".join(decl) + "\n" + head
+    for sym in re.findall(r"^extern u8 (D_\w+);$", head, re.M):
+        if not re.search(r"\b%s\b" % sym, body):
+            head = head.replace(f"extern u8 {sym};\n", "")
+    return head + body
+
+
+MUTS = [m_true_array] * 6 + [m_struct_array] * 4 + [m_merge_syms] + [m_array_index] * 3 + [m_no_unsigned_counter] * 2 + [m_swap_decls] * 4 + [m_retype] * 2 + [m_retype_param, m_swap_stmts, m_swap_stmts, m_commute, m_inline_temp, m_cast, m_unsigned, m_register]
 
 
 def permute(job):
@@ -239,7 +295,10 @@ def permute(job):
             if body_span(t) is None:
                 t = c
                 break
-            t = rng.choice(MUTS)(t, rng) or t
+            try:
+                t = rng.choice(MUTS)(t, rng) or t
+            except (IndexError, ValueError):
+                pass  # una mutación de texto puede no aplicar a esta función
         if t == c:
             continue
         o = compile_to(t, d, opt)

@@ -353,8 +353,52 @@ def known_decls(c):
     return k
 
 
+def unify_structs(c, decls):
+    """Un mismo array en varias funciones: une sus campos en un solo struct, si el tamaño coincide."""
+    def fields(line):
+        size, out = 0, {}
+        for ty, kind, off, n in re.findall(r"(\w+) (f|p)([0-9A-F]+)(?:\[0x([0-9A-F]+)\])?;", line):
+            w = int(n, 16) if n else {"s8": 1, "u8": 1, "s16": 2, "u16": 2, "f64": 8}.get(ty, 4)
+            size = max(size, int(off, 16) + w)
+            if kind == "f":
+                out[int(off, 16)] = ty
+        return size, out
+
+    keep = []
+    for d in decls:
+        m = re.match(r"typedef struct \{.*\} (S_\w+);$", d)
+        old = re.search(r"^typedef struct \{.*\} %s;$" % m.group(1), c, re.M) if m else None
+        if not old:
+            keep.append(d)
+            continue
+        (sa, fa), (sb, fb) = fields(old.group(0)), fields(d)
+        if sa != sb or any(fa.get(o, t) != t for o, t in fb.items()):
+            return None, None
+        merged, pos, parts = {**fa, **fb}, 0, []
+        for o in sorted(merged):
+            w = {"s8": 1, "u8": 1, "s16": 2, "u16": 2, "f64": 8}.get(merged[o], 4)
+            if o < pos:
+                return None, None
+            if o > pos:
+                parts.append(f"u8 p{pos:X}[0x{o - pos:X}];")
+            parts.append(f"{merged[o]} f{o:X};")
+            pos = o + w
+        if sa > pos:
+            parts.append(f"u8 p{pos:X}[0x{sa - pos:X}];")
+        c = c.replace(old.group(0), f"typedef struct {{ {' '.join(parts)} }} {m.group(1)};")
+    return c, keep
+
+
 def merge(c, name, cand, opt):
     decls, body = split(cand)
+    c, decls = unify_structs(c, decls)
+    if c is None:
+        return None
+    for d in decls:
+        # La declaración de array manda: la escalar anterior se quita y compilar decide si vale.
+        m = re.match(r"extern S_\w+ (\w+)\[\];$", d)
+        if m:
+            c = re.sub(r"^extern (?!S_)[\w \*]+\b%s;\n" % m.group(1), "", c, flags=re.M)
     known = known_decls(c)
     new, body = reconcile(decls, body, known)
     if new is None:
