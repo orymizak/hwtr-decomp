@@ -1,5 +1,8 @@
 #include "common.h"
 #include "include_asm.h"
+s32 func_8007F5C4(s32,s32);
+s32 func_8006DD60(s32 *,s32,s32);
+extern s32 D_8014D980;
 
 s32 func_800757E8(s32);
 s32 func_8006CF10(s32 *, s32);
@@ -43,7 +46,9 @@ INCLUDE_ASM("asm/nonmatchings/unit_0D1F0", func_8006DB84);
 
 INCLUDE_ASM("asm/nonmatchings/unit_0D1F0", func_8006DC28);
 
-INCLUDE_ASM("asm/nonmatchings/unit_0D1F0", func_8006DC90);
+void func_8006DC90(void) {
+    func_8006DD60(&D_8014D980, 0x140, 0xF0);
+}
 
 void func_8006DCB8(void) {
     if (D_800F05E0 != 0) {
@@ -68,7 +73,14 @@ INCLUDE_ASM("asm/nonmatchings/unit_0D1F0", func_8006DEF4);
 
 INCLUDE_ASM("asm/nonmatchings/unit_0D1F0", func_8006DF34);
 
-INCLUDE_ASM("asm/nonmatchings/unit_0D1F0", func_8006DFBC);
+void func_8006DFBC(void) {
+    if (D_800F05E0 != 0) {
+        Memory_Free(D_800F05E0);
+        D_800F05E0 = 0;
+    }
+    D_800F05E0 = func_8007F5C4(0x20, 0x20);
+    D_800F05E4 = 1;
+}
 
 void func_8006E00C(s32 arg0) {
     if (D_800F05E0 != 0) {
