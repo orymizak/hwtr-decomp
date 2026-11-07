@@ -69,6 +69,7 @@ segments:
       - [0x1050, asm, game]
       - [0xEC60, c, file_table]
       - [0xFDE0, asm]
+      - [0x195B0, c, game_init]
       - [0x19800, c, heap]
       - [0x19A70, c, memory]
       - [0x19D40, asm]
