@@ -38,9 +38,31 @@ void func_8006DA40(void *arg0) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_0D1F0", func_8006DA88);
 
-INCLUDE_ASM("asm/nonmatchings/unit_0D1F0", func_8006DAC4);
+void func_8006DAC4(s32 arg0) {
+    void *var_s0;
+    u32 var_s1;
 
-INCLUDE_ASM("asm/nonmatchings/unit_0D1F0", func_8006DB1C);
+    var_s1 = 0;
+    var_s0 = &(*(u8 *)&D_801455C0);
+    do {
+        ((s32 (*)(void *, s32))func_8006CF10)(var_s0, arg0);
+        var_s1 += 1;
+        var_s0 += 0x550;
+    } while (var_s1 < 8U);
+}
+
+void func_8006DB1C(s32 arg0, s32 arg1) {
+    void *var_s0;
+    u32 var_s1;
+
+    var_s1 = 0;
+    var_s0 = &(*(u8 *)&D_801455C0);
+    do {
+        ((s32 (*)(void *, s32, s32))func_8006D15C)(var_s0, arg0, arg1 & 0xFF);
+        var_s1 += 1;
+        var_s0 += 0x550;
+    } while (var_s1 < 8U);
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_0D1F0", func_8006DB84);
 
