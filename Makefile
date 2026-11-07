@@ -47,6 +47,7 @@ toolchain:
 
 split:
 	$(PYTHON) -m splat split $(YAML)
+	$(PYTHON) tools/fix_jump_labels.py
 
 extract:
 	$(PYTHON) tools/extract_files.py
