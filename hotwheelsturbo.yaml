@@ -280,7 +280,8 @@ segments:
       - [0x85D00, c, unit_85D00]
       - [0x85D50, c, unit_85D50]
       - [0x85E60, c, unit_85E60]
-      - [0x85E70, asm]
+      - [0x85E70, c, unit_85E70]
+      - [0x86870, asm]
       - [0x87550, c, unit_87550]
       - [0x87570, c, unit_87570]
       - [0x87590, asm, libc] # ANSI C y aritmética de 64 bits
