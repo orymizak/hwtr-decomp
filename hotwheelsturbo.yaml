@@ -38,6 +38,7 @@ options:
 
   # string_encoding: ASCII
   # data_string_encoding: ASCII
+  migrate_rodata_to_functions: False # .rodata de cada unidad en asm/data/, sin mezclarla con INCLUDE_ASM
   rodata_string_guesser_level: 2
   data_string_guesser_level: 2
   # libultra_symbols: True
@@ -289,10 +290,11 @@ segments:
       - [0x90860, data]
       - [0x911F0, .data, file_table]
       - [0x928B0, data]
+      - [0x9F3B0, rodata]
       - [0x9F880, .rodata, file_table]
-      - [0xA0390, .rodata, font]
+      - [0xA0390, rodata, font]
       - [0xA03B0, rodata]
-      - [0xA03F0, .rodata, screen]
+      - [0xA03F0, rodata, screen]
       - [0xA0420, rodata]
       - { type: bss, vram: 0x80101E70 }
 

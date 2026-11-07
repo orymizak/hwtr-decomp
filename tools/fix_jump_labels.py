@@ -14,6 +14,8 @@ sources = {path: open(path).read() for path in files}
 labels = set()
 for source in sources.values():
     labels.update(re.findall(r"^\s*jlabel (\.L\w+)", source, re.M))
+    # Una función ya en C no tiene jlabel, pero la tabla de la ROM sigue nombrando sus etiquetas.
+    labels.update(re.findall(r"\.word (\.L\w+)", source))
 
 pattern = re.compile(r"\.L\w+")
 for path, source in sources.items():

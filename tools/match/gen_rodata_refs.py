@@ -7,7 +7,7 @@ import glob, re
 from pathlib import Path
 
 OUT = Path("rodata_refs.txt")
-RODATA = (0x800FEC80, 0x80101E70)
+RODATA = (0x800FE7B0, 0x80101E70)
 PATTERN = re.compile(r"\*/\s+(ldc1|lw)\s+\S+\s+%lo\(((?:D|jtbl)_([0-9A-F]{8}))(?: \+ 0x[0-9A-F]+)?\)")
 
 refs = {}
