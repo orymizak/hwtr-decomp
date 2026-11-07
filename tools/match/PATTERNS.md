@@ -35,6 +35,10 @@ Observados al igualar funciones a mano contra la ROM. El ejemplo indica una func
 
 ## Comprobación
 
+- **`hand.py` no conserva `#define`.** Al unir una función a su unidad se pierden las macros, así que los
+  accesos a registros de hardware van escritos directamente, como `*(volatile u32 *)0xA4600010`
+  (`__osEPiRawStartDma`). La comprobación de la ROM enlazada lo detecta.
+
 Comparar sin reubicar no basta. `func_800BA864` y `func_800BBAB4` coincidían aisladas y cambiaban la ROM enlazada, por eso `commit_unit.sh` exige el SHA-1 y `verify_funcs.py`.
 
 ## Casi iguales, sin convertir
