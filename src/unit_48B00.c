@@ -1,11 +1,20 @@
 #include "common.h"
 #include "include_asm.h"
+s32 Memory_Free(void *);
 
 
 
 INCLUDE_ASM("asm/nonmatchings/unit_48B00", func_800A7F00);
 
-INCLUDE_ASM("asm/nonmatchings/unit_48B00", func_800A7F5C);
+void func_800A7F5C(void *arg0) {
+    void *temp_a0;
+
+    temp_a0 = (*(s32 *)((u8 *)(arg0) + 0x8));
+    if (temp_a0 != NULL) {
+        Memory_Free(temp_a0);
+    }
+    Memory_Free(arg0);
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_48B00", func_800A7F98);
 
@@ -21,7 +30,21 @@ u16 func_800A81D4(void *arg0) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_48B00", func_800A81DC);
 
-INCLUDE_ASM("asm/nonmatchings/unit_48B00", func_800A8218);
+void func_800A8218(s32 *arg0) {
+    s32 *var_a0;
+    s32 *var_s0;
+
+    var_s0 = *arg0;
+    var_a0 = var_s0;
+    if (var_s0 != NULL) {
+        do {
+            var_s0 = (*(s32 *)((u8 *)(var_s0) + 0x8));
+            ((s32 (*)(s32 *))Memory_Free)(var_a0);
+            var_a0 = var_s0;
+        } while (var_s0 != NULL);
+    }
+    ((s32 (*)(s32 *))Memory_Free)(arg0);
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_48B00", func_800A8268);
 
