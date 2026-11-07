@@ -27,7 +27,20 @@ s32 func_800D7130();
 
 INCLUDE_ASM("asm/nonmatchings/unit_0B140", func_8006A540);
 
-INCLUDE_ASM("asm/nonmatchings/unit_0B140", func_8006AA34);
+s32 func_8006AA34(void) {
+    s32 *var_s0;
+    s32 var_s1;
+
+    var_s1 = 0;
+    var_s0 = &D_80102208;
+    do {
+        var_s1 += 1;
+        Memory_Free(*var_s0);
+        *var_s0 = 0;
+        var_s0 += 1;
+    } while (var_s1 < 3);
+    return 1;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_0B140", func_8006AA84);
 
