@@ -90,8 +90,41 @@ def write_png(path, pixels):
                            + chunk(b"IDAT", zlib.compress(rows)) + chunk(b"IEND", b""))
 
 
+def play():
+    """Ejecuta la ROM compilada en el emulador y devuelve lo medido en la memoria del juego, o None sin emulador."""
+    if not Path("tools/emu/input_script.dylib").exists():
+        return None
+    out = Path(".scratch/play.json")
+    out.parent.mkdir(exist_ok=True)
+    out.unlink(missing_ok=True)
+    env = dict(os.environ, SDL_AUDIODRIVER="dummy", HW_MENU_FRAMES="1800")
+    try:
+        subprocess.run([sys.executable, "tools/emu_harness/run.py", str(ROM), str(out), "--shots", ".scratch/shots"],
+                       capture_output=True, timeout=240, env=env)
+    except subprocess.TimeoutExpired:
+        return None
+    return json.loads(out.read_text())["results"] if out.exists() else None
+
+
+def play_steps(r):
+    """move, act y hud solo pasan con una carrera real; nunca se dan por buenos sin medirlos."""
+    if r is None:
+        missing = "no se pudo ejecutar la ROM en el emulador (tools/emu_harness/setup.sh)"
+        return [dict(step=s, passed=False, detail=missing) for s in ("move", "act", "hud")]
+    boot = f"{r.get('frames', 0)} fotogramas, {r.get('image_swaps', 0)} cambios de imagen, {r.get('pad_reads', 0)} lecturas del mando"
+    if "dist" not in r:
+        reason = f"la ROM arranca ({boot}), pero no se llegó a una carrera"
+        return [dict(step=s, passed=False, detail=reason) for s in ("move", "act", "hud")]
+    return [
+        dict(step="move", passed=r["dist"] > 1.0, detail=f"el coche recorrió {r['dist']:.0f} pulgadas"),
+        dict(step="act", passed=r["gas"] > 0.5 and r["max_speed"] > 10.0,
+             detail=f"acelerador {r['gas']:.2f}, velocidad máxima {r['max_speed']:.0f} pulgadas/s"),
+        dict(step="hud", passed=bool(r.get("picture_not_black")), detail="captura de la carrera" + ("" if r.get("picture_not_black") else " en negro")),
+    ]
+
+
 def self_test(path, state, pixels):
-    steps = [
+    steps = play_steps(play()) + [
         dict(step="rom", passed=state["identical"], detail=f"SHA-1 {state['sha1'] or 'sin ROM'}"),
         dict(step="funciones", passed=state["funcs_ok"], detail=state["funcs_text"]),
         dict(step="estado", passed=bool(state["zones"]) and bytes(BACKGROUND) * (WIDTH * HEIGHT) != bytes(pixels),
