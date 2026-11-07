@@ -173,6 +173,7 @@ segments:
       - [0x79630, asm]
       - [0x7A970, c, unit_7A970]
       - [0x7AA80, asm]
+      - [0x7C710, c, unit_7C710]
       - [0x7C890, c, unit_7C890]
       - [0x7C8D0, c, unit_7C8D0]
       - [0x7C920, c, unit_7C920]
