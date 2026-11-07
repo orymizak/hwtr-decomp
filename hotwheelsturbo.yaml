@@ -119,7 +119,7 @@ segments:
       - [0x6E0C0, c, unit_6E0C0]
       - [0x6E200, asm, audio_driver] # sin identificar: quizá librería de audio externa
       - [0x6E480, c, unit_6E480]
-      - [0x6E4B0, asm]
+      - [0x6E4B0, c, unit_6E4B0]
       - [0x6E4F0, c, unit_6E4F0]
       - [0x6E530, asm]
       - [0x76160, asm, system] # planificador, DMA, Controller Pak
