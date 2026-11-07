@@ -182,7 +182,7 @@ segments:
       - [0x79450, c, unit_79450]
       - [0x79590, c, unit_79590]
       - [0x79630, c, unit_79630]
-      - [0x79E60, asm]
+      - [0x79E60, c, unit_79E60]
       - [0x7A970, c, unit_7A970]
       - [0x7AA80, asm]
       - [0x7B750, c, unit_7B750]
