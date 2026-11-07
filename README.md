@@ -41,6 +41,8 @@ make
 
 `make` construye `build/hotwheelsturbo.z64` y comprueba su SHA-1.
 
+`python3 main.py` compila, comprueba la ROM y cada función en C, y muestra el avance. No es el juego: para jugar, la ROM compilada necesita un emulador de Nintendo 64.
+
 Para extraer y descomprimir los 201 archivos del juego en `assets/files/`:
 
 ```sh
