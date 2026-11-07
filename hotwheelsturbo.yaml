@@ -266,7 +266,7 @@ segments:
       - [0x84BB0, c, unit_84BB0]
       - [0x84BD0, c, unit_84BD0]
       - [0x84C50, c, unit_84C50]
-      - [0x84CD0, asm]
+      - [0x84CD0, c, unit_84CD0]
       - [0x858D0, c, unit_858D0]
       - [0x858E0, c, unit_858E0]
       - [0x858F0, c, unit_858F0]
