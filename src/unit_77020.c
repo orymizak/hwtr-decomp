@@ -1,5 +1,9 @@
 #include "common.h"
 #include "include_asm.h"
+s32 bcopy(void *, s32,s32);
+s32 func_800D7664();
+s32 func_800D768C();
+extern u8 D_80141090;
 
 s32 func_800D7450(s32 *);
 extern s32 D_800FB1E0;
@@ -14,7 +18,11 @@ extern u16 D_800FB1B0;
 extern s32 D_800FB1B4;
 s32 func_800E1390(s32, s32, s32);
 
-INCLUDE_ASM("asm/nonmatchings/unit_77020", func_800D6420);
+void func_800D6420(s32 arg0) {
+    func_800D7664();
+    bcopy(&D_80141090, arg0, 0x18);
+    func_800D768C();
+}
 
 void func_800D6460(void) {
     func_800D7450(&D_800FB1E0);
