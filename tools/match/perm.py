@@ -155,7 +155,7 @@ def m_commute(c, r):
 def m_field_width(c, r):
     """El ancho de un campo se dedujo por desplazamiento y puede corresponder a otra base."""
     b = body_span(c)
-    ms = list(re.finditer(r"\*\((s32|u32|s16|u16|s8|u8|f32) \*\)\(\(u8 \*\)", c[b:]))
+    ms = list(re.finditer(r"\*\((s32|u32|s16|u16|s8|u8|f32) \*\)\(", c[b:]))
     if not ms:
         return None
     m = r.choice(ms)

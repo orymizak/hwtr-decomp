@@ -91,9 +91,11 @@ def symbol_widths(asm):
 def global_fields(t, syms):
     """D_X.unk4 sobre un símbolo sin tipo: acceso por bytes con el ancho que usa el ensamblador."""
     def rep(m):
-        ty = "s32 (**)()" if m.group(3) else syms.get((m.group(1), int(m.group(2), 16)), "s32") + " *"
-        return f"(*({ty})((u8 *)&{m.group(1)} + 0x{m.group(2)})){m.group(3)}"
-    return re.sub(r"\b(D_[0-9A-F]+)\.unk([0-9A-F]+)\b(\(?)", rep, t)
+        off = int(m.group(2) + m.group(3), 16)
+        ty = "s32 (**)()" if m.group(4) else syms.get((m.group(1), off), "s32") + " *"
+        add = f"- 0x{m.group(3)}" if m.group(2) else f"+ 0x{m.group(3)}"
+        return f"(*({ty})((u8 *)&{m.group(1)} {add})){m.group(4)}"
+    return re.sub(r"\b(D_[0-9A-F]+)\.unk(-?)([0-9A-F]+)\b(\(?)", rep, t)
 
 
 def byte_symbols(t, syms):
@@ -174,18 +176,29 @@ def fill_params(t):
 
 def volatile_io(t):
     """Los registros de hardware son volátiles: gcc no une la dirección con el desplazamiento."""
+    t = re.sub(r"\*\(void \*\)(0x[0-9A-Fa-f]{8})\b", r"*(s32 *)\1", t)
     return re.sub(r"\*\((\w+) \*\)(0x[0-9A-Fa-f]{8})\b", r"*(volatile \1 *)\2", t)
 
 
 def unspecified_protos(t):
     head = re.search(r"^[\w \*]+\b\w+\(.*\) \{$", t, re.M)
     end = head.start() if head else len(t)
-    return re.sub(r"^([\w \*]+\b\w+)\(.*\);$", r"\1();", t[:end], flags=re.M) + t[end:]
+    head = re.sub(r"^([\w \*]+\b\w+)\(.*\);$", r"\1();", t[:end], flags=re.M)
+    head = re.sub(r"^(extern [\w \*]+\(\*\w+\))\(.*\);$", r"\1();", head, flags=re.M)
+    return head + t[end:]
+
+
+def typed_derefs(t):
+    """`*(expr)` sobre un entero no compila: se tipa, y el permutador puede cambiar el ancho."""
+    return re.sub(r"(?<![\w)\]])\*\((?!(?:volatile )?\w+ \*+\))", "*(s32 *)(", t)
 
 
 def clean(text, choice, syms, ptr):
     t = re.sub(r"\s*/\*.*?\*/", "", text)
     t = re.sub(r"^.*\bmemset\(.*\);\n", "", t, flags=re.M)
+    t = re.sub(r"\(unaligned (\w+)\)", r"(\1)", t)
+    t = re.sub(r"\(bitwise \w+\) ?", "", t)
+    t = re.sub(r"\?(8|16|32|64)\b", lambda m: {"8": "s8", "16": "s16", "32": "s32", "64": "f64"}[m.group(1)], t)
     t = global_fields(t, syms)
     if re.search(r"M2C_|saved_reg|\.unk[0-9A-Fa-f]", t):
         return None
@@ -274,6 +287,9 @@ def convert(job):
                 o = compile_to(c, d, opt)
                 if o is None:
                     c = unspecified_protos(c)
+                    o = compile_to(c, d, opt)
+                if o is None:
+                    c = typed_derefs(c)
                     o = compile_to(c, d, opt)
                 if o is None:
                     continue
@@ -456,6 +472,7 @@ def process(unit, commit, converter=None):
     with ThreadPoolExecutor(8) as ex:
         res = list(ex.map(converter or convert, [(i, unit, n, opt) for i, n in enumerate(names)]))
     c, added = orig, []
+    found = sum(r[1] is not None for r in res)
     for name, cand, best, size, _ in res:
         if cand is None:
             if best is not None and best * 4 <= size * 0.15:
@@ -465,6 +482,9 @@ def process(unit, commit, converter=None):
         if m:
             c = m
             added.append(name)
+    merged = len(added)
+    if found:
+        print(f"{unit}: {found} candidatas, {merged} unidas", flush=True)
     if not added:
         return 0
     for _ in range(10):
