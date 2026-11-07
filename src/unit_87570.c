@@ -3,4 +3,6 @@
 
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_87570", __osSiDeviceBusy);
+s32 __osSiDeviceBusy(void) {
+    return (*(volatile s32 *)0xA4800018 & 3) != 0;
+}
