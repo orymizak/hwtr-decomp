@@ -223,4 +223,13 @@ u16 func_8006A450(void) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_8006A460);
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_8006A4D4);
+void func_8006A4D4(s32 arg0, s8 arg1) {
+    s32 temp_a0;
+
+    temp_a0 = (*(s32 *)((u8 *)(D_8013816C) + 0x2C)) + ((*(u16 *)((u8 *)(((arg0 << 5) + (*(s32 *)((u8 *)(D_8013816C) + 0x48)))) + 0x10)) * 0x54);
+    if (!(arg1 & 0xFF)) {
+        func_80072D48(temp_a0);
+        return;
+    }
+    func_80072D5C(temp_a0);
+}
