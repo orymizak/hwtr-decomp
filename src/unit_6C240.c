@@ -1,5 +1,10 @@
 #include "common.h"
 #include "include_asm.h"
+s32 func_800CB168();
+s32 func_800CB28C();
+s32 func_800CB2C0(s32,s32);
+s32 func_800C9F18(void *,s32);
+extern u8 D_800FAB88;
 
 extern s8 D_80125590;
 s32 func_800CA200();
@@ -41,11 +46,21 @@ void func_800CC2DC(void) {
     func_800CA210();
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_6C240", func_800CC2F8);
+void func_800CC2F8(void) {
+    func_800C9F18(&D_800FAB88, 0);
+}
 
-INCLUDE_ASM("asm/nonmatchings/unit_6C240", func_800CC31C);
+void func_800CC31C(void) {
+    func_800CB168();
+    func_800CB2C0(D_800FA520, 1);
+    func_800CB28C();
+}
 
-INCLUDE_ASM("asm/nonmatchings/unit_6C240", func_800CC350);
+void func_800CC350(void) {
+    func_800CB168();
+    func_800CB2C0(D_800FA520, 0);
+    func_800CB28C();
+}
 
 void func_800CC384(void) {
     func_800CACA8(D_800FA520);
@@ -82,13 +97,29 @@ void func_800CC4D0(void) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_6C240", func_800CC4F4);
 
-INCLUDE_ASM("asm/nonmatchings/unit_6C240", func_800CC544);
+void func_800CC544(void) {
+    func_800CB168();
+    func_800CB2C0(D_800FA510, 0);
+    func_800CB28C();
+}
 
-INCLUDE_ASM("asm/nonmatchings/unit_6C240", func_800CC578);
+void func_800CC578(void) {
+    func_800CB168();
+    func_800CB2C0(D_800FA510, 1);
+    func_800CB28C();
+}
 
-INCLUDE_ASM("asm/nonmatchings/unit_6C240", func_800CC5AC);
+void func_800CC5AC(void) {
+    func_800CB168();
+    func_800CB2C0(D_800FA510, 2);
+    func_800CB28C();
+}
 
-INCLUDE_ASM("asm/nonmatchings/unit_6C240", func_800CC5E0);
+void func_800CC5E0(void) {
+    func_800CB168();
+    func_800CB2C0(D_800FA510, 3);
+    func_800CB28C();
+}
 
 void func_800CC614(void) {
     func_800CA8F0(D_800FA514);
@@ -98,9 +129,17 @@ void func_800CC638(void) {
     func_800CACA8(D_800FA514);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_6C240", func_800CC65C);
+void func_800CC65C(void) {
+    func_800CB168();
+    func_800CB2C0(D_800FA514, 0);
+    func_800CB28C();
+}
 
-INCLUDE_ASM("asm/nonmatchings/unit_6C240", func_800CC690);
+void func_800CC690(void) {
+    func_800CB168();
+    func_800CB2C0(D_800FA514, 1);
+    func_800CB28C();
+}
 
 void func_800CC6C4(void) {
     func_800CA8F0(D_800FA518);
