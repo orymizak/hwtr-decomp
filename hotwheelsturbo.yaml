@@ -296,7 +296,8 @@ segments:
       - [0x9F7F0, rodata, unit_0D1F0]
       - [0x9F880, .rodata, file_table]
       - [0xA0390, rodata, font]
-      - [0xA03B0, rodata]
+      - [0xA03B0, rodata, unit_103B0]
+      - [0xA03C0, rodata]
       - [0xA03F0, rodata, screen]
       - [0xA0420, rodata]
       - { type: bss, vram: 0x80101E70 }
