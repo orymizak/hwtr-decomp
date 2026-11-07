@@ -1,5 +1,12 @@
 #include "common.h"
 #include "include_asm.h"
+s32 func_80070BA4(void *);
+s32 func_800717C8(s32, s32, s32);
+void func_80072EE0(u8 *, void *, s32, s32, s32);
+void func_8007AFD4(s32, s32, void *);
+void func_80076D6C(s32, s32, s32, s32, s32, f32, f32);
+extern u16 D_800F20FA;
+extern u16 D_800F20FC;
 extern u8 D_800F2090;
 typedef struct { s32 f0; s32 f4; u8 p8[0x208]; s32 f210; s32 f214; u8 p218[0xFC]; s32 f314; s32 f318; u8 p31C[0x4]; } S_D_8014C740;
 extern S_D_8014C740 D_8014C740[];
@@ -70,7 +77,21 @@ void func_80072D5C(void *arg0) {
     *(s32 *)((u8 *)arg0 + 0x30) = (s32) (*(s32 *)((u8 *)arg0 + 0x30) | 0x40);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_13490", func_80072D6C);
+s32 func_80072D6C(u8 *a0, s32 a1, s32 a2, s32 a3, s32 a4) {
+    u8 buf[0x30];
+
+    if ((func_800717C8(a1, a2, *(s32 *)(a0 + 0x38)) & 0xFF) != 1) {
+        if (*(s32 *)(a0 + 0x34) != a3) {
+            *(s32 *)(a0 + 0x30) &= ~0x80;
+        }
+        return 0;
+    }
+    if (*(s32 *)(a0 + 0x3C) != 0) {
+        func_8007AFD4(a1, a2, buf);
+        func_80072EE0(a0, buf, func_80070BA4(buf), a3, a4);
+    }
+    return 1;
+}
 
 void func_80072E38(void *arg0, s32 arg1) {
     s32 temp_v0;
@@ -260,7 +281,11 @@ void func_80076BB0(s8 arg0, s8 arg1, s8 arg2) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_13490", func_80076BCC);
 
-INCLUDE_ASM("asm/nonmatchings/unit_13490", func_80076CF8);
+void func_80076CF8(s32 a, s32 b, s32 c, s32 d, s32 e) {
+    if (d >= -a && e >= -b && a < D_800F20FA && b < D_800F20FC) {
+        func_80076D6C(a, b, c, d, e, 1.0f, 1.0f);
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_13490", func_80076D6C);
 

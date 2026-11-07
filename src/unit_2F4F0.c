@@ -1,5 +1,7 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { s32 x; s32 y; s32 z; } Pos_;
+extern u8 D_80118558[];
 extern u8 D_801185AC;
 extern u8 D_801185A4;
 extern u8 D_801185A2;
@@ -16,7 +18,23 @@ INCLUDE_ASM("asm/nonmatchings/unit_2F4F0", func_8008EA6C);
 
 INCLUDE_ASM("asm/nonmatchings/unit_2F4F0", func_8009013C);
 
-INCLUDE_ASM("asm/nonmatchings/unit_2F4F0", func_80090410);
+void func_80090410(u8 i, Pos_ *a1, f32 *a2, f32 *a3, f32 *a4, f32 *a5, s8 *a6, u8 *a7) {
+    u8 *p = D_80118558 + i * 0x64;
+
+    *a1 = *(Pos_ *)(p + 4);
+    a2[0] = *(f32 *)(p + 0x1C);
+    a2[1] = *(f32 *)(p + 0x28);
+    a2[2] = *(f32 *)(p + 0x34);
+    a3[0] = *(f32 *)(p + 0x20);
+    a3[1] = *(f32 *)(p + 0x2C);
+    a3[2] = *(f32 *)(p + 0x38);
+    a4[0] = *(f32 *)(p + 0x24);
+    a4[1] = *(f32 *)(p + 0x30);
+    a4[2] = *(f32 *)(p + 0x3C);
+    *a5 = *(f32 *)(p + 0x40);
+    *a6 = *(s32 *)(p + 0x44) == 0;
+    *a7 = p[0x49];
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_2F4F0", func_800904C4);
 

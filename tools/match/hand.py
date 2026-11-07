@@ -98,6 +98,21 @@ def built():
     return Path("build/hotwheelsturbo.z64").read_bytes() if Path("build/hotwheelsturbo.z64").exists() else b""
 
 
+def explain():
+    """Dice por qué falló el enlazado o en qué función cambió la ROM."""
+    b = built()
+    if len(b) != len(ROM):
+        out = subprocess.run("make 2>&1 | grep -E 'undefined|multiple|rror' | head -3", shell=True, capture_output=True, text=True).stdout
+        print("  enlazado:", out.strip()[:300])
+        return
+    first = next((i for i in range(len(ROM)) if ROM[i] != b[i]), None)
+    if first is not None:
+        v = first - 0x1000 + 0x80060400
+        nm = pass2.nm_map()
+        near = max((a, n) for n, a in nm.items() if a <= v)
+        print(f"  primera diferencia en {v:08X}, dentro de {near[1]}")
+
+
 def apply(ok):
     by_unit = {}
     for name, (unit, opt, body) in ok.items():
@@ -119,7 +134,10 @@ def apply(ok):
                     else:
                         c = merged
             path.write_text(c)
-            return pass2.make(unit) == ROM
+            ok = pass2.make(unit) == ROM
+            if not ok:
+                explain()
+            return ok
         names = [n for n, _, _ in items]
         if attempt(names):
             text = path.read_text()

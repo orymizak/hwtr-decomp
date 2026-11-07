@@ -1,5 +1,8 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { f32 x; f32 y; f32 z; } Vec3_;
+typedef struct { s32 x; s32 y; s32 z; } Pos_;
+typedef struct { Pos_ p; f32 m[9]; s32 d; f32 e; } Cam_;
 s32 Memory_Alloc();
 extern u8 D_80101E80;
 s32 func_800682A4(s32, s32,s32,s32);
@@ -183,7 +186,22 @@ u16 func_800687D8(void) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_800687E8);
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_800688F4);
+void func_800688F4(s32 idx, Vec3_ pos, f32 *m) {
+    f32 *q = (f32 *)(*(u8 **)((*(u8 * *)&D_8013816C) + 0x2C) + *(u16 *)(*(u8 **)((*(u8 * *)&D_8013816C) + 0x38) + idx * 0x18) * 0x54);
+
+    q[0] = m[0];
+    q[1] = m[1];
+    q[2] = m[2];
+    q[4] = m[3];
+    q[5] = m[4];
+    q[6] = m[5];
+    q[8] = m[6];
+    q[9] = m[7];
+    q[10] = m[8];
+    q[3] = pos.x;
+    q[7] = pos.y;
+    q[11] = pos.z;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_800689A4);
 
@@ -219,7 +237,22 @@ u8 func_8006A358(void) {
     return *(u8 *)((u8 *)D_8013816C + 0xB);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_8006A368);
+void func_8006A368(u8 i, Pos_ *a1, f32 *a2, s32 *a3, f32 *a4) {
+    Cam_ *c = (Cam_ *)*(u8 **)((*(u8 * *)&D_8013816C) + 0x40) + i;
+
+    *a1 = c->p;
+    *a3 = c->d;
+    *a4 = c->e;
+    a2[0] = c->m[0];
+    a2[1] = c->m[1];
+    a2[2] = c->m[2];
+    a2[3] = c->m[3];
+    a2[4] = c->m[4];
+    a2[5] = c->m[5];
+    a2[6] = c->m[6];
+    a2[7] = c->m[7];
+    a2[8] = c->m[8];
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_8006A400);
 
