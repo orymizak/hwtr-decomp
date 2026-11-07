@@ -144,7 +144,7 @@ segments:
       - [0x75AE0, c, unit_75AE0]
       - [0x76040, c, unit_76040]
       - [0x76090, c, unit_76090]
-      - [0x76160, asm, system] # planificador, DMA, Controller Pak
+      - [0x76160, c, unit_76160]
       - [0x76B30, c, unit_76B30]
       - [0x76B70, c, unit_76B70]
       - [0x76BB0, c, unit_76BB0]
