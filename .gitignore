@@ -1,0 +1,9 @@
+baserom*
+build/
+assets/
+ghidra*
+path/
+
+.DS*
+asm/
+.splache

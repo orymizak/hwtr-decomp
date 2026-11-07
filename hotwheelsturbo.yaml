@@ -1,0 +1,282 @@
+name: Hot Wheels Turbo (North America)
+sha1: 94913a07e49005ffd43dfdfa16ff5862bdb93748
+options:
+  basename: hotwheelsturbo
+  target_path: baserom.z64
+  elf_path: build/hotwheelsturbo.elf
+  base_path: .
+  platform: n64
+  compiler: KMC # sin confirmar: heurística de splat; apunta a GCC, no distingue KMC de SN64
+
+  # asm_path: asm
+  # src_path: src
+  # build_path: build
+  # create_asm_dependencies: True
+
+  ld_script_path: hotwheelsturbo.ld
+  ld_dependencies: True
+
+  find_file_boundaries: True
+  header_encoding: ASCII
+
+  o_as_suffix: True
+  use_legacy_include_asm: False
+  mips_abi_float_regs: o32
+
+  # section_order: [".text", ".data", ".rodata", ".bss"]
+  # auto_link_sections: [".data", ".rodata", ".bss"]
+
+  symbol_addrs_path:
+    - symbol_addrs.txt
+  reloc_addrs_path:
+    - reloc_addrs.txt
+
+  # undefined_funcs_auto_path: undefined_funcs_auto.txt
+  # undefined_syms_auto_path: undefined_syms_auto.txt
+
+  extensions_path: tools/splat_ext
+
+  # string_encoding: ASCII
+  # data_string_encoding: ASCII
+  rodata_string_guesser_level: 2
+  data_string_guesser_level: 2
+  # libultra_symbols: True
+  # hardware_regs: True
+  # gfx_ucode: # one of [f3d, f3db, f3dex, f3dexb, f3dex2]
+segments:
+  - name: header
+    type: header
+    start: 0x0
+
+  - name: ipl3
+    type: bin
+    start: 0x40
+
+  - name: entry
+    type: code
+    start: 0x1000
+    vram: 0x80060400
+    subsegments:
+      - [0x1000, hasm]
+
+  - name: main
+    type: code
+    start: 0x1050
+    vram: 0x80060450
+    follows_vram: entry
+    bss_size: 0x4CE60
+    subsegments:
+      - [0x1050, asm]
+      - [0x886A0, bin, rsp_text] # rspboot + microcódigos RSP (texto)
+      - [0x90860, data] # incluye la tabla de archivos en 0x911F0
+      - { type: bss, vram: 0x80101E70 }
+
+  # 201 archivos contiguos (gFileTable), tal como están guardados en la ROM
+  - [0xA2A70, bin, rom_files/4X4.DUP]
+  - [0xA2B20, bin, rom_files/ACTNFNT.OVL]
+  - [0xA5460, bin, rom_files/ACTNOVL1.OVL]
+  - [0xA8830, bin, rom_files/ACTNOVL2.OVL]
+  - [0xAB950, bin, rom_files/AIGRP.PRM]
+  - [0xAB960, bin, rom_files/ARROWD.OBJ]
+  - [0xABA10, bin, rom_files/ARROWL.OBJ]
+  - [0xABAC0, bin, rom_files/ARROWR.OBJ]
+  - [0xABB70, bin, rom_files/ARROWU.OBJ]
+  - [0xABC20, bin, rom_files/BISECTOR.CAR]
+  - [0xB39A0, bin, rom_files/BISECTOR.CWH]
+  - [0xB3B00, bin, rom_files/BLACK.OVL]
+  - [0xB6DE0, bin, rom_files/BRAKES.DUP]
+  - [0xB6E90, bin, rom_files/BUTTONS.OVL]
+  - [0xBA600, bin, rom_files/CATAPULT.CAR]
+  - [0xC22C0, bin, rom_files/CATAPULT.CWH]
+  - [0xC2420, bin, rom_files/CCCSND.BFX]
+  - [0xC33D0, bin, rom_files/CCCSND.BIN]
+  - [0xC33E0, bin, rom_files/CCCSND.PTR]
+  - [0xC9060, bin, rom_files/CCCSND.WBK]
+  - [0x393C00, bin, rom_files/CLOUD00.TEX]
+  - [0x393E00, bin, rom_files/CLOUD01.TEX]
+  - [0x394000, bin, rom_files/CLOUD02.TEX]
+  - [0x394200, bin, rom_files/CLOUD03.TEX]
+  - [0x394400, bin, rom_files/CLOUD04.TEX]
+  - [0x394600, bin, rom_files/DEORA.CAR]
+  - [0x39D640, bin, rom_files/DEORA.CWH]
+  - [0x39D7A0, bin, rom_files/DESERT1.BLD]
+  - [0x3A1C80, bin, rom_files/DESERT1.OBJ]
+  - [0x3A2C70, bin, rom_files/DESERT1.SCN]
+  - [0x3B4100, bin, rom_files/DESERT1.SKY]
+  - [0x3BA400, bin, rom_files/DESERT1.WLD]
+  - [0x4021F0, bin, rom_files/DESERT2.BLD]
+  - [0x407180, bin, rom_files/DESERT2.OBJ]
+  - [0x408260, bin, rom_files/DESERT2.SCN]
+  - [0x417170, bin, rom_files/DESERT2.SKY]
+  - [0x41B430, bin, rom_files/DESERT2.WLD]
+  - [0x45EC20, bin, rom_files/DESERT3.BLD]
+  - [0x462080, bin, rom_files/DESERT3.OBJ]
+  - [0x462D30, bin, rom_files/DESERT3.SCN]
+  - [0x46FCB0, bin, rom_files/DESERT3.SKY]
+  - [0x476A10, bin, rom_files/DESERT3.WLD]
+  - [0x4B8D20, bin, rom_files/DOUBLEV.CAR]
+  - [0x4C24D0, bin, rom_files/DOUBLEV.CWH]
+  - [0x4C2630, bin, rom_files/DRAGSTER.CAR]
+  - [0x4CA570, bin, rom_files/DRAGSTER.CWH]
+  - [0x4CA6D0, bin, rom_files/EFFECTS.TEX]
+  - [0x4DEFC0, bin, rom_files/ENGCARS.CDT]
+  - [0x4DFAF0, bin, rom_files/ENGLISH.HWT]
+  - [0x4E1130, bin, rom_files/ENGNAME.CHM]
+  - [0x4E11A0, bin, rom_files/ENGPWD.CHM]
+  - [0x4E1200, bin, rom_files/ENVMAP1.TEX]
+  - [0x4E1A10, bin, rom_files/EVILWEVL.CAR]
+  - [0x4EC9D0, bin, rom_files/EVILWEVL.CWH]
+  - [0x4ECB30, bin, rom_files/FORM5G.CAR]
+  - [0x4F3A80, bin, rom_files/FORM5G.CWH]
+  - [0x4F3BE0, bin, rom_files/GAUGEB.OBJ]
+  - [0x4F3C90, bin, rom_files/GAUGEDB.OBJ]
+  - [0x4F3D40, bin, rom_files/GAUGER.OBJ]
+  - [0x4F3DF0, bin, rom_files/GAUGEY.OBJ]
+  - [0x4F3EA0, bin, rom_files/GLACIAL1.BLD]
+  - [0x4FBD50, bin, rom_files/GLACIAL1.OBJ]
+  - [0x4FCC30, bin, rom_files/GLACIAL1.SCN]
+  - [0x50FC60, bin, rom_files/GLACIAL1.SKY]
+  - [0x514830, bin, rom_files/GLACIAL1.WLD]
+  - [0x552F00, bin, rom_files/GLACIAL2.BLD]
+  - [0x55A040, bin, rom_files/GLACIAL2.OBJ]
+  - [0x55AF40, bin, rom_files/GLACIAL2.SCN]
+  - [0x56B2D0, bin, rom_files/GLACIAL2.SKY]
+  - [0x56FDD0, bin, rom_files/GLACIAL2.WLD]
+  - [0x5A6B50, bin, rom_files/GLACIAL3.BLD]
+  - [0x5ADAB0, bin, rom_files/GLACIAL3.OBJ]
+  - [0x5AE6E0, bin, rom_files/GLACIAL3.SCN]
+  - [0x5B8580, bin, rom_files/GLACIAL3.SKY]
+  - [0x5BD080, bin, rom_files/GLACIAL3.WLD]
+  - [0x5E1D60, bin, rom_files/GOCART.CAR]
+  - [0x5EAF50, bin, rom_files/GOCART.CWH]
+  - [0x5EB0B0, bin, rom_files/GULCHSTP.CAR]
+  - [0x5F3EE0, bin, rom_files/GULCHSTP.CWH]
+  - [0x5F4040, bin, rom_files/GYRO.DUP]
+  - [0x5F40F0, bin, rom_files/HANDLING.DUP]
+  - [0x5F41A0, bin, rom_files/HAUNTED1.OBJ]
+  - [0x5F4C80, bin, rom_files/HAUNTED2.BLD]
+  - [0x5F90E0, bin, rom_files/HAUNTED2.OBJ]
+  - [0x5FA150, bin, rom_files/HAUNTED2.SCN]
+  - [0x60A1F0, bin, rom_files/HAUNTED2.SKY]
+  - [0x6101F0, bin, rom_files/HAUNTED2.WLD]
+  - [0x6592C0, bin, rom_files/HAUNTED3.BLD]
+  - [0x65E7D0, bin, rom_files/HAUNTED3.OBJ]
+  - [0x65F7A0, bin, rom_files/HAUNTED3.SCN]
+  - [0x668F00, bin, rom_files/HAUNTED3.SKY]
+  - [0x66EEA0, bin, rom_files/HAUNTED3.WLD]
+  - [0x6A5620, bin, rom_files/HW500.CAR]
+  - [0x6AF000, bin, rom_files/HW500.CWH]
+  - [0x6AF160, bin, rom_files/JETHREAT.CAR]
+  - [0x6B9190, bin, rom_files/JETHREAT.CWH]
+  - [0x6B92F0, bin, rom_files/KYLE.CAR]
+  - [0x6C22F0, bin, rom_files/KYLE.CWH]
+  - [0x6C2450, bin, rom_files/LAKESTER.CAR]
+  - [0x6CA5E0, bin, rom_files/LAKESTER.CWH]
+  - [0x6CA740, bin, rom_files/MONGOOSE.CAR]
+  - [0x6D3AA0, bin, rom_files/MONGOOSE.CWH]
+  - [0x6D3C00, bin, rom_files/MYSTERY.OBJ]
+  - [0x6D44E0, bin, rom_files/N64CPRES.BG]
+  - [0x6FC8C0, bin, rom_files/N64CRED.BG]
+  - [0x7218A0, bin, rom_files/N64CRED2.BG]
+  - [0x7478D0, bin, rom_files/N64CTRL.BG]
+  - [0x76FA80, bin, rom_files/N64EA.BG]
+  - [0x783300, bin, rom_files/N64GAR.BG]
+  - [0x7A5580, bin, rom_files/N64GAR1.BG]
+  - [0x7BFEC0, bin, rom_files/N64HELP0.BG]
+  - [0x7E48B0, bin, rom_files/N64HELP1.BG]
+  - [0x806A10, bin, rom_files/N64HELP2.BG]
+  - [0x830260, bin, rom_files/N64HELP3.BG]
+  - [0x851970, bin, rom_files/N64HELP4.BG]
+  - [0x87EFA0, bin, rom_files/N64HELP5.BG]
+  - [0x8A81B0, bin, rom_files/N64HELP6.BG]
+  - [0x8BED80, bin, rom_files/N64HELP7.BG]
+  - [0x8E5820, bin, rom_files/N64HELP8.BG]
+  - [0x90F5B0, bin, rom_files/N64HELP9.BG]
+  - [0x935EE0, bin, rom_files/N64HIGH.BG]
+  - [0x95E710, bin, rom_files/N64HWC.BG]
+  - [0x980790, bin, rom_files/N64LEGAL.BG]
+  - [0x987850, bin, rom_files/N64LOAD.BG]
+  - [0x9AEA40, bin, rom_files/N64LOSE.BG]
+  - [0x9D8D30, bin, rom_files/N64MAIN.BG]
+  - [0x9FACA0, bin, rom_files/N64OPT.BG]
+  - [0xA213C0, bin, rom_files/N64REG.BG]
+  - [0xA495C0, bin, rom_files/N64SFS.BG]
+  - [0xA572D0, bin, rom_files/N64SPL.BG]
+  - [0xA7B0A0, bin, rom_files/N64UNLOK.BG]
+  - [0xA9FCD0, bin, rom_files/N64WIN.BG]
+  - [0xACD860, bin, rom_files/POP1.OBJ]
+  - [0xACDE10, bin, rom_files/PPASSION.CAR]
+  - [0xAD5CA0, bin, rom_files/PPASSION.CWH]
+  - [0xAD5E00, bin, rom_files/PTEST1.OBJ]
+  - [0xAD65C0, bin, rom_files/PWRPIPES.CAR]
+  - [0xADE890, bin, rom_files/PWRPIPES.CWH]
+  - [0xADE9F0, bin, rom_files/PWRPSTN.CAR]
+  - [0xAE8630, bin, rom_files/PWRPSTN.CWH]
+  - [0xAE8790, bin, rom_files/RASH1.CAR]
+  - [0xAF1820, bin, rom_files/RASH1.CWH]
+  - [0xAF1980, bin, rom_files/RDROCKET.CAR]
+  - [0xAFABA0, bin, rom_files/RDROCKET.CWH]
+  - [0xAFAD00, bin, rom_files/REDBARON.CAR]
+  - [0xB01ED0, bin, rom_files/REDBARON.CWH]
+  - [0xB02030, bin, rom_files/RIGOMTR.CAR]
+  - [0xB0CBE0, bin, rom_files/RIGOMTR.CWH]
+  - [0xB0CD40, bin, rom_files/ROCKET.CAR]
+  - [0xB16C60, bin, rom_files/ROCKET.CWH]
+  - [0xB16DC0, bin, rom_files/RODDER.CAR]
+  - [0xB20CE0, bin, rom_files/RODDER.CWH]
+  - [0xB20E40, bin, rom_files/ROKBUSTR.CAR]
+  - [0xB2B010, bin, rom_files/ROKBUSTR.CWH]
+  - [0xB2B170, bin, rom_files/RUBBER.DUP]
+  - [0xB2B220, bin, rom_files/SCCUP1.BLD]
+  - [0xB2F330, bin, rom_files/SCCUP2.BLD]
+  - [0xB34360, bin, rom_files/SHDOWJET.CAR]
+  - [0xB3C830, bin, rom_files/SHDOWJET.CWH]
+  - [0xB3C990, bin, rom_files/SIGNCURS.OBJ]
+  - [0xB3CBA0, bin, rom_files/SILHOUET.CAR]
+  - [0xB45710, bin, rom_files/SILHOUET.CWH]
+  - [0xB45870, bin, rom_files/SLIDEBUT.OBJ]
+  - [0xB45E70, bin, rom_files/SLIDEOUT.CAR]
+  - [0xB4E370, bin, rom_files/SLIDEOUT.CWH]
+  - [0xB4E4D0, bin, rom_files/SNAKE.CAR]
+  - [0xB57720, bin, rom_files/SNAKE.CWH]
+  - [0xB57880, bin, rom_files/SOLAIRE.CAR]
+  - [0xB5FE40, bin, rom_files/SOLAIRE.CWH]
+  - [0xB5FFA0, bin, rom_files/SPDBLSTR.CAR]
+  - [0xB68020, bin, rom_files/SPDBLSTR.CWH]
+  - [0xB68180, bin, rom_files/SPLTIMG.CAR]
+  - [0xB710D0, bin, rom_files/SPLTIMG.CWH]
+  - [0xB71230, bin, rom_files/STEALTH.CAR]
+  - [0xB78950, bin, rom_files/STEALTH.CWH]
+  - [0xB78AB0, bin, rom_files/STEEL.DUP]
+  - [0xB78B60, bin, rom_files/STGFRT.CAR]
+  - [0xB80EB0, bin, rom_files/STGFRT.CWH]
+  - [0xB81010, bin, rom_files/STICKY.DUP]
+  - [0xB810C0, bin, rom_files/STRIP_T.CAR]
+  - [0xB8B320, bin, rom_files/STRIP_T.CWH]
+  - [0xB8B480, bin, rom_files/SUPERVAN.CAR]
+  - [0xB92C50, bin, rom_files/SUPERVAN.CWH]
+  - [0xB92DB0, bin, rom_files/SWT16.CAR]
+  - [0xB9CDA0, bin, rom_files/SWT16.CWH]
+  - [0xB9CF00, bin, rom_files/TCUP.BLD]
+  - [0xB9F110, bin, rom_files/THUNDER.CAR]
+  - [0xBA7E90, bin, rom_files/THUNDER.CWH]
+  - [0xBA7FF0, bin, rom_files/TOWJAM.CAR]
+  - [0xBAF4C0, bin, rom_files/TOWJAM.CWH]
+  - [0xBAF620, bin, rom_files/TUNING.PRM]
+  - [0xBAF720, bin, rom_files/TURBO.DUP]
+  - [0xBAF7D0, bin, rom_files/TWINMIL2.CAR]
+  - [0xBB81D0, bin, rom_files/TWINMIL2.CWH]
+  - [0xBB8330, bin, rom_files/TWINMILL.CAR]
+  - [0xBC23E0, bin, rom_files/TWINMILL.CWH]
+  - [0xBC2540, bin, rom_files/UNCAR1.DUP]
+  - [0xBC25F0, bin, rom_files/UNCAR2.DUP]
+  - [0xBC26A0, bin, rom_files/WAY2FAST.CAR]
+  - [0xBCB4B0, bin, rom_files/WAY2FAST.CWH]
+  - [0xBCB610, bin, rom_files/YELLOW.OVL]
+
+  # relleno de 0xFF hasta el final de la ROM
+  - name: padding
+    type: bin
+    start: 0xBCFAC0
+
+  - [0xC00000]

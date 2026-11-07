@@ -1,0 +1,12 @@
+// Visit https://github.com/ethteck/splat/wiki/Adding-Symbols for documentation about this file
+entrypoint = 0x80060400; // type:func
+main = 0x800CD4C0; // type:func
+gFileTable = 0x800F05F0; // type:FileEntry size:0x15FC
+FileTable_Init = 0x8006E060; // type:func
+gFileTablePtr = 0x800F1BEC; // type:u32
+gFileTableCount = 0x800F1BF0; // type:s32
+File_Load = 0x8006E0B0; // type:func
+File_LoadLZ = 0x8006EE44; // type:func
+File_LoadLZChunked = 0x8006EEEC; // type:func
+LZ_Decompress = 0x8007F050; // type:func
+LZ_AdvanceBits = 0x8007F378; // type:func
