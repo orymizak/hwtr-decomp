@@ -4,6 +4,7 @@ main = 0x800CD4C0; // type:func
 gFileTable = 0x800F05F0; // type:FileEntry size:0x15FC
 FileTable_Init = 0x8006E060; // type:func
 gFileSystem = 0x800F1BEC; // type:FileSystem size:0x1C
+gAsyncReads = 0x800F1C08; // type:AsyncRead size:0x90
 File_Load = 0x8006E0B0; // type:func
 File_LoadLZ = 0x8006EE44; // type:func
 File_LoadLZChunked = 0x8006EEEC; // type:func

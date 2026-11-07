@@ -76,7 +76,11 @@ segments:
       - [0x788B0, asm, libultra] # incluye audio (al*), gu y _Printf
       - [0x87590, asm, libc] # ANSI C y aritmética de 64 bits
       - [0x886A0, bin, rsp_text] # rspboot + microcódigos RSP (texto)
-      - [0x90860, data] # incluye la tabla de archivos en 0x911F0
+      - [0x90860, data]
+      - [0x911F0, .data, file_table]
+      - [0x928B0, data]
+      - [0x9F880, .rodata, file_table]
+      - [0xA0390, rodata]
       - { type: bss, vram: 0x80101E70 }
 
   # 201 archivos contiguos (gFileTable), tal como están guardados en la ROM
