@@ -148,6 +148,8 @@ segments:
       - [0x77560, c, unit_77560]
       - [0x775A0, c, unit_775A0]
       - [0x775E0, asm]
+      - [0x784B0, c, unit_784B0]
+      - [0x78510, asm]
       - [0x788B0, asm, libultra] # incluye audio (al*), gu y _Printf
       - [0x7C890, c, unit_7C890]
       - [0x7C8D0, c, unit_7C8D0]
