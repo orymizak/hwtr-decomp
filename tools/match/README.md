@@ -8,6 +8,7 @@ Se ejecutan desde la raíz del repo, con `TMP_DIR` apuntando a un directorio tem
 - `bound.py <asm.s>`: lista los archivos probables (función alineada a 16 con relleno antes).
 - `pass2.py [unidades...]`: segunda pasada sobre lo que sigue en `INCLUDE_ASM`; prueba variantes de m2c y de anchos, y hace commit por unidad si la ROM es idéntica.
 - `perm.py [--iters N] [unidades...]`: permutador sencillo sobre lo que `pass2.py` no iguala.
+- `dperm.py [--secs N] [--max-ratio R] [unidades...]`: pasa lo casi igual por `tools/decomp-permuter` (se clona aparte, no se versiona).
 - `chk.py <vram_ini> <vram_fin> [--show nombre]`: compara funciones con la ROM. Necesita `funcs.json`, el mapa de funciones generado desde un árbol con todo en asm.
 - `ExportDecomp.java` y `gen_context.py`: exportan firmas de Ghidra a `ghidra_work/` y generan el contexto de m2c que usa `pass2.py`.
 - `DecompileNamed.java`: script de Ghidra para imprimir el pseudocódigo de funciones por nombre.

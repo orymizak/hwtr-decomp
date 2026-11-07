@@ -162,7 +162,7 @@ SIZES = {"s32": 4, "u32": 4, "f32": 4, "s16": 2, "u16": 2, "f64": 8}
 def scale_steps(t):
     """m2c da en bytes el paso de un puntero tipado: `s32 *p; p += 4` es avanzar uno."""
     for ty, stars, name in set(re.findall(r"^\s+(\w+) (\*+)(\w+);$", t, re.M)):
-        size = 4 if len(stars) > 1 else SIZES.get(ty)
+        size = 4 if len(stars) > 1 else SIZES.get(ty) or DATA.get("sizes", {}).get(ty)
         if size:
             t = re.sub(r"\b%s ([+-])= (0x[0-9A-Fa-f]+|\d+);" % name,
                        lambda m: f"{name} {m.group(1)}= {int(m.group(2), 0) // size};" if int(m.group(2), 0) % size == 0 else m.group(0), t)
@@ -207,7 +207,7 @@ def clean(text, choice, syms, ptr):
     t = re.sub(r"\(unaligned (\w+)\)", r"(\1)", t)
     t = re.sub(r"\(bitwise \w+\) ?", "", t)
     t = re.sub(r"\?(8|16|32|64)\b", lambda m: {"8": "s8", "16": "s16", "32": "s32", "64": "f64"}[m.group(1)], t)
-    t = global_fields(t, syms)
+    t = struct_index(global_fields(t, syms))
     if re.search(r"M2C_|saved_reg|\.unk[0-9A-Fa-f]", t):
         return None
     if ptr == "void":
@@ -230,10 +230,41 @@ def clean(text, choice, syms, ptr):
     return "\n".join(l.rstrip() for l in t.splitlines())
 
 
+DATA = json.loads(Path("ghidra_work/data.json").read_text()) if Path("ghidra_work/data.json").exists() else {"decls": {}, "rebase": {}}
+
+
+def rebase_asm(asm):
+    """Un campo de un array global aparece como símbolo propio: se expresa como base + desplazamiento."""
+    def rep(m):
+        base = DATA["rebase"].get(m.group(2))
+        if not base:
+            return m.group(0)
+        off = base[1] + int(m.group(3) or "0", 16)
+        return f"%{m.group(1)}({base[0]} + 0x{off:X})"
+    return re.sub(r"%(hi|lo)\((D_[0-9A-F]{8})(?: \+ 0x([0-9A-F]+))?\)", rep, asm)
+
+
+INDEX = r"\(((?:[^()]|\((?:[^()]|\([^()]*\))*\))*?) \* (0x[0-9A-Fa-f]+|\d+)\)"
+
+
+def struct_index(t):
+    """m2c no siempre indexa: *(&D->f1C + (i * 0x4C)) es D[i].f1C, que es lo que da el código original."""
+    def rep(m):
+        sym, field, x, n = m.groups()
+        if DATA.get("sizes", {}).get(f"S_{sym}") != int(n, 0):
+            return m.group(0)
+        return f"{sym}[{x}].f{field}"
+    t = re.sub(r"\*\(&(D_[0-9A-F]{8})->f([0-9A-F]+) \+ " + INDEX + r"\)", rep, t)
+    return t
+
+
 def add_protos(text, name):
-    """Con contexto m2c no repite los prototipos conocidos, pero el candidato los necesita."""
+    """Con contexto m2c no repite lo ya conocido, pero el candidato necesita declararlo."""
     used = [n for n in set(re.findall(r"\b(\w+)\(", text)) if n in PROTOS and n != name]
     missing = [PROTOS[n] for n in sorted(used) if not re.search(r"^[\w \*]+\b%s\(.*\);$" % n, text, re.M)]
+    for sym in sorted(set(re.findall(r"\bD_[0-9A-F]{8}\b", text))):
+        if sym in DATA["decls"] and not re.search(r"^extern .*\b%s\b" % sym, text, re.M):
+            missing.append(DATA["decls"][sym])
     return "\n".join(missing) + "\n" + text if missing else text
 
 
@@ -287,8 +318,10 @@ def convert(job):
     multi = [k for k, w in opts.items() if len(w) > 1]
     combos = [dict(zip(multi, c)) for c in itertools.islice(itertools.product(*(opts[k] for k in multi)), MAX_WIDTH_COMBOS)]
     best, best_c, seen = None, None, set()
+    (d / "r.s").write_text(rebase_asm(asm))
     for flags in M2C_VARIANTS:
-        r = subprocess.run(["m2c", "--target", "mips-gcc-c", *flags, str(d / "f.s")], capture_output=True, text=True)
+        src_s = d / ("r.s" if "--context" in flags else "f.s")
+        r = subprocess.run(["m2c", "--target", "mips-gcc-c", *flags, str(src_s)], capture_output=True, text=True)
         if r.returncode or r.stdout in seen:
             continue
         seen.add(r.stdout)
@@ -478,6 +511,22 @@ def degrade(c, unit, names):
     return c
 
 
+COMMIT_EVERY = 5
+PENDING = []
+
+
+def flush():
+    """Agrupa los cambios: un commit cada COMMIT_EVERY unidades modificadas."""
+    if not PENDING:
+        return
+    subprocess.run(["python3", "tools/progress.py", "--readme"], capture_output=True)
+    subprocess.run(["git", "add", "src", "README.md"])
+    n = sum(k for _, k in PENDING)
+    detail = "\n".join(f"- {u}: {k}" for u, k in PENDING)
+    subprocess.run(["git", "commit", "-q", "-m", f"Convierte {n} funciones de {len(PENDING)} unidades\n\n{detail}\n\nLa ROM sigue siendo idéntica."])
+    PENDING.clear()
+
+
 def process(unit, commit, converter=None):
     path = Path(f"src/{unit}.c")
     orig = path.read_text()
@@ -545,10 +594,9 @@ def process(unit, commit, converter=None):
     c = build(good)
     added = good
     if commit:
-        subprocess.run(["python3", "tools/progress.py", "--readme"], capture_output=True)
-        subprocess.run(["git", "add", "src", "README.md"])
-        left = c.count("INCLUDE_ASM(")
-        subprocess.run(["git", "commit", "-q", "-m", f"Convierte {len(added)} funciones de {unit}.c\n\nQuedan {left} en ensamblador. La ROM sigue siendo idéntica."])
+        PENDING.append((unit, len(added)))
+        if len(PENDING) >= COMMIT_EVERY:
+            flush()
     return len(added)
 
 
@@ -562,6 +610,7 @@ def main():
         total += n
         json.dump(near, open(TMP / "near.json", "w"))
         print(f"{u}: +{n} (total {total})", flush=True)
+    flush()
 
 
 if __name__ == "__main__":

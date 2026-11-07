@@ -392,6 +392,8 @@ def main():
         n = pass2.process(u, True, permute)
         total += n
         print(f"{u}: +{n} (total {total}, {int(time.time() - t0)} s)", flush=True)
+    pass2.flush()
 
 
-main()
+if __name__ == "__main__":
+    main()
