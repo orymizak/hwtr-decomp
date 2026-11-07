@@ -1,6 +1,13 @@
 #include "common.h"
 #include "include_asm.h"
+s32 __osSiDeviceBusy(void);
 
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_85A30", __osSiRawReadIo);
+s32 __osSiRawReadIo(u32 devAddr, u32 *data) {
+    if (__osSiDeviceBusy()) {
+        return -1;
+    }
+    *data = *(volatile u32 *)(devAddr | 0xA0000000);
+    return 0;
+}

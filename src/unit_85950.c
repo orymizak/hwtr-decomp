@@ -11,6 +11,14 @@ void __osSpSetStatus(s32 arg0) {
     *(volatile s32 *)0xA4040010 = arg0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_85950", __osSpSetPc);
+s32 __osSpSetPc(u32 pc) {
+    register u32 stat = *(volatile u32 *)0xA4040010;
+
+    if (!(stat & 1)) {
+        return -1;
+    }
+    *(volatile u32 *)0xA4080000 = pc;
+    return 0;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_85950", __osSpRawStartDma);

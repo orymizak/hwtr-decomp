@@ -1,12 +1,66 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { s32 status; void *queue; s32 channel; u8 id[32]; u8 label[32]; s32 version; s32 dir_size; s32 inode_table; s32 minode_table; s32 dir_table; s32 inode_start_page; u8 banks; u8 activebank; } PfsD_;
+typedef union { struct { u8 bank; u8 page; } inode_t; u16 ipage; } InodeUnitD_;
+typedef struct { u32 game_code; u16 company_code; InodeUnitD_ start_page; u8 status; s8 reserved; u16 data_sum; u8 ext_name[4]; u8 game_name[16]; } PfsDirD_;
+typedef struct { InodeUnitD_ inode_page[128]; } InodeD_;
+void bzero(void *, s32);
+s32 func_800E1530(PfsD_ *, u16, u32, u8 *, u8 *, s32 *);
+s32 func_800E1E40(PfsD_ *, s32);
+s32 func_800E2940(void *, s32, u16, u8 *);
+s32 func_800E25FC(PfsD_ *, InodeD_ *, s32, s32);
+s32 func_800E2B30(void *, s32, u16, u8 *, s32);
 typedef union { struct { u8 bank; u8 page; } t; u16 ipage; } InodeUnit_;
 typedef struct { u8 pad[0x60]; s32 inode_start_page; } Pfs_;
 typedef struct { InodeUnit_ page[128]; } Inode_;
 
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_81930", func_800E0D30);
+s32 func_800E0D30(PfsD_ *pfs, u16 company_code, u32 game_code, u8 *game_name, u8 *ext_name) {
+    s32 file_no;
+    s32 ret;
+    InodeD_ inode;
+    PfsDirD_ dir;
+    InodeUnitD_ last_page;
+    u8 startpage;
+    u8 bank;
+
+    if ((company_code == 0) || (game_code == 0)) {
+        return 5;
+    }
+    if ((ret = func_800E1530(pfs, company_code, game_code, game_name, ext_name, &file_no)) != 0) {
+        return ret;
+    }
+    if (pfs->activebank != 0 && (ret = func_800E1E40(pfs, 0)) != 0) {
+        return ret;
+    }
+    if ((ret = func_800E2940(pfs->queue, pfs->channel, (u16)(pfs->dir_table + file_no), (u8 *)&dir)) != 0) {
+        return ret;
+    }
+    startpage = dir.start_page.inode_t.page;
+    for (bank = dir.start_page.inode_t.bank; bank < pfs->banks;) {
+        if ((ret = func_800E25FC(pfs, &inode, 0, bank)) != 0) {
+            return ret;
+        }
+        if ((ret = func_800E0EDC((Pfs_ *)pfs, (Inode_ *)&inode, startpage, bank, (InodeUnit_ *)&last_page)) != 0) {
+            return ret;
+        }
+        if ((ret = func_800E25FC(pfs, &inode, 1, bank)) != 0) {
+            return ret;
+        }
+        if (last_page.ipage == 1) {
+            break;
+        }
+        bank = last_page.inode_t.bank;
+        startpage = last_page.inode_t.page;
+    }
+    if (bank >= pfs->banks) {
+        return 3;
+    }
+    bzero(&dir, sizeof(PfsDirD_));
+    ret = func_800E2B30(pfs->queue, pfs->channel, (u16)(pfs->dir_table + file_no), (u8 *)&dir, 0);
+    return ret;
+}
 
 s32 func_800E0EDC(Pfs_ *pfs, Inode_ *inode, u8 start_page, u8 bank, InodeUnit_ *final_page) {
     InodeUnit_ next;
