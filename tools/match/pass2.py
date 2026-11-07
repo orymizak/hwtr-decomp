@@ -117,6 +117,16 @@ def byte_symbols(t, syms):
     return t
 
 
+def byte_offsets(t, syms):
+    """m2c suma bytes a `&D` también si D tiene tipo: se hace explícito con u8 *."""
+    for sym in set(re.findall(r"&(D_[0-9A-F]+)\b", t)):
+        ty = syms.get(sym, "s32")
+        t = re.sub(r"\*\(&%s\b" % sym, f"*({ty} *)((u8 *)&{sym}", t)
+        t = re.sub(r"(?<!\(u8 \*\))&%s( [+-] )" % sym, f"(u8 *)&{sym}\\1", t)
+        t = re.sub(r"( \+ )&%s\b" % sym, f"\\1(u8 *)&{sym}", t)
+    return t
+
+
 def void_derefs(t, choice):
     """`*x` sobre `void *x` no compila: usa el ancho visto en el desplazamiento 0."""
     for x in set(re.findall(r"\bvoid \*(\w+)[;,)]", t)):
@@ -181,6 +191,7 @@ def clean(text, choice, syms, ptr):
         return None
     if ptr == "void":
         t = byte_symbols(t, syms)
+        t = byte_offsets(t, syms)
         t = re.sub(r"\? \*", "void *", t)
     t = re.sub(r"\(\?\)", "()", t)
     t = re.sub(r"\?\s*\(\*", "s32 (*", t)

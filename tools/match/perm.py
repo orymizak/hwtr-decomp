@@ -48,7 +48,7 @@ def score(o, target, d):
 
 def body_span(c):
     h = re.search(r"^[\w \*]+\b\w+\(.*\) \{$", c, re.M)
-    return h.end() if h else None
+    return h.end() + 1 if h else None
 
 
 def locals_of(c):
@@ -155,13 +155,70 @@ def m_register(c, r):
     return c[:b + m.start(1)] + "register " + c[b + m.start(1):]
 
 
-MUTS = [m_swap_decls] * 4 + [m_retype] * 2 + [m_retype_param, m_swap_stmts, m_swap_stmts, m_commute, m_inline_temp, m_cast, m_unsigned, m_register]
+def m_array_index(c, r):
+    """Vuelve a la forma original de un bucle sobre un array: quita el índice paralelo en bytes."""
+    b = body_span(c)
+    body = c[b:]
+    counters = [m.group(1) for m in re.finditer(r"^\s+(var_\w+) \+= 1;$", body, re.M) if re.search(r"^\s+%s = 0;$" % m.group(1), body, re.M)]
+    steps = re.findall(r"^\s+(var_\w+) \+= (0x[0-9A-Fa-f]+|\d+);$", body, re.M)
+    cand = []
+    for y, n in steps:
+        if int(n, 0) == 1:
+            continue
+        init = re.findall(r"^\s+%s = (.*);$" % y, body, re.M)
+        if len(init) == 1 and len(re.findall(r"^\s+%s [-+*&|]?= " % y, body, re.M)) == 2:
+            cand.extend((x, y, n, init[0]) for x in counters if x != y)
+    if not cand:
+        return None
+    x, y, n, init = r.choice(cand)
+    body = re.sub(r"^\s+%s = .*;\n" % y, "", body, count=1, flags=re.M)
+    body = re.sub(r"^\s+%s \+= .*;\n" % y, "", body, count=1, flags=re.M)
+    body = re.sub(r"^\s+[\w ]+ \*?%s;\n" % y, "", body, count=1, flags=re.M)
+    idx = f"({x} * {n})" if init == "0" else f"((u8 *)({init}) + ({x} * {n}))"
+    return c[:b] + re.sub(r"\b%s\b" % y, lambda _: idx, body)
+
+
+def m_no_unsigned_counter(c, r):
+    """`var += 1; while (var < 8U)` suele ser un s32 en el original."""
+    b = body_span(c)
+    body = c[b:]
+    ms = list(re.finditer(r"^\s+u32 (var_\w+);$", body, re.M))
+    if not ms:
+        return None
+    m = r.choice(ms)
+    body = body[:m.start()] + m.group(0).replace("u32", "s32") + body[m.end():]
+    body = re.sub(r"(\b%s (?:<|<=|>|>=) (?:0x[0-9A-Fa-f]+|\d+))U\b" % m.group(1), r"\1", body)
+    return c[:b] + body
+
+
+def m_merge_syms(c, r):
+    """Dos símbolos cercanos suelen ser campos del mismo struct: un solo símbolo base."""
+    b = body_span(c)
+    body = c[b:]
+    syms = sorted(set(re.findall(r"&(D_[0-9A-F]{8})\b", body)))
+    if len(syms) < 2:
+        return None
+    base = syms[0]
+    for y in syms[1:]:
+        dist = int(y[2:], 16) - int(base[2:], 16)
+        if dist < 0x800:
+            body = re.sub(r"(?:\(u8 \*\))?&%s\b" % y, f"((u8 *)&{base} + 0x{dist:X})", body)
+    return c[:b] + body
+
+
+def m_struct_array(c, r):
+    t = m_array_index(m_merge_syms(c, r) or c, r)
+    # El campo va después del índice, como en a[i].campo: gcc conserva así la base y el desplazamiento.
+    return t and re.sub(r"\(\(u8 \*\)&(D_\w+) \+ (0x\w+)\) \+ (\(var_\w+ \* \w+\))", r"(u8 *)&\1 + \3 + \2", t)
+
+
+MUTS = [m_struct_array] * 4 + [m_merge_syms] + [m_array_index] * 3 + [m_no_unsigned_counter] * 2 + [m_swap_decls] * 4 + [m_retype] * 2 + [m_retype_param, m_swap_stmts, m_swap_stmts, m_commute, m_inline_temp, m_cast, m_unsigned, m_register]
 
 
 def permute(job):
     r_ = convert(job)
     name, cand, best, size, base = r_
-    if cand is not None or base is None or size > MAX_SIZE:
+    if cand is not None or base is None or size > MAX_SIZE or body_span(base) is None:
         return r_
     i, unit, name, opt = job
     d = TMP / "pm" / str(i)
@@ -179,8 +236,10 @@ def permute(job):
     for _ in range(ITERS):
         t = c
         for __ in range(rng.choice((1, 1, 2))):
-            nt = rng.choice(MUTS)(t, rng)
-            t = nt or t
+            if body_span(t) is None:
+                t = c
+                break
+            t = rng.choice(MUTS)(t, rng) or t
         if t == c:
             continue
         o = compile_to(t, d, opt)
