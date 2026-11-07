@@ -10,7 +10,10 @@ extern s32 D_80127BB4;
 extern s32 D_80127BB8;
 extern u32 D_80127BBC;
 
-INCLUDE_ASM("asm/nonmatchings/unit_72FB0", func_800D23B0);
+void func_800D23B0(s32 arg0, s32 arg1) {
+    func_800D2450((void *) arg0, 0U, arg1);
+    func_800DBC90(&(*(u8 *)&D_80127BA0), (u32) arg0, (u32) arg1);
+}
 
 void func_800D23FC(s32 arg0) {
     alHeapDBAlloc(0, 0, &(*(u8 *)&D_80127BA0), 1, arg0);
