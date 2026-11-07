@@ -31,7 +31,8 @@ def main():
     symbols = []
     for line in subprocess.check_output([NM, "-n", ELF], text=True).splitlines():
         parts = line.split()
-        if len(parts) == 3 and parts[1] in "Tt" and CODE_START <= int(parts[0], 16) < CODE_END:
+        # El macro nonmatching de splat añade un segundo símbolo por función
+        if len(parts) == 3 and parts[1] == "T" and "NON_MATCHING" not in parts[2] and CODE_START <= int(parts[0], 16) < CODE_END:
             symbols.append((int(parts[0], 16), parts[2]))
 
     done = c_functions()
