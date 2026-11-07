@@ -101,7 +101,7 @@ segments:
       - [0x50510, asm]
       - [0x68D10, c, unit_68D10]
       - [0x699E0, c, unit_699E0]
-      - [0x69E80, asm]
+      - [0x69E80, c, unit_69E80]
       - [0x6ADC0, c, unit_6ADC0]
       - [0x6AE90, asm]
       - [0x6E0C0, c, unit_6E0C0]
