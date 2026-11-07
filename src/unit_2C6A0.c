@@ -31,7 +31,10 @@ s32 func_8008D3AC(void) {
     return D_800F36F4;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", func_8008D3B8);
+void func_8008D3B8(void *arg0) {
+    D_801184B4 = (*(u8 *)((u8 *)(arg0) + 0x18)) + 6;
+    D_801184B8 = 0;
+}
 
 void func_8008D3D4(void) {
     D_801416A0((s32) (D_801184B8 * 0x64) / (s32) (D_801184B4 - 1));
