@@ -1,5 +1,6 @@
 #include "common.h"
 #include "include_asm.h"
+s32 alHeapDBAlloc(s32,s32, void *,s32, s32);
 
 extern s32 D_80127BA0;
 extern s32 D_80127BA4;
@@ -11,7 +12,9 @@ extern u32 D_80127BBC;
 
 INCLUDE_ASM("asm/nonmatchings/unit_72FB0", func_800D23B0);
 
-INCLUDE_ASM("asm/nonmatchings/unit_72FB0", func_800D23FC);
+void func_800D23FC(s32 arg0) {
+    alHeapDBAlloc(0, 0, &(*(u8 *)&D_80127BA0), 1, arg0);
+}
 
 s32 func_800D242C(void) {
     return D_80127BA4 - D_80127BA0;
