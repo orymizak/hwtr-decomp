@@ -1,5 +1,10 @@
 #include "common.h"
 #include "include_asm.h"
+s32 osCreateThread(void *,s32, void *,s32, void *, s32);
+s32 osStartThread(void *);
+extern u8 D_8012DBE0;
+extern u8 D_8012FD90;
+extern u8 func_800D5E00;
 
 extern s32 D_8014D304;
 extern s32 D_8014D33C;
@@ -49,4 +54,7 @@ u8 func_800D5DF4(void) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_76160", func_800D5E00);
 
-INCLUDE_ASM("asm/nonmatchings/unit_76160", func_800D5ED0);
+void func_800D5ED0(void) {
+    osCreateThread(&D_8012DBE0, 4, &func_800D5E00, 0, &D_8012FD90, 0x32);
+    osStartThread(&D_8012DBE0);
+}
