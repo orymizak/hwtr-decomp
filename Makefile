@@ -51,7 +51,7 @@ extract:
 	$(PYTHON) tools/extract_files.py
 
 progress: $(ELF)
-	$(PYTHON) tools/progress.py
+	$(PYTHON) tools/progress.py --readme
 
 verify: $(ROM)
 	@sha1=$$(shasum $(ROM) | cut -d' ' -f1); \

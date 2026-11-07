@@ -3,6 +3,8 @@
 import glob
 import re
 import subprocess
+import sys
+from pathlib import Path
 
 ELF = "build/hotwheelsturbo.elf"
 NM = "mips-linux-gnu-nm"
@@ -36,6 +38,7 @@ def main():
             symbols.append((int(parts[0], 16), parts[2]))
 
     done = c_functions()
+    table = ["| Zona | Funciones | Bytes de código | Avance |", "|---|---|---|---|"]
     print(f"{'zona':10} {'funciones':>13} {'bytes':>17} {'avance':>8}")
     rows = [("total", CODE_START, CODE_END)] + ZONES
     for name, start, end in rows:
@@ -49,6 +52,13 @@ def main():
                     c_bytes += next_addr - addr
         size = end - start
         print(f"{name:10} {c_funcs:5}/{funcs:<7} {c_bytes:8}/{size:<8} {c_bytes / size * 100:7.2f}%")
+        table.append(f"| {name} | {c_funcs}/{funcs} | {c_bytes}/{size} | {c_bytes / size * 100:.2f} % |")
+
+    if "--readme" in sys.argv:
+        readme = Path("README.md")
+        text = readme.read_text()
+        block = "<!-- progress -->\n" + "\n".join(table) + "\n<!-- /progress -->"
+        readme.write_text(re.sub(r"<!-- progress -->.*?<!-- /progress -->", block, text, flags=re.S))
 
 
 if __name__ == "__main__":

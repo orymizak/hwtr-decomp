@@ -61,8 +61,20 @@ make extract
 
 ## Estado
 
-La ROM se reconstruye idéntica, pero casi todo el código sigue en ensamblador generado. `make progress`
-muestra el avance por zona, en funciones y bytes de código.
+La ROM se reconstruye idéntica, pero casi todo el código sigue en ensamblador generado.
+
+<!-- progress -->
+| Zona | Funciones | Bytes de código | Avance |
+|---|---|---|---|
+| total | 100/1911 | 12968/554576 | 2.34 % |
+| juego | 100/1373 | 12968/446896 | 2.90 % |
+| audio | 0/188 | 0/32608 | 0.00 % |
+| sistema | 0/87 | 0/10064 | 0.00 % |
+| libultra | 0/238 | 0/60640 | 0.00 % |
+| libc | 0/25 | 0/4368 | 0.00 % |
+<!-- /progress -->
+
+`make progress` actualiza esta tabla.
 
 - **Compilador:** GCC 2.7.2 compatible con KMC reproduce exactamente las funciones probadas. Las opciones
   de compilación aún son provisionales, y varían por archivo (`-O2` y `-O0`).
