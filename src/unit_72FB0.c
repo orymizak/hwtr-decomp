@@ -27,7 +27,24 @@ s32 *func_800D2444(void) {
     return &D_80127BA0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_72FB0", func_800D2450);
+void func_800D2450(void *arg0, u8 arg1, s32 arg2) {
+  volatile long long pad;
+  s32 var_v0;
+  void *var_a0;
+  u8 new_var;
+  var_a0 = arg0;
+  var_v0 = arg2 - 1;
+  if (arg2 != 0) {
+    do
+    {
+      new_var = arg1;
+      *((u8 *) var_a0) = new_var;
+      var_v0 -= 1;
+      var_a0 += 1;
+    }
+    while (var_v0 != (-1));
+  }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_72FB0", func_800D247C);
 

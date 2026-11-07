@@ -37,7 +37,12 @@ INCLUDE_ASM("asm/nonmatchings/unit_6AE90", func_800CB0DC);
 
 INCLUDE_ASM("asm/nonmatchings/unit_6AE90", func_800CB168);
 
-INCLUDE_ASM("asm/nonmatchings/unit_6AE90", func_800CB268);
+void func_800CB268(void) {
+  int new_var;
+  new_var = 0x80;
+  D_80124D70 = new_var;
+  D_80124D71 = 0;
+}
 
 void func_800CB280(void) {
     D_80124D70 = 0;
