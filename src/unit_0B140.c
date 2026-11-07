@@ -72,7 +72,34 @@ s32 func_8006B630(void) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_0B140", func_8006B6B8);
 
-INCLUDE_ASM("asm/nonmatchings/unit_0B140", func_8006B838);
+void func_8006B838(void) {
+    s32 *var_a0;
+    s32 *var_a1;
+    s32 *var_a2;
+    s32 *var_a3;
+    s32 temp_v1;
+    s32 temp_v1_2;
+    s32 var_t0;
+
+    var_t0 = 0;
+    var_a0 = &D_800F0414;
+    var_a3 = (u8 *)&D_800F0414 + 4;
+    var_a2 = (u8 *)&D_800F0414 - 0xC;
+    var_a1 = (u8 *)&D_800F0414 - 0x10;
+    do {
+        temp_v1 = *var_a1;
+        var_t0 += 1;
+        *var_a1 = *var_a2;
+        *var_a2 = temp_v1;
+        temp_v1_2 = *var_a3;
+        var_a2 += 21;
+        var_a1 += 21;
+        *var_a3 = *var_a0;
+        *var_a0 = temp_v1_2;
+        var_a0 += 21;
+        var_a3 += 21;
+    } while (var_t0 < 4);
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_0B140", func_8006B894);
 
