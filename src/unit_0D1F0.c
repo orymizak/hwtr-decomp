@@ -1,5 +1,7 @@
 #include "common.h"
 #include "include_asm.h"
+extern s32 D_80138AA8;
+extern s32 D_8014C1A8;
 typedef struct { s32 f0; s32 f4; u8 p8[0x548]; } S_D_801455C0;
 extern S_D_801455C0 D_801455C0[];
 s32 func_8007F5C4(s32,s32);
@@ -103,7 +105,25 @@ INCLUDE_ASM("asm/nonmatchings/unit_0D1F0", func_8006DD60);
 
 INCLUDE_ASM("asm/nonmatchings/unit_0D1F0", func_8006DEF4);
 
-INCLUDE_ASM("asm/nonmatchings/unit_0D1F0", func_8006DF34);
+void func_8006DF34(s32 arg0) {
+    register s32 var_a1;
+    register s32 *var_v1;
+    register u16 *var_a2;
+    register s16 temp_v0;
+
+    if ((NULL != (*(void * *)&D_800F05E0)) && (D_800F05E4 != 0) && ((1 != D_8014C1A8) & (D_80138AA8 != 0))) {
+        var_a2 = (*(u32 *)((u8 *)((*(void * *)&D_800F05E0)) + 0x4));
+        var_a1 = 0;
+        var_v1 = &D_8014D980;
+        do {
+            temp_v0 = *(s16 *)((2 * *var_v1) + arg0);
+            var_v1 += 1;
+            *var_a2 = temp_v0;
+            var_a2 += 1;
+            var_a1 += 1;
+        } while (var_a1 < 0x400);
+    }
+}
 
 void func_8006DFBC(void) {
     if (D_800F05E0 != 0) {
