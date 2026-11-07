@@ -35,9 +35,9 @@ def asm_of(unit, name):
 
 def width_options(asm):
     w = {}
-    for op, off in re.findall(r"\*/\s+(lw|sw|lbu|lb|sb|lhu|lh|sh|lwc1|swc1|ldc1|sdc1)\s+\S+\s+(-?0x[0-9A-F]+)\(\$", asm):
+    for op, off in re.findall(r"\*/\s+(lw|sw|lbu|lb|sb|lhu|lh|sh|lwc1|swc1|ldc1|sdc1)\s+\S+\s+(-?0x[0-9A-F]+)\(\$(?!sp)", asm):
         w.setdefault(int(off, 16), set()).add(WIDTH[op])
-    return {k: sorted(v) for k, v in w.items()}
+    return {k: sorted(v, key=lambda t: (t != "s32", t)) for k, v in w.items()}
 
 
 def base_start(s, end):
@@ -69,31 +69,83 @@ def base_start(s, end):
 def expand_fields(t, choose):
     """Convierte a->unk8 en (*(T *)((u8 *)(a) + 0x8)), de dentro hacia fuera."""
     while True:
-        m = re.search(r"->unk([0-9A-Fa-f]+)", t)
+        m = re.search(r"->unk(-?)([0-9A-Fa-f]+)", t)
         if not m:
             return t
         b = base_start(t, m.start())
-        off = m.group(1)
-        t = f"{t[:b]}(*({choose(int(off, 16))} *)((u8 *)({t[b:m.start()]}) + 0x{off})){t[m.end():]}"
+        sign, off = m.group(1), m.group(2)
+        val = int(sign + off, 16)
+        ty = "s32 (**)()" if t[m.end():m.end() + 1] == "(" else f"{choose(val)} *"
+        add = f"- 0x{off}" if sign else f"+ 0x{off}"
+        t = f"{t[:b]}(*({ty})((u8 *)({t[b:m.start()]}) {add})){t[m.end():]}"
 
 
 def symbol_widths(asm):
     w = {}
-    for op, sym in re.findall(r"\*/\s+(lw|sw|lbu|lb|sb|lhu|lh|sh|lwc1|swc1|ldc1|sdc1)\s+\S+\s+%lo\((\w+)", asm):
+    for op, sym, off in re.findall(r"\*/\s+(lw|sw|lbu|lb|sb|lhu|lh|sh|lwc1|swc1|ldc1|sdc1)\s+\S+\s+%lo\((\w+)(?: \+ 0x([0-9A-F]+))?\)", asm):
         w.setdefault(sym, WIDTH[op])
+        w.setdefault((sym, int(off or "0", 16)), WIDTH[op])
     return w
+
+
+def global_fields(t, syms):
+    """D_X.unk4 sobre un símbolo sin tipo: acceso por bytes con el ancho que usa el ensamblador."""
+    def rep(m):
+        ty = syms.get((m.group(1), int(m.group(2), 16)), "s32")
+        return f"(*({ty} *)((u8 *)&{m.group(1)} + 0x{m.group(2)}))"
+    return re.sub(r"\b(D_[0-9A-F]+)\.unk([0-9A-F]+)\b", rep, t)
 
 
 def byte_symbols(t, syms):
     """m2c escala en bytes lo que tipa `?`: esos símbolos pasan a u8 con cast en cada acceso."""
     for sym in re.findall(r"^extern \? (\w+);$", t, re.M):
         t = t.replace(f"extern ? {sym};", f"extern u8 {sym};")
-        t = t.replace(f"*(&{sym}", f"*({syms.get(sym, 's32')} *)(&{sym}")
+        while True:
+            i = t.find(f"*(&{sym}")
+            if i < 0:
+                break
+            j, depth = i + 1, 0
+            while True:
+                depth += (t[j] == "(") - (t[j] == ")")
+                if depth == 0:
+                    break
+                j += 1
+            if t[j + 1:j + 2] == "(":
+                t = f"{t[:i]}(*(s32 (**)()){t[i + 1:j + 1]}){t[j + 1:]}"
+            else:
+                t = f"{t[:i]}*({syms.get(sym, 's32')} *){t[i + 1:]}"
     return t
+
+
+def void_derefs(t, choice):
+    """`*x` sobre `void *x` no compila: usa el ancho visto en el desplazamiento 0."""
+    for x in set(re.findall(r"\bvoid \*(\w+)[;,)]", t)):
+        ty = choice.get(0, "s32")
+        t = re.sub(r"(?<![\w)\]])\*\*%s\b" % x, f"(*({ty} *)(*(s32 *){x}))", t)
+        t = re.sub(r"(?<![\w)\]])\*%s\b(?!\s*[,;)]\s*$)" % x, f"(*({ty} *){x})", t)
+    return t
+
+
+def declare_stack(t):
+    """m2c lee huecos de pila sin declararlos."""
+    head = re.search(r"^[\w \*]+\b\w+\(.*\) \{\n", t, re.M)
+    if not head:
+        return t
+    body = t[head.end():]
+    names = sorted(n for n in set(re.findall(r"\bsp[0-9A-F]+\b", body)) if not re.search(r"^\s+[\w \*]+\b%s\b[^=]*;$" % n, body, re.M))
+    return t[:head.end()] + "".join(f"    s32 {n};\n" for n in names) + body
+
+
+def unspecified_protos(t):
+    head = re.search(r"^[\w \*]+\b\w+\(.*\) \{$", t, re.M)
+    end = head.start() if head else len(t)
+    return re.sub(r"^([\w \*]+\b\w+)\(.*\);$", r"\1();", t[:end], flags=re.M) + t[end:]
 
 
 def clean(text, choice, syms, ptr):
     t = re.sub(r"\s*/\*.*?\*/", "", text)
+    t = re.sub(r"^.*\bmemset\(.*\);\n", "", t, flags=re.M)
+    t = global_fields(t, syms)
     if re.search(r"M2C_|saved_reg|\.unk[0-9A-Fa-f]", t):
         return None
     if ptr == "void":
@@ -110,6 +162,7 @@ def clean(text, choice, syms, ptr):
         t = expand_fields(t, lambda o: choice.get(o, "s32"))
     except IndexError:
         return None
+    t = declare_stack(void_derefs(t, choice))
     return "\n".join(l.rstrip() for l in t.splitlines())
 
 
@@ -154,6 +207,10 @@ def convert(job):
     d = TMP / "p2" / str(i)
     d.mkdir(parents=True, exist_ok=True)
     v, size, asm = asm_of(unit, name)
+    # m2c no acepta saltos a la propia función: les da una etiqueta local.
+    selfb = re.sub(r"^(\s+/\*.*?\*/\s+(?!jal\b)\w+\s.*\b)%s$" % re.escape(name), r"\1.Lself", asm, flags=re.M)
+    if selfb != asm:
+        asm = selfb.replace(f"glabel {name}\n", f"glabel {name}\n.Lself:\n", 1)
     (d / "f.s").write_text(asm)
     opts, syms = width_options(asm), symbol_widths(asm)
     multi = [k for k, w in opts.items() if len(w) > 1]
@@ -172,6 +229,9 @@ def convert(job):
                 if c is None:
                     continue
                 o = compile_to(c, d, opt)
+                if o is None:
+                    c = unspecified_protos(c)
+                    o = compile_to(c, d, opt)
                 if o is None:
                     continue
                 dif, rodata = compare(o, v, size, d)
