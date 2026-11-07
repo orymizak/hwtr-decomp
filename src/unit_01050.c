@@ -403,6 +403,11 @@ INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80064EA4);
 
 INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80064EE8);
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80064F5C);
+void func_80064F5C(s32 arg0, u32 arg1) {
+    func_800D6240(arg0, 0x80020400, (arg1 & 1) + arg1);
+}
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80064F84);
+void func_80064F84(s32 arg0, u32 arg1) {
+    func_800D6240(arg0, 0x80000400, (arg1 & 1) + arg1);
+    func_800CE89C((void *)0x80000400);
+}
