@@ -1,5 +1,21 @@
 #include "common.h"
 #include "include_asm.h"
+s32 func_8006C0EC(s32,s32);
+extern u8 D_800F03EB;
+extern s32 D_80145568;
+extern s32 D_8014556C;
+extern s32 D_80145570;
+extern s32 D_80145574;
+extern s32 D_80145578;
+extern s32 D_8014557C;
+extern s32 D_80145580;
+extern s32 D_80145584;
+extern s32 D_80145588;
+extern s32 D_8014558C;
+extern s32 D_80145590;
+extern s32 D_80145594;
+extern s32 D_801455A4;
+extern s32 D_801455B0;
 
 s32 Memory_Free(s32);
 extern s32 D_80102208;
@@ -19,7 +35,25 @@ INCLUDE_ASM("asm/nonmatchings/unit_0B140", func_8006B2A0);
 
 INCLUDE_ASM("asm/nonmatchings/unit_0B140", func_8006B4F8);
 
-INCLUDE_ASM("asm/nonmatchings/unit_0B140", func_8006B630);
+s32 func_8006B630(void) {
+    D_80145568 = 0;
+    D_8014556C = 0;
+    D_80145570 = 0;
+    D_801455A4 = 0;
+    D_80145574 = 0;
+    D_80145578 = 0;
+    D_8014557C = 0;
+    D_80145580 = 0;
+    D_80145584 = 0;
+    D_80145588 = 0;
+    D_801455B0 = 0;
+    D_8014558C = 0;
+    D_80145590 = 0;
+    D_80145594 = 0;
+    D_80145584 = 0;
+    D_80145588 = 0;
+    return 1;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_0B140", func_8006B6B8);
 
@@ -35,7 +69,9 @@ INCLUDE_ASM("asm/nonmatchings/unit_0B140", func_8006BDA8);
 
 INCLUDE_ASM("asm/nonmatchings/unit_0B140", func_8006BE34);
 
-INCLUDE_ASM("asm/nonmatchings/unit_0B140", func_8006C0A0);
+u8 func_8006C0A0(void) {
+    return D_800F03EB;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_0B140", func_8006C0AC);
 
@@ -43,7 +79,10 @@ INCLUDE_ASM("asm/nonmatchings/unit_0B140", func_8006C0C4);
 
 INCLUDE_ASM("asm/nonmatchings/unit_0B140", func_8006C0EC);
 
-INCLUDE_ASM("asm/nonmatchings/unit_0B140", func_8006C218);
+s32 func_8006C218(s32 arg0) {
+    func_8006C0EC(arg0 & 0xFF, 0);
+    return 1;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_0B140", func_8006C23C);
 
