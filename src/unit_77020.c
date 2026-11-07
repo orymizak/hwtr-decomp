@@ -50,7 +50,11 @@ s32 func_800D64A0(void *arg0) {
     return temp_v0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_77020", func_800D64F0);
+void func_800D64F0(s32 arg0) {
+  void ***temp_a1;
+  temp_a1 = *((s32 *) (((u8 *) arg0) + 0xC));
+  func_800E16F0(*(*temp_a1), (*((s32 *) (((u8 *) arg0) + 0xC))) + 4);
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_77020", func_800D6518);
 

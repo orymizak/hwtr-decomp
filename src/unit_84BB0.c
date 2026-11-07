@@ -3,4 +3,8 @@
 
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_84BB0", __osAiDeviceBusy);
+s32 __osAiDeviceBusy(void) {
+  int new_var;
+  new_var = 0;
+  return (*((volatile s32 *) 0xA450000C)) < new_var;
+}
