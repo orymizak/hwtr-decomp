@@ -166,7 +166,7 @@ segments:
       - [0x775A0, c, unit_775A0]
       - [0x775E0, asm]
       - [0x77BA0, c, unit_77BA0]
-      - [0x77D30, asm]
+      - [0x77D30, c, unit_77D30]
       - [0x78170, c, unit_78170]
       - [0x784B0, c, unit_784B0]
       - [0x78510, c, unit_78510]
