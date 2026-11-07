@@ -80,7 +80,7 @@ segments:
       - [0x195B0, c, game_init]
       - [0x19800, c, heap]
       - [0x19A70, c, memory]
-      - [0x19D40, asm]
+      - [0x19D40, c, unit_19D40]
       - [0x1CC80, c, unit_1CC80]
       - [0x1F7F0, c, sys_table]
       - [0x1FC50, c, lz]

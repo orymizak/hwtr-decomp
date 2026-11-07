@@ -1,0 +1,93 @@
+#include "common.h"
+#include "include_asm.h"
+
+s32 Memory_Alloc(s32);
+f32 func_8007ADF0(f32, f32);
+extern s32 D_8014551C;
+
+INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_80079140);
+
+INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_80079BD4);
+
+INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_80079DBC);
+
+void func_80079E48(void *arg0) {
+    Memory_Alloc(*(u16 *)((u8 *)arg0 + 0x4) * 8);
+}
+
+s32 func_80079E68(void *arg0) {
+    s32 var_v0;
+    u16 temp_a0;
+
+    temp_a0 = *(u16 *)((u8 *)arg0 + 0x6);
+    var_v0 = 0;
+    if (temp_a0 != 0) {
+        var_v0 = Memory_Alloc(temp_a0 * 0x10);
+    }
+    return var_v0;
+}
+
+INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_80079E90);
+
+INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_80079EF4);
+
+INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_80079FC0);
+
+INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_8007A004);
+
+INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_8007A858);
+
+INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_8007A9E0);
+
+f32 func_8007AC64(f32 arg0) {
+    f32 temp_fv0;
+    f32 var_fv0;
+
+    if (fabsf(arg0) > 1.0f) {
+        return 0.0f;
+    }
+    temp_fv0 = sqrtf(1.0f - (arg0 * arg0));
+    if (temp_fv0 != 0.0f) {
+        return func_8007ADF0(arg0, temp_fv0);
+    }
+    var_fv0 = 1.5707964f;
+    if (!(arg0 > 0.0f)) {
+        var_fv0 = -1.5707964f;
+    }
+    return var_fv0;
+}
+
+INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_8007AD24);
+
+INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_8007ADF0);
+
+INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_8007AFAC);
+
+void func_8007AFD4(void *arg0, void *arg1, void *arg2) {
+    *(f32 *)((u8 *)arg2 + 0x0) = (f32) ((*(f32 *)((u8 *)arg0 + 0x0) * *(f32 *)((u8 *)arg1 + 0x0)) + (*(f32 *)((u8 *)arg0 + 0x4) * *(f32 *)((u8 *)arg1 + 0x10)) + (*(f32 *)((u8 *)arg0 + 0x8) * *(f32 *)((u8 *)arg1 + 0x20)));
+    *(f32 *)((u8 *)arg2 + 0x4) = (f32) ((*(f32 *)((u8 *)arg0 + 0x0) * *(f32 *)((u8 *)arg1 + 0x4)) + (*(f32 *)((u8 *)arg0 + 0x4) * *(f32 *)((u8 *)arg1 + 0x14)) + (*(f32 *)((u8 *)arg0 + 0x8) * *(f32 *)((u8 *)arg1 + 0x24)));
+    *(f32 *)((u8 *)arg2 + 0x8) = (f32) ((*(f32 *)((u8 *)arg0 + 0x0) * *(f32 *)((u8 *)arg1 + 0x8)) + (*(f32 *)((u8 *)arg0 + 0x4) * *(f32 *)((u8 *)arg1 + 0x18)) + (*(f32 *)((u8 *)arg0 + 0x8) * *(f32 *)((u8 *)arg1 + 0x28)));
+    *(f32 *)((u8 *)arg2 + 0xC) = (f32) ((*(f32 *)((u8 *)arg0 + 0x0) * *(f32 *)((u8 *)arg1 + 0xC)) + (*(f32 *)((u8 *)arg0 + 0x4) * *(f32 *)((u8 *)arg1 + 0x1C)) + (*(f32 *)((u8 *)arg0 + 0x8) * *(f32 *)((u8 *)arg1 + 0x2C)) + *(f32 *)((u8 *)arg0 + 0xC));
+    *(f32 *)((u8 *)arg2 + 0x10) = (f32) ((*(f32 *)((u8 *)arg0 + 0x10) * *(f32 *)((u8 *)arg1 + 0x0)) + (*(f32 *)((u8 *)arg0 + 0x14) * *(f32 *)((u8 *)arg1 + 0x10)) + (*(f32 *)((u8 *)arg0 + 0x18) * *(f32 *)((u8 *)arg1 + 0x20)));
+    *(f32 *)((u8 *)arg2 + 0x14) = (f32) ((*(f32 *)((u8 *)arg0 + 0x10) * *(f32 *)((u8 *)arg1 + 0x4)) + (*(f32 *)((u8 *)arg0 + 0x14) * *(f32 *)((u8 *)arg1 + 0x14)) + (*(f32 *)((u8 *)arg0 + 0x18) * *(f32 *)((u8 *)arg1 + 0x24)));
+    *(f32 *)((u8 *)arg2 + 0x18) = (f32) ((*(f32 *)((u8 *)arg0 + 0x10) * *(f32 *)((u8 *)arg1 + 0x8)) + (*(f32 *)((u8 *)arg0 + 0x14) * *(f32 *)((u8 *)arg1 + 0x18)) + (*(f32 *)((u8 *)arg0 + 0x18) * *(f32 *)((u8 *)arg1 + 0x28)));
+    *(f32 *)((u8 *)arg2 + 0x1C) = (f32) ((*(f32 *)((u8 *)arg0 + 0x10) * *(f32 *)((u8 *)arg1 + 0xC)) + (*(f32 *)((u8 *)arg0 + 0x14) * *(f32 *)((u8 *)arg1 + 0x1C)) + (*(f32 *)((u8 *)arg0 + 0x18) * *(f32 *)((u8 *)arg1 + 0x2C)) + *(f32 *)((u8 *)arg0 + 0x1C));
+    *(f32 *)((u8 *)arg2 + 0x20) = (f32) ((*(f32 *)((u8 *)arg0 + 0x20) * *(f32 *)((u8 *)arg1 + 0x0)) + (*(f32 *)((u8 *)arg0 + 0x24) * *(f32 *)((u8 *)arg1 + 0x10)) + (*(f32 *)((u8 *)arg0 + 0x28) * *(f32 *)((u8 *)arg1 + 0x20)));
+    *(f32 *)((u8 *)arg2 + 0x24) = (f32) ((*(f32 *)((u8 *)arg0 + 0x20) * *(f32 *)((u8 *)arg1 + 0x4)) + (*(f32 *)((u8 *)arg0 + 0x24) * *(f32 *)((u8 *)arg1 + 0x14)) + (*(f32 *)((u8 *)arg0 + 0x28) * *(f32 *)((u8 *)arg1 + 0x24)));
+    *(f32 *)((u8 *)arg2 + 0x28) = (f32) ((*(f32 *)((u8 *)arg0 + 0x20) * *(f32 *)((u8 *)arg1 + 0x8)) + (*(f32 *)((u8 *)arg0 + 0x24) * *(f32 *)((u8 *)arg1 + 0x18)) + (*(f32 *)((u8 *)arg0 + 0x28) * *(f32 *)((u8 *)arg1 + 0x28)));
+    *(f32 *)((u8 *)arg2 + 0x2C) = (f32) ((*(f32 *)((u8 *)arg0 + 0x20) * *(f32 *)((u8 *)arg1 + 0xC)) + (*(f32 *)((u8 *)arg0 + 0x24) * *(f32 *)((u8 *)arg1 + 0x1C)) + (*(f32 *)((u8 *)arg0 + 0x28) * *(f32 *)((u8 *)arg1 + 0x2C)) + *(f32 *)((u8 *)arg0 + 0x2C));
+}
+
+INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_8007B230);
+
+INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_8007B510);
+
+INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_8007B598);
+
+INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_8007BE30);
+
+INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_8007BE54);
+
+INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_8007BEBC);
+
+INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_8007BF20);
