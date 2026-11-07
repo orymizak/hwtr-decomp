@@ -265,8 +265,8 @@ s32 D_800F1C9C[5] = { 0 };
 s32 File_LoadLZ(s32 index, void *dst);
 s32 File_LoadLZChunked(s32 index, u8 *dst);
 s32 File_LoadLZChunkedAsync();
-void *func_80079024(u32 size);
-void func_800790C4(void *ptr);
+void *Memory_Alloc(u32 size);
+void Memory_Free(void *ptr);
 void func_800D6240(u32 romAddr, void *dst, u32 size);
 void func_800D66D0(PakHandle *handle, s32 port);
 void func_800D6770(PakHandle *handle);
@@ -430,10 +430,10 @@ s32 func_8006E578(s32 port) {
     D_800F1C98[port] = 1;
     gFileSystem.initialized[port] = 0;
     if (gFileSystem.handles[port] != NULL) {
-        func_800790C4(gFileSystem.handles[port]);
+        Memory_Free(gFileSystem.handles[port]);
         gFileSystem.handles[port] = NULL;
     }
-    handle = func_80079024(sizeof(PakHandle));
+    handle = Memory_Alloc(sizeof(PakHandle));
     memset(handle, 0, sizeof(PakHandle));
     func_800D66D0(handle, port);
     if (port == 0) {
@@ -443,12 +443,12 @@ s32 func_8006E578(s32 port) {
         gFileSystem.handles[port] = handle;
         switch (handle->status) {
             case 1:
-                func_800790C4(handle);
+                Memory_Free(handle);
                 gFileSystem.handles[port] = NULL;
                 D_800F1C9C[port] = 1;
                 return 1;
             case 11:
-                func_800790C4(handle);
+                Memory_Free(handle);
                 gFileSystem.handles[port] = NULL;
                 if (func_8006C4BC(port)) {
                     D_800F1C9C[port] = 1;
@@ -477,7 +477,7 @@ s32 func_8006E578(s32 port) {
         gFileSystem.handles[port] = handle;
         switch (handle->status) {
             case 1:
-                func_800790C4(handle);
+                Memory_Free(handle);
                 gFileSystem.handles[port] = NULL;
                 D_800F03F8[port].unk00 = 0;
                 D_800F1C9C[port] = 1;
@@ -549,8 +549,8 @@ s32 Save_Read(s32 port, SaveBlock *dst) {
     u8 errors[2];
     PakHandle *handle;
 
-    blocks[0] = func_80079024(sizeof(SaveBlock));
-    blocks[1] = func_80079024(sizeof(SaveBlock));
+    blocks[0] = Memory_Alloc(sizeof(SaveBlock));
+    blocks[1] = Memory_Alloc(sizeof(SaveBlock));
     D_800F1C98[port] = 0;
     handle = gFileSystem.handles[port];
     if (handle != NULL && gFileSystem.initialized[port]) {
@@ -565,8 +565,8 @@ s32 Save_Read(s32 port, SaveBlock *dst) {
             goto second_only;
         }
     }
-    func_800790C4(blocks[0]);
-    func_800790C4(blocks[1]);
+    Memory_Free(blocks[0]);
+    Memory_Free(blocks[1]);
     return 0;
 
 second_only:
@@ -583,8 +583,8 @@ first_valid:
     }
 
 done:
-    func_800790C4(blocks[0]);
-    func_800790C4(blocks[1]);
+    Memory_Free(blocks[0]);
+    Memory_Free(blocks[1]);
     return 1;
 }
 
@@ -627,7 +627,7 @@ s32 File_LoadLZ(s32 index, void *dst) {
     void *buffer;
     u32 size;
 
-    buffer = func_80079024(gFileSystem.table[index].storedSize);
+    buffer = Memory_Alloc(gFileSystem.table[index].storedSize);
     if (buffer == NULL) {
         return 0;
     }
@@ -638,7 +638,7 @@ s32 File_LoadLZ(s32 index, void *dst) {
         func_800D6240(gFileSystem.table[index].romStart, buffer, size);
     }
     LZ_Decompress(buffer, dst);
-    func_800790C4(buffer);
+    Memory_Free(buffer);
     return 1;
 }
 
@@ -665,7 +665,7 @@ s32 File_LoadLZAsync(s32 index, void *dst, s32 slot) {
     void *buffer;
     u32 size;
 
-    buffer = func_80079024(gFileSystem.table[index].storedSize);
+    buffer = Memory_Alloc(gFileSystem.table[index].storedSize);
     if (buffer == NULL) {
         return 0;
     }
@@ -682,7 +682,7 @@ s32 File_LoadLZAsync(s32 index, void *dst, s32 slot) {
 
 s32 File_FinishLZAsync(s32 slot) {
     LZ_Decompress(gAsyncReads[slot].buffer, gAsyncReads[slot].dst);
-    func_800790C4(gAsyncReads[slot].buffer);
+    Memory_Free(gAsyncReads[slot].buffer);
     return 1;
 }
 
