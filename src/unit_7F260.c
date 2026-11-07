@@ -1,5 +1,6 @@
 #include "common.h"
 #include "include_asm.h"
+u32 func_800DEE5C(s32, void *, void *, u32);
 
 s32 osSetIntMask(s32);
 s32 osViGetCurrentFramebuffer();
@@ -30,7 +31,26 @@ INCLUDE_ASM("asm/nonmatchings/unit_7F260", func_800DE99C);
 
 INCLUDE_ASM("asm/nonmatchings/unit_7F260", func_800DEA9C);
 
-INCLUDE_ASM("asm/nonmatchings/unit_7F260", func_800DEB8C);
+void func_800DEB8C(s32 arg0) {
+    s32 sp10;
+    s32 sp14;
+    u32 var_s0;
+    void *temp_a1;
+
+    temp_a1 = (*(s32 *)((u8 *)(arg0) + 0x278));
+    sp10 = 0;
+    sp14 = 0;
+    (*(s32 *)((u8 *)(arg0) + 0x278)) = NULL;
+    (*(s32 *)((u8 *)(temp_a1) + 0x4)) = (s32) ((*(s32 *)((u8 *)(temp_a1) + 0x4)) & ~1);
+    func_800DEC70(arg0, (s32) temp_a1);
+    var_s0 = ((*(s32 *)((u8 *)(arg0) + 0x274)) == 0) * 2;
+    if ((*(s32 *)((u8 *)(arg0) + 0x278)) == NULL) {
+        var_s0 |= 1;
+    }
+    if (func_800DEE5C(arg0, &sp10, &sp14, var_s0) != var_s0) {
+        func_800DED54(arg0, sp10, sp14);
+    }
+}
 
 s32 func_800DEC1C(s32 arg0) {
     s32 temp_s0;
