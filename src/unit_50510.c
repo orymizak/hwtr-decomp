@@ -1,5 +1,6 @@
 #include "common.h"
 #include "include_asm.h"
+extern u8 D_801206D0;
 
 extern s32 (*D_8014104C)(s32);
 s32 func_800B073C();
@@ -28,7 +29,9 @@ INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B0024);
 
 INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B027C);
 
-INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B02E4);
+void *func_800B02E4(s32 arg0) {
+    return (arg0 * 0x88C) + &D_801206D0;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B0310);
 
