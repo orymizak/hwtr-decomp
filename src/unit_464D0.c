@@ -7,9 +7,37 @@ void func_8007A9E0(void *);
 s32 func_8009A770(s32 *);
 extern s32 D_8011E870;
 
-INCLUDE_ASM("asm/nonmatchings/unit_464D0", func_800A58D0);
+s32 func_800A58D0(void) {
+    u8 *e = (u8 *)&D_8011E870;
+    u32 i;
 
-INCLUDE_ASM("asm/nonmatchings/unit_464D0", func_800A5950);
+    memset(e, 0, 0xE20);
+    for (i = 0; i < 8; i++) {
+        *(s32 *)e = 0;
+        *(u8 **)(e + 0x68) = e + 0x90;
+        *(u8 **)(e + 0x54) = e + 0x1A8;
+        *(u8 **)(e + 0x58) = e + 0x1B4;
+        *(u8 *)(e + 0x50) = 1;
+        *(u8 **)(e + 0x5C) = e + 0x1C0;
+        e += 0x1C4;
+    }
+    return 1;
+}
+
+
+s32 func_800A5950(void) {
+    Ent1C4_ *e = (Ent1C4_ *)&D_8011E870;
+    u32 i;
+
+    for (i = 0; i < 8; i++, e++) {
+        if (e->w0 == 1) {
+            func_8009A770((s32 *)((u8 *)e + 8));
+            e->w0 = 0;
+        }
+    }
+    return 1;
+}
+
 
 void func_800A59B8(void) {
     Ent1C4_ *e = (Ent1C4_ *)&D_8011E870;

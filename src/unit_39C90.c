@@ -1,5 +1,18 @@
 #include "common.h"
 #include "include_asm.h"
+extern s32 D_8011B33C;
+extern s32 D_8011B344;
+extern s32 D_8011B348;
+extern s32 D_8011B34C;
+void func_800C9B40(void);
+typedef struct { s32 a; s32 b; s32 c; } V12_;
+typedef struct { s32 a; s32 b; s32 c; s32 d; } V16_;
+typedef struct { u8 pad[0x18]; V12_ v[6]; V16_ q[1]; } Cam41_;
+typedef struct Nd4_ { s32 a; struct Nd4_ *prev; struct Nd4_ *next; u16 cnt; } Nd4_;
+typedef struct { u8 pad[0x4C]; void *a; void *b; void *c; u8 pad2[0xC]; s32 id; } Obj95_;
+typedef struct Lnk95_ { Obj95_ *obj; s32 x; struct Lnk95_ *next; } Lnk95_;
+extern Lnk95_ *D_8011B338;
+s32 func_8009A770(s32 *);
 typedef struct { u8 pad[0x110]; u8 b110; } Obj60_;
 typedef struct { u8 pad[8]; s32 w8; } Obj70_;
 typedef struct { u8 pad[0x60]; Obj60_ *p60; u8 pad2[0xC]; Obj70_ *p70; } ObjA2_;
@@ -17,11 +30,43 @@ INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_80099090);
 
 INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_8009930C);
 
-INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_800993B8);
+void func_800A3D64(Nd3_ **list);
+s32 func_800993B8(void) {
+    func_800C9B40();
+    func_800A3D64((Nd3_ **)&(*(s32 *)&D_8011B338));
+    func_800A3D64((Nd3_ **)&D_8011B33C);
+    func_800A3D64((Nd3_ **)&(*(s32 *)&D_8011B340));
+    func_800A3D64((Nd3_ **)&D_8011B344);
+    func_800A3D64((Nd3_ **)&D_8011B348);
+    func_800A3D64((Nd3_ **)&D_8011B34C);
+    Memory_Free(D_8011B334);
+    D_8011B334 = NULL;
+    return 1;
+}
+
 
 INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_80099434);
 
-INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_8009951C);
+void func_8009951C(s32 id) {
+    Lnk95_ *n = D_8011B338;
+    Obj95_ *o;
+
+    while (n != NULL) {
+        o = n->obj;
+        if (o->id == id) {
+            break;
+        }
+        n = n->next;
+    }
+    if (n != NULL) {
+        func_8009A770((s32 *)o);
+        Memory_Free(o->a);
+        Memory_Free(o->b);
+        Memory_Free(o->c);
+        Memory_Free(o);
+    }
+}
+
 
 INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_80099594);
 
@@ -111,7 +156,32 @@ void func_800A3D64(Nd3_ **list) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_800A3DB8);
+void func_800A3DB8(Nd4_ **list, s32 key) {
+    Nd4_ *n;
+    Nd4_ *nx;
+
+    for (n = *list; n != NULL; n = n->next) {
+        if (n->a == key) {
+            break;
+        }
+    }
+    if (n == NULL) {
+        n = (Nd4_ *)D_8011E860;
+        nx = n->next;
+        nx->prev = NULL;
+        n->a = key;
+        n->prev = NULL;
+        n->next = *list;
+        n->cnt = 0;
+        *list = n;
+        D_8011E860 = nx;
+        if (n->next != NULL) {
+            n->next->prev = n;
+        }
+    }
+    n->cnt++;
+}
+
 
 void func_800A3E30(void **arg0, s32 arg1) {
     u16 temp_v0;
@@ -156,7 +226,13 @@ loop_1:
 
 INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_800A3ED4);
 
-INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_800A4120);
+void func_800A4120(u8 i, V12_ *v, V16_ *q) {
+    if (D_8011B334 != NULL) {
+        *v = ((Cam41_ *)D_8011B334)->v[i];
+        *q = ((Cam41_ *)D_8011B334)->q[i];
+    }
+}
+
 
 INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_800A4198);
 

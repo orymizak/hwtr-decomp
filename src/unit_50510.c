@@ -1,5 +1,8 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { u8 pad[0x14]; u32 lo; u32 hi; } Bits5_;
+extern s8 D_800F5F90[];
+extern u8 D_80123D20[];
 void func_800C90DC(void);
 void func_800B1824(void);
 void func_800B20A4(void);
@@ -41,7 +44,17 @@ INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800AFD1C);
 
 INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B0024);
 
-INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B027C);
+u8 *func_800B027C(void) {
+    u8 i;
+
+    for (i = 0; i < 4; i++) {
+        if (D_80123D20[i] != 0) {
+            return i * 0x88C + &D_801206D0;
+        }
+    }
+    return &D_801206D0;
+}
+
 
 void *func_800B02E4(s32 arg0) {
     return (arg0 * 0x88C) + &D_801206D0;
@@ -87,7 +100,24 @@ void func_800B0624(void) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B0654);
 
-INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B06CC);
+void func_800B06CC(Bits5_ *b, u32 mask) {
+    u8 i;
+
+    for (i = 0; i < 24; i++, mask >>= 1) {
+        if (mask == 0) {
+            return;
+        }
+        if (mask & 1) {
+            s8 bit = D_800F5F90[i];
+
+            if (bit >= 32) {
+                b->hi |= 1 << (bit - 32);
+            } else {
+                b->lo |= 1 << bit;
+            }
+        }
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B073C);
 

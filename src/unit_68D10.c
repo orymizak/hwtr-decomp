@@ -66,13 +66,44 @@ void func_800C81CC(s32 arg0, s8 arg1) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_68D10", func_800C8214);
 
-INCLUDE_ASM("asm/nonmatchings/unit_68D10", func_800C82B4);
+void func_800C82B4(void) {
+    s32 (**fp)() = &D_80141048;
 
-INCLUDE_ASM("asm/nonmatchings/unit_68D10", func_800C8320);
+    if ((u32)((*fp)() - D_80124D44) >= 1000) {
+        D_80124D44 = (*fp)();
+        ((s32 (*)(void *, s32))func_800C9F18)(&D_800F9F70, 0x7C);
+    }
+}
 
-INCLUDE_ASM("asm/nonmatchings/unit_68D10", func_800C838C);
+void func_800C8320(void) {
+    s32 (**fp)() = &D_80141048;
 
-INCLUDE_ASM("asm/nonmatchings/unit_68D10", func_800C83F8);
+    if ((u32)((*fp)() - D_80124D44) >= 3000) {
+        D_80124D44 = (*fp)();
+        ((s32 (*)(void *, s32))func_800C9F18)(&D_800F9F70, 0x2D);
+    }
+}
+
+
+void func_800C838C(void) {
+    s32 (**fp)() = &D_80141048;
+
+    if ((u32)((*fp)() - D_80124D44) >= 5000) {
+        D_80124D44 = (*fp)();
+        ((s32 (*)(void *, s32))func_800C9F18)(&D_800F9F70, 0x18);
+    }
+}
+
+
+void func_800C83F8(void) {
+    s32 (**fp)() = &D_80141048;
+
+    if ((u32)((*fp)() - D_80124D44) >= 30000) {
+        D_80124D44 = (*fp)();
+        ((s32 (*)(void *, s32))func_800C9F18)(&D_800F9F70, 0x2E);
+    }
+}
+
 
 void func_800C8464(void) {
     if ((u32) (D_80141048() - D_80124D40) >= 0x1388U) {

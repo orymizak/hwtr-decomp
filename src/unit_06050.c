@@ -1,5 +1,12 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { s32 a; s32 b; s32 c; } V12_;
+typedef struct { s32 a; s32 b; s32 c; s32 d; } V16_;
+typedef struct { V16_ q; V12_ v; } E1C_;
+typedef struct { u8 pad[0x10]; E1C_ *p; } E14_;
+typedef struct { s32 idx; s32 a; s32 b; s32 c; } Rec16_;
+typedef struct { f32 x; f32 y; f32 z; } Vec3f_;
+typedef struct { Vec3f_ v; f32 s; u8 pad[2]; char name[0xE]; } Ent20_;
 extern void *D_80138170;
 void func_800734F4(void *);
 void func_8006AA34(void);
@@ -72,7 +79,18 @@ u16 func_800658C4(void) {
     return *(u16 *)((u8 *)D_8013816C + 0x10);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_800658D4);
+void func_800658D4(s32 i, Vec3f_ *pos, s32 *a, s32 *b, s32 *c) {
+    Rec16_ *r = *(Rec16_ **)((*(u8 **)&D_8013816C) + 0x4C) + i;
+    f32 *m = (f32 *)(*(u8 **)((*(u8 **)&D_8013816C) + 0x2C) + r->idx * 0x54);
+
+    pos->x = m[3];
+    pos->y = m[7];
+    pos->z = m[11];
+    *a = r->a;
+    *b = r->b;
+    *c = r->c;
+}
+
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80065940);
 
@@ -301,7 +319,10 @@ void func_8006A1F0(s32 arg0, s32 *arg1, s32 *arg2, s32 *arg3, s32 *arg4) {
     *arg4 = *(s32 *)((u8 *)temp_v1 + 0xC);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_8006A234);
+void func_8006A234(s32 a, s32 b, V12_ *v, V16_ *q) {
+    *v = (*(E14_ **)((u8 *)D_8013816C + 0x44))[a].p[b].v;
+    *q = (*(E14_ **)((u8 *)D_8013816C + 0x44))[a].p[b].q;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_8006A2B8);
 
@@ -339,7 +360,11 @@ u16 func_8006A450(void) {
     return *(u16 *)((u8 *)D_8013816C + 0xE);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_8006A460);
+void func_8006A460(s32 i, Vec3f_ *v, f32 *s, char *name) {
+    *v = (*(Ent20_ **)((u8 *)D_8013816C + 0x48))[i].v;
+    *s = (*(Ent20_ **)((u8 *)D_8013816C + 0x48))[i].s;
+    strcpy(name, (*(Ent20_ **)((u8 *)D_8013816C + 0x48))[i].name);
+}
 
 void func_8006A4D4(s32 arg0, s8 arg1) {
     s32 temp_a0;

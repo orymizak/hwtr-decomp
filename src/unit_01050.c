@@ -1,5 +1,12 @@
 #include "common.h"
 #include "include_asm.h"
+void *Memory_Alloc(s32);
+extern void *D_80101E70;
+extern u8 D_80138AB0;
+void func_8006B838(void);
+u8 func_8008BE7C(s32);
+void func_8007C224(void);
+void func_80078980(s32);
 typedef struct Node64_ { u8 pad[0xC]; f32 v; u8 pad2[4]; struct Node64_ *next; u8 pad3[2]; u8 id; } Node64_;
 extern Node64_ *D_800F0100;
 void func_800D6240(u32 devAddr, void *dram, u32 size);
@@ -165,7 +172,23 @@ s32 func_800609A8(void) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_01050", func_800609C8);
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80060AFC);
+s32 func_80061B40(void);
+u8 func_80060AFC(s32 a) {
+    u8 *p = &D_80138AB0;
+    u8 r;
+
+    func_8006C468();
+    func_80061B40();
+    if (*p != 0) {
+        func_8006B838();
+    }
+    *p = 0;
+    r = func_8008BE7C(a);
+    func_8007C224();
+    func_80078980(0);
+    return r;
+}
+
 
 s32 func_80060B6C(void) {
     return func_8008C08C() & 0xFF;
@@ -387,7 +410,26 @@ INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80064364);
 
 INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80064418);
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", func_800645BC);
+s32 func_800645BC(u8 id) {
+    Node64_ *p = D_800F0100;
+
+    while (p != NULL) {
+        if (p->id == id) {
+            break;
+        }
+        p = p->next;
+    }
+    if (p == NULL) {
+        return 0;
+    }
+    p->pad3[1] = 0;
+    if (func_800CE428(*(s32 *)p->pad2) != 0) {
+        func_800CE374(*(s32 *)p->pad2, 0);
+        *(s32 *)p->pad2 = 0;
+    }
+    return 1;
+}
+
 
 s32 func_80064638(u8 id, f32 v) {
     Node64_ *p = D_800F0100;
@@ -457,7 +499,18 @@ s32 func_80064980(void) {
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80064988);
+f32 func_80064E68(void *arg0, void *arg1);
+f32 func_80064988(void *a) {
+    f32 d = func_80064E68(a, &D_800EFF08);
+
+    d = sqrtf(d);
+
+    if (d >= 2400.0) {
+        return 0.0f;
+    }
+    return (2400.0 - d) / 2400.0;
+}
+
 
 INCLUDE_ASM("asm/nonmatchings/unit_01050", func_800649F8);
 
@@ -482,7 +535,13 @@ void func_80064EA4(u32 devAddr, u32 size, s32 a) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80064EE8);
+void func_80064EE8(u32 a, u32 sizeA, u32 b, u32 sizeB) {
+    func_800D6240(a, (void *)0x80010400, sizeA);
+    D_80101E70 = Memory_Alloc(sizeB);
+    func_800D6240(b, D_80101E70, sizeB);
+    func_800CE6D4((void *)0x80010400, (s32)D_80101E70);
+}
+
 
 void func_80064F5C(s32 arg0, u32 arg1) {
     func_800D6240(arg0, 0x80020400, (arg1 & 1) + arg1);
