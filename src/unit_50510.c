@@ -16,6 +16,10 @@ extern void *D_80123D30[];
 extern u8 D_80100BB0;
 void func_800B11FC(void);
 typedef struct { u8 d[0x140]; } E140_;
+typedef struct { u8 a; u8 pad; u16 x; u16 y; u16 x2; u16 y2; } E0A2_;
+typedef struct { u8 pad[2]; u8 n; u8 pad2; E0A2_ *arr; u8 pad3[0xB]; u8 mode; } T0A2_;
+extern u32 D_80123D10[];
+extern u32 (*D_80140FEC)(u32);
 s8 func_800B0FB0(char *s);
 extern E140_ D_80122900[][4];
 extern void (*D_8014103C)(u8, s32);
@@ -40,7 +44,38 @@ s32 func_800AFB74(void) {
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800AFB7C);
+s32 func_800AFB7C(u32 i) {
+    u32 s;
+
+    if (i >= 4) {
+        return 4;
+    }
+    if (D_80123D10[i] & 0x40) {
+        return 8;
+    }
+    s = D_80140FEC(i);
+    if (s == 0) {
+        return 0;
+    } else if (s & 2) {
+        return 2;
+    } else if (s == 4) {
+        return 3;
+    } else if (s & 1) {
+        return 1;
+    } else if (s & 0x20) {
+        return 4;
+    } else if (s & 8) {
+        return 7;
+    } else if (s & 0x10) {
+        return 6;
+    } else if (s & 0x40) {
+        return 8;
+    } else if (s & 0x80) {
+        return 9;
+    }
+    return 4;
+}
+
 
 INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800AFC40);
 
@@ -207,11 +242,41 @@ INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B1A3C);
 
 INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B1B60);
 
-INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B1C70);
+void func_800B1C70(T0A2_ *t) {
+    u32 i;
+
+    if (t->mode == 2) {
+        for (i = 0; i < t->n; i++) {
+            t->arr[i].x2 = t->arr[i].x + 640;
+            t->arr[i].y2 = t->arr[i].y;
+        }
+    } else if (t->mode == 1) {
+        for (i = 0; i < t->n; i++) {
+            t->arr[i].x2 = t->arr[i].x - 640;
+            t->arr[i].y2 = t->arr[i].y;
+        }
+    }
+}
+
 
 INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B1D30);
 
-INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B1E40);
+void func_800B1E40(T0A2_ *t) {
+    u32 i;
+
+    if (t->mode == 2) {
+        for (i = 0; i < t->n; i++) {
+            t->arr[i].x2 = t->arr[i].x + 640;
+            t->arr[i].y2 = t->arr[i].y;
+        }
+    } else if (t->mode == 1) {
+        for (i = 0; i < t->n; i++) {
+            t->arr[i].x2 = t->arr[i].x - 640;
+            t->arr[i].y2 = t->arr[i].y;
+        }
+    }
+}
+
 
 INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B1F00);
 
