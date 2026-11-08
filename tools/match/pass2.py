@@ -546,7 +546,7 @@ def degrade(c, unit, names):
     return c
 
 
-COMMIT_EVERY = 5
+COMMIT_EVERY = 20
 PENDING = []
 
 

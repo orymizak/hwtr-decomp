@@ -73,7 +73,15 @@ INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80066504);
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_800665A4);
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_800665D0);
+void func_800665D0(u32 arg0, void *arg1, void *arg2, void *arg3) {
+  u32 temp_a0;
+  s8 new_var;
+ do { temp_a0 = arg0 & 0xFFFF; } while (0);
+  *((u8 *) arg1) = (s8) (temp_a0 >> 0xB);
+  new_var = (s8) ((temp_a0 >> 6) & 0x1F);
+  *((u8 *) arg2) = new_var;
+  *((u8 *) arg3) = (s8) ((temp_a0 >> 1) & 0x1F);
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_800665F8);
 

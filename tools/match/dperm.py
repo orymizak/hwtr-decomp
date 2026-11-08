@@ -63,7 +63,7 @@ def run(job):
     finally:
         try:
             os.killpg(p.pid, signal.SIGKILL)
-        except ProcessLookupError:
+        except (ProcessLookupError, PermissionError):
             pass
         p.wait()
     for src in sorted(glob.glob(str(d / "output-0-*/source.c"))):
