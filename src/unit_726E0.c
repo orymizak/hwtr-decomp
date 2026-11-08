@@ -6,7 +6,10 @@ extern void **D_80127994;
 extern s32 D_801279A8;
 extern u8 D_801279B0;
 
-extern s32 func_800D1D30;
+typedef struct { u8 p0[0xC]; u32 unkC; u32 unk10; } Seg_;
+Seg_ *func_800D1D9C(u32 addr);
+u32 osVirtualToPhysical(void *);
+u32 func_800D1D30(u32 addr);
 
 INCLUDE_ASM("asm/nonmatchings/unit_726E0", func_800D1AE0);
 
@@ -55,9 +58,20 @@ void func_800D1C54(void) {
 }
 
 s32 *func_800D1D24(void) {
-    return &func_800D1D30;
+    return (s32 *)func_800D1D30;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_726E0", func_800D1D30);
+u32 func_800D1D30(u32 addr) {
+    Seg_ *s = func_800D1D9C(addr);
+
+    if (s == 0) {
+        return osVirtualToPhysical((void *)addr);
+    }
+    if ((addr & 0xFF000000) == 0xFF000000) {
+        addr &= 0xFFFFFF;
+        addr += 0x140000;
+    }
+    return osVirtualToPhysical((void *)(s->unk10 + addr - s->unkC));
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_726E0", func_800D1D9C);
