@@ -1,5 +1,6 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { s32 *t; s16 a; s16 b; s32 c; s32 d; s32 e; s16 f; s16 g; } Seq9_;
 s32 func_8008E510(u8);
 
 s32 Memory_Alloc(s32);
@@ -42,7 +43,15 @@ void func_800C9978(void) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_69E80", func_800C9A00);
 
-INCLUDE_ASM("asm/nonmatchings/unit_69E80", func_800C9AF0);
+void func_800C9AF0(s32 n, s32 b) {
+    D_800F9F90 = n;
+    if (n != 0) {
+        D_800F9F94 = b;
+        D_800F9F98 = Memory_Alloc(n * 2);
+        memset((void *)D_800F9F98, 0, D_800F9F90 * 2);
+    }
+}
+
 
 void func_800C9B40(void) {
     if (D_800F9F90 != 0) {
@@ -85,7 +94,15 @@ INCLUDE_ASM("asm/nonmatchings/unit_69E80", func_800C9DA0);
 
 INCLUDE_ASM("asm/nonmatchings/unit_69E80", func_800C9E70);
 
-INCLUDE_ASM("asm/nonmatchings/unit_69E80", func_800C9ED0);
+s32 func_800C9ED0(Seq9_ *s) {
+    s->c = s->t[s->a];
+    s->e = s->t[s->b];
+    s->g = -1;
+    s->f = 0;
+    s->d = 0;
+    return 0;
+}
+
 
 INCLUDE_ASM("asm/nonmatchings/unit_69E80", func_800C9F18);
 

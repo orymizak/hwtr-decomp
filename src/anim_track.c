@@ -45,7 +45,16 @@ void func_80087EA4(s32 index, Vec3 *out) {
     *out = track->result;
 }
 
-INCLUDE_ASM("asm/nonmatchings/anim_track", func_80087EE0);
+s32 func_80087EE0(s32 id) {
+    u32 i;
+
+    for (i = 0; i < D_800F3010; i++) {
+        if (D_800F3014[i].id == id) {
+            return i;
+        }
+    }
+    return 0;
+}
 
 s32 func_80087F2C(u32 index) {
     if (index >= D_800F3010) {

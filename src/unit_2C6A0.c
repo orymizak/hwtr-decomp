@@ -1,5 +1,10 @@
 #include "common.h"
 #include "include_asm.h"
+u8 (*D_8014C120)(void);
+void func_8008E700(void);
+typedef struct { u8 id; u8 b; u8 pad[2]; s32 c; } Ent8_;
+extern Ent8_ D_80118538[];
+void (*D_8014C130)(s32);
 extern s32 D_800F378C[];
 extern s32 D_800F3770[];
 extern s32 D_80141448;
@@ -36,7 +41,12 @@ INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", func_8008C0D4);
 
 INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", func_8008C548);
 
-INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", func_8008CDAC);
+void func_8008CDAC(void) {
+    func_8008E700();
+    D_80141780();
+    D_8014C0A8(0xE, 0, 1.0f, 1.0f);
+}
+
 
 INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", func_8008CDFC);
 
@@ -101,13 +111,27 @@ INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", func_8008DF18);
 
 INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", func_8008E0BC);
 
-INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", func_8008E2B0);
+void func_8008E2B0(void) {
+    u32 i;
+
+    memset(D_80118538, 0, 16);
+    for (i = 0; i < 2; i++) {
+        D_80118538[i].id = D_8014C120();
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", func_8008E310);
 
 INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", func_8008E38C);
 
-INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", func_8008E510);
+void func_8008E510(u8 i) {
+    Ent8_ *e = &D_80118538[i];
+
+    D_8014C130(e->id);
+    e->b = 0;
+    e->c = 0;
+}
+
 
 INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", func_8008E558);
 

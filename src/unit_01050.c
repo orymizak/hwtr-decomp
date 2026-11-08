@@ -1,5 +1,7 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct Node64_ { u8 pad[0xC]; f32 v; u8 pad2[4]; struct Node64_ *next; u8 pad3[2]; u8 id; } Node64_;
+extern Node64_ *D_800F0100;
 void func_800D6240(u32 devAddr, void *dram, u32 size);
 void func_800CE6D4(void *data, s32 a);
 typedef struct { s32 a; s32 b; s32 c; } Vec3J_;
@@ -219,7 +221,16 @@ s32 func_80061A84(u32 arg0) {
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80061B40);
+s32 func_80061B40(void) {
+    s32 *p = &D_800EFC68;
+
+    if (func_800CE428(*p) != 0) {
+        func_800CE374(*p, 0);
+        *p = 0;
+    }
+    return 1;
+}
+
 
 u8 func_80061B88(void) {
     return D_800F0105;
@@ -248,9 +259,17 @@ s32 func_800634C0(Vec3J_ v) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", func_800634F4);
+s32 func_800634F4(u8 i, Vec3_ v) {
+    *(Vec3_ *)((u8 *)&D_800EFF54[i] + 0x10) = v;
+    return 1;
+}
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80063550);
+
+s32 func_80063550(u8 i, Vec3_ v) {
+    *(Vec3_ *)((u8 *)&D_800EFF54[i] + 0x1C) = v;
+    return 1;
+}
+
 
 INCLUDE_ASM("asm/nonmatchings/unit_01050", func_800635AC);
 
@@ -348,7 +367,21 @@ s32 func_80064204(s32 arg0, s32 arg1) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80064230);
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80064308);
+s32 func_80064308(u8 id, Vec3_ v) {
+    Node64_ *p = D_800F0100;
+
+    while (p != NULL) {
+        if (p->id == id) {
+            ((Vec3_ *)p)->x = v.x;
+            ((Vec3_ *)p)->y = v.y;
+            ((Vec3_ *)p)->z = v.z;
+            return 1;
+        }
+        p = p->next;
+    }
+    return 0;
+}
+
 
 INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80064364);
 
@@ -356,23 +389,47 @@ INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80064418);
 
 INCLUDE_ASM("asm/nonmatchings/unit_01050", func_800645BC);
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80064638);
+s32 func_80064638(u8 id, f32 v) {
+    Node64_ *p = D_800F0100;
+
+    while (p != NULL) {
+        if (p->id == id) {
+            break;
+        }
+        p = p->next;
+    }
+    if (p == NULL) {
+        return 0;
+    }
+    p->v = v;
+    return 1;
+}
+
 
 INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80064684);
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", func_8006470C);
+u8 func_8006470C(void) {
+    return D_800EFC6C * 255.0f;
+}
+
 
 void func_8006476C(s32 arg0) {
     D_800EFC70 = (f32) ((f64) (arg0 & 0xFF) / D_800FE898);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80064798);
+u8 func_80064798(void) {
+    return D_800EFC70 * 255.0f;
+}
+
 
 void func_800647F8(s32 arg0) {
     D_800EFC74 = (f32) ((f64) (arg0 & 0xFF) / D_800FE8A0);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80064824);
+u8 func_80064824(void) {
+    return D_800EFC74 * 255.0f;
+}
+
 
 void func_80064884(s32 arg0) {
     s32 temp_s0;

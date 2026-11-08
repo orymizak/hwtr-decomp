@@ -1,5 +1,6 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { u8 pad[0xC]; u8 r; u8 g; u8 b; s8 on; } Col16_;
 f32 sqrtf(f32);
 extern f64 D_800FF8E0;
 
@@ -29,7 +30,19 @@ s32 func_80079E68(void *arg0) {
     return var_v0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_80079E90);
+void func_80079E90(Col16_ *src, Col16_ *dst, u32 n) {
+    u32 i;
+
+    for (i = 0; i < n; i++, src++) {
+        if (src->on != 0) {
+            dst->r = src->r << 3;
+            dst->g = src->g << 3;
+            dst->b = src->b << 3;
+        }
+        dst++;
+    }
+}
+
 
 INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_80079EF4);
 

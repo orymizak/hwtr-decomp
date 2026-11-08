@@ -1,12 +1,20 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { s16 a; s16 b; s32 c; s32 d; } Obj0C_;
 void *Memory_Alloc(s32 size);
 void *memset(void *dst, s32 value, u32 size);
 s32 Memory_Free(void *);
 
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_48B00", func_800A7F00);
+Obj0C_ *func_800A7F00(s16 a, s16 b) {
+    Obj0C_ *o = Memory_Alloc(0xC);
+
+    memset(o, 0, 0xC);
+    o->a = a;
+    o->b = b;
+    return o;
+}
 
 void func_800A7F5C(void *arg0) {
     void *temp_a0;

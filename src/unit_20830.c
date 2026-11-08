@@ -1,5 +1,6 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { u8 pad[4]; s32 a; s32 b; void *c; } Buf20_;
 s32 func_8007FD40(s32);
 s32 func_80080070(s32);
 extern s32 D_800F2690;
@@ -57,4 +58,12 @@ void func_800804B4(void) {
     func_80080070(*(s32 *)(&(*(u8 *)&D_8010C410) + (D_800F2690 * 4)));
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_20830", func_80080500);
+void func_80080500(void) {
+    s32 i = D_800F2690 ^ 1;
+
+    ((Buf20_ * *)&D_8010C410)[i]->a = 0;
+    ((Buf20_ * *)&D_8010C410)[i]->b = 0;
+    D_800F2690 = i;
+    ((Buf20_ * *)&D_8010C410)[i]->c = (u8 *)((Buf20_ * *)&D_8010C410)[i] + 0x1C30;
+}
+

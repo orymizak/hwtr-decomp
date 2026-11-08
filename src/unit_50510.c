@@ -1,5 +1,15 @@
 #include "common.h"
 #include "include_asm.h"
+void func_800C90DC(void);
+void func_800B1824(void);
+void func_800B20A4(void);
+extern s32 D_80123DB0[];
+extern u8 D_800F6040;
+extern void *D_80123D30[];
+extern u8 D_80100BB0;
+void func_800B11FC(void);
+typedef struct { u8 d[0x140]; } E140_;
+extern E140_ D_80122900[][4];
 void (*D_8014103C)(u8, s32);
 s8 func_800B0FB0(s32 x);
 void func_800B1250(s32 x);
@@ -10,7 +20,6 @@ extern u8 D_801206D0;
 extern s32 (*D_8014104C)(s32);
 s32 func_800B073C();
 s32 func_800B0A5C();
-s32 func_800B11FC();
 extern s32 (*D_80141040)(s32);
 s32 func_800B1F00();
 s32 func_800B2170(s32);
@@ -38,7 +47,12 @@ void *func_800B02E4(s32 arg0) {
     return (arg0 * 0x88C) + &D_801206D0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B0310);
+E140_ *func_800B0310(u32 i, u32 j) {
+    if (i >= 4 || j >= (u32)D_80123D00[i]) {
+        return NULL;
+    }
+    return &D_80122900[i][j];
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B0364);
 
@@ -94,7 +108,15 @@ INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B1064);
 
 INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B10F4);
 
-INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B11FC);
+void func_800B11FC(void) {
+    u8 i;
+
+    for (i = 0; i < D_800F6040; i++) {
+        D_80123D30[i] = &D_80100BB0;
+    }
+    D_800F6040 = 0;
+}
+
 
 void func_800B1250(s32 x) {
     s8 r = func_800B0FB0(x);
@@ -208,7 +230,16 @@ void func_800B2BAC(void *arg0) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B2C1C);
+void func_800B2C1C(void) {
+    u8 i;
+
+    func_800C90DC();
+    func_800B1824();
+    func_800B20A4();
+    for (i = 0; i < 33; i++) {
+        D_80123DB0[i] = 0;
+    }
+}
 
 void func_800B2C78(void) {
     func_800C9130();

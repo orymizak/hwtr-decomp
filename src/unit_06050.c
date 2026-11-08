@@ -1,5 +1,15 @@
 #include "common.h"
 #include "include_asm.h"
+extern void *D_80138170;
+void func_800734F4(void *);
+void func_8006AA34(void);
+void func_8006DC28(void);
+extern char D_800FE9F0[];
+char *strcpy(char *, const char *);
+char *strcat(char *, const char *);
+s32 File_Load(char *, s32);
+extern void *D_80101E84;
+void Memory_Free(void *);
 typedef struct { s32 a; s32 b; s32 c; s32 d; } Vec4L_;
 typedef struct { u8 p0[0x13C]; Vec4L_ v; u8 unk14C; } ObjL_;
 u8 func_80066A2C(u8 a, s32 b, s32 c);
@@ -32,13 +42,31 @@ s32 func_80065514(void) {
     return ((*(s32 *)((u8 *)&D_80101E80 + 0x0)) == 0) + ((*(s32 *)((u8 *)&D_80101E80 + 0x4)) == 0);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80065584);
+s32 func_80065584(void) {
+    void **p = (void **)&D_80101E80;
+
+    Memory_Free(*p);
+    Memory_Free(D_80101E84);
+    *p = NULL;
+    D_80101E84 = NULL;
+    return 0;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_800655CC);
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_8006572C);
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_8006586C);
+s32 func_8006586C(void) {
+    void **p = &D_8013816C;
+
+    func_800734F4(*p);
+    func_800734F4(D_80138170);
+    func_8006AA34();
+    func_8006DC28();
+    *p = NULL;
+    D_80138170 = NULL;
+    return 1;
+}
 
 u16 func_800658C4(void) {
     return *(u16 *)((u8 *)D_8013816C + 0x10);
@@ -178,7 +206,10 @@ void func_80067EFC(u8 i, u8 val, Vec4L_ *src) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80067F40);
+void func_80067F40(u8 i, f32 v) {
+    ((u8 **)&D_80138174)[i][0x10E] = v * 240.0f;
+}
+
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80067FA4);
 
@@ -295,7 +326,14 @@ void func_8006A368(u8 i, Pos_ *a1, f32 *a2, s32 *a3, f32 *a4) {
     a2[8] = c->m[8];
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_8006A400);
+s32 func_8006A400(char *name, s32 dst) {
+    char buf[64];
+
+    strcpy(buf, name);
+    strcat(buf, D_800FE9F0);
+    File_Load(buf, dst);
+    return 1;
+}
 
 u16 func_8006A450(void) {
     return *(u16 *)((u8 *)D_8013816C + 0xE);

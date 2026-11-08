@@ -1,5 +1,8 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { u8 on; u8 pad[0x63]; } Ent64_;
+extern Ent64_ D_801185B4[];
+extern u8 D_80118620;
 typedef struct { s32 x; s32 y; s32 z; } Pos_;
 extern u8 D_80118558[];
 s32 func_800A5894(void);
@@ -64,7 +67,14 @@ s32 func_800908A8(void) {
   return 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_2F4F0", func_800908E8);
+void func_800908E8(void) {
+    u32 i;
+
+    for (i = 0; i < D_80118620; i++) {
+        D_801185B4[i].on = 1;
+    }
+}
+
 
 INCLUDE_ASM("asm/nonmatchings/unit_2F4F0", func_80090934);
 

@@ -1,5 +1,14 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { u8 pad[0x110]; u8 b110; } Obj60_;
+typedef struct { u8 pad[8]; s32 w8; } Obj70_;
+typedef struct { u8 pad[0x60]; Obj60_ *p60; u8 pad2[0xC]; Obj70_ *p70; } ObjA2_;
+typedef struct LnkA2_ { ObjA2_ *obj; s32 x; struct LnkA2_ *next; } LnkA2_;
+extern LnkA2_ *D_8011B340;
+void func_800A25EC(ObjA2_ *);
+typedef struct { u8 pad[0x40]; void *a; void *b; void *c; } Res40_;
+void Memory_Free(void *);
+typedef struct Nd3_ { s32 a; struct Nd3_ *prev; struct Nd3_ *next; } Nd3_;
 
 extern void *D_8011E860;
 extern void *D_8011B334;
@@ -22,7 +31,18 @@ INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_80099C94);
 
 INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_80099E78);
 
-INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_8009A488);
+void func_8009A488(Res40_ *r) {
+    if (r->a != NULL) {
+        Memory_Free(r->a);
+    }
+    if (r->b != NULL) {
+        Memory_Free(r->b);
+    }
+    if (r->c != NULL) {
+        Memory_Free(r->c);
+    }
+}
+
 
 INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_8009A4E4);
 
@@ -52,7 +72,18 @@ INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_8009F7D4);
 
 INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_800A0C44);
 
-INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_800A258C);
+void func_800A258C(void) {
+    LnkA2_ *n;
+
+    for (n = D_8011B340; n != NULL; n = n->next) {
+        ObjA2_ *o = n->obj;
+
+        if (o->p60->b110 == 0 && o->p70->w8 != 0) {
+            func_800A25EC(o);
+        }
+    }
+}
+
 
 INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_800A25EC);
 
@@ -62,7 +93,23 @@ INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_800A3978);
 
 INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_800A3CD8);
 
-INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_800A3D64);
+void func_800A3D64(Nd3_ **list) {
+    Nd3_ *n = *list;
+
+    while (n != NULL) {
+        Nd3_ *c = n;
+        Nd3_ *old;
+
+        n = n->next;
+        old = (Nd3_ *)D_8011E860;
+        c->prev = NULL;
+        D_8011E860 = c;
+        c->next = old;
+        old->prev = c;
+    }
+    memset(list, 0, 4);
+}
+
 
 INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_800A3DB8);
 

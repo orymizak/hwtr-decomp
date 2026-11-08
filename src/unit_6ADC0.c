@@ -1,5 +1,6 @@
 #include "common.h"
 #include "include_asm.h"
+s32 func_800C9F78(void *);
 
 s32 func_800C9ED0(s32 *);
 extern s32 D_800FAB88;
@@ -30,4 +31,16 @@ void func_800CA220(void) {
     D_80124D62 = 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_6ADC0", func_800CA230);
+s32 func_800CA230(void) {
+    if (func_800C9F78(&D_800FAB88) == 0) {
+        return 0;
+    }
+    if (*(u8 *)&D_80124D60 != 0) {
+        return 3;
+    }
+    if (*(u8 *)&D_80124D61 != 0) {
+        return 2;
+    }
+    return 1;
+}
+

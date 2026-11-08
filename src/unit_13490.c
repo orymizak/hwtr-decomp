@@ -1,5 +1,8 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { u32 pad0 : 30; u32 b1 : 1; u32 b0 : 1; u8 pad[0x14]; } Slot18_;
+typedef struct { u8 pad[0x30]; s32 flags; u8 pad2[0x20]; } Item54_;
+typedef struct { u16 count; u8 pad[0x2A]; Item54_ *items; } ItemList_;
 typedef struct { u32 flags; u8 pad[0x14]; } SlotM_;
 s32 func_80070BA4(void *);
 s32 func_800717C8(s32, s32, s32);
@@ -131,7 +134,15 @@ s32 func_8007319C(s32 arg0) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_13490", func_800731DC);
 
-INCLUDE_ASM("asm/nonmatchings/unit_13490", func_800734AC);
+ItemList_ *func_800734AC(ItemList_ *l) {
+    u32 i;
+
+    for (i = 0; i < l->count; i++) {
+        l->items[i].flags |= 0x4000;
+    }
+    return l;
+}
+
 
 void func_800734F4(s32 arg0) {
     if (arg0 != 0) {
@@ -204,7 +215,17 @@ void func_80075580(void) {
     } while (var_v0 >= 0);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_13490", func_800755B4);
+void func_800755B4(void) {
+    s32 r = 0;
+    s32 i;
+
+    for (i = 0; i < 16; i++) {
+        if (((Slot18_ *)&D_8014D180)[i].b0 & ((Slot18_ *)&D_8014D180)[i].b1) {
+            r = i + 1;
+        }
+    }
+    D_8014C64C = r;
+}
 
 void func_80075600(s32 arg0, s8 arg1, s8 arg2, s8 arg3) {
     s32 temp_v0;
