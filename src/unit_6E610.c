@@ -1,5 +1,29 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { u8 p0[0x20]; f32 unk20; u8 p24[0x92]; u8 unkB6; u8 pB7[0x1E]; u8 unkD5; u8 pD6[6]; f32 unkDC; } SeqJ_;
+typedef struct { s32 unk0; u8 p4[0x2C]; f32 unk30; u8 p34[0x10]; s32 unk44; u8 p48[0x48]; f32 unk90; u8 p94[0xA8]; } Voice8_;
+typedef struct { s32 unk0; u8 p4[0x40]; s32 unk44; u8 p48[0x68]; s16 unkB0; u8 pB2[0xC]; u8 unkBE; u8 pBF[0x7D]; } Voice7_;
+typedef struct { u8 p0[0x34]; s32 unk34; s32 unk38; u8 p3C[0x34]; f32 unk70; u8 p74[0x2E]; u16 unkA2; u16 unkA4; u8 pA6[0x16]; u8 unkBC; u8 pBD[0x1E]; u8 unkDB; u8 pDC[4]; u8 *unkE0[4]; s32 unkF0[4]; s32 unk100[4]; u16 unk110[4]; u16 unk118[4]; u8 unk120[4]; u8 unk124[4]; f32 unk128[4]; } SeqH_;
+typedef struct { s32 unk0; u8 p4[0x40]; s32 unk44; u8 p48[0x56]; s16 unk9E; u8 pA0[0x9C]; } Voice5_;
+typedef struct { s32 unk0; u8 p4[0x40]; s32 unk44; u8 p48[0x34]; s32 unk7C; u8 p80[0xBC]; } Voice4_;
+typedef struct { u8 p0[0x30]; f32 unk30; u8 p34[0x5C]; f32 unk90; } SeqG_;
+typedef struct { s32 unk0; u8 p4[0x40]; s32 unk44; u8 p48[0xF4]; } Voice_;
+extern s32 D_80127934;
+typedef struct { u8 p0[0xBD]; u8 unkBD; } SeqF_;
+typedef struct { u8 p0[0xBC]; u8 unkBC; } SeqE_;
+typedef struct { u8 p0[0xB9]; u8 unkB9; } SeqD_;
+typedef struct { u8 p0[0x1C]; u8 *unk1C; } Bank_;
+typedef struct { u8 p0[0x74]; Bank_ *unk74; u8 p78[0xC]; u8 *unk84; } SeqC_;
+typedef struct { s32 unk0; s32 unk4; } Entry_;
+typedef struct { u8 p0[0xAC]; u16 unkAC; } SeqB_;
+typedef struct { u8 p0[0xAE]; u16 unkAE; } SeqA_;
+typedef struct { u8 p0[0xCE]; u8 unkCE; u8 unkCF; u8 pD0[8]; u8 unkD8; } SeqChan3_;
+typedef struct { u8 p0[0xB2]; u16 unkB2; u16 unkB4; } SeqChan2_;
+extern s32 D_80127964;
+void func_800CE7E8(s32 arg);
+typedef struct { u8 type; u8 pad[3]; s32 arg; } AudMsg_;
+void func_800CEB34(AudMsg_ *msg);
+typedef struct { u8 p0[0x2C]; f32 unk2C; u8 p30[0x20]; f32 unk50; u8 p54[0x64]; u8 unkB8; } SeqChan_;
 extern s32 D_800FAE80;
 extern u8 D_800FAE84;
 f32 sinf(f32);
@@ -16,7 +40,6 @@ extern s32 D_8012795C;
 
 extern s16 D_8012794C;
 extern s16 D_8012794E;
-s32 func_800CE7E8(s32);
 s32 func_800D05EC();
 extern void *D_80127958;
 extern s32 D_80127968;
@@ -90,11 +113,65 @@ INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CE374);
 
 INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CE428);
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CE480);
+s32 func_800CE480(s32 id, s16 val) {
+    s32 i;
+    s32 n;
+    Voice5_ *v;
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CE4E0);
+    if (id == 0) {
+        return 0;
+    }
+    i = 0;
+    v = (*(Voice5_ * *)&D_8012793C);
+    for (n = 0; i < D_80127934; i++, v++) {
+        if (v->unk44 == id) {
+            v->unk9E = val;
+            n++;
+        }
+    }
+    return n;
+}
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CE550);
+s32 func_800CE4E0(s32 id, s16 val) {
+    s32 i;
+    s32 n;
+    Voice7_ *v;
+
+    if (id == 0) {
+        return 0;
+    }
+    i = 0;
+    v = (*(Voice7_ * *)&D_8012793C);
+    for (n = 0; i < D_80127934; i++, v++) {
+        if (v->unk44 == id) {
+            n++;
+            v->unkB0 = val;
+            v->unkBE = 0xFF;
+        }
+    }
+    return n;
+}
+
+
+s32 func_800CE550(s32 id, f32 val) {
+    s32 i;
+    s32 n;
+    Voice8_ *v;
+
+    if (id == 0) {
+        return 0;
+    }
+    i = 0;
+    v = (*(Voice8_ * *)&D_8012793C);
+    for (n = 0; i < D_80127934; i++, v++) {
+        if (v->unk44 == id) {
+            v->unk30 = val + v->unk90;
+            n++;
+        }
+    }
+    return n;
+}
+
 
 INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CE5C0);
 
@@ -124,13 +201,47 @@ s32 func_800CE75C(void) {
     return D_8012795C;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CE768);
+s32 func_800CE768(s32 id) {
+    s32 i;
+    Voice4_ *v;
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CE7C4);
+    if (id == 0) {
+        return 0;
+    }
+    v = (*(Voice4_ * *)&D_8012793C);
+    for (i = 0; i < D_80127934; i++, v++) {
+        if (v->unk44 == id) {
+            return v->unk7C;
+        }
+    }
+    return 0;
+}
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CE7E8);
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CE810);
+void func_800CE7C4(s32 arg) {
+    AudMsg_ msg;
+    msg.type = 0;
+    msg.arg = arg;
+    func_800CEB34(&msg);
+}
+
+
+void func_800CE7E8(s32 arg) {
+    AudMsg_ msg;
+    msg.type = 1;
+    msg.arg = arg;
+    func_800CEB34(&msg);
+}
+
+
+void func_800CE810(s32 arg) {
+    AudMsg_ msg;
+    msg.type = 2;
+    msg.arg = arg;
+    D_80127964 = arg;
+    func_800CEB34(&msg);
+}
+
 
 INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CE840);
 
@@ -324,7 +435,17 @@ INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800D0444);
 
 INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800D05EC);
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800D0858);
+void func_800D0858(s32 id, s32 mask, s32 bits) {
+    s32 i;
+    Voice_ *v = (*(Voice_ * *)&D_8012793C);
+
+    for (i = 0; i < D_80127934; i++, v++) {
+        if (v->unk44 == id) {
+            v->unk0 = (v->unk0 & mask) | bits;
+        }
+    }
+}
+
 
 s32 func_800D08AC(void *arg0) {
     *(s32 *)((u8 *)arg0 + 0x38) = 0;
@@ -336,9 +457,25 @@ s32 func_800D08AC(void *arg0) {
     return 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800D08CC);
+u8 *func_800D08CC(SeqA_ *s, u8 *p) {
+    s32 v = *p++;
+    if (v & 0x80) {
+        v = *p++ | ((v & 0x7F) << 8);
+    }
+    s->unkAE = v;
+    return p;
+}
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800D08FC);
+
+u8 *func_800D08FC(SeqChan_ *s, u8 *p) {
+    u8 v = *p++;
+    s->unkB8 = v;
+    if (v) {
+        s->unk50 = s->unk2C;
+    }
+    return p;
+}
+
 
 s32 func_800D091C(void *arg0, s32 arg1) {
     *(u8 *)((u8 *)arg0 + 0xB8) = 0;
@@ -357,9 +494,22 @@ void *func_800D0B34(s32 arg0, void *arg1) {
   return arg1 + 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800D0B48);
+u8 *func_800D0B48(SeqChan2_ *s, u8 *p) {
+    s32 hi = *p++;
+    s32 lo = *p++;
+    s->unkB4 = 0;
+    s->unkB2 = lo | (hi << 8);
+    return p;
+}
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800D0B6C);
+
+u8 *func_800D0B6C(SeqJ_ *s, u8 *p) {
+    s->unkB6 = *p++;
+    s->unkD5 = *p++;
+    s->unk20 = (f32)*p / 50.0;
+    s->unkDC = 6.2831852 / (f32)s->unkD5;
+    return p + 1;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800D0BDC);
 
@@ -369,7 +519,17 @@ s32 func_800D0C50(void *arg0, s32 arg1) {
     return arg1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800D0C60);
+u8 *func_800D0C60(SeqB_ *s, u8 *p) {
+    s32 v = *p++;
+    if (v >= 0x80) {
+        v &= 0x7F;
+        v <<= 8;
+        v |= *p++;
+    }
+    s->unkAC = v;
+    return p;
+}
+
 
 s32 func_800D0C90(void *arg0, s32 arg1) {
     *(u8 *)((u8 *)arg0 + 0xB7) = 1;
@@ -386,7 +546,18 @@ s32 func_800D0CB0(void *arg0, s32 arg1) {
     return arg1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800D0CC0);
+u8 *func_800D0CC0(SeqG_ *s, u8 *p) {
+    s32 v = *p++;
+    f32 f;
+
+    if (v & 0x80) {
+        v |= -0x100;
+    }
+    f = (f32)v / 100.0;
+    s->unk30 = s->unk30 - s->unk90 + f;
+    s->unk90 = f;
+    return p;
+}
 
 s32 func_800D0D18(void *arg0, s32 arg1) {
     *(u8 *)((u8 *)arg0 + 0xD6) = 1;
@@ -408,11 +579,29 @@ s32 func_800D0D44(void *arg0, s32 arg1) {
     return arg1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800D0D50);
+u8 *func_800D0D50(SeqH_ *s, u8 *p) {
+    s32 i = s->unkDB;
+
+    s->unk120[i] = *p++;
+    s->unkE0[i] = p;
+    s->unkF0[i] = s->unk38;
+    s->unk100[i] = s->unk34;
+    s->unk124[i] = s->unkBC;
+    s->unk128[i] = s->unk70;
+    s->unk110[i] = s->unkA2;
+    s->unk118[i] = s->unkA4;
+    s->unkDB++;
+    return p;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800D0DBC);
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800D0E58);
+u8 *func_800D0E58(SeqChan3_ *s, u8 *p) {
+    s->unkD8 = *p++;
+    s->unkCE = *p++;
+    s->unkCF = *p;
+    return p + 1;
+}
 
 s32 func_800D0E80(void *arg0, s32 arg1) {
     *(u8 *)((u8 *)arg0 + 0xCE) = 0;
@@ -448,7 +637,17 @@ s32 func_800D0ED0(s32 arg0, s32 arg1) {
     return arg1 + 2;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800D0ED8);
+u8 *func_800D0ED8(SeqC_ *s, u8 *p) {
+    s32 v = *p++;
+    if (v >= 0x80) {
+        v &= 0x7F;
+        v <<= 8;
+        v |= *p++;
+    }
+    s->unk84 = s->unk74->unk1C + v * 6;
+    return p;
+}
+
 
 s32 func_800D0F20(void *arg0, s32 arg1) {
     *(s32 *)((u8 *)arg0 + 0x84) = 0;
@@ -466,11 +665,25 @@ void *func_800D0FA4(void *arg0, u8 *arg1) {
     return arg1 + 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800D0FB4);
+u8 *func_800D0FB4(SeqD_ *s, u8 *p) {
+    s->unkB9 = ((u8 (*)(u8))func_800CFFC4)(*p++);
+    s->unkB9 += *p++;
+    return p;
+}
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800D1004);
+u8 *func_800D1004(SeqE_ *s, u8 *p) {
+    s->unkBC = ((u8 (*)(u8))func_800CFFC4)(*p++);
+    s->unkBC += *p++;
+    return p;
+}
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800D1054);
+
+u8 *func_800D1054(SeqF_ *s, u8 *p) {
+    s->unkBD = ((u8 (*)(u8))func_800CFFC4)(*p++);
+    s->unkBD += *p++;
+    return p;
+}
+
 
 void *func_800D10A4(void *arg0, u8 *arg1) {
     *(u8 *)((u8 *)arg0 + 0xBC) = (u8) *arg1;
@@ -538,9 +751,31 @@ void func_800D19E0(s32 arg0) {
     (*(s32 *)((u8 *)(arg0) + 0x20)) = &D_800FACF8;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800D19F8);
+s32 func_800D19F8(void) {
+    s32 i;
+    s32 max = 0;
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800D1A3C);
+    for (i = 0; ((Entry_ * *)&D_800FAE84)[i] != 0; i++) {
+        if (max < ((Entry_ * *)&D_800FAE84)[i]->unk0) {
+            max = ((Entry_ * *)&D_800FAE84)[i]->unk0;
+        }
+    }
+    return max;
+}
+
+
+s32 func_800D1A3C(void) {
+    s32 i;
+    s32 max = 0;
+
+    for (i = 0; ((Entry_ * *)&D_800FAE84)[i] != 0; i++) {
+        if (max < ((Entry_ * *)&D_800FAE84)[i]->unk4) {
+            max = ((Entry_ * *)&D_800FAE84)[i]->unk4;
+        }
+    }
+    return max;
+}
+
 
 s32 func_800D1A80(s32 arg0) {
   u8 *new_var;
