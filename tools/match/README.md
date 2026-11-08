@@ -18,6 +18,8 @@ Lo que sigue trabaja sobre la compilación con `tools/cc.py`, que resuelve doble
 - `targets.py`: lista lo pendiente con tablas de saltos, argumentos en pila o dobles de .rodata.
 - `show.py <función>...`: prepara una función para escribirla a mano (tamaño y salida de m2c).
 - `hand.py <lote.c> [--apply]`: comprueba un lote escrito a mano y pasa a `src/` lo que coincide.
+- `insert.py <lote.c> <unidad>`: pasa un lote de `hand.py` a la unidad poniendo antes los typedefs; para cuando `hand.py --apply` falla por el orden de los tipos. Hay que compilar y comprobar la ROM después.
+- `ultra_id.py [--version K] [--all]`: identifica funciones de libultra/libaudio compilando ultralib (clon local en `tools/ultralib`, solo como referencia, sin versionar); `ultra_names.py` les pone nombre.
 - `try.py <unidad> <función> [archivo.c]`: compara un candidato instrucción a instrucción.
 - `gen_rodata_refs.py`: genera `rodata_refs.txt` mientras el código sigue en ensamblador.
 - `rodata_owners.py`, `split_rodata.py`, `rodata_cuts.txt`: dividen .rodata por unidad.
