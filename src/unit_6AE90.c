@@ -2,6 +2,8 @@
 #include "include_asm.h"
 typedef struct { s32 a; s32 b; u8 pad[0x10]; } E18c_;
 typedef struct { u8 pad[8]; u8 n1; u8 p1[3]; E18c_ *a1; u8 n2; u8 p2[3]; E18c_ *a2; } TCB_;
+void func_800CAE1C(E18c_ *);
+void func_800CAF28(E18c_ *);
 
 extern s32 D_80125580;
 extern s8 D_80124D70;
@@ -33,7 +35,17 @@ INCLUDE_ASM("asm/nonmatchings/unit_6AE90", func_800CAE1C);
 
 INCLUDE_ASM("asm/nonmatchings/unit_6AE90", func_800CAF28);
 
-INCLUDE_ASM("asm/nonmatchings/unit_6AE90", func_800CB034);
+void func_800CB034(TCB_ *t) {
+    u8 i;
+
+    for (i = 0; i < t->n1; i++) {
+        func_800CAE1C(&t->a1[i]);
+    }
+    for (i = 0; i < t->n2; i++) {
+        func_800CAF28(&t->a2[i]);
+    }
+}
+
 
 void func_800CB0DC(TCB_ *t) {
     u8 i;

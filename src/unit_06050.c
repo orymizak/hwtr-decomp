@@ -1,5 +1,6 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { f32 x; f32 y; f32 z; } V3f6_;
 typedef struct { s32 a; s32 b; s32 c; } V12_;
 typedef struct { s32 a; s32 b; s32 c; s32 d; } V16_;
 typedef struct { V16_ q; V12_ v; } E1C_;
@@ -324,7 +325,23 @@ void func_8006A234(s32 a, s32 b, V12_ *v, V16_ *q) {
     *q = (*(E14_ **)((u8 *)D_8013816C + 0x44))[a].p[b].q;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_8006A2B8);
+void func_8006A2B8(s32 i, V3f6_ *t, f32 *m) {
+    f32 *d = (f32 *)(*(u8 **)((u8 *)D_8013816C + 0x2C) +
+                     *(u16 *)(*(u8 **)((u8 *)D_8013816C + 0x44) + i * 0x14 + 4) * 0x54);
+
+    d[0] = m[0];
+    d[1] = m[1];
+    d[2] = m[2];
+    d[3] = t->x;
+    d[4] = m[3];
+    d[5] = m[4];
+    d[6] = m[5];
+    d[7] = t->y;
+    d[8] = m[6];
+    d[9] = m[7];
+    d[10] = m[8];
+    d[11] = t->z;
+}
 
 u8 func_8006A358(void) {
     return *(u8 *)((u8 *)D_8013816C + 0xB);

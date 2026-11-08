@@ -1,5 +1,7 @@
 #include "common.h"
 #include "include_asm.h"
+extern void (*D_8014556C)(s32);
+extern u8 D_800F64B0[][14];
 s32 func_800C9F18(void *,s32);
 extern u8 D_800F9F70;
 
@@ -64,7 +66,20 @@ void func_800C81CC(s32 arg0, s8 arg1) {
     (*(u8 *)((u8 *)(var_a2) + 0x8)) = 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_68D10", func_800C8214);
+u8 func_800C8214(u8 i, s32 k) {
+    s32 j = k - 14;
+
+    if ((u8)D_801455A0(i) != 0) {
+        if (D_800F64B0[i][j] == 0) {
+            D_800F64B0[i][j] = 1;
+            return 1;
+        }
+        return 0;
+    }
+    D_800F64B0[i][j] = 0;
+    return 0;
+}
+
 
 void func_800C82B4(void) {
     s32 (**fp)() = &D_80141048;
@@ -131,4 +146,19 @@ INCLUDE_ASM("asm/nonmatchings/unit_68D10", func_800C891C);
 
 INCLUDE_ASM("asm/nonmatchings/unit_68D10", func_800C8CE4);
 
-INCLUDE_ASM("asm/nonmatchings/unit_68D10", func_800C8D40);
+void func_800C8D40(void) {
+    void (**fp)(s32) = &D_8014556C;
+    u8 i;
+    u32 k;
+
+    (*fp)(0);
+    (*fp)(1);
+    for (i = 0; i < 2; i++) {
+        for (k = 14; k < 27; k++) {
+            if ((u8)((s32 (*)(s32, s32))D_801455A0)(i, k) != 0) {
+                return;
+            }
+        }
+    }
+    ((s32 (*)(void *, s32))func_800C9F18)(&D_800F9F70, 0x11);
+}

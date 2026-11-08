@@ -7,6 +7,7 @@ extern s32 D_80138AA8;
 extern s32 D_8014C1A8;
 typedef struct { s32 f0; s32 f4; u8 p8[0x548]; } S_D_801455C0;
 extern S_D_801455C0 D_801455C0[];
+void func_8006CA88(S_D_801455C0 *, s32, f32, u8);
 s32 func_8007F5C4(s32,s32);
 s32 func_8006DD60(s32 *,s32,s32);
 extern s32 D_8014D980;
@@ -79,7 +80,26 @@ void func_8006DB1C(s32 arg0, s32 arg1) {
     } while (var_s1 < 8U);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_0D1F0", func_8006DB84);
+void func_8006DB84(s32 a, f32 b, u8 c) {
+    s32 min = D_801455C0[0].f0;
+    u32 best = 0;
+    u32 i;
+
+    for (i = 1; i < 8; i++) {
+        s32 v = D_801455C0[i].f0;
+
+        if (v == 0) {
+            best = i;
+            break;
+        }
+        if (v < min) {
+            best = i;
+            min = v;
+        }
+    }
+    func_8006CA88(&D_801455C0[best], a, b, c);
+}
+
 
 INCLUDE_ASM("asm/nonmatchings/unit_0D1F0", func_8006DC28);
 

@@ -517,6 +517,10 @@ def merge(c, name, cand, opt):
     src = src.replace(marker, body)
     if new:
         idx = src.index('#include "include_asm.h"\n') + len('#include "include_asm.h"\n')
+        # After the file's typedefs, so prototypes that use them parse; still before the function.
+        typedefs = [m.end() for m in re.finditer(r"^typedef .*;\n", src[:src.index(body)], re.M)]
+        if typedefs:
+            idx = max(idx, typedefs[-1])
         src = src[:idx] + "\n".join(d for _, d in new) + "\n" + src[idx:]
     return src if compile_tu(src, opt) else None
 

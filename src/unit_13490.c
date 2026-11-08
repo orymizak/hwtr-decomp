@@ -201,7 +201,22 @@ void func_800741AC(s32 arg0) {
     Memory_Free(arg0);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_13490", func_800741D8);
+void func_800757E8(s32);
+s32 func_800741D8(ItemListB_ *l) {
+    s32 i;
+
+    if (l != NULL) {
+        func_800757E8(((s8 *)l)[0xFE]);
+        func_80073530(l);
+        for (i = 0; i < l->count; i++) {
+            if (l->items[i].p40 != 0) {
+                Memory_Free(l->items[i].p40);
+                l->items[i].p40 = 0;
+                func_800759F0(&l->items[i]);
+            }
+        }
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_13490", func_80074274);
 

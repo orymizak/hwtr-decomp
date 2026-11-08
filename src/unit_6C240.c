@@ -1,5 +1,8 @@
 #include "common.h"
 #include "include_asm.h"
+s32 func_8008D460(s32);
+s32 func_8008D48C(s32);
+void func_800CB4D4(s32, s32, s32, s32, s32, s32);
 void func_800CAE10(void);
 void func_800CB034(s32);
 void func_800CB268(void);
@@ -295,9 +298,27 @@ void func_800CD26C(void) {
     func_800CACA8(D_800FA51C);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_6C240", func_800CD290);
+void func_800CD290(void) {
+    s32 (**fp)() = &D_8014C0B0;
 
-INCLUDE_ASM("asm/nonmatchings/unit_6C240", func_800CD338);
+    func_800CB168();
+    func_800CB2C0(D_800FA51C, 0);
+    func_800CB4D4(func_8008D460((*fp)()), 160, 155, 255, 255, 255);
+    func_800CB4D4(func_8008D48C((*fp)()), 160, 175, 255, 255, 255);
+    func_800CB28C();
+}
+
+
+void func_800CD338(void) {
+    s32 (**fp)() = &D_8014C0B0;
+
+    func_800CB168();
+    func_800CB2C0(D_800FA51C, 1);
+    func_800CB4D4(func_8008D460((*fp)()), 160, 155, 255, 255, 255);
+    func_800CB4D4(func_8008D48C((*fp)()), 160, 175, 255, 255, 255);
+    func_800CB28C();
+}
+
 
 void func_800CD3E0(void) {
     D_8014C0B4();

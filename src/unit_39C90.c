@@ -1,5 +1,15 @@
 #include "common.h"
 #include "include_asm.h"
+extern s32 D_8011B330;
+extern s32 D_8011C820;
+extern s32 D_8011C824;
+extern s32 D_8011C828;
+extern u8 D_8011C7A0[];
+extern void (*D_801416F8)(void *);
+s32 func_8008182C(void);
+void func_800A3CD8(void);
+u8 func_80099090(u8 *);
+void func_800C9AF0(s32 n, s32 b);
 extern s32 D_8011B33C;
 extern s32 D_8011B344;
 extern s32 D_8011B348;
@@ -28,7 +38,23 @@ extern void *D_8011B334;
 
 INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_80099090);
 
-INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_8009930C);
+s32 func_8009930C(u8 *o) {
+    s32 v = *(s32 *)(o + 0x1C);
+
+    D_8011B330 = 100;
+    D_8011C820 = v;
+    D_8011C824 = func_8008182C();
+    D_8011C828 = o[0x1A];
+    func_800A3CD8();
+    if (func_80099090(o) == 0) {
+        return 0;
+    }
+    D_801416F8(D_8011B334);
+    func_800C9AF0(*(s32 *)((u8 *)D_8011B334 + 0x10), *(s32 *)((u8 *)D_8011B334 + 0xD0));
+    memset(D_8011C7A0, 0, 0x80);
+    return 1;
+}
+
 
 void func_800A3D64(Nd3_ **list);
 s32 func_800993B8(void) {

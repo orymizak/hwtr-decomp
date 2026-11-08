@@ -1,5 +1,15 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { u8 b; u8 pad[3]; s32 w[6]; } E1C8_;
+extern E1C8_ D_800F316C[];
+extern u8 (*D_8014169C)(u8);
+extern s32 D_801410E0[];
+extern char D_8010080C[];
+s32 sprintf(char *, const char *, ...);
+typedef struct Lnk89_ { s32 *obj; s32 x; struct Lnk89_ *next; } Lnk89_;
+extern Lnk89_ **D_80118470[];
+void func_800A82F8(Lnk89_ **, s32 *);
+void Memory_Free(void *);
 s32 func_80095970(void *);
 extern s32 (*D_80141768)(u8,s32);
 
@@ -75,7 +85,19 @@ INCLUDE_ASM("asm/nonmatchings/unit_28C10", func_80089848);
 
 INCLUDE_ASM("asm/nonmatchings/unit_28C10", func_80089B10);
 
-INCLUDE_ASM("asm/nonmatchings/unit_28C10", func_80089F28);
+void func_80089F28(u8 *o) {
+    Lnk89_ *n = *D_80118470[*o];
+    s32 *x;
+
+    while (n != NULL) {
+        x = n->obj;
+        n = n->next;
+        func_80088558((void *)*x, o);
+        func_800A82F8(D_80118470[*o], x);
+        Memory_Free(x);
+    }
+}
+
 
 INCLUDE_ASM("asm/nonmatchings/unit_28C10", func_80089FC4);
 
@@ -85,4 +107,9 @@ INCLUDE_ASM("asm/nonmatchings/unit_28C10", func_8008AD04);
 
 INCLUDE_ASM("asm/nonmatchings/unit_28C10", func_8008AEC0);
 
-INCLUDE_ASM("asm/nonmatchings/unit_28C10", func_8008B9FC);
+void func_8008B9FC(u16 i, char *out) {
+    if (i < 49) {
+        sprintf(out, D_8010080C, D_801410E0[D_800F316C[i].w[D_8014169C(D_800F316C[i].b)]]);
+    }
+}
+
