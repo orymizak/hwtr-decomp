@@ -161,7 +161,8 @@ def apply(ok):
         if attempt(names):
             text = path.read_text()
             left = [n for n in names if f'", {n});' in text]
-            print(f"{unit}: {len(names) - len(left)}/{len(names)} aplicadas, ROM idéntica")
+            done_msg = "compila (ROM sin comprobar)" if os.environ.get("NO_BUILD") == "1" else "ROM idéntica"
+            print(f"{unit}: {len(names) - len(left)}/{len(names)} aplicadas, {done_msg}")
             continue
         good = []
         for n in names:
@@ -173,7 +174,8 @@ def apply(ok):
             path.write_text(orig)
             pass2.make(unit)
             sys.exit(f"{unit}: la ROM no coincide tras restaurar")
-        print(f"{unit}: {len(good)}/{len(names)} aplicadas, ROM idéntica")
+        done_msg = "compila (ROM sin comprobar)" if os.environ.get("NO_BUILD") == "1" else "ROM idéntica"
+        print(f"{unit}: {len(good)}/{len(names)} aplicadas, {done_msg}")
 
 
 def main():

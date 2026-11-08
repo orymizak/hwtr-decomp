@@ -24,6 +24,8 @@ $(BUILD)/src/unit_6E0C0.o: OPTFLAGS := -O0
 # __os{Pi,Si}CreateAccessQueue van insertadas en línea en __os{Pi,Si}GetAccess: estos archivos de libultra usan -O3.
 $(BUILD)/src/unit_792B0.o: OPTFLAGS := -O3
 $(BUILD)/src/unit_7FD20.o: OPTFLAGS := -O3
+# osSpTaskLoad lleva insertado _VirtualToPhysicalTask (estático): -O3.
+$(BUILD)/src/unit_7EFB0.o: OPTFLAGS := -O3
 
 ASFLAGS := -EB -march=vr4300 -mtune=vr4300 -mabi=32 -Iinclude
 LDFLAGS := -EB -T $(LD_SCRIPT) -T undefined_syms_auto.txt -T undefined_funcs_auto.txt \
