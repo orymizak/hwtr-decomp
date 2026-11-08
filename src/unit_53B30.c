@@ -2509,7 +2509,16 @@ INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800C615C);
 
 INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800C62E8);
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800C6474);
+void func_800C6474(s32 arg0) {
+  u32 temp_s0;
+  unsigned char new_var;
+  new_var = ((D_80123EBF + (D_80123EBE * 3)) - 1) & 0xFF;
+  temp_s0 = new_var;
+  func_800C5FD0(D_80124148 + 8, *((s32 *) (((u8 *) arg0) + 0x44)), temp_s0);
+  if (D_80123EA0 == 2) {
+    func_800C5FD0(D_8012414C + 8, *((s32 *) (((u8 *) arg0) + 0x70)), temp_s0);
+  }
+}
 
 void func_800C6500(s32 arg0) {
   s32 temp_s1;
