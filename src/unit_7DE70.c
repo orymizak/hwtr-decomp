@@ -1,14 +1,46 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { s32 m[4][4]; } Mtx_;
 void guMtxIdentF(f32 mf[4][4]);
 f32 cosf(f32);
 f32 sinf(f32);
 
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_7DE70", guMtxF2L);
+void guMtxF2L(f32 mf[4][4], Mtx_ *m) {
+    s32 i, j;
+    s32 e1, e2;
+    s32 *ai, *af;
 
-INCLUDE_ASM("asm/nonmatchings/unit_7DE70", guMtxL2F);
+    ai = (s32 *)&m->m[0][0];
+    af = (s32 *)&m->m[2][0];
+    for (i = 0; i < 4; i++)
+        for (j = 0; j < 2; j++) {
+            e1 = (s32)(mf[i][j * 2] * 65536.0f);
+            e2 = (s32)(mf[i][j * 2 + 1] * 65536.0f);
+            *(ai++) = (e1 & 0xffff0000) | ((e2 >> 16) & 0xffff);
+            *(af++) = ((e1 << 16) & 0xffff0000) | (e2 & 0xffff);
+        }
+}
+
+void guMtxL2F(f32 mf[4][4], Mtx_ *m) {
+    s32 i, j;
+    u32 e1, e2;
+    u32 *ai, *af;
+    s32 q1, q2;
+
+    ai = (u32 *)&m->m[0][0];
+    af = (u32 *)&m->m[2][0];
+    for (i = 0; i < 4; i++)
+        for (j = 0; j < 2; j++) {
+            e1 = (*ai & 0xffff0000) | ((*af >> 16) & 0xffff);
+            e2 = ((*(ai++) << 16) & 0xffff0000) | (*(af++) & 0xffff);
+            q1 = *((s32 *)&e1);
+            q2 = *((s32 *)&e2);
+            mf[i][j * 2] = ((f32)q1 * (1.0f / 65536.0f));
+            mf[i][j * 2 + 1] = ((f32)q2 * (1.0f / 65536.0f));
+        }
+}
 
 void guMtxIdentF(f32 mf[4][4]) {
     s32 i, j;
@@ -24,36 +56,9 @@ void guMtxIdentF(f32 mf[4][4]) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_7DE70", guMtxIdent);
-
-void guPerspectiveF(f32 mf[4][4], u16 *perspNorm, f32 fovy, f32 aspect, f32 near, f32 far, f32 scale) {
-    f32 cot;
-    s32 i, j;
+void guMtxIdent(Mtx_ *m) {
+    f32 mf[4][4];
 
     guMtxIdentF(mf);
-    fovy *= 3.1415926 / 180.0;
-    cot = cosf(fovy / 2) / sinf(fovy / 2);
-    mf[0][0] = cot / aspect;
-    mf[1][1] = cot;
-    mf[2][2] = (near + far) / (near - far);
-    mf[2][3] = -1;
-    mf[3][2] = (2 * near * far) / (near - far);
-    mf[3][3] = 0;
-    for (i = 0; i < 4; i++) {
-        for (j = 0; j < 4; j++) {
-            mf[i][j] *= scale;
-        }
-    }
-    if (perspNorm != NULL) {
-        if (near + far <= 2.0) {
-            *perspNorm = (u16)0xFFFF;
-        } else {
-            *perspNorm = (u16)((2.0 * 65536.0) / (near + far));
-            if (*perspNorm <= 0) {
-                *perspNorm = (u16)0x0001;
-            }
-        }
-    }
+    guMtxF2L(mf, m);
 }
-
-INCLUDE_ASM("asm/nonmatchings/unit_7DE70", guPerspective);

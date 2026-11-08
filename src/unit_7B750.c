@@ -1,6 +1,8 @@
 #include "common.h"
 #include "include_asm.h"
 typedef struct { u32 w0; u32 w1; } Acmd_;
+typedef struct ALFilt2_ { struct ALFilt2_ *source; Acmd_ *(*handler)(void *, s16 *, s32, s32, Acmd_ *); s32 (*setParam)(void *, s32, void *); } ALFilt2_;
+typedef struct { ALFilt2_ filter; u8 padC[8]; s32 sourceCount; s32 maxSources; ALFilt2_ **sources; } ALBus2_;
 typedef struct Filt_ { struct Filt_ *source; Acmd_ *(*handler)(struct Filt_ *, s16 *, s32, s32, Acmd_ *); } Filt_;
 typedef struct { Filt_ *source; u8 p4[0x10]; u32 state; f32 ratio; s32 upitch; f32 delta; s32 first; } Resampler_;
 u32 osVirtualToPhysical(u32);
@@ -9,9 +11,36 @@ typedef struct { u8 pad0[0x18]; void *ctrlList; s32 unk1C; s32 unk20; s32 unk24;
 
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_7B750", alMainBusPull);
+Acmd_ *alMainBusPull(void *filter, s16 *outp, s32 outCount, s32 sampleOffset, Acmd_ *p) {
+    Acmd_ *ptr = p;
+    ALBus2_ *m = (ALBus2_ *)filter;
+    ALFilt2_ **sources = m->sources;
+    s32 i;
 
-INCLUDE_ASM("asm/nonmatchings/unit_7B750", func_800DAC90);
+    { Acmd_ *_a = ptr++; _a->w0 = 0x02000440; _a->w1 = (u32)(outCount << 1); }
+    { Acmd_ *_a = ptr++; _a->w0 = 0x02000580; _a->w1 = (u32)(outCount << 1); }
+    for (i = 0; i < m->sourceCount; i++) {
+        ptr = (sources[i]->handler)(sources[i], outp, outCount, sampleOffset, ptr);
+        { Acmd_ *_a = ptr++; _a->w0 = 0x08000000; _a->w1 = (u32)((outCount << 1) & 0xFFFF); }
+        { Acmd_ *_a = ptr++; _a->w0 = 0x0C007FFF; _a->w1 = 0x06C00440; }
+        { Acmd_ *_a = ptr++; _a->w0 = 0x0C007FFF; _a->w1 = 0x08000580; }
+    }
+    return ptr;
+}
+
+s32 func_800DAC90(void *filter, s32 paramID, void *param) {
+    ALBus2_ *m = (ALBus2_ *)filter;
+    ALFilt2_ **sources = m->sources;
+
+    switch (paramID) {
+        case 2:
+            sources[m->sourceCount++] = (ALFilt2_ *)param;
+            break;
+        default:
+            break;
+    }
+    return 0;
+}
 
 Acmd_ *alResamplePull(Resampler_ *f, u16 *outp, s32 outCount, s32 sampleOffset, Acmd_ *p) {
     Acmd_ *ptr = p;
