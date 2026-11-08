@@ -3,7 +3,7 @@
 
 Requiere tools/decomp-permuter y el mismo entorno que pass2 (TMP_DIR, PYTHONPATH=tools/match, m2c en PATH).
 Lo que llega a 0 pasa por el filtro de pass2: commit por unidad solo si la ROM es idéntica."""
-import glob, os, re, shutil, stat, subprocess, sys
+import glob, os, re, shutil, signal, stat, subprocess, sys
 from pathlib import Path
 import pass2, perm
 from pass2 import TMP, asm_of, compare, compile_to, convert, section
@@ -53,11 +53,19 @@ def run(job):
     if o is None or section(o, ".rodata", d) or perm.score(o, target, d) > len(target) * MAX_RATIO:
         return r
     setup(d, unit, name, r[4], opt, asm)
+    # Grupo de procesos propio: al vencer el tiempo se matan también sus workers, que si no quedan huérfanos.
+    p = subprocess.Popen([PY, str(ROOT / "tools/decomp-permuter/permuter.py"), str(d), "--stop-on-zero", "--best-only", "--quiet", "-j", "4"],
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, cwd=ROOT, start_new_session=True)
     try:
-        subprocess.run([PY, str(ROOT / "tools/decomp-permuter/permuter.py"), str(d), "--stop-on-zero", "--best-only", "--quiet", "-j", "4"],
-                       capture_output=True, text=True, timeout=SECS, cwd=ROOT)
+        p.wait(timeout=SECS)
     except subprocess.TimeoutExpired:
         pass
+    finally:
+        try:
+            os.killpg(p.pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+        p.wait()
     for src in sorted(glob.glob(str(d / "output-0-*/source.c"))):
         c = from_output(Path(src).read_text(), name)
         o = compile_to(c, d, opt)
