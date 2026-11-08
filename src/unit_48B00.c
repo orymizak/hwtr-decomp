@@ -1,5 +1,6 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct Nd8_ { s32 a; struct Nd8_ *prev; struct Nd8_ *next; u16 cnt; } Nd8_;
 typedef struct { s16 a; s16 b; s32 c; s32 d; } Obj0C_;
 void *Memory_Alloc(s32 size);
 void *memset(void *dst, s32 value, u32 size);
@@ -61,7 +62,28 @@ void func_800A8218(s32 *arg0) {
     ((s32 (*)(s32 *))Memory_Free)(arg0);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_48B00", func_800A8268);
+void func_800A8268(Nd8_ **list, s32 key) {
+    Nd8_ *n;
+
+    for (n = *list; n != NULL; n = n->next) {
+        if (n->a == key) {
+            break;
+        }
+    }
+    if (n == NULL) {
+        n = Memory_Alloc(0x10);
+        n->a = key;
+        n->prev = NULL;
+        n->next = *list;
+        n->cnt = 0;
+        *list = n;
+        if (n->next != NULL) {
+            n->next->prev = n;
+        }
+    }
+    n->cnt++;
+}
+
 
 void func_800A82F8(void *arg0, s32 arg1) {
     u16 temp_v0;

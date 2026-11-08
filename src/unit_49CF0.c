@@ -1,6 +1,6 @@
 #include "common.h"
 #include "include_asm.h"
-s32 (*D_801416D4)(s32);
+extern s32 (*D_801416D4)(s32);
 s32 func_800A76D8(s32);
 extern u8 D_800F3938;
 extern u8 D_800F393C;

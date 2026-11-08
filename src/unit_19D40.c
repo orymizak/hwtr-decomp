@@ -1,5 +1,7 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { u16 magic; u8 pad[0xA]; s32 c; s32 w10; u32 p14; u32 p18; u32 p1C; u32 p20; u32 p24; u32 p28; u32 p2C; s32 w30; } Hdr79_;
+void func_80079EF4(u32);
 extern s32 D_80138E38;
 void Debug_FormatNumber(u16, char *);
 void Debug_DrawString(char *, s32, s32, s32);
@@ -15,7 +17,22 @@ INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_80079140);
 
 INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_80079BD4);
 
-INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_80079DBC);
+void func_80079DBC(Hdr79_ *h) {
+    if (h->p14 != 0) {
+        h->p14 += (u32)h;
+        func_80079EF4(h->p14);
+    }
+    h->c = 0;
+    h->magic = 0xF6B1;
+    h->w30 = 0;
+    h->p18 += (u32)h;
+    h->p1C += (u32)h;
+    h->p20 += (u32)h;
+    h->p24 += (u32)h;
+    h->p28 += (u32)h;
+    h->p2C += (u32)h;
+}
+
 
 void func_80079E48(void *arg0) {
     Memory_Alloc(*(u16 *)((u8 *)arg0 + 0x4) * 8);

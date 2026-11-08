@@ -1,6 +1,6 @@
 #include "common.h"
 #include "include_asm.h"
-void (*D_80141004)(s32);
+extern void (*D_80141004)(s32);
 extern void (*D_80141000)(s32, void *);
 extern u8 D_80101070;
 extern u8 D_80101078;

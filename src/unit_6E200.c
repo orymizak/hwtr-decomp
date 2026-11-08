@@ -4,7 +4,7 @@ typedef struct { u8 p0[0x20]; void *ucode; u8 p24[4]; void *ucode_data; u8 p2C[0
 extern ScTaskI_ D_80138AB8;
 extern u8 D_8014D304[];
 extern u8 D_800FABA1;
-void (*D_800FABA4)(s32, u8);
+extern void (*D_800FABA4)(s32, u8);
 s32 osSendMesg(void *mq, void *msg, s32 flag);
 s32 osRecvMesg(void *mq, void **msg, s32 flag);
 s32 func_800CDB5C(s32);

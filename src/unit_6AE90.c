@@ -1,5 +1,7 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { s32 a; s32 b; u8 pad[0x10]; } E18c_;
+typedef struct { u8 pad[8]; u8 n1; u8 p1[3]; E18c_ *a1; u8 n2; u8 p2[3]; E18c_ *a2; } TCB_;
 
 extern s32 D_80125580;
 extern s8 D_80124D70;
@@ -33,7 +35,17 @@ INCLUDE_ASM("asm/nonmatchings/unit_6AE90", func_800CAF28);
 
 INCLUDE_ASM("asm/nonmatchings/unit_6AE90", func_800CB034);
 
-INCLUDE_ASM("asm/nonmatchings/unit_6AE90", func_800CB0DC);
+void func_800CB0DC(TCB_ *t) {
+    u8 i;
+
+    for (i = 0; i < t->n1; i++) {
+        t->a1[i].b = 0;
+    }
+    for (i = 0; i < t->n2; i++) {
+        t->a2[i].b = 0;
+    }
+}
+
 
 INCLUDE_ASM("asm/nonmatchings/unit_6AE90", func_800CB168);
 

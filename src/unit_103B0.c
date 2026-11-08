@@ -1,5 +1,7 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { s8 a; s8 b; s8 c; u8 pad[0xD]; } Ent6F_;
+extern Ent6F_ D_800F1DF0[];
 extern u8 D_800F20F8;
 extern u8 D_800F20F4;
 void func_800704DC(void);
@@ -52,7 +54,21 @@ void func_8006FDB8(s32 a) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_103B0", func_8006FE2C);
 
-INCLUDE_ASM("asm/nonmatchings/unit_103B0", func_8006FF00);
+void func_8006FF00(s32 i, u8 a, u8 b, u8 c) {
+    if (D_800F1DF0[i].a != a) {
+        D_800F1DF0[i].a = a;
+        D_800F20F8 = 1;
+    }
+    if (D_800F1DF0[i].b != b) {
+        D_800F1DF0[i].b = b;
+        D_800F20F8 = 1;
+    }
+    if (D_800F1DF0[i].c != c) {
+        D_800F1DF0[i].c = c;
+        D_800F20F8 = 1;
+    }
+}
+
 
 INCLUDE_ASM("asm/nonmatchings/unit_103B0", func_8006FF90);
 

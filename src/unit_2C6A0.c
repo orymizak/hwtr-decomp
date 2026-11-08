@@ -2,11 +2,11 @@
 #include "include_asm.h"
 extern void (*D_80141780)(void);
 extern void (*D_8014C0A8)(s32, s32, f32, f32);
-u8 (*D_8014C120)(void);
+extern u8 (*D_8014C120)(void);
 void func_8008E700(void);
 typedef struct { u8 id; u8 b; u8 pad[2]; s32 c; } Ent8_;
 extern Ent8_ D_80118538[];
-void (*D_8014C130)(s32);
+extern void (*D_8014C130)(s32);
 extern s32 D_800F378C[];
 extern s32 D_800F3770[];
 extern s32 D_80141448;

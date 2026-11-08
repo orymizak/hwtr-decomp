@@ -1,5 +1,6 @@
 #include "common.h"
 #include "include_asm.h"
+s32 strcmp(const char *, const char *);
 typedef struct { u8 d[0x2C]; } E2C5_;
 typedef struct { u8 n; u8 pad[3]; E2C5_ *arr; } T2C5_;
 void func_800B192C(E2C5_ *);
@@ -16,7 +17,7 @@ extern u8 D_80100BB0;
 void func_800B11FC(void);
 typedef struct { u8 d[0x140]; } E140_;
 extern E140_ D_80122900[][4];
-void (*D_8014103C)(u8, s32);
+extern void (*D_8014103C)(u8, s32);
 s8 func_800B0FB0(s32 x);
 void func_800B1250(s32 x);
 extern s32 D_80123D00[];
@@ -137,7 +138,16 @@ void func_800B0F94(void) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B0FB0);
 
-INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B1064);
+s8 func_800B1064(char *s) {
+    u8 i;
+
+    for (i = 0; i < D_800F6040; i++) {
+        if (strcmp(s, D_80123D30[i]) == 0) {
+            return i;
+        }
+    }
+    return -1;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B10F4);
 

@@ -7,7 +7,7 @@ void func_800CB0DC(s32);
 typedef struct { s16 id; s16 x; } Id4_;
 typedef struct { u8 pad[0xC]; Id4_ *ids; u8 pad2[3]; s8 n; } IdTab_;
 extern IdTab_ *D_800FAB90;
-u8 (*D_801455A4)(void);
+extern u8 (*D_801455A4)(void);
 s32 func_800CB168();
 s32 func_800CB28C();
 s32 func_800CB2C0(s32,s32);

@@ -22,7 +22,8 @@ def sections(path):
         head, _, body = part.partition("\n")
         words = head.split()
         # Sin extern en los prototipos: pass2.reconcile los reescribe como cast si chocan.
-        body = re.sub(r"^extern ([\w \*]+\(.*\);)$", r"\1", body, flags=re.M)
+        # Only real prototypes: `extern T (*D_x)(...)` is a function pointer and keeps its extern.
+        body = re.sub(r"^extern ([\w \*]*\b\w+\(.*\);)$", r"\1", body, flags=re.M)
         yield words[0], next((w for w in words[1:] if w.startswith("-O")), None), body
 
 
