@@ -1,5 +1,8 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { u8 pad[0x30]; s32 flags; u8 pad2[0xC]; s32 p40; u8 pad3[0x10]; } Item54b_;
+typedef struct { u16 count; u8 pad[0x2A]; Item54b_ *items; } ItemListB_;
+void func_80073740(ItemListB_ *l);
 typedef struct { u32 pad0 : 30; u32 b1 : 1; u32 b0 : 1; u8 pad[0x14]; } Slot18_;
 typedef struct { u8 pad[0x30]; s32 flags; u8 pad2[0x20]; } Item54_;
 typedef struct { u16 count; u8 pad[0x2A]; Item54_ *items; } ItemList_;
@@ -37,7 +40,6 @@ s32 File_Load(s32, s32);
 s32 Memory_Alloc(s32);
 s32 Memory_Free(s32);
 s32 func_80073530();
-s32 func_80073740(s32);
 s32 func_800741D8();
 extern s32 D_80134798;
 extern s8 D_800F1FA0;
@@ -156,7 +158,19 @@ INCLUDE_ASM("asm/nonmatchings/unit_13490", func_80073530);
 
 INCLUDE_ASM("asm/nonmatchings/unit_13490", func_800735E4);
 
-INCLUDE_ASM("asm/nonmatchings/unit_13490", func_80073740);
+void func_800759F0(void *arg0);
+void func_80073740(ItemListB_ *l) {
+    s32 i;
+
+    for (i = 0; i < l->count; i++) {
+        if (l->items[i].p40 != 0) {
+            Memory_Free(l->items[i].p40);
+            l->items[i].p40 = 0;
+            ((void (*)(Item54b_ *))func_800759F0)(&l->items[i]);
+        }
+    }
+}
+
 
 INCLUDE_ASM("asm/nonmatchings/unit_13490", func_800737C8);
 

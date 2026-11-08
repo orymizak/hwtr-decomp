@@ -1,5 +1,8 @@
 #include "common.h"
 #include "include_asm.h"
+extern s32 D_80138E38;
+void Debug_FormatNumber(u16, char *);
+void Debug_DrawString(char *, s32, s32, s32);
 typedef struct { u8 pad[0xC]; u8 r; u8 g; u8 b; s8 on; } Col16_;
 f32 sqrtf(f32);
 extern f64 D_800FF8E0;
@@ -120,7 +123,21 @@ void func_8007AFD4(void *arg0, void *arg1, void *arg2) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_8007B230);
 
-INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_8007B510);
+void func_8007B510(u16 n) {
+    char buf[8];
+    s32 y;
+    s32 x;
+
+    Debug_FormatNumber(n, buf);
+    D_80138E38 = 0x8037FB2C;
+    for (y = 0; y < 16; y++) {
+        for (x = 0; x < 48; x++) {
+            ((u16 *)0x8037FB2C)[y * 640 + x] = 0;
+        }
+    }
+    Debug_DrawString(buf, 3, 0xFFFF, 1);
+}
+
 
 INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_8007B598);
 

@@ -1,5 +1,8 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { u8 d[0x2C]; } E2C5_;
+typedef struct { u8 n; u8 pad[3]; E2C5_ *arr; } T2C5_;
+void func_800B192C(E2C5_ *);
 typedef struct { u8 pad[0x14]; u32 lo; u32 hi; } Bits5_;
 extern s8 D_800F5F90[];
 extern u8 D_80123D20[];
@@ -243,7 +246,15 @@ void func_800B2AFC(s32 arg0) {
     func_800B2330(arg0);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B2B28);
+void func_800B2B28(T2C5_ *t) {
+    u8 i;
+
+    for (i = 0; i < t->n; i++) {
+        func_800B133C((s32)&t->arr[i]);
+        func_800B192C(&t->arr[i]);
+    }
+}
+
 
 void func_800B2BAC(void *arg0) {
     u16 var_v0;

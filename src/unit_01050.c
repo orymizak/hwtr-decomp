@@ -1,5 +1,6 @@
 #include "common.h"
 #include "include_asm.h"
+void func_800CE480(s32, s32);
 void *Memory_Alloc(s32);
 extern void *D_80101E70;
 extern u8 D_80138AB0;
@@ -448,7 +449,15 @@ s32 func_80064638(u8 id, f32 v) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80064684);
+void func_80064684(u8 v) {
+    f32 *p = &D_800EFC6C;
+
+    *p = v / 255.0;
+    if (func_800CE428(D_800EFC68) != 0) {
+        func_800CE480(D_800EFC68, *p * 128.0f);
+    }
+}
+
 
 u8 func_8006470C(void) {
     return D_800EFC6C * 255.0f;

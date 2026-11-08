@@ -1,5 +1,8 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { f32 x; f32 y; f32 z; } V3f3_;
+extern V3f3_ D_80123E40[];
+s32 strcmp(const char *, const char *);
 u32 func_800B042C(u8);
 extern s8 D_800F6102;
 void func_800C0A20(s32, s32, s32, s32, s32);
@@ -406,9 +409,25 @@ void func_800B3D64(u32 arg0) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800B3D9C);
+void func_800B3D9C(u8 i, s32 a, s32 b, s32 c) {
+    if (i < 2) {
+        D_80123E40[i].x = func_800B1294(a);
+        D_80123E40[i].y = func_800B12C4(b);
+        D_80123E40[i].z = func_800B1308(c);
+    }
+}
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800B3E24);
+
+extern V3f3_ D_80123E58[];
+s32 func_800B3E24(s32 arg0, s32 a, s32 b, s32 c) {
+    u8 i = arg0;
+
+    if (i < 2) {
+        D_80123E58[i].x = func_800B1294(a);
+        D_80123E58[i].y = func_800B12C4(b);
+        D_80123E58[i].z = func_800B1308(c);
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800B3EAC);
 
@@ -468,7 +487,17 @@ s32 func_800B5124(u32 arg0) {
     return *(s32 *)((u8 *)&D_800FA0DC + ((arg0 & 0xFF) * 4));
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800B513C);
+s8 func_800B513C(char *s) {
+    u8 i;
+
+    for (i = 0; i < 41; i++) {
+        if (((char **)&D_800FA0DC)[i] != NULL && strcmp(s, ((char **)&D_800FA0DC)[i]) == 0) {
+            return i;
+        }
+    }
+    return -1;
+}
+
 
 INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800B51C0);
 
@@ -2885,7 +2914,29 @@ INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800C4564);
 
 INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800C46C4);
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800C4768);
+extern u8 D_80101000;
+extern u8 D_80124100;
+extern u8 D_80124101;
+extern u8 D_80124102;
+extern ObjG1_ D_800F6388;
+void func_800B4DF8(s32);
+void func_800C4768(void) {
+    s32 *p;
+
+    func_800B3144((s32 *)&D_80101000);
+    func_800B8D74();
+    p = &D_800F5F80;
+    func_800B2AD0(*p);
+    func_800B4DF8(*p);
+    D_80124103 = 0;
+    D_80124104 = 0;
+    D_800F61D7 = 0;
+    D_80124100 = 0;
+    D_80124101 = 0;
+    D_80124102 = 0;
+    func_800C46C4();
+    func_800B4E64(&D_800F6388);
+}
 
 void func_800C47F0(void) {
     func_800B2B28(D_800F5F80);
