@@ -1,5 +1,7 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { u16 type; u8 pri; void *retQueue; } MesgHdrC_;
+typedef struct { u8 b[0x18]; } MesgQueueV_;
 typedef struct { u16 state; u16 retraceCount; void *framep; void *modep; u32 control; void *msgq; void *msg; } ViCtxM_;
 typedef struct { s32 active; void *thread; void *cmdQueue; void *evtQueue; void *acsQueue; void *dma; void *edma; } DevMgrV_;
 typedef struct { u16 type; } MesgHdrV_;
@@ -16,7 +18,66 @@ u32 osGetCount(void);
 
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_80800", osCreateViManager);
+extern DevMgrV_ D_800FB630;
+extern s32 D_800FB64C;
+extern MesgQueueV_ D_80134440;
+extern void *D_80134458[5];
+extern MesgHdrC_ D_80134470;
+extern MesgHdrC_ D_80134488;
+extern u8 D_80133288[];
+extern u8 D_80133440[];
+void __osTimerServicesInit(void);
+void osCreateMesgQueue(void *mq, void **msg, s32 count);
+void osSetEventMesg(s32 e, void *mq, void *msg);
+s32 osGetThreadPri(void *t);
+void osSetThreadPri(void *t, s32 pri);
+u32 __osDisableInt(void);
+void __osRestoreInt(u32);
+void osCreateThread(void *t, s32 id, void (*entry)(void *), void *arg, void *sp, s32 pri);
+void osStartThread(void *t);
+void __osViInit(void);
+void viMgrMain(void *arg);
+void osCreateViManager(s32 pri) {
+    u32 savedMask;
+    s32 oldPri;
+    s32 myPri;
+
+    if (D_800FB630.active) {
+        return;
+    }
+    __osTimerServicesInit();
+    D_800FB64C = 0;
+    osCreateMesgQueue(&D_80134440, D_80134458, 5);
+    D_80134470.type = 13;
+    D_80134470.pri = 0;
+    D_80134470.retQueue = 0;
+    D_80134488.type = 14;
+    D_80134488.pri = 0;
+    D_80134488.retQueue = 0;
+    osSetEventMesg(7, &D_80134440, &D_80134470);
+    osSetEventMesg(3, &D_80134440, &D_80134488);
+    oldPri = -1;
+    myPri = osGetThreadPri(0);
+    if (myPri < pri) {
+        oldPri = myPri;
+        osSetThreadPri(0, pri);
+    }
+    savedMask = __osDisableInt();
+    D_800FB630.active = 1;
+    D_800FB630.thread = D_80133288;
+    D_800FB630.cmdQueue = &D_80134440;
+    D_800FB630.evtQueue = &D_80134440;
+    D_800FB630.acsQueue = 0;
+    D_800FB630.dma = 0;
+    D_800FB630.edma = 0;
+    osCreateThread(D_80133288, 0, viMgrMain, &D_800FB630, D_80133440 + 0x1000, pri);
+    __osViInit();
+    osStartThread(D_80133288);
+    __osRestoreInt(savedMask);
+    if (oldPri != -1) {
+        osSetThreadPri(0, oldPri);
+    }
+}
 
 void viMgrMain(void *arg) {
     ViCtxM_ *vc;

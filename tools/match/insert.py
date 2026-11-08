@@ -22,8 +22,13 @@ for name, body in parts:
     types = [d for d in decls if d.startswith("typedef")]
     others = [d for d in decls if not d.startswith("typedef")]
     add_t = [d for d in types if not re.search(r"\b%s;" % re.escape(re.search(r"(\w+);\s*$", d).group(1)), known)]
-    add_o = [d for d in others if d.strip() and d not in known and
-             not re.search(r"\b%s\(" % re.escape((re.search(r"(\w+)\(", d) or re.search(r"(\w+)(\[\])?;", d)).group(1)), known)]
+    def declared(d):
+        f = re.search(r"(\w+)\(", d)
+        if f:
+            return re.search(r"\b%s\(" % re.escape(f.group(1)), known)
+        v = re.search(r"(\w+)\s*(\[[^\]]*\])?;\s*$", d)
+        return v and re.search(r"\b%s\b" % re.escape(v.group(1)), known)
+    add_o = [d for d in others if d.strip() and d not in known and not declared(d)]
     i = c.index(head) + len(head)
     c = c[:i] + "".join(d + "\n" for d in add_t) + c[i:]
     j = c.index(marker)
