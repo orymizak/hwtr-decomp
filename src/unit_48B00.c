@@ -2,6 +2,8 @@
 #include "include_asm.h"
 typedef struct Nd8_ { s32 a; struct Nd8_ *prev; struct Nd8_ *next; u16 cnt; } Nd8_;
 typedef struct { s16 a; s16 b; s32 c; s32 d; } Obj0C_;
+typedef struct { u16 size; u16 cap; u16 count; u16 pad; u8 *data; } VecA7_;
+void *memcpy(void *, const void *, u32);
 void *Memory_Alloc(s32 size);
 void *memset(void *dst, s32 value, u32 size);
 s32 Memory_Free(void *);
@@ -27,7 +29,18 @@ void func_800A7F5C(void *arg0) {
     Memory_Free(arg0);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_48B00", func_800A7F98);
+void *func_800A7F98(VecA7_ *v) {
+    u8 *n;
+
+    if (v->count % v->cap == 0) {
+        n = Memory_Alloc(v->size * (v->count + v->cap));
+        memcpy(n, v->data, v->size * v->count);
+        Memory_Free(v->data);
+        v->data = n;
+    }
+    return v->data + v->size * v->count++;
+}
+
 
 INCLUDE_ASM("asm/nonmatchings/unit_48B00", func_800A8050);
 

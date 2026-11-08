@@ -16,9 +16,9 @@ extern void *D_80123D30[];
 extern u8 D_80100BB0;
 void func_800B11FC(void);
 typedef struct { u8 d[0x140]; } E140_;
+s8 func_800B0FB0(char *s);
 extern E140_ D_80122900[][4];
 extern void (*D_8014103C)(u8, s32);
-s8 func_800B0FB0(s32 x);
 void func_800B1250(s32 x);
 extern s32 D_80123D00[];
 s32 func_800B133C(s32);
@@ -136,7 +136,21 @@ void func_800B0F94(void) {
     func_800B0A5C();
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B0FB0);
+s8 func_800B0FB0(char *s) {
+    u8 i;
+    u8 n;
+
+    for (i = 0; i < D_800F6040; i++) {
+        if (strcmp(s, D_80123D30[i]) == 0) {
+            return -1;
+        }
+    }
+    n = D_800F6040;
+    D_80123D30[n] = s;
+    D_800F6040 = n + 1;
+    return n;
+}
+
 
 s8 func_800B1064(char *s) {
     u8 i;

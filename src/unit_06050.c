@@ -25,6 +25,7 @@ typedef struct { u16 unk0; s16 x; s16 y; s16 z; s32 unk8; s32 unkC; s32 unk10; s
 typedef struct { f32 x; f32 y; f32 z; } Vec3_;
 typedef struct { s32 x; s32 y; s32 z; } Pos_;
 typedef struct { Pos_ p; f32 m[9]; s32 d; f32 e; } Cam_;
+void func_80067A00(u8, u8, f32, f32, f32);
 s32 Memory_Alloc();
 extern u8 D_80101E80;
 s32 func_800682A4(s32, s32,s32,s32);
@@ -215,7 +216,13 @@ INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80067310);
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_800674DC);
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80067950);
+void func_80067950(u8 i, f32 v) {
+    u32 j;
+
+    for (j = 0; j < ((u8 *)(&D_80138174)[i])[0xFC]; j++) {
+        func_80067A00(i, j, 0.0f, 0.0f, v);
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80067A00);
 

@@ -1,5 +1,8 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { u8 pad[0x10]; s32 p10; } Sub14_;
+typedef struct { u8 pad[0x14]; Sub14_ *sub; u8 pad2[0x18]; s32 p30; } Item34_;
+typedef struct { u16 a; u16 count; u8 pad[0x2C]; Item34_ *items; } ItemList34_;
 typedef struct { u8 pad[0x30]; s32 flags; u8 pad2[0xC]; s32 p40; u8 pad3[0x10]; } Item54b_;
 typedef struct { u16 count; u8 pad[0x2A]; Item54b_ *items; } ItemListB_;
 void func_80073740(ItemListB_ *l);
@@ -154,7 +157,20 @@ void func_800734F4(s32 arg0) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_13490", func_80073530);
+s32 func_80073530(ItemList34_ *l) {
+    s32 i;
+
+    for (i = 0; i < l->count; i++) {
+        if (l->items[i].p30 != 0) {
+            Memory_Free(l->items[i].p30);
+            l->items[i].p30 = 0;
+        }
+        if (l->items[i].sub != NULL && l->items[i].sub->p10 != 0) {
+            Memory_Free(l->items[i].sub->p10);
+            l->items[i].sub->p10 = 0;
+        }
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_13490", func_800735E4);
 

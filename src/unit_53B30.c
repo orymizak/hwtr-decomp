@@ -69,6 +69,12 @@ extern u8 D_800F6418;
 void func_800B80B0(void);
 extern u8 D_80100F88[];
 typedef struct { u8 p0[0x10]; s32 unk10; f32 unk14; } ObjG1_;
+extern u8 D_800F60D0;
+extern s8 D_800F60D4[][6];
+void func_800BDF94(void);
+void func_800BE288(void);
+extern s32 D_801240F4;
+extern u8 D_80124C95;
 void func_800B4E64(ObjG1_ *o);
 void func_800BA584(s32);
 void func_800BA6F8(s32);
@@ -1250,7 +1256,17 @@ void func_800B9D1C(void) {
     D_80124C94 = 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800B9DC8);
+void func_800B9DC8(void) {
+    u8 buf[0x40];
+    u8 big[0x118];
+
+    D_80140FBC(1, ((char **)&D_800FA0DC)[((u8 *)D_8012414C)[0x20]], 0);
+    D_80140FB8(((char **)&D_800FA0DC)[((u8 *)D_8012414C)[0x20]], big, buf);
+    D_80140FD8();
+    *(V12_ *)&D_801240F4 = *(V12_ *)(big + 0x80);
+    D_80124C95 = 0;
+}
+
 
 void func_800B9E74(void) {
     D_80140FDC();
@@ -1384,7 +1400,26 @@ void func_800BAC10(void) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800BAC84);
+void func_800BAC84(void) {
+    switch (D_800F61D2) {
+        case 1:
+            ((void (*)(void *, s32))func_800C9F18)(&D_800F9F70, 0x3B);
+            break;
+        case 2:
+            ((void (*)(void *, s32))func_800C9F18)(&D_800F9F70, 0x3C);
+            break;
+        case 3:
+            ((void (*)(void *, s32))func_800C9F18)(&D_800F9F70, 0x3E);
+            break;
+        case 5:
+            ((void (*)(void *, s32))func_800C9F18)(&D_800F9F70, 0x3D);
+            break;
+        default:
+            ((void (*)(void *, s32))func_800C9F18)(&D_800F9F70, 0x3F);
+            break;
+    }
+}
+
 
 void func_800BAD34(void) {
     if (D_80124C80 < 0x7C) {
@@ -1427,9 +1462,41 @@ void func_800BAE28(void) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800BAE80);
+void func_800BAE80(void) {
+    D_80140FAC(0x30, 1, 1.0f, 1.0f);
+    if (D_800F6418 != 0) {
+        if (D_800F6101 != 0) {
+            D_800F6101 -= 1;
+        } else {
+            D_800F6101 = 2;
+        }
+    } else {
+        do {
+            if (D_800F6101 != 0) {
+                D_800F6101 -= 1;
+            } else {
+                D_800F6101 = 2;
+            }
+        } while (D_800F6101 == 1);
+    }
+}
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800BAF2C);
+
+void func_800BAF2C(void) {
+    D_80140FAC(0x31, 1, 1.0f, 1.0f);
+    if (D_800F6418 != 0) {
+        if (++D_800F6101 >= 3) {
+            D_800F6101 = 0;
+        }
+    } else {
+        do {
+            if (++D_800F6101 >= 3) {
+                D_800F6101 = 0;
+            }
+        } while (D_800F6101 == 1);
+    }
+}
+
 
 void func_800B8184(void);
 void func_800BAFE0(void) {
@@ -1823,7 +1890,22 @@ void func_800BCAA8(void) {
     func_800C8554(0x50);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800BCAC4);
+void func_800BCAC4(void) {
+    u8 *p = (u8 *)D_80124148;
+
+    D_800F60D0 = 0;
+    if (p[0x23] >= 6 || D_800F60D4[p[0x22]][p[0x23]] == -1) {
+        if ((u8)((s32 (*)(s32 arg0))func_800BB598)(0) == 0) {
+            ((void (*)(void *, s32))func_800C9F18)(&D_800F9F70, 0x52);
+            D_800F60D0 = 1;
+        } else {
+            ((void (*)(void *, s32))func_800C9F18)(&D_800F9F70, 0x53);
+        }
+    } else {
+        ((void (*)(void *, s32))func_800C9F18)(&D_800F9F70, 0x54);
+    }
+}
+
 
 void func_800BCB7C(void) {
     func_800B3144(&D_80100ED4);
@@ -2101,9 +2183,34 @@ void func_800BF4B0(void) {
     func_800C8110();
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800BF508);
+void func_800BF508(void) {
+    if ((u8)func_800B7DFC(D_801240B9, D_80124148) != 0) {
+        ((u8 *)D_80124148)[0x20] = D_801240B9;
+        D_801240BB = 1;
+        if (D_80123EA0 == 2) {
+            ((s32 (*)(s32, s32, s32, s32))func_800B3E24)(0, 325, 650, 0);
+            ((void (*)(u32 arg0))func_800B3CDC)(0);
+        }
+    } else {
+        D_80140FAC(0x35, 1, 1.0f, 1.0f);
+        func_800BDF94();
+    }
+}
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800BF5BC);
+void func_800BF5BC(void) {
+    if (D_80123EA0 != 1) {
+        if ((u8)func_800B7DFC(D_801240BA, D_8012414C) != 0) {
+            ((u8 *)D_8012414C)[0x20] = D_801240BA;
+            D_801240BC = 1;
+            ((s32 (*)(s32, s32, s32, s32))func_800B3E24)(1, 675, 650, 0);
+            ((void (*)(u32 arg0))func_800B3CDC)(1);
+        } else {
+            D_80140FAC(0x35, 1, 1.0f, 1.0f);
+            func_800BE288();
+        }
+    }
+}
+
 
 INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800BF66C);
 
@@ -2252,7 +2359,19 @@ void func_800C002C(void) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800C00BC);
+void func_800C00BC(void) {
+    switch ((u8)D_800F61D4) {
+        case 2:
+            D_80140FAC(0x38, 1, D_800F641C[0x87C] / 255.0f, 1.0f);
+            break;
+        case 3:
+            D_80140FAC(0x37, 1, D_800F641C[0x880] / 255.0f, 1.0f);
+            break;
+        case 1:
+            break;
+    }
+}
+
 
 void func_800C0174(void) {
     switch ((*(u8 *)&D_800F61D4)) {

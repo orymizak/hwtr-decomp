@@ -1,5 +1,12 @@
 #include "common.h"
 #include "include_asm.h"
+extern u8 D_800F3B3C[];
+extern u16 D_800F3B34[];
+extern u16 D_800F3B38[];
+typedef struct { u8 a[32]; } E32_;
+typedef struct { E32_ e[7]; u8 pad[16]; } E240_;
+extern E240_ D_800F3951[];
+extern E240_ D_800F3961[];
 extern s32 (*D_801416D4)(s32);
 s32 func_800A76D8(s32);
 extern u8 D_800F3938;
@@ -86,4 +93,23 @@ INCLUDE_ASM("asm/nonmatchings/unit_49CF0", func_800ABF2C);
 
 INCLUDE_ASM("asm/nonmatchings/unit_49CF0", func_800AC6EC);
 
-INCLUDE_ASM("asm/nonmatchings/unit_49CF0", func_800AC7C8);
+void func_800AC7C8(u8 i, u8 v) {
+    u8 j;
+
+    if (D_800F3B3C[i] == v) {
+        return;
+    }
+    if (v != 0) {
+        if (D_800F3B34[i] != D_800F3B38[i]) {
+            D_800F3B34[i] = D_800F3B38[i];
+        } else {
+            D_800F3B34[i] = 0;
+        }
+    }
+    D_800F3B3C[i] = v;
+    for (j = 0; j < 3; j++) {
+        D_800F3951[i].e[j].a[0] = 1;
+        D_800F3961[i].e[j].a[0] = 1;
+    }
+}
+
