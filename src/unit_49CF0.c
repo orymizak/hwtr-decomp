@@ -5,6 +5,10 @@ extern u16 D_800F3B34[];
 extern u16 D_800F3B38[];
 typedef struct { u8 a[32]; } E32_;
 typedef struct { E32_ e[7]; u8 pad[16]; } E240_;
+typedef struct { s32 t; u8 a; u8 b; u8 c; u8 d; s32 pad; } E0Cb_;
+extern E0Cb_ D_800F3B18[];
+extern u8 D_800F3B42;
+u8 *func_800960D8(u8);
 extern E240_ D_800F3951[];
 extern E240_ D_800F3961[];
 extern s32 (*D_801416D4)(s32);
@@ -91,7 +95,19 @@ void func_800ABEC8(s32 arg0, s32 arg1, s8 arg2) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_49CF0", func_800ABF2C);
 
-INCLUDE_ASM("asm/nonmatchings/unit_49CF0", func_800AC6EC);
+void func_800AC6EC(u8 i, s32 n) {
+    if (i < D_800F3B42) {
+        D_800F3B18[i].t = ((s32 (*)(void))func_800A76D8)();
+        D_800F3B18[i].a = func_800960D8((&D_800F3B40)[i])[0x6CC];
+        D_800F3B18[i].b = n;
+        if (D_800F3B18[i].a + (u8)n >= 11) {
+            D_800F3B18[i].b = 10 - D_800F3B18[i].a;
+        }
+        D_800F3B18[i].c = 9;
+        D_800F3B18[i].d = 1;
+    }
+}
+
 
 void func_800AC7C8(u8 i, u8 v) {
     u8 j;

@@ -25,6 +25,12 @@ typedef struct { u16 unk0; s16 x; s16 y; s16 z; s32 unk8; s32 unkC; s32 unk10; s
 typedef struct { f32 x; f32 y; f32 z; } Vec3_;
 typedef struct { s32 x; s32 y; s32 z; } Pos_;
 typedef struct { Pos_ p; f32 m[9]; s32 d; f32 e; } Cam_;
+extern u8 D_80138150[];
+extern u8 D_80138156[];
+extern f32 D_8013815C;
+extern f32 D_80138160;
+extern f32 D_80138164;
+extern f32 D_80138168;
 extern s32 D_80101E88[];
 extern s32 D_800F0218[];
 u8 File_PollAsync(s32);
@@ -212,7 +218,34 @@ void func_80066C64(s32 arg0) {
     func_80066D80(arg0 & 0xFF);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80066C9C);
+void func_80066C9C(s32 a, s32 b) {
+    u8 y = 1;
+    u8 x = 24;
+    f32 *p;
+    s32 i;
+
+    if ((a == 0) & (b == 0)) {
+        x = 0;
+        y = 0;
+    }
+    for (i = 0; i < 6; i++) {
+        D_80138150[i] = x;
+        D_80138156[i] = y;
+    }
+    p = &D_8013815C;
+    *p = 700.0f;
+    D_80138160 = 1400.0f;
+    D_80138164 = 2800.0f;
+    D_80138168 = 4800.0f;
+    if (a != 1) {
+        *p = 490.0f;
+        D_80138160 = 980.0f;
+        D_80138164 = 1960.0f;
+        D_80138168 = 3360.0f;
+    } else {
+        D_80138156[0] = 0;
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80066D80);
 
