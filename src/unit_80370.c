@@ -11,6 +11,9 @@ extern u64 D_801415B0;
 extern u32 D_801345C4;
 extern u32 D_80138B14;
 extern Timer_ *D_800FB620;
+s32 osSendMesg(void *, void *, s32);
+void __osSetTimerIntr(u64 tim);
+u64 __osInsertTimer(TimerI_ *t);
 
 
 
@@ -26,7 +29,44 @@ void __osTimerServicesInit(void) {
     D_800FB620->msg = 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_80370", __osTimerInterrupt);
+void __osTimerInterrupt(void) {
+    Timer_ *t;
+    u32 count;
+    u32 elapsed_cycles;
+
+    if (D_800FB620->next == D_800FB620) {
+        return;
+    }
+    while (1) {
+        t = D_800FB620->next;
+        if (t == D_800FB620) {
+            __osSetCompare(0);
+            D_80145560 = 0;
+            break;
+        }
+        count = osGetCount();
+        elapsed_cycles = count - D_80145560;
+        D_80145560 = count;
+        if (elapsed_cycles < t->remaining) {
+            t->remaining -= elapsed_cycles;
+            __osSetTimerIntr(t->remaining);
+            return;
+        } else {
+            t->prev->next = t->next;
+            t->next->prev = t->prev;
+            t->next = NULL;
+            t->prev = NULL;
+            if (t->mq != NULL) {
+                osSendMesg(t->mq, t->msg, 0);
+            }
+            if (t->interval != 0) {
+                t->remaining = t->interval;
+                __osInsertTimer((TimerI_ *)t);
+            }
+        }
+    }
+}
+
 
 void __osSetTimerIntr(u64 tim) {
     u64 NewTime;

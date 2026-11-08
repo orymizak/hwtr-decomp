@@ -33,6 +33,13 @@ Observados al igualar funciones a mano contra la ROM. El ejemplo indica una func
 - **Un cast de ancho también cambia el código.** `*(u8 *)&D` puede cambiar registros o direcciones. Es mejor corregir el `extern` de la unidad (`func_800BBAB4`).
 - **Prototipos nuevos en una unidad.** Afectan también a las funciones ya convertidas, por eso hay que comprobar siempre la ROM enlazada.
 
+## Opciones de compilación
+
+- **Parte de libultra se compiló con `-O3`.** En `__osPiGetAccess` y `__osSiGetAccess`, la función de crear la cola, que está
+  en el mismo archivo, va insertada en línea. Con `-O3` en esas unidades (`unit_792B0`, `unit_7FD20`), la ROM sale idéntica.
+  En el resto de unidades de libultra con C, `-O2` y `-O3` dan el mismo código, salvo en `unit_7DE70`, que mezcla
+  varios archivos de la biblioteca gráfica y debe seguir con `-O2`.
+
 ## Comprobación
 
 - **`hand.py` no conserva `#define`.** Al unir una función a su unidad se pierden las macros, así que los

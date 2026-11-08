@@ -14,7 +14,14 @@ void __osSiCreateAccessQueue(void) {
     osSendMesg(&D_8014EC98, 0, 0);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_7FD20", __osSiGetAccess);
+void __osSiGetAccess(void) {
+    void *dummyMesg;
+
+    if (!D_800FB5F0) {
+        __osSiCreateAccessQueue();
+    }
+    osRecvMesg(&D_8014EC98, &dummyMesg, 1);
+}
 
 void __osSiRelAccess(void) {
     osSendMesg(&D_8014EC98, 0, 0);

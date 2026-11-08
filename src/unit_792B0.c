@@ -14,7 +14,14 @@ void __osPiCreateAccessQueue(void) {
     osSendMesg(&D_80141678, 0, 0);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_792B0", __osPiGetAccess);
+void __osPiGetAccess(void) {
+    void *dummyMesg;
+
+    if (!D_800FB2E0) {
+        __osPiCreateAccessQueue();
+    }
+    osRecvMesg(&D_80141678, &dummyMesg, 1);
+}
 
 void __osPiRelAccess(void) {
     osSendMesg(&D_80141678, 0, 0);
