@@ -1,11 +1,14 @@
 #include "common.h"
 #include "include_asm.h"
 typedef struct { u16 magic; u8 pad[0xA]; s32 c; s32 w10; u32 p14; u32 p18; u32 p1C; u32 p20; u32 p24; u32 p28; u32 p2C; s32 w30; } Hdr79_;
-void func_80079EF4(u32);
 extern s32 D_80138E38;
 void Debug_FormatNumber(u16, char *);
 void Debug_DrawString(char *, s32, s32, s32);
 typedef struct { u8 pad[0xC]; u8 r; u8 g; u8 b; s8 on; } Col16_;
+typedef struct { u8 pad[0xC]; u8 r; u8 g; u8 b; u8 flags; } Col16b_;
+typedef struct { u16 n; u8 pad[2]; Col16b_ *c; u32 p8; u32 pC; s32 w10; } Hdr7E_;
+extern u8 D_800F20F6;
+void func_80079EF4(Hdr7E_ *h);
 f32 sqrtf(f32);
 extern f64 D_800FF8E0;
 
@@ -64,7 +67,24 @@ void func_80079E90(Col16_ *src, Col16_ *dst, u32 n) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_80079EF4);
+void func_80079EF4(Hdr7E_ *h) {
+    u8 *sh;
+    s32 i;
+
+    h->w10 = 0;
+    h->c = (Col16b_ *)((u32)h->c + (u32)h);
+    h->p8 += (u32)h;
+    h->pC += (u32)h;
+    for (i = 0; i < h->n * 3; i++) {
+        sh = &D_800F20F6;
+        if (h->c[i].flags & 1) {
+            h->c[i].r >>= *sh;
+            h->c[i].g >>= *sh;
+            h->c[i].b >>= *sh;
+        }
+    }
+}
+
 
 void *func_80079FC0(u16 *n) {
     return ((void * (*)(s32 size))Memory_Alloc)(*n * 12 + *n * 160 + *n * 48 + 16);
