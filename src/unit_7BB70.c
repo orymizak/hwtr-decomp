@@ -16,7 +16,66 @@ extern u8 *D_800FB5B0;
 
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_7BB70", alFxPull);
+typedef struct FilterP_ { struct FilterP_ *source; Acmd_ *(*handler)(void *, s16 *, s32, s32, Acmd_ *); s32 (*setParam)(void *, s32, void *); u8 pad[8]; } FilterP_;
+typedef struct { FilterP_ filter; s16 *base; s16 *input; u32 length; ALDelay_ *delay; u8 section_count; void *paramHdl; } FxP_;
+Acmd_ *_saveBuffer(Fx_ *r, s16 *curr_ptr, s32 buff, s32 count, Acmd_ *p);
+Acmd_ *_filterBuffer(LowPass_ *lp, s32 buff, s32 count, Acmd_ *p);
+Acmd_ *_loadBuffer(Fx_ *r, s16 *curr_ptr, s32 buff, s32 count, Acmd_ *p);
+Acmd6_ *_loadOutputBuffer(Fx6_ *r, Delay6_ *d, s32 buff, s32 incount, Acmd6_ *p);
+Acmd_ *alFxPull(void *filter, s16 *outp, s32 outCount, s32 sampleOffset, Acmd_ *p) {
+    Acmd_ *ptr = p;
+    FxP_ *r = (FxP_ *)filter;
+    FilterP_ *source = r->filter.source;
+    s16 i, buff1, buff2, input, output;
+    s16 *in_ptr, *out_ptr, gain, *prev_out_ptr = 0;
+    ALDelay_ *d, *pd;
+
+    ptr = (*source->handler)(source, outp, outCount, sampleOffset, p);
+    input = 1728;
+    output = 2048;
+    buff1 = 0;
+    buff2 = 320;
+    { Acmd_ *_a = ptr++; _a->w0 = 0x08000000; _a->w1 = (outCount << 1) & 0xFFFF; }
+    { Acmd_ *_a = ptr++; _a->w0 = 0x0C00DA83; _a->w1 = (1728 << 16) | (input & 0xFFFF); }
+    { Acmd_ *_a = ptr++; _a->w0 = 0x0C005A82; _a->w1 = (2048 << 16) | (input & 0xFFFF); }
+    ptr = _saveBuffer((Fx_ *)r, r->input, input, outCount, ptr);
+    { Acmd_ *_a = ptr++; _a->w0 = 0x02000000 | (output & 0xFFFFFF); _a->w1 = (u32)(outCount << 1); }
+    for (i = 0; i < r->section_count; i++) {
+        d = &r->delay[i];
+        in_ptr = &r->input[-d->input];
+        out_ptr = &r->input[-d->output];
+        if (in_ptr == prev_out_ptr) {
+            s16 t = buff2;
+            buff2 = buff1;
+            buff1 = t;
+        } else {
+            ptr = _loadBuffer((Fx_ *)r, in_ptr, buff1, outCount, ptr);
+        }
+        ptr = (Acmd_ *)_loadOutputBuffer((Fx6_ *)r, (Delay6_ *)d, buff2, outCount, (Acmd6_ *)ptr);
+        if (d->ffcoef) {
+            { Acmd_ *_a = ptr++; _a->w0 = 0x0C000000 | ((u16)d->ffcoef & 0xFFFF); _a->w1 = ((buff1 & 0xFFFF) << 16) | (buff2 & 0xFFFF); }
+            if (!d->pad24 && !d->lp) {
+                ptr = _saveBuffer((Fx_ *)r, out_ptr, buff2, outCount, ptr);
+            }
+        }
+        if (d->fbcoef) {
+            { Acmd_ *_a = ptr++; _a->w0 = 0x0C000000 | ((u16)d->fbcoef & 0xFFFF); _a->w1 = ((buff2 & 0xFFFF) << 16) | (buff1 & 0xFFFF); }
+            ptr = _saveBuffer((Fx_ *)r, in_ptr, buff1, outCount, ptr);
+        }
+        if (d->lp)
+            ptr = _filterBuffer((LowPass_ *)d->lp, buff2, outCount, ptr);
+        if (!d->pad24)
+            ptr = _saveBuffer((Fx_ *)r, out_ptr, buff2, outCount, ptr);
+        if (d->gain)
+            { Acmd_ *_a = ptr++; _a->w0 = 0x0C000000 | ((u16)d->gain & 0xFFFF); _a->w1 = ((buff2 & 0xFFFF) << 16) | (output & 0xFFFF); }
+        prev_out_ptr = &r->input[d->output];
+    }
+    r->input += outCount;
+    if (r->input > &r->base[r->length])
+        r->input -= r->length;
+    { Acmd_ *_a = ptr++; _a->w0 = 0x0A000000 | (output & 0xFFFFFF); _a->w1 = (1728 << 16) | ((outCount << 1) & 0xFFFF); }
+    return ptr;
+}
 
 s32 alFxParam(s32 *arg0, s32 arg1, s32 arg2) {
     if (arg1 == 1) {

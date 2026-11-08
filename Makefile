@@ -24,6 +24,7 @@ $(BUILD)/src/unit_6E0C0.o: OPTFLAGS := -O0
 # __os{Pi,Si}CreateAccessQueue van insertadas en línea en __os{Pi,Si}GetAccess: estos archivos de libultra usan -O3.
 $(BUILD)/src/unit_792B0.o: OPTFLAGS := -O3
 $(BUILD)/src/unit_79630.o: OPTFLAGS := -O3
+$(BUILD)/src/unit_7AA80.o: OPTFLAGS := -O3
 $(BUILD)/src/unit_81B50.o: OPTFLAGS := -O3
 $(BUILD)/src/unit_82AB0.o: OPTFLAGS := -O3
 $(BUILD)/src/unit_81170.o: OPTFLAGS := -O3
