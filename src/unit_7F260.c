@@ -14,17 +14,59 @@ typedef struct OSScTask_ { struct OSScTask_ *next; u32 state; u32 flags; void *f
 typedef struct { u8 pad[0x260]; void *clientList; OSScTask_ *audioListHead; OSScTask_ *gfxListHead; OSScTask_ *audioListTail; OSScTask_ *gfxListTail; OSScTask_ *curRSPTask; OSScTask_ *curRDPTask; u32 frameCount; s32 doAudio; } OSSchedT_;
 typedef struct OSScClient_ { struct OSScClient_ *next; void *msgQ; } OSScClient_;
 typedef struct { u8 pad[0x260]; OSScClient_ *clientList; } OSSchedC_;
+typedef struct { s16 retraceMsg; u8 p2[0x1E]; s16 prenmiMsg; u8 p22[0x1E]; u8 interruptQ[0x18]; void *intBuf[8]; u8 cmdQ[0x18]; void *cmdMsgBuf[8]; u8 thread[0x1B0]; OSScClient_ *clientList; OSScTask_ *audioListHead; OSScTask_ *gfxListHead; OSScTask_ *audioListTail; OSScTask_ *gfxListTail; OSScTask_ *curRSPTask; OSScTask_ *curRDPTask; u32 frameCount; s32 doAudio; } OSSched_;
+typedef struct { u8 b[0x50]; } OSViMode_;
+extern OSViMode_ D_800FB650[];
+void osCreateMesgQueue(void *mq, void **msg, s32 count);
+void osCreateViManager(s32 pri);
+void osViSetMode(OSViMode_ *mode);
+void osSetEventMesg(s32 e, void *mq, void *msg);
+void osViSetEvent(void *mq, void *msg, u32 retraceCount);
+void osCreateThread(void *t, s32 id, void (*entry)(void *), void *arg, void *sp, s32 pri);
+void osStartThread(void *t);
+s32 osRecvMesg(void *mq, void **msg, s32 flag);
+s32 osSpTaskYielded(void *task);
+void __scMain(void *arg);
+void __scHandleRetrace(OSSched_ *sc);
+void __scHandleRSP(OSSched_ *sc);
+void __scHandleRDP(s32 arg0);
+s32 __scTaskComplete(void *sc, OSScTask_ *t);
+void __scAppendList(OSSchedT_ *sc, OSScTask_ *t);
+void __scExec(OSSchedT_ *sc, OSScTask_ *sp, OSScTask_ *dp);
+void __scYield(void *arg0);
 u32 osVirtualToPhysical(void *);
 void osWritebackDCache(void *, s32);
 void osInvalDCache(void *, s32);
-u32 __scSchedule(s32, void *, void *, u32);
+s32 __scSchedule(OSSched_ *sc, OSScTask_ **sp, OSScTask_ **dp, s32 availRCP);
 
 s32 osSetIntMask(s32);
-s32 osViGetCurrentFramebuffer();
-s32 osViGetNextFramebuffer();
+s32 osViGetCurrentFramebuffer(void);
+s32 osViGetNextFramebuffer(void);
 s32 osSpTaskYield(void *);
 
-INCLUDE_ASM("asm/nonmatchings/unit_7F260", osCreateScheduler);
+void osCreateScheduler(OSSched_ *sc, void *stack, s32 priority, u8 mode, u8 numFields) {
+    sc->curRSPTask = 0;
+    sc->curRDPTask = 0;
+    sc->clientList = 0;
+    sc->frameCount = 0;
+    sc->audioListHead = 0;
+    sc->gfxListHead = 0;
+    sc->audioListTail = 0;
+    sc->gfxListTail = 0;
+    sc->retraceMsg = 1;
+    sc->prenmiMsg = 4;
+    osCreateMesgQueue(&sc->interruptQ, sc->intBuf, 8);
+    osCreateMesgQueue(&sc->cmdQ, sc->cmdMsgBuf, 8);
+    osCreateViManager(0xFE);
+    osViSetMode(&D_800FB650[mode]);
+    osViBlack(1);
+    osSetEventMesg(4, &sc->interruptQ, (void *)667);
+    osSetEventMesg(9, &sc->interruptQ, (void *)668);
+    osSetEventMesg(14, &sc->interruptQ, (void *)669);
+    osViSetEvent(&sc->interruptQ, (void *)666, numFields);
+    osCreateThread(&sc->thread, 4, __scMain, (void *)sc, stack, priority);
+    osStartThread(&sc->thread);
+}
 
 void osScAddClient(void *arg0, void *arg1, s32 arg2) {
     s32 temp_v0;
@@ -61,11 +103,84 @@ s32 osScGetCmdQ(s32 arg0) {
     return arg0 + 0x78;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_7F260", __scMain);
+void __scMain(void *arg) {
+    void *msg;
+    OSSched_ *sc = (OSSched_ *)arg;
+    OSScClient_ *client;
 
-INCLUDE_ASM("asm/nonmatchings/unit_7F260", __scHandleRetrace);
+    while (1) {
+        osRecvMesg(&sc->interruptQ, &msg, 1);
+        switch ((s32)msg) {
+            case 666:
+                __scHandleRetrace(sc);
+                break;
+            case 667:
+                __scHandleRSP(sc);
+                break;
+            case 668:
+                __scHandleRDP(sc);
+                break;
+            case 669:
+                for (client = sc->clientList; client != 0; client = client->next) {
+                    osSendMesg(client->msgQ, &sc->prenmiMsg, 0);
+                }
+                break;
+        }
+    }
+}
 
-INCLUDE_ASM("asm/nonmatchings/unit_7F260", __scHandleRSP);
+void __scHandleRetrace(OSSched_ *sc) {
+    OSScTask_ *rspTask;
+    OSScClient_ *client;
+    s32 i;
+    s32 state;
+    OSScTask_ *sp = 0;
+    OSScTask_ *dp = 0;
+
+    sc->frameCount++;
+    while (osRecvMesg(&sc->cmdQ, (void **)&rspTask, 0) != -1) {
+        __scAppendList(sc, rspTask);
+    }
+    if (sc->doAudio && sc->curRSPTask) {
+        __scYield(sc);
+    } else {
+        state = (sc->curRSPTask == 0) * 2;
+    if (sc->curRDPTask == 0) {
+        state |= 1;
+    }
+        if (__scSchedule(sc, &sp, &dp, state) != state)
+            __scExec(sc, sp, dp);
+    }
+    for (client = sc->clientList; client != 0; client = client->next) {
+        osSendMesg(client->msgQ, &sc->retraceMsg, 0);
+    }
+}
+
+void __scHandleRSP(OSSched_ *sc) {
+    OSScTask_ *t, *sp = 0, *dp = 0;
+    s32 state;
+
+    t = sc->curRSPTask;
+    sc->curRSPTask = 0;
+    if ((t->state & 0x10) && osSpTaskYielded(&t->type)) {
+        t->state |= 0x20;
+        if ((t->flags & 7) == 3) {
+            t->next = sc->gfxListHead;
+            sc->gfxListHead = t;
+            if (sc->gfxListTail == 0)
+                sc->gfxListTail = t;
+        }
+    } else {
+        t->state &= ~2;
+        __scTaskComplete(sc, t);
+    }
+    state = (sc->curRSPTask == 0) * 2;
+    if (sc->curRDPTask == 0) {
+        state |= 1;
+    }
+    if ((__scSchedule(sc, &sp, &dp, state)) != state)
+        __scExec(sc, sp, dp);
+}
 
 void __scHandleRDP(s32 arg0) {
     s32 sp10;
@@ -172,7 +287,86 @@ void __scYield(void *arg0) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_7F260", __scSchedule);
+s32 __scSchedule(OSSched_ *sc, OSScTask_ **sp, OSScTask_ **dp, s32 availRCP) {
+    s32 avail = availRCP;
+    OSScTask_ *gfx = sc->gfxListHead;
+    OSScTask_ *audio = sc->audioListHead;
+    s32 ready;
+    s32 cur;
+
+    if (sc->doAudio && (avail & 2)) {
+        if (gfx && (gfx->flags & 0x10)) {
+            *sp = gfx;
+            avail &= ~2;
+        } else {
+            *sp = audio;
+            avail &= ~2;
+            sc->doAudio = 0;
+            sc->audioListHead = sc->audioListHead->next;
+            if (sc->audioListHead == 0)
+                sc->audioListTail = 0;
+        }
+    } else {
+        if (gfx != 0) {
+            cur = osViGetCurrentFramebuffer();
+            ready = (s32)gfx & -(cur == osViGetNextFramebuffer());
+        } else {
+            ready = 0;
+        }
+        if (ready) {
+            switch (gfx->flags & 7) {
+                case 3:
+                    if (gfx->state & 0x20) {
+                        if (avail & 2) {
+                            *sp = gfx;
+                            avail &= ~2;
+                            if (gfx->state & 1) {
+                                *dp = gfx;
+                                avail &= ~1;
+                            }
+                            sc->gfxListHead = sc->gfxListHead->next;
+                            if (sc->gfxListHead == 0)
+                                sc->gfxListTail = 0;
+                        }
+                    } else {
+                        if (avail == 3) {
+                            *sp = *dp = gfx;
+                            avail &= ~3;
+                            sc->gfxListHead = sc->gfxListHead->next;
+                            if (sc->gfxListHead == 0)
+                                sc->gfxListTail = 0;
+                        }
+                    }
+                    break;
+                case 7:
+                case 6:
+                case 2:
+                    if (gfx->state & 2) {
+                        if (avail & 2) {
+                            *sp = gfx;
+                            avail &= ~2;
+                        }
+                    } else if (gfx->state & 1) {
+                        if (avail & 1) {
+                            *dp = gfx;
+                            avail &= ~1;
+                            sc->gfxListHead = sc->gfxListHead->next;
+                            if (sc->gfxListHead == 0)
+                                sc->gfxListTail = 0;
+                        }
+                    }
+                    break;
+                case 5:
+                case 1:
+                default:
+                    break;
+            }
+        }
+    }
+    if (avail != availRCP)
+        avail = __scSchedule(sc, sp, dp, avail);
+    return avail;
+}
 
 s32 __osSiRawStartDma(s32 direction, void *dramAddr) {
     if (*(volatile u32 *)0xA4800018 & 3) {

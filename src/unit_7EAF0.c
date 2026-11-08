@@ -3,6 +3,10 @@
 
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_7EAF0", osSyncPrintf);
+void osSyncPrintf(const char *fmt, ...) {
+}
 
-INCLUDE_ASM("asm/nonmatchings/unit_7EAF0", func_800DDF04);
+
+void func_800DDF04(const char *fmt, ...) {
+}
+

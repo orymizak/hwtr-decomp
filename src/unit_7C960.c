@@ -1,5 +1,7 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct ALParam_ { struct ALParam_ *next; } ALParam_;
+typedef struct { u8 pad[0x2C]; ALParam_ *paramList; } ALSynth_;
 s32 alLink(s32, void *);
 s32 alUnlink(s32);
 
@@ -27,7 +29,12 @@ s32 *__allocParam(void) {
     return var_v1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_7C960", __freeParam);
+void __freeParam(ALParam_ *param) {
+    ALSynth_ *drvr = (*(ALSynth_ * *)&D_800FB5B0);
+    param->next = drvr->paramList;
+    drvr->paramList = param;
+}
+
 
 void _collectPVoices(void *arg0) {
     s32 var_s0;

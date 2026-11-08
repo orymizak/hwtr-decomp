@@ -4,6 +4,7 @@ typedef struct { u32 w0; u32 w1; } Acmd_;
 typedef struct { u8 p0[0x14]; s16 *base; u8 p18[4]; s32 length; } Fx_;
 u32 osVirtualToPhysical(void *);
 typedef struct { u16 fc; } LP_;
+typedef struct { s16 fc; s16 fgain; s32 pad4; s16 fccoef[16]; void *fstate; s32 first; } LowPass_;
 typedef struct { u32 input; u32 output; s16 ffcoef; s16 fbcoef; s16 gain; s16 pad; f32 rsinc; f32 rsval; s32 rsdelta; f32 rsgain; LP_ *lp; s32 pad24; } ALDelay_;
 typedef struct { u8 pad0[0x20]; ALDelay_ *delay; } ALFx_;
 extern void _init_lpfilter(LP_ *);
@@ -110,6 +111,23 @@ Acmd_ *_saveBuffer(Fx_ *r, s16 *curr_ptr, s32 buff, s32 count, Acmd_ *p) {
     return ptr;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_7BB70", _filterBuffer);
+Acmd_ *_filterBuffer(LowPass_ *lp, s32 buff, s32 count, Acmd_ *p) {
+    Acmd_ *ptr = p;
 
-INCLUDE_ASM("asm/nonmatchings/unit_7BB70", _doModFunc);
+    { Acmd_ *_a = ptr++; _a->w0 = 0x08000000 | (0 << 16) | (buff & 0xFFFF); _a->w1 = ((buff & 0xFFFF) << 16) | ((count << 1) & 0xFFFF); }
+    { Acmd_ *_a = ptr++; _a->w0 = 0x0B000020; _a->w1 = osVirtualToPhysical(lp->fccoef); }
+    { Acmd_ *_a = ptr++; _a->w0 = 0x0E000000 | ((lp->first & 0xFF) << 16) | (lp->fgain & 0xFFFF); _a->w1 = osVirtualToPhysical(lp->fstate); }
+    lp->first = 0;
+    return ptr;
+}
+
+f32 _doModFunc(ALDelay_ *d, s32 count) {
+    f32 val;
+
+    d->rsval += d->rsinc * count;
+    d->rsval = (d->rsval > 2.0) ? d->rsval - (2.0 * 2) : d->rsval;
+    val = d->rsval;
+    val = (val < 0) ? -val : val;
+    val -= 2.0 / 2;
+    return (d->rsgain * val);
+}

@@ -5,7 +5,17 @@
 
 INCLUDE_ASM("asm/nonmatchings/unit_7E930", bzero);
 
-INCLUDE_ASM("asm/nonmatchings/unit_7E930", strchr);
+const char *strchr(const char *s, s32 c) {
+    const char ch = c;
+
+    while (*s != ch) {
+        if (*s++ == 0) {
+            return 0;
+        }
+    }
+    return s;
+}
+
 
 s32 strlen(s8 *arg0) {
     s8 *var_v1;
