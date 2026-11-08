@@ -96,7 +96,7 @@ print("OK" if ok else "FALLO", NAME, "en C:", n, "asm:", c.count("INCLUDE_ASM(")
 if ok:
     subprocess.run(["python3", "tools/progress.py", "--readme"], capture_output=True)
     subprocess.run("git add -A src hotwheelsturbo.yaml Makefile README.md", shell=True)
-    subprocess.run(["git", "commit", "-q", "-m", f"Añade {NAME}.c\n\n{n} funciones en C y {c.count('INCLUDE_ASM(')} en ensamblador. La ROM sigue siendo idéntica."])
+    subprocess.run(["git", "commit", "-q", "-m", f"Add {NAME}.c\n\n{n} functions in C and {c.count('INCLUDE_ASM(')} in assembly. The ROM is still identical."])
 else:
     subprocess.run("git checkout -- hotwheelsturbo.yaml Makefile; rm -f src/%s.c" % NAME, shell=True)
     subprocess.run("rm -rf asm/nonmatchings build; make split >/dev/null 2>&1", shell=True)

@@ -84,3 +84,9 @@ La ROM se reconstruye idéntica, pero casi todo el código sigue en ensamblador 
   el mapa de la ROM. Los nombres de libultra se asignaron por análisis del código.
 - **.rodata:** empieza en la ROM en `0x9F3B0` y está dividida por unidad en `asm/data/`. `tools/cc.py` hace que el C use esos símbolos en lugar de duplicarlos.
 - **Por hacer:** el resto del código, y la comparación del SHA-1 contra No-Intro.
+
+## License
+
+The original tooling, build scripts and documentation in this repository are released under the [MIT License](LICENSE).
+Decompiled code is provided for preservation and research purposes; the game and the Nintendo 64 SDK remain the property of their respective owners.
+No ROM or game assets are included: you need your own legally obtained copy of the game to build it.

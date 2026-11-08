@@ -558,7 +558,7 @@ def flush():
     subprocess.run(["git", "add", "src", "README.md"])
     n = sum(k for _, k in PENDING)
     detail = "\n".join(f"- {u}: {k}" for u, k in PENDING)
-    subprocess.run(["git", "commit", "-q", "-m", f"Convierte {n} funciones de {len(PENDING)} unidades\n\n{detail}\n\nLa ROM sigue siendo idéntica."])
+    subprocess.run(["git", "commit", "-q", "-m", f"Match {n} functions in {len(PENDING)} units\n\n{detail}\n\nThe ROM is still identical."])
     PENDING.clear()
 
 
