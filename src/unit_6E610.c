@@ -1,5 +1,7 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { s32 unk0; u8 p4[0x40]; s32 unk44; u8 p48[0x50]; s16 unk98; u8 p9A[2]; s16 unk9C; u8 p9E[0xA]; u16 unkA8; u8 pAA[0x92]; } VoiceC_;
+typedef struct { s32 unk0; u8 p4[0x40]; s32 unk44; u8 p48[0x83]; u8 unkCB; u8 unkCC; u8 pCD[0x6F]; } VoiceB_;
 typedef struct { u8 p0[0x20]; s32 unk20; } ObjA_;
 typedef struct { u8 p0[0x14]; s32 unk14; } ObjB_;
 typedef struct { s32 unk0; u8 p4[0x40]; s32 unk44; u8 p48[0x2C]; ObjA_ *unk74; ObjB_ *unk78; u8 p7C[0xC0]; } Voice9_;
@@ -177,9 +179,57 @@ s32 func_800CE550(s32 id, f32 val) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CE5C0);
+s32 func_800CE5C0(s32 id, s32 val) {
+    s32 i;
+    s32 n;
+    VoiceC_ *v;
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CE64C);
+    if (id == 0) {
+        return 0;
+    }
+    if (val <= 0) {
+        val = 1;
+    } else if (val > 256) {
+        val = 256;
+    }
+    i = 0;
+    v = (*(VoiceC_ * *)&D_8012793C);
+    for (n = 0; i < D_80127934; i++, v++) {
+        if (v->unk44 == id) {
+            n++;
+            v->unk98 = val;
+            v->unk9C = (v->unkA8 * val) >> 7;
+        }
+    }
+    return n;
+}
+
+
+s32 func_800CE64C(s32 id, s32 val) {
+    s32 i;
+    s32 n;
+    VoiceB_ *v;
+
+    if (id == 0) {
+        return 0;
+    }
+    if (val < 0) {
+        val = 0;
+    } else if (val >= 128) {
+        val = 127;
+    }
+    i = 0;
+    v = (*(VoiceB_ * *)&D_8012793C);
+    for (n = 0; i < D_80127934; i++, v++) {
+        if (v->unk44 == id) {
+            n++;
+            v->unkCB = val;
+            v->unkCC = 0xFF;
+        }
+    }
+    return n;
+}
+
 
 void func_800CE6D4(s32 arg0) {
     func_800CFE2C();
