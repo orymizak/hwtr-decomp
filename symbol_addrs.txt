@@ -330,3 +330,4 @@ _Genld = 0x800E63A4;  // type:func
 ldiv = 0x800E6990;  // type:func
 lldiv = 0x800E6A14;  // type:func
 D_80133440 = 0x80133440; // size:0x1000
+__umoddi3 = 0x800E7840;  // type:func
