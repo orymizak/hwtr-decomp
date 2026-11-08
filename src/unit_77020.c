@@ -1,5 +1,8 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { void *pfs; s32 file_no; } PakFileS_;
+typedef struct { PakFileS_ *file; u8 *name; u8 *ext; s32 size; s32 create; } ArgsS_;
+typedef struct { u8 p0[0xC]; ArgsS_ *args; } ReqS_;
 typedef struct { void *pfs; s32 file_no; } PakFileB_;
 typedef struct { PakFileB_ *file; s32 offset; s32 size; u8 flag; u8 *buffer; } ReqArgB_;
 typedef struct { u8 p0[0xC]; ReqArgB_ *args; } ReqB_;
@@ -65,7 +68,17 @@ s32 func_800D6518(ReqB_ *r) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_77020", func_800D6558);
+s32 func_800D6558(ReqS_ *r) {
+    ArgsS_ *a = r->args;
+    PakFileS_ *f = a->file;
+    s32 ret;
+
+    ret = osPfsFindFile(f->pfs, D_800FB1B0, D_800FB1B4, a->name, a->ext, &f->file_no);
+    if (ret == 5 && a->create == 1) {
+        ret = osPfsAllocateFile(f->pfs, D_800FB1B0, D_800FB1B4, a->name, a->ext, a->size, &f->file_no);
+    }
+    return ret;
+}
 
 void func_800D6610(void *arg0) {
     void *temp_v0;

@@ -1,5 +1,7 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { u8 p0[0x10]; s32 unk10; f32 unk14; } ObjG1_;
+void func_800B4E64(ObjG1_ *o);
 void func_800BA584(s32);
 void func_800BA6F8(s32);
 extern u8 D_800F6476;
@@ -168,7 +170,6 @@ extern s32 D_80124148;
 extern u8 D_80123EA0;
 extern u8 D_801240BA;
 extern s32 D_8012414C;
-s32 func_800B4E64(s32 *);
 s32 func_800BFC68();
 extern s32 D_800F5F48;
 extern s32 D_800F6370;
@@ -426,7 +427,10 @@ INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800B4CC4);
 
 INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800B4DF8);
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800B4E64);
+void func_800B4E64(ObjG1_ *o) {
+    o->unk14 = o->unk10;
+}
+
 
 INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800B4E74);
 
