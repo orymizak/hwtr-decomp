@@ -113,6 +113,22 @@ def explain():
         print(f"  primera diferencia en {v:08X}, dentro de {near[1]}")
 
 
+def forward_protos(c, name, body):
+    """Las funciones que el candidato llama y que la unidad define más abajo necesitan su prototipo exacto
+    antes del punto de inserción; si no, pass2.reconcile las convierte en un cast sin declarar."""
+    marker = re.search(r'INCLUDE_ASM\("asm/nonmatchings/\w+", %s\);' % re.escape(name), c)
+    if not marker:
+        return c
+    before, after = c[:marker.start()], c[marker.start():]
+    protos = []
+    for m in re.finditer(r"^([\w \*]+?\b(\w+)\(([^;{\n]*)\)) \{$", after, re.M):
+        callee = m.group(2)
+        if callee != name and re.search(r"\b%s\(" % re.escape(callee), body) and \
+                not re.search(r"\b%s\(" % re.escape(callee), before):
+            protos.append(m.group(1) + ";")
+    return before + "".join(p + "\n" for p in protos) + after if protos else c
+
+
 def apply(ok):
     by_unit = {}
     for name, (unit, opt, body) in ok.items():
@@ -124,7 +140,7 @@ def apply(ok):
             c = orig
             for name, opt, body in items:
                 if name in names:
-                    merged = pass2.merge(c, name, body, opt)
+                    merged = pass2.merge(forward_protos(c, name, body), name, body, opt)
                     if merged is None:
                         print(f"{name}: no se puede unir a {unit}")
                         tu = Path(os.environ["TMP_DIR"]).resolve() / "tu" / "tu.c"
@@ -134,6 +150,9 @@ def apply(ok):
                     else:
                         c = merged
             path.write_text(c)
+            if os.environ.get("NO_BUILD") == "1":
+                # Sin compilar la ROM: basta con que la unidad compile con todas las funciones unidas.
+                return all(f'", {n});' not in c for n in names)
             ok = pass2.make(unit) == ROM
             if not ok:
                 explain()

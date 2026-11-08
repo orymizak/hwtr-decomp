@@ -201,3 +201,4 @@ __osViCurr = 0x800FC8F0; // type:s32
 __osViNext = 0x800FC8F4; // type:s32
 __osEventStateTab = 0x8014C650; // type:s32
 D_800F6476 = 0x800F6476; // size:0x1
+D_80132200 = 0x80132200; // size:0x1000 pila del hilo del PI (piThreadStack)

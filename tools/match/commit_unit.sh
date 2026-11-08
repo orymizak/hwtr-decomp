@@ -4,7 +4,9 @@
 # Cada 3 commits la compilación es completa (make clean && make); en los demás, incremental.
 # Antes de los 5 minutos no hace nada: los cambios siguen pendientes para el siguiente commit.
 # --force confirma ya lo pendiente (al terminar una tanda de trabajo).
+# NO_BUILD=1: no compila la ROM (la persona la prueba más tarde); MIN_AGE cambia el intervalo (en segundos).
 set -e
+MIN_AGE=${MIN_AGE:-300}
 force=0
 if [ "$1" = "--force" ]; then
     force=1
@@ -14,10 +16,18 @@ msg=$1
 shift
 if [ $force = 0 ]; then
     age=$(( $(date +%s) - $(git log -1 --format=%ct) ))
-    if [ "$age" -lt 300 ]; then
-        echo "pendiente: faltan $((300 - age)) s para el siguiente commit"
+    if [ "$age" -lt "$MIN_AGE" ]; then
+        echo "pendiente: faltan $((MIN_AGE - age)) s para el siguiente commit"
         exit 0
     fi
+fi
+if [ "${NO_BUILD:-0}" = 1 ]; then
+    git add -- "$@"
+    git commit -q -m "$msg
+
+Sin compilar la ROM (a petición): cada función coincide con la ROM compilada por separado; falta comprobar el SHA-1."
+    git log --oneline -1
+    exit 0
 fi
 # Commits desde la última compilación completa: los que no dicen "make clean" en su mensaje.
 since=0
