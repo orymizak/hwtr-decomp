@@ -1,5 +1,7 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { u32 w0; u32 w1; } AcmdO_;
+typedef struct { u8 p0[0x14]; s16 *base; u8 p18[4]; s32 length; } FxO_;
 typedef struct { u32 w0; u32 w1; } Acmd_;
 typedef struct { u8 p0[0x14]; s16 *base; u8 p18[4]; s32 length; } Fx_;
 u32 osVirtualToPhysical(void *);
@@ -81,6 +83,25 @@ Acmd_ *func_800D45C0(Fx_ *r, s16 *curr_ptr, s32 buff, s32 count, Acmd_ *p) {
     return ptr;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_74AB0", func_800D46E8);
+AcmdO_ *func_800D46E8(FxO_ *r, s16 *curr_ptr, s32 buff, AcmdO_ *p) {
+    AcmdO_ *ptr = p;
+    s32 after_end, before_end;
+    s16 *updated_ptr, *delay_end;
+
+    delay_end = &r->base[r->length];
+    if (curr_ptr < r->base) {
+        curr_ptr += r->length;
+    }
+    updated_ptr = curr_ptr + 184;
+    if (updated_ptr > delay_end) {
+        after_end = updated_ptr - delay_end;
+        before_end = delay_end - curr_ptr;
+        { AcmdO_ *_a = ptr++; _a->w0 = 0x06000000 | (((before_end << 1) & 0xFFF) << 12) | (buff & 0xFFF); _a->w1 = osVirtualToPhysical(curr_ptr); }
+        { AcmdO_ *_a = ptr++; _a->w0 = 0x06000000 | (((after_end << 1) & 0xFFF) << 12) | ((buff + (before_end << 1)) & 0xFFF); _a->w1 = osVirtualToPhysical(r->base); }
+    } else {
+        { AcmdO_ *_a = ptr++; _a->w0 = 0x06000000 | ((0x170 & 0xFFF) << 12) | (buff & 0xFFF); _a->w1 = osVirtualToPhysical(curr_ptr); }
+    }
+    return ptr;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_74AB0", func_800D4800);

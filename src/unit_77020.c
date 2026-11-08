@@ -1,5 +1,8 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { void *pfs; s32 file_no; } PakFileB_;
+typedef struct { PakFileB_ *file; s32 offset; s32 size; u8 flag; u8 *buffer; } ReqArgB_;
+typedef struct { u8 p0[0xC]; ReqArgB_ *args; } ReqB_;
 s32 osPfsRepairId();
 s32 osPfsNumFiles();
 s32 osPfsDeleteFile();
@@ -56,7 +59,11 @@ void func_800D64F0(s32 arg0) {
   osPfsFreeBlocks(*(*temp_a1), (*((s32 *) (((u8 *) arg0) + 0xC))) + 4);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_77020", func_800D6518);
+s32 func_800D6518(ReqB_ *r) {
+    ReqArgB_ *a = r->args;
+    return ((s32 (*)(void *pfs, s32 file_no, u8 flag, s32 offset, s32 size, u8 *data_buffer))osPfsReadWriteFile)(a->file->pfs, a->file->file_no, a->flag, a->offset, a->size, a->buffer);
+}
+
 
 INCLUDE_ASM("asm/nonmatchings/unit_77020", func_800D6558);
 

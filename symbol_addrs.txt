@@ -333,3 +333,4 @@ D_80133440 = 0x80133440; // size:0x1000
 __umoddi3 = 0x800E7840;  // type:func
 Config_CheckCheatCode = 0x80087864; // type:func
 gCheatButtonCodes = 0x800F2FE0; // size:0x28
+D_80138AB8 = 0x80138AB8;

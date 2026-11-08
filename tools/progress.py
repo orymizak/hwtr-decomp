@@ -58,8 +58,8 @@ def main():
         table_en.append(f"| {english.get(name, name)} | {c_funcs}/{funcs} | {c_bytes}/{size} | {c_bytes / size * 100:.2f}% |")
 
     if "--readme" in sys.argv:
-        # README.md is in English; README.es.md keeps the Spanish table.
-        for path, rows_ in (("README.md", table_en), ("README.es.md", table)):
+        # Only the English README is kept up to date; README.es.md is updated by hand at the end.
+        for path, rows_ in (("README.md", table_en),):
             readme = Path(path)
             if not readme.exists():
                 continue

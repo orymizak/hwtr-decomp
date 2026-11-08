@@ -1,5 +1,12 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { u8 p0[0x20]; void *ucode; u8 p24[4]; void *ucode_data; u8 p2C[0x14]; void *data_ptr; u32 data_size; } ScTaskI_;
+extern ScTaskI_ D_80138AB8;
+extern u8 D_8014D304[];
+extern u8 D_800FABA1;
+void (*D_800FABA4)(s32, u8);
+s32 osSendMesg(void *mq, void *msg, s32 flag);
+s32 osRecvMesg(void *mq, void **msg, s32 flag);
 s32 func_800CDB5C(s32);
 s32 func_800CE95C(void *);
 extern u8 D_800E7AA0;
@@ -56,4 +63,17 @@ void func_800CD6C4(void) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_6E200", func_800CD728);
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E200", func_800CD7B8);
+void func_800CD7B8(u32 *a) {
+    if ((*(u8 *)&D_800FABA0) == 1) {
+        D_80138AB8.data_ptr = (void *)a[0];
+        D_80138AB8.data_size = a[1];
+        D_80138AB8.ucode = (void *)a[2];
+        D_80138AB8.ucode_data = (void *)a[3];
+        osSendMesg(D_8014D304, &D_80138AB8, 1);
+        osRecvMesg(((u8 *)&D_80134780), 0, 1);
+    }
+    if (D_800FABA4 != 0 && D_800FABA1 != 0) {
+        D_800FABA4(1, D_800FABA1);
+        D_800FABA1++;
+    }
+}

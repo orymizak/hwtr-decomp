@@ -1,5 +1,15 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { u8 p0[0xC]; s32 unkC; u8 p10[4]; s32 unk14; u8 p18[0x20]; u8 *unk38; u8 p3C[0x66]; u16 unkA2; u8 pA4[0x18]; u8 unkBC; } SeqP_;
+typedef struct { u8 p0[0xC]; s32 unkC; u8 p10[0x84]; s32 unk94; u8 p98[0x25]; u8 unkBD; u8 pBE[0x16]; u8 unkD4; u8 pD5[4]; u8 unkD9; u8 unkDA; } SeqO_;
+typedef struct { u8 p0[0x10]; s32 unk10; u8 p14[4]; struct { s32 a; s32 b; } entries[1]; } BankG_;
+typedef struct { u8 p0[4]; s32 unk4; u8 p8[0x3C]; s32 unk44; s32 unk48; u8 p4C[0x2C]; BankG_ *unk78; s32 unk7C; s32 unk80; u8 p84[0x1A]; s16 unk9E; u8 pA0[6]; s16 unkA6; u8 pA8[8]; s16 unkB0; } VoiceG_;
+extern s32 D_80127950;
+void func_800D0058(VoiceG_ *v);
+typedef struct { u8 p0[0x24]; f32 unk24; u8 p28[0xC]; s32 unk34; s32 unk38; u8 p3C[0x30]; f32 unk6C; f32 unk70; u8 p74[0x2E]; u16 unkA2; u16 unkA4; u8 pA6[0x16]; u8 unkBC; u8 pBD[0x1E]; u8 unkDB; u8 pDC[4]; u8 *unkE0[4]; s32 unkF0[4]; s32 unk100[4]; u16 unk110[4]; u16 unk118[4]; u8 unk120[4]; u8 unk124[4]; f32 unk128[4]; } SeqN_;
+typedef struct { u8 b[8]; } AudMsgE_;
+void func_800D247C(void *dst, void *src, s32 n);
+s32 func_800CEB34(AudMsgE_ *msg);
 typedef struct { s32 unk0; u8 p4[0x40]; s32 unk44; u8 p48[0x50]; s16 unk98; u8 p9A[2]; s16 unk9C; u8 p9E[0xA]; u16 unkA8; u8 pAA[0x92]; } VoiceC_;
 typedef struct { s32 unk0; u8 p4[0x40]; s32 unk44; u8 p48[0x83]; u8 unkCB; u8 unkCC; u8 pCD[0x6F]; } VoiceB_;
 typedef struct { u8 p0[0x20]; s32 unk20; } ObjA_;
@@ -28,7 +38,6 @@ typedef struct { u8 p0[0xB2]; u16 unkB2; u16 unkB4; } SeqChan2_;
 extern s32 D_80127964;
 void func_800CE7E8(s32 arg);
 typedef struct { u8 type; u8 pad[3]; s32 arg; } AudMsg_;
-void func_800CEB34(AudMsg_ *msg);
 typedef struct { u8 p0[0x2C]; f32 unk2C; u8 p30[0x20]; f32 unk50; u8 p54[0x64]; u8 unkB8; } SeqChan_;
 extern s32 D_800FAE80;
 extern u8 D_800FAE84;
@@ -387,7 +396,17 @@ void func_800CEAB4(void *arg0) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CEB34);
+s32 func_800CEB34(AudMsgE_ *msg) {
+    s32 next = (D_80127978 + 1) % D_8012797C;
+
+    if (next == D_80127974) {
+        return 0;
+    }
+    func_800D247C(&(*(AudMsgE_ * *)&D_80127980)[D_80127978], msg, 8);
+    D_80127978 = next;
+    return 1;
+}
+
 
 INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CEBCC);
 
@@ -430,7 +449,34 @@ void func_800CF930(void *arg0) {
     *(u8 *)((u8 *)arg0 + 0xDA) = (s8) (*(u8 *)((u8 *)arg0 + 0xBD) & 0x40);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CF94C);
+void func_800CF94C(SeqO_ *s) {
+    u32 t;
+
+    do {
+        s->unk94 += 0x100;
+        t = s->unkD9 + s->unkD4;
+        if (t < 0x40) {
+            s->unkD9 = t;
+        } else {
+            s->unkD9 = t & 0x3F;
+            t >>= 6;
+            if (s->unkDA == 0) {
+                s->unkBD += t;
+                if (s->unkBD >= 0x80) {
+                    s->unkBD = 0x7F;
+                    s->unkDA = 1;
+                }
+            } else {
+                s->unkBD -= t;
+                if (s->unkBD >= 0x80 || s->unkBD == 0) {
+                    s->unkBD = 0;
+                    s->unkDA = 0;
+                }
+            }
+        }
+    } while (s->unk94 - s->unkC < 0);
+}
+
 
 f32 func_800CFA04(s32 arg0) {
     u8 temp_v0;
@@ -461,7 +507,32 @@ f32 func_800CFA5C(s32 arg0) {
   *((f32 *) (((u8 *) arg0) + 0x68)) = temp_fv0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CFAC0);
+void func_800CFAC0(SeqP_ *s) {
+    u8 b;
+    u16 v;
+
+    do {
+        s->unk14 += 0x100;
+        if (--s->unkA2 == 0) {
+            b = *s->unk38++;
+            if (b >= 0x80) {
+                s->unkBC = b & 0x7F;
+                b = *s->unk38++;
+                if (b >= 0x80) {
+                    v = (b & 0x7F) << 8;
+                    s->unkA2 = v;
+                    v += 2;
+                    s->unkA2 = *s->unk38++ + v;
+                } else {
+                    s->unkA2 = b + 2;
+                }
+            } else {
+                s->unkBC = b;
+                s->unkA2 = 1;
+            }
+        }
+    } while (s->unk14 - s->unkC < 0);
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CFB84);
 
@@ -515,7 +586,21 @@ void func_800D035C(void *arg0, s32 arg1, s32 arg2) {
   }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800D0394);
+s32 func_800D0394(VoiceG_ *v, BankG_ *b, s32 idx, s32 a3, s32 a4, s32 a5) {
+    func_800D0058(v);
+    v->unkA6 = idx;
+    v->unk78 = b;
+    v->unk9E = a3;
+    v->unkB0 = a4;
+    v->unk44 = D_80127950;
+    v->unk48 = a5;
+    D_80127950++;
+    if (b->unk10 != 0) {
+        v->unk7C = b->unk10;
+    }
+    v->unk4 = v->unk80 = b->entries[idx].a;
+    return v->unk44;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800D0444);
 
@@ -680,7 +765,27 @@ u8 *func_800D0D50(SeqH_ *s, u8 *p) {
     return p;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800D0DBC);
+u8 *func_800D0DBC(SeqN_ *s, u8 *p) {
+    s32 i = s->unkDB - 1;
+
+    if (s->unk120[i] != 0xFF) {
+        if (--s->unk120[i] == 0) {
+            s->unkDB = i;
+            i = -1;
+        }
+    }
+    if (i >= 0) {
+        p = s->unkE0[i];
+        s->unk38 = s->unkF0[i];
+        s->unk34 = s->unk100[i];
+        s->unkBC = s->unk124[i];
+        s->unk70 = s->unk128[i];
+        s->unkA2 = s->unk110[i];
+        s->unkA4 = s->unk118[i];
+        s->unk24 = s->unk70 * s->unk6C;
+    }
+    return p;
+}
 
 u8 *func_800D0E58(SeqChan3_ *s, u8 *p) {
     s->unkD8 = *p++;
