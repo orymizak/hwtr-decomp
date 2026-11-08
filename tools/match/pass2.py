@@ -400,8 +400,9 @@ def split(c):
 
 
 def decl_name(d):
-    m = re.search(r"\(\*\s*(\w+)\)|\b(\w+)\s*\(.*\)\s*;$|\b(\w+)\s*(?:\[[^\]]*\])*\s*;$", d)
-    return (m.group(1) or m.group(2) or m.group(3)) if m else None
+    # Function pointers first: otherwise `void (*D_x)(s32);` is taken as a prototype named `void`.
+    m = re.search(r"\(\*\s*(\w+)\)", d) or re.search(r"\b(\w+)\s*\(.*\)\s*;$|\b(\w+)\s*(?:\[[^\]]*\])*\s*;$", d)
+    return next((g for g in m.groups() if g), None) if m else None
 
 
 def reconcile(decls, body, known):

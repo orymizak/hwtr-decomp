@@ -1,5 +1,16 @@
 #include "common.h"
 #include "include_asm.h"
+extern void (*D_80141020)(s32, s32, s32);
+extern void (*D_8014102C)(void);
+extern void (*D_80141038)(f32, f32, f32, f32);
+extern void (*D_8014105C)(s32);
+extern u8 (*D_80141080)(void);
+extern u8 (*D_801455A4)(void);
+extern void (*D_8014556C)(s32);
+extern u8 (*D_80145578)(s32, s32);
+extern u8 (*D_80140F9C)(void *);
+extern u8 (*D_80140FA8)(void);
+extern void (*D_80140FAC)(s32, s32, f32, f32);
 typedef struct { f32 x; f32 y; f32 z; } V3f3_;
 extern V3f3_ D_80123E40[];
 s32 strcmp(const char *, const char *);
@@ -1325,7 +1336,6 @@ INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800BAE80);
 
 INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800BAF2C);
 
-extern void (*D_80140FAC)(s32, s32, f32, f32);
 void func_800B8184(void);
 void func_800BAFE0(void) {
     D_80140FAC(0x30, 1, 1.0f, 1.0f);
@@ -2107,21 +2117,7 @@ INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800C03B4);
 
 INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800C04F0);
 
-void func_800C0524(void) {
-    if (D_80124C71 == 2) {
-        if ((*(u8 *)&D_800F61D4) < 8) {
-            (*(u8 *)&D_800F61D4)++;
-        } else {
-            (*(u8 *)&D_800F61D4) = 0;
-        }
-    } else {
-        if ((*(u8 *)&D_800F61D4) < 7) {
-            (*(u8 *)&D_800F61D4)++;
-        } else {
-            (*(u8 *)&D_800F61D4) = 0;
-        }
-    }
-}
+INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800C0524);
 
 
 void func_800C0584(void) {

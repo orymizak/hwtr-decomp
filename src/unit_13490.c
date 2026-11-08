@@ -229,17 +229,7 @@ void func_80075580(void) {
     } while (var_v0 >= 0);
 }
 
-void func_800755B4(void) {
-    s32 r = 0;
-    s32 i;
-
-    for (i = 0; i < 16; i++) {
-        if (((Slot18_ *)&D_8014D180)[i].b0 & ((Slot18_ *)&D_8014D180)[i].b1) {
-            r = i + 1;
-        }
-    }
-    D_8014C64C = r;
-}
+INCLUDE_ASM("asm/nonmatchings/unit_13490", func_800755B4);
 
 void func_80075600(s32 arg0, s8 arg1, s8 arg2, s8 arg3) {
     s32 temp_v0;
@@ -281,21 +271,7 @@ s32 func_800757A4(void) {
 }
 
 
-void func_800757E8(s32 n) {
-    s32 r;
-    s32 i;
-
-    if (n != -1) {
-        *(u32 *)&((Slot18_ *)&D_8014D180)[n] = 0;
-        r = 0;
-        for (i = 0; i < 16; i++) {
-            if (((Slot18_ *)&D_8014D180)[i].b0 & ((Slot18_ *)&D_8014D180)[i].b1) {
-                r = i + 1;
-            }
-        }
-        D_8014C64C = r;
-    }
-}
+INCLUDE_ASM("asm/nonmatchings/unit_13490", func_800757E8);
 
 
 void func_80075858(void) {
