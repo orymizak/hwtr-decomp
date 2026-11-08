@@ -1,5 +1,9 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { u32 w0; u32 w1; } Acmd6_;
+typedef struct { u8 filter[0x14]; void *state; f32 ratio; s32 upitch; f32 delta; s32 first; } Resampler6_;
+typedef struct { u32 input; u32 output; s16 ffcoef; s16 fbcoef; s16 gain; f32 rsinc; f32 rsval; s32 rsdelta; f32 rsgain; void *lp; Resampler6_ *rs; } Delay6_;
+typedef struct { u8 filter[0x14]; s16 *base; s16 *input; u32 length; } Fx6_;
 typedef struct { u32 w0; u32 w1; } Acmd_;
 typedef struct { u8 p0[0x14]; s16 *base; u8 p18[4]; s32 length; } Fx_;
 u32 osVirtualToPhysical(void *);
@@ -59,7 +63,39 @@ s32 alFxParamHdl(void *filter, s32 paramID, void *param) {
     return 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_7BB70", _loadOutputBuffer);
+f32 _doModFunc(ALDelay_ *d, s32 count);
+Acmd_ *_loadBuffer(Fx_ *r, s16 *curr_ptr, s32 buff, s32 count, Acmd_ *p);
+Acmd6_ *_loadOutputBuffer(Fx6_ *r, Delay6_ *d, s32 buff, s32 incount, Acmd6_ *p) {
+    Acmd6_ *ptr = p;
+    s32 ratio, count, rbuff = 640;
+    s16 *out_ptr;
+    f32 fincount, fratio, delta;
+    s32 ramalign = 0, length;
+
+    if (d->rs) {
+        length = d->output - d->input;
+        delta = _doModFunc((ALDelay_ *)d, incount);
+        delta /= length;
+        delta = (s32)(delta * 0x8000);
+        delta = delta / 0x8000;
+        fratio = 1.0 - delta;
+        fincount = d->rs->delta + (fratio * (f32)incount);
+        count = (s32)fincount;
+        d->rs->delta = fincount - (f32)count;
+        out_ptr = &r->input[-(d->output - d->rsdelta)];
+        ramalign = ((s32)out_ptr & 0x7) >> 1;
+        ptr = (Acmd6_ *)_loadBuffer((Fx_ *)r, out_ptr - ramalign, rbuff, count + ramalign, (Acmd_ *)ptr);
+        ratio = (s32)(fratio * 0x8000);
+        { Acmd6_ *_a = ptr++; _a->w0 = (8 << 24) | (((rbuff + (ramalign << 1))) & 0xFFFF); _a->w1 = ((buff & 0xFFFF) << 16) | ((incount << 1) & 0xFFFF); }
+        { Acmd6_ *_a = ptr++; _a->w0 = (5 << 24) | ((d->rs->first & 0xFF) << 16) | (ratio & 0xFFFF); _a->w1 = osVirtualToPhysical(d->rs->state); }
+        d->rs->first = 0;
+        d->rsdelta += count - incount;
+    } else {
+        out_ptr = &r->input[-d->output];
+        ptr = (Acmd6_ *)_loadBuffer((Fx_ *)r, out_ptr, buff, incount, (Acmd_ *)ptr);
+    }
+    return ptr;
+}
 
 Acmd_ *_loadBuffer(Fx_ *r, s16 *curr_ptr, s32 buff, s32 count, Acmd_ *p) {
     Acmd_ *ptr = p;
