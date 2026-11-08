@@ -1,5 +1,7 @@
 #include "common.h"
 #include "include_asm.h"
+void *Memory_Alloc(s32 size);
+void *memset(void *dst, s32 value, u32 size);
 s32 Memory_Free(void *);
 
 
@@ -28,7 +30,12 @@ u16 func_800A81D4(void *arg0) {
     return *(u16 *)((u8 *)arg0 + 0x4);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_48B00", func_800A81DC);
+void *func_800A81DC(void) {
+    void *p = Memory_Alloc(4);
+
+    memset(p, 0, 4);
+    return p;
+}
 
 void func_800A8218(s32 *arg0) {
     s32 *var_a0;

@@ -1,5 +1,10 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { s32 state; u8 pad[0x50]; } SlotC_;
+extern SlotC_ D_800F03F8[];
+extern u8 D_800F0548[];
+void func_800D7150(void);
+void *memset(void *dst, s32 value, u32 size);
 typedef struct { u16 button; s8 stick_x; s8 stick_y; u8 errnum; u8 pad; } Pad_;
 extern void func_800D6420(Pad_ *);
 extern u8 D_800F0403;
@@ -263,7 +268,11 @@ s32 func_8006C218(s32 arg0) {
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_0B140", func_8006C23C);
+s32 func_8006C23C(u8 i) {
+    u8 unused[16];
+
+    return D_800F03F8[i].state == 2;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_0B140", func_8006C274);
 
@@ -284,7 +293,12 @@ s32 func_8006C468(void) {
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_0B140", func_8006C488);
+s32 func_8006C488(void) {
+    func_800D7150();
+    memset(D_800F0548, 0, 2);
+    return 1;
+}
+
 
 INCLUDE_ASM("asm/nonmatchings/unit_0B140", func_8006C4BC);
 

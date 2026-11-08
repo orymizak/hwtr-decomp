@@ -1,5 +1,11 @@
 #include "common.h"
 #include "include_asm.h"
+void func_800D6240(u32 devAddr, void *dram, u32 size);
+void func_800CE6D4(void *data, s32 a);
+typedef struct { s32 a; s32 b; s32 c; } Vec3J_;
+extern Vec3J_ D_800EFF14;
+typedef struct { s32 a; s32 b; s32 c; } Vec3I_;
+extern Vec3I_ D_800EFF08;
 typedef struct { f32 x; f32 y; f32 z; } Vec3_;
 extern Vec3_ D_800EFF20;
 extern Vec3_ D_800EFF2C;
@@ -225,7 +231,10 @@ INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80061C70);
 
 INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80062950);
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80063434);
+s32 func_80063434(Vec3I_ v) {
+    D_800EFF08 = v;
+    return 1;
+}
 
 s32 func_80063468(Vec3_ a, Vec3_ b) {
     D_800EFF20 = a;
@@ -233,7 +242,11 @@ s32 func_80063468(Vec3_ a, Vec3_ b) {
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", func_800634C0);
+s32 func_800634C0(Vec3J_ v) {
+    D_800EFF14 = v;
+    return 1;
+}
+
 
 INCLUDE_ASM("asm/nonmatchings/unit_01050", func_800634F4);
 
@@ -406,7 +419,11 @@ f32 func_80064E68(void *arg0, void *arg1) {
     return (temp_fv1 * temp_fv1) + (temp_ft0 * temp_ft0) + (temp_fv0 * temp_fv0);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80064EA4);
+void func_80064EA4(u32 devAddr, u32 size, s32 a) {
+    func_800D6240(devAddr, (void *)0x80010400, size);
+    func_800CE6D4((void *)0x80010400, a);
+}
+
 
 INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80064EE8);
 

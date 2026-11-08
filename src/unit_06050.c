@@ -1,5 +1,7 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { s32 a; s32 b; s32 c; s32 d; } Vec4L_;
+typedef struct { u8 p0[0x13C]; Vec4L_ v; u8 unk14C; } ObjL_;
 u8 func_80066A2C(u8 a, s32 b, s32 c);
 typedef struct { u16 unk0; s16 x; s16 y; s16 z; s32 unk8; s32 unkC; s32 unk10; s32 unk14; } Node_;
 typedef struct { f32 x; f32 y; f32 z; } Vec3_;
@@ -170,7 +172,11 @@ INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80067950);
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80067A00);
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80067EFC);
+void func_80067EFC(u8 i, u8 val, Vec4L_ *src) {
+    ((ObjL_ * *)&D_80138174)[i]->unk14C = val;
+    ((ObjL_ * *)&D_80138174)[i]->v = *src;
+}
+
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80067F40);
 

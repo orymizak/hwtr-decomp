@@ -33,7 +33,10 @@ INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_80079E90);
 
 INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_80079EF4);
 
-INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_80079FC0);
+void *func_80079FC0(u16 *n) {
+    return ((void * (*)(s32 size))Memory_Alloc)(*n * 12 + *n * 160 + *n * 48 + 16);
+}
+
 
 INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_8007A004);
 

@@ -1,5 +1,8 @@
 #include "common.h"
 #include "include_asm.h"
+extern s32 D_800F378C[];
+extern s32 D_800F3770[];
+extern s32 D_80141448;
 extern s32 D_800F36D0[];
 extern s32 D_8014C1A8;
 
@@ -55,9 +58,34 @@ void func_8008D3D4(void) {
     D_801184B8 += 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", func_8008D460);
+s32 func_8008D460(u32 i) {
+    switch (i) {
+        case 0:
+        case 1:
+        case 2:
+        case 3:
+        case 4:
+        case 5:
+        case 6:
+            return D_800F3770[i];
+    }
+    return D_80141448;
+}
 
-INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", func_8008D48C);
+
+s32 func_8008D48C(u32 i) {
+    switch (i) {
+        case 0:
+        case 1:
+        case 2:
+        case 3:
+        case 4:
+        case 5:
+        case 6:
+            return D_800F378C[i];
+    }
+    return D_80141448;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", func_8008D4B8);
 

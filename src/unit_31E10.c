@@ -1,5 +1,7 @@
 #include "common.h"
 #include "include_asm.h"
+extern u8 D_800F38A0[];
+void *memset(void *dst, s32 value, u32 size);
 extern s32 (*D_80141698)();
 s32 func_80099434(void *);
 s32 func_8009951C(void *);
@@ -109,7 +111,11 @@ INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_80098584);
 
 INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_8009887C);
 
-INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_80098BC0);
+s32 func_80098BC0(void) {
+    memset(D_800F38A0, 0, 8);
+    return 1;
+}
+
 
 s32 func_80098BEC(void) {
     return 1;

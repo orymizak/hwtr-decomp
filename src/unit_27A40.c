@@ -45,7 +45,16 @@ s32 func_80087660(void) {
     return (var_s0 & 0xFF) == 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_27A40", func_800876D4);
+s32 func_8008770C(void);
+void func_800876D4(void **tbl, u32 size) {
+    s32 i;
+    s32 n = size >> 2;
+
+    for (i = 0; i < n; i++) {
+        *tbl++ = func_8008770C;
+    }
+}
+
 
 s32 func_8008770C(void) {
     return 0;

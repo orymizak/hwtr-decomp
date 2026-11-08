@@ -1,5 +1,8 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { u8 p0[4]; u16 *unk4; } BufD_;
+typedef struct { u32 w0; u32 w1; } GfxA_;
+typedef struct { u8 p0[0x34]; GfxA_ *unk34; } ObjA2_;
 extern s32 D_80138AA8;
 extern s32 D_8014C1A8;
 typedef struct { s32 f0; s32 f4; u8 p8[0x548]; } S_D_801455C0;
@@ -99,11 +102,23 @@ void func_8006DCE8(s32 arg0) {
     D_800F05E0 = func_8007F57C(arg0);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_0D1F0", func_8006DD34);
+void func_8006DD34(ObjA2_ *o) {
+    if ((*(GfxA_ * *)&D_800F05E0) != 0) {
+        *o->unk34 = *(*(GfxA_ * *)&D_800F05E0);
+    }
+}
+
 
 INCLUDE_ASM("asm/nonmatchings/unit_0D1F0", func_8006DD60);
 
-INCLUDE_ASM("asm/nonmatchings/unit_0D1F0", func_8006DEF4);
+void func_8006DEF4(u16 *pal, s32 *idx) {
+    s32 i;
+    u16 *dst = (*(BufD_ * *)&D_800F05E0)->unk4;
+
+    for (i = 0; i < 0x400; i++) {
+        *dst++ = pal[*idx++];
+    }
+}
 
 void func_8006DF34(s32 arg0) {
     register s32 var_a1;

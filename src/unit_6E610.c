@@ -1,5 +1,13 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { u32 unk0; s32 unk4; u8 p8[8]; s32 unk10; u8 p14[8]; s32 unk1C; u8 p20[0x58]; s32 unk78; u8 p7C[0xC0]; } VoiceW_;
+typedef struct { u32 unk0; u8 p4[0xC]; s32 unk10; u8 p14[8]; s32 unk1C; u8 p20[0x24]; s32 unk44; u8 p48[0xF4]; } VoiceX_;
+typedef struct { s32 unk0; u8 p4[0x40]; s32 unk44; u8 p48[0x34]; s32 unk7C; u8 p80[0xBC]; } VoiceY_;
+typedef struct { u8 p0[0x44]; s32 unk44; s32 unk48; u8 p4C[0x2C]; void *unk78; u8 p7C[0x22]; s16 unk9E; u8 pA0[0x10]; s16 unkB0; } SeqY_;
+typedef struct { u8 p0[0x7C]; s32 unk7C; } SeqY2_;
+typedef struct { s32 unk0; u8 p4[0x70]; s32 unk74; u8 p78[0x24]; s16 unk9C; u8 p9E[0xA]; s16 unkA8; u8 pAA[0x92]; } VoiceZ_;
+typedef struct { u8 p0[0x74]; s32 unk74; s32 unk78; u8 p7C[0x1C]; s16 unk98; u8 p9A[2]; s16 unk9C; } SeqZ_;
+extern s32 D_80127944;
 typedef struct { u8 p0[0xC]; s32 unkC; u8 p10[4]; s32 unk14; u8 p18[0x20]; u8 *unk38; u8 p3C[0x66]; u16 unkA2; u8 pA4[0x18]; u8 unkBC; } SeqP_;
 typedef struct { u8 p0[0xC]; s32 unkC; u8 p10[0x84]; s32 unk94; u8 p98[0x25]; u8 unkBD; u8 pBE[0x16]; u8 unkD4; u8 pD5[4]; u8 unkD9; u8 unkDA; } SeqO_;
 typedef struct { u8 p0[0x10]; s32 unk10; u8 p14[4]; struct { s32 a; s32 b; } entries[1]; } BankG_;
@@ -120,13 +128,101 @@ block_4:
 
 INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CE110);
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CE228);
+void func_800CE228(s32 flags, s32 val) {
+    s32 i;
+    s32 rate;
+    VoiceW_ *v;
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CE2F4);
+    rate = val;
+    if (val == 0) {
+        rate = 1;
+    }
+    v = *(VoiceW_ **)&D_8012793C;
+    for (i = 0; i < D_80127934; i++, v++) {
+        if (!((v->unk78 != 0) ? (flags & 1) : (flags & 2))) {
+            continue;
+        }
+        if (v->unk4 == 0) {
+            continue;
+        }
+        if (v->unk10 != -1) {
+            continue;
+        }
+        if (v->unk0 & 1) {
+            v->unk1C = 1;
+            v->unk10 = 0;
+            v->unk0 &= ~1;
+        } else {
+            v->unk1C = rate;
+            v->unk10 = val;
+        }
+    }
+}
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CE374);
+s32 func_800CE2F4(s32 flags) {
+    s32 i;
+    s32 n;
+    VoiceW_ *v;
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CE428);
+    n = 0;
+    v = *(VoiceW_ **)&D_8012793C;
+    for (i = 0; i < D_80127934; i++, v++) {
+        if (v->unk4 == 0) {
+            continue;
+        }
+        if ((v->unk78 != 0) ? (flags & 1) : (flags & 2)) {
+            n++;
+        }
+    }
+    return n;
+}
+
+s32 func_800CE374(s32 id, s32 val) {
+    s32 i;
+    s32 n;
+    s32 rate;
+    VoiceX_ *v;
+
+    if (id == 0) {
+        return 0;
+    }
+    rate = val;
+    if (val == 0) {
+        rate = 1;
+    }
+    i = 0;
+    v = *(VoiceX_ **)&D_8012793C;
+    for (n = 0; i < D_80127934; i++, v++) {
+        if (v->unk44 == id && v->unk10 == -1) {
+            if (v->unk0 & 1) {
+                v->unk1C = 1;
+                v->unk10 = 0;
+                v->unk0 &= ~1;
+            } else {
+                v->unk1C = rate;
+                v->unk10 = val;
+            }
+            n++;
+        }
+    }
+    return n;
+}
+
+s32 func_800CE428(s32 id) {
+    s32 i;
+    Voice_ *v;
+    s32 n;
+
+    if (id == 0) {
+        return 0;
+    }
+    i = 0;
+    v = *(Voice_ **)&D_8012793C;
+    for (n = 0; i < D_80127934; i++, v++) {
+        n += (v->unk44 == id);
+    }
+    return n;
+}
 
 s32 func_800CE480(s32 id, s16 val) {
     s32 i;
@@ -655,7 +751,27 @@ s32 func_800D091C(void *arg0, s32 arg1) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800D0928);
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800D0A50);
+u8 *func_800D0A50(SeqZ_ *s, u8 *p) {
+    s32 tempo = ((*p * 0x6000) / 120) / D_80127944;
+    s32 scaled;
+    s32 i;
+    VoiceZ_ *v;
+
+    p++;
+    scaled = (tempo * s->unk98) >> 7;
+    if (s->unk78 != 0) {
+        s->unk9C = tempo;
+    } else {
+        v = (*(VoiceZ_ * *)&D_8012793C);
+        for (i = 0; i < D_80127934; i++, v++) {
+            if (v->unk74 == s->unk74) {
+                v->unkA8 = tempo;
+                v->unk9C = scaled;
+            }
+        }
+    }
+    return p;
+}
 
 void *func_800D0B34(s32 arg0, void *arg1) {
   s16 new_var;
@@ -881,7 +997,29 @@ void *func_800D10A4(void *arg0, u8 *arg1) {
     return arg1 + 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800D10B4);
+u8 *func_800D10B4(SeqY_ *s, u8 *p) {
+    s32 v = *p++;
+    s32 id;
+    s32 i;
+    VoiceY_ *vc;
+
+    if (v >= 0x80) {
+        v = ((v & 0x7F) << 8) + *p++;
+    }
+    s->unk48++;
+    id = ((s32 (*)(void *bank, s32 idx, s32 a, s32 b, s32 c))func_800D0444)(s->unk78, v, s->unk9E, s->unkB0, s->unk48);
+    s->unk48--;
+    if (id != 0) {
+        vc = (*(VoiceY_ * *)&D_8012793C);
+        for (i = 0; i < D_80127934; i++, vc++) {
+            if (vc->unk44 == id) {
+                vc->unk44 = s->unk44;
+                vc->unk7C = ((SeqY2_ *)s)->unk7C;
+            }
+        }
+    }
+    return p;
+}
 
 void *func_800D1184(void *arg0, u8 *arg1) {
     f32 temp_fv0;

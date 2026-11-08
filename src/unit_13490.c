@@ -1,5 +1,6 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { u32 flags; u8 pad[0x14]; } SlotM_;
 s32 func_80070BA4(void *);
 s32 func_800717C8(s32, s32, s32);
 void func_80072EE0(u8 *, void *, s32, s32, s32);
@@ -232,7 +233,18 @@ INCLUDE_ASM("asm/nonmatchings/unit_13490", func_800756A0);
 
 INCLUDE_ASM("asm/nonmatchings/unit_13490", func_80075720);
 
-INCLUDE_ASM("asm/nonmatchings/unit_13490", func_800757A4);
+s32 func_800757A4(void) {
+    s32 i;
+
+    for (i = 0; i < 16; i++) {
+        if (!(((SlotM_ *)&D_8014D180)[i].flags & 2)) {
+            ((SlotM_ *)&D_8014D180)[i].flags = 2;
+            return i;
+        }
+    }
+    return -1;
+}
+
 
 INCLUDE_ASM("asm/nonmatchings/unit_13490", func_800757E8);
 
