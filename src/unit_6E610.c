@@ -1,5 +1,8 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { u8 p0[0x20]; s32 unk20; } ObjA_;
+typedef struct { u8 p0[0x14]; s32 unk14; } ObjB_;
+typedef struct { s32 unk0; u8 p4[0x40]; s32 unk44; u8 p48[0x2C]; ObjA_ *unk74; ObjB_ *unk78; u8 p7C[0xC0]; } Voice9_;
 typedef struct { u8 p0[0x3C]; s32 unk3C; s32 unk40; u8 p44[0x10]; s32 unk54; u8 p58[0x42]; u16 unk9A; u8 p9C[0x16]; u16 unkB2; u16 unkB4; u8 pB6[9]; u8 unkBF; u8 unkC0; u8 pC1[2]; u8 unkC3; u8 unkC4; u8 unkC5; } SeqK_;
 typedef struct { u8 p0[0x20]; f32 unk20; u8 p24[0x92]; u8 unkB6; u8 pB7[0x1E]; u8 unkD5; u8 pD6[6]; f32 unkDC; } SeqJ_;
 typedef struct { s32 unk0; u8 p4[0x2C]; f32 unk30; u8 p34[0x10]; s32 unk44; u8 p48[0x48]; f32 unk90; u8 p94[0xA8]; } Voice8_;
@@ -278,7 +281,25 @@ void func_800CE95C(s32 arg0) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CE968);
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CE9CC);
+s32 func_800CE9CC(s32 id) {
+    s32 i;
+    Voice9_ *v;
+
+    if (id == 0) {
+        return 0;
+    }
+    v = (*(Voice9_ * *)&D_8012793C);
+    for (i = 0; i < D_80127934; i++, v++) {
+        if (v->unk44 == id) {
+            if (v->unk74 != 0) {
+                return v->unk74->unk20;
+            }
+            return v->unk78->unk14;
+        }
+    }
+    return 0;
+}
+
 
 void func_800CEA44(s32 arg0) {
     D_80127970 = arg0;
