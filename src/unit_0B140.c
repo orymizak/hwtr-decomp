@@ -6,6 +6,10 @@ extern u8 D_800F0548[];
 void func_800D7150(void);
 void *memset(void *dst, s32 value, u32 size);
 typedef struct { u16 button; s8 stick_x; s8 stick_y; u8 errnum; u8 pad; } Pad_;
+typedef struct { u8 buf[8]; s32 st; s32 mode; } PakSt_;
+s32 func_800D6FA0(s32);
+void func_800D7030(s32, s32);
+void func_800D66D0(PakSt_ *, s32);
 extern void func_800D6420(Pad_ *);
 extern u8 D_800F0403;
 extern u8 D_800F0390;
@@ -302,4 +306,23 @@ s32 func_8006C488(void) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_0B140", func_8006C4BC);
 
-INCLUDE_ASM("asm/nonmatchings/unit_0B140", func_8006C520);
+s32 func_8006C520(void) {
+    PakSt_ s;
+    s32 i;
+
+    for (i = 0; i < 4; i++) {
+        s.st = func_800D6FA0(i);
+        if (s.st == 0) {
+            s.mode = 2;
+            func_800D7030(i, 2);
+        } else if (s.st == 11) {
+            func_800D66D0(&s, i);
+            if (s.st == 10) {
+                s.mode = 1;
+            }
+        }
+        D_800F03F8[i].state = s.mode;
+    }
+    return 1;
+}
+

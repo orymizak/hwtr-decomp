@@ -19,6 +19,10 @@ extern u16 D_800F20FA;
 extern u16 D_800F20FC;
 extern u8 D_800F2090;
 typedef struct { s32 f0; s32 f4; u8 p8[0x208]; s32 f210; s32 f214; u8 p218[0xFC]; s32 f314; s32 f318; u8 p31C[0x4]; } S_D_8014C740;
+typedef struct { u8 pad[8]; u8 b8; u8 pad2[0xB]; s32 *p14; u8 pad3[0x18]; s32 w30; } Obj74_;
+typedef struct { u8 pad[0x30]; s32 flags; u8 pad2[8]; Obj74_ *p3C; u8 pad3[0x14]; } Item74_;
+typedef struct { u16 count; u8 pad[0x2A]; Item74_ *items; u8 pad2[4]; s32 w34; } List74_;
+void func_8007A004(s32 *, s32, u8);
 extern S_D_8014C740 D_8014C740[];
 extern u8 D_800F2060;
 extern s32 D_8014C540;
@@ -210,7 +214,23 @@ s32 func_80073A88(s32 arg0) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_13490", func_80073AC8);
 
-INCLUDE_ASM("asm/nonmatchings/unit_13490", func_800740DC);
+void func_800740DC(List74_ *l, u8 v) {
+    u32 i;
+    Obj74_ *o;
+
+    if (l != NULL) {
+        for (i = 0; i < l->count; i++) {
+            o = l->items[i].p3C;
+            o->b8 = v;
+            if (o->w30 != 0) {
+                ((s32 (*)(void *, s32 *, s32, s32, s32))func_80079140)(o, &D_3000000, o->w30, l->w34, l->items->flags & 0x4000);
+            }
+            if (o->p14 != NULL && o->p14[4] != 0) {
+                func_8007A004(o->p14, l->w34, o->b8);
+            }
+        }
+    }
+}
 
 void func_800741AC(s32 arg0) {
     func_800741D8();

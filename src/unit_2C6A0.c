@@ -5,6 +5,12 @@ extern void (*D_8014C0A8)(s32, s32, f32, f32);
 extern u8 (*D_8014C120)(void);
 void func_8008E700(void);
 typedef struct { u8 id; u8 b; u8 pad[2]; s32 c; } Ent8_;
+extern u8 D_800F36E8;
+extern u32 D_800F36EC;
+extern u32 D_800F36E4;
+extern u8 D_80118498[];
+u32 func_800A76D8(void);
+u8 func_800A7C34(u8);
 extern Ent8_ D_80118538[];
 extern void (*D_8014C130)(s32);
 extern s32 D_800F378C[];
@@ -52,7 +58,27 @@ void func_8008CDAC(void) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", func_8008CDFC);
 
-INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", func_8008CF90);
+u8 func_8008CF90(void) {
+    u8 ok = 1;
+    u8 i;
+
+    if (func_800A76D8() > 0x1B773F) {
+        return 1;
+    }
+    if (D_800F36E8 != 0) {
+        ok = !(func_800A76D8() < D_800F36EC);
+    } else {
+        for (i = 0; i < D_800F36E4; i++) {
+            u8 v = func_800A7C34(i);
+
+            if (v == 0) {
+                ok = 0;
+            }
+            D_80118498[i] = v;
+        }
+    }
+    return ok;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", func_8008D060);
 

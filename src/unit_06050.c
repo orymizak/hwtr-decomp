@@ -25,6 +25,10 @@ typedef struct { u16 unk0; s16 x; s16 y; s16 z; s32 unk8; s32 unkC; s32 unk10; s
 typedef struct { f32 x; f32 y; f32 z; } Vec3_;
 typedef struct { s32 x; s32 y; s32 z; } Pos_;
 typedef struct { Pos_ p; f32 m[9]; s32 d; f32 e; } Cam_;
+extern s32 D_80101E88[];
+extern s32 D_800F0218[];
+u8 File_PollAsync(s32);
+s32 func_80073AC8(s32);
 void func_80067A00(u8, u8, f32, f32, f32);
 s32 Memory_Alloc();
 extern u8 D_80101E80;
@@ -176,7 +180,20 @@ u8 func_800667F8(u8 a, s32 b) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_8006681C);
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_8006695C);
+s32 func_8006695C(u8 i) {
+    s32 j;
+
+    if (File_PollAsync(D_80101E88[i]) == 0) {
+        return 0;
+    }
+    D_800F0218[i] = 0;
+    (&D_80138174)[i] = func_80073AC8(((s32 *)&D_80101E80)[i]);
+    for (j = 0; j < ((u8 *)(&D_80138174)[i])[0xFC]; j++) {
+        func_80067A00(i, j, 0.0f, 0.0f, 0.0f);
+    }
+    return 1;
+}
+
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80066A2C);
 
