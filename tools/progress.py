@@ -39,6 +39,8 @@ def main():
 
     done = c_functions()
     table = ["| Zona | Funciones | Bytes de código | Avance |", "|---|---|---|---|"]
+    table_en = ["| Area | Functions | Code bytes | Progress |", "|---|---|---|---|"]
+    english = {"juego": "game", "sistema": "system"}
     print(f"{'zona':10} {'funciones':>13} {'bytes':>17} {'avance':>8}")
     rows = [("total", CODE_START, CODE_END)] + ZONES
     for name, start, end in rows:
@@ -53,12 +55,17 @@ def main():
         size = end - start
         print(f"{name:10} {c_funcs:5}/{funcs:<7} {c_bytes:8}/{size:<8} {c_bytes / size * 100:7.2f}%")
         table.append(f"| {name} | {c_funcs}/{funcs} | {c_bytes}/{size} | {c_bytes / size * 100:.2f} % |")
+        table_en.append(f"| {english.get(name, name)} | {c_funcs}/{funcs} | {c_bytes}/{size} | {c_bytes / size * 100:.2f}% |")
 
     if "--readme" in sys.argv:
-        readme = Path("README.md")
-        text = readme.read_text()
-        block = "<!-- progress -->\n" + "\n".join(table) + "\n<!-- /progress -->"
-        readme.write_text(re.sub(r"<!-- progress -->.*?<!-- /progress -->", block, text, flags=re.S))
+        # README.md is in English; README.es.md keeps the Spanish table.
+        for path, rows_ in (("README.md", table_en), ("README.es.md", table)):
+            readme = Path(path)
+            if not readme.exists():
+                continue
+            text = readme.read_text()
+            block = "<!-- progress -->\n" + "\n".join(rows_) + "\n<!-- /progress -->"
+            readme.write_text(re.sub(r"<!-- progress -->.*?<!-- /progress -->", block, text, flags=re.S))
 
 
 if __name__ == "__main__":

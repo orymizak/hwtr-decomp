@@ -1,89 +1,94 @@
-# Hot Wheels Turbo Racing (N64, USA): decompilación
+# Hot Wheels Turbo Racing (N64, USA): decompilation
 
-Reconstrucción en C del código de *Hot Wheels Turbo Racing* para Nintendo 64. El objetivo es que el
-código compile a una ROM idéntica byte a byte a la original.
+**English** | [Español](README.es.md)
 
-**Este repositorio no contiene la ROM, assets ni código del juego ya compilado.** Necesitas tu propia
-copia legal de la ROM: de ella se extrae todo lo demás en tu equipo. No compartas la ROM, `assets/`,
-`asm/` ni `build/`.
+A C reconstruction of the code of *Hot Wheels Turbo Racing* for the Nintendo 64. The goal is for the
+code to compile into a ROM that is byte-for-byte identical to the original.
 
-## ROM requerida
+**This repository does not contain the ROM, game assets or any compiled game code.** You need your own
+legally obtained copy of the ROM: everything else is extracted from it on your machine. Do not share the
+ROM, `assets/`, `asm/` or `build/`.
+
+## Required ROM
 
 | | |
 |---|---|
-| Archivo | `baserom.z64` (big-endian) |
-| Tamaño | 12.582.912 bytes |
+| File | `baserom.z64` (big-endian) |
+| Size | 12,582,912 bytes |
 | SHA-1 | `94913a07e49005ffd43dfdfa16ff5862bdb93748` |
-| ID interno | `NHWE` |
+| Internal ID | `NHWE` |
 
-## Requisitos
+## Requirements
 
-- Python 3 con las dependencias de `requirements.txt`, por ejemplo en un entorno virtual
-- GNU Make y `curl`
-- Binutils MIPS:
+- Python 3 with the dependencies in `requirements.txt`, e.g. in a virtual environment
+- GNU Make and `curl`
+- MIPS binutils:
   - macOS: `brew install mips-linux-gnu-binutils`
   - Debian/Ubuntu: `apt install binutils-mips-linux-gnu`
-- GCC 2.7.2 para MIPS y binutils 2.6, que instala `make toolchain`
+- GCC 2.7.2 for MIPS and binutils 2.6, installed by `make toolchain`
 
-En Mac con Apple Silicon, el compilador es un binario x86_64 y necesita Rosetta:
+On Apple Silicon Macs the compiler is an x86_64 binary and needs Rosetta:
 `softwareupdate --install-rosetta`.
 
-## Compilar
+## Building
 
 ```sh
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-cp /ruta/a/tu/rom.z64 baserom.z64
+cp /path/to/your/rom.z64 baserom.z64
 make toolchain
 make split
 make
 ```
 
-`make` construye `build/hotwheelsturbo.z64` y comprueba su SHA-1.
+`make` builds `build/hotwheelsturbo.z64` and checks its SHA-1.
 
-`python3 main.py` compila, comprueba la ROM y cada función en C, y muestra el avance. No es el juego.
+`python3 main.py` builds, checks the ROM and every C function, and prints the progress. It is not the game.
 
-Para extraer y descomprimir los 201 archivos del juego en `assets/files/`:
+To extract and decompress the game's 201 files into `assets/files/`:
 
 ```sh
 make extract
 ```
 
-## Estructura
+## Layout
 
-| Ruta | Contenido |
+| Path | Contents |
 |---|---|
-| `src/` | código C reconstruido |
-| `include/` | cabeceras y macros de ensamblador |
-| `hotwheelsturbo.yaml` | mapa de la ROM para [splat](https://github.com/ethteck/splat) |
-| `symbol_addrs.txt` | símbolos identificados |
-| `tools/extract_files.py` | extractor y descompresor de archivos |
+| `src/` | reconstructed C code |
+| `include/` | headers and assembler macros |
+| `hotwheelsturbo.yaml` | ROM map for [splat](https://github.com/ethteck/splat) |
+| `symbol_addrs.txt` | identified symbols |
+| `tools/extract_files.py` | file extractor and decompressor |
+| `tools/match/` | matching tools (see its README) |
 
-`make split` genera a partir de tu ROM `asm/`, `assets/` y el script de enlazado. Nada de eso se versiona.
+`make split` generates `asm/`, `assets/` and the linker script from your ROM. None of that is versioned.
 
-## Estado
+## Status
 
-La ROM se reconstruye idéntica, pero casi todo el código sigue en ensamblador generado.
+The ROM rebuilds identically; the remaining code is still generated assembly.
 
 <!-- progress -->
-| Zona | Funciones | Bytes de código | Avance |
+| Area | Functions | Code bytes | Progress |
 |---|---|---|---|
-| total | 934/1917 | 109560/554576 | 19.76 % |
-| juego | 589/1373 | 46344/446896 | 10.37 % |
-| audio | 89/188 | 5724/32608 | 17.55 % |
-| sistema | 46/87 | 2436/10064 | 24.21 % |
-| libultra | 210/244 | 55056/60640 | 90.79 % |
-| libc | 0/25 | 0/4368 | 0.00 % |
+| total | 964/1917 | 112264/554576 | 20.24% |
+| game | 590/1373 | 46644/446896 | 10.44% |
+| audio | 118/188 | 8128/32608 | 24.93% |
+| system | 46/87 | 2436/10064 | 24.21% |
+| libultra | 210/244 | 55056/60640 | 90.79% |
+| libc | 0/25 | 0/4368 | 0.00% |
 <!-- /progress -->
 
-`make progress` actualiza esta tabla.
+`make progress` updates this table.
 
-- **Compilador:** GCC 2.7.2 compatible con KMC reproduce exactamente las funciones probadas. Las opciones
-  de compilación aún son provisionales, y varían por archivo (`-O2` y `-O0`).
-- **Librerías:** libultra (probablemente SDK 2.0J), libc y un driver de audio están separados del juego en
-  el mapa de la ROM. Los nombres de libultra se asignaron por análisis del código.
-- **.rodata:** empieza en la ROM en `0x9F3B0` y está dividida por unidad en `asm/data/`. `tools/cc.py` hace que el C use esos símbolos en lugar de duplicarlos.
-- **Por hacer:** el resto del código, y la comparación del SHA-1 contra No-Intro.
+- **Compiler:** a KMC-compatible GCC 2.7.2 reproduces the tested functions exactly. Optimization flags vary
+  per file (`-O2`, `-O3` for most of libultra, `-O0` in a few places).
+- **Libraries:** libultra (SDK 2.0K/L), libc and an audio driver are separated from the game in the ROM map.
+  libultra and libaudio functions were identified by compiling [ultralib](https://github.com/decompals/ultralib)
+  and comparing; ultralib is used as a reference only and is not included.
+- **.rodata:** starts at ROM offset `0x9F3B0` and is split per unit in `asm/data/`. `tools/cc.py` makes the C
+  code use those symbols instead of emitting duplicates.
+- **To do:** the rest of the game code and the audio driver.
 
 ## License
 
