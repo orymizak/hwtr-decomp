@@ -6,9 +6,9 @@ f32 sinf(f32);
 
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_7DE70", func_800DD270);
+INCLUDE_ASM("asm/nonmatchings/unit_7DE70", guMtxF2L);
 
-INCLUDE_ASM("asm/nonmatchings/unit_7DE70", func_800DD308);
+INCLUDE_ASM("asm/nonmatchings/unit_7DE70", guMtxL2F);
 
 void guMtxIdentF(f32 mf[4][4]) {
     s32 i, j;
@@ -24,9 +24,9 @@ void guMtxIdentF(f32 mf[4][4]) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_7DE70", func_800DD400);
+INCLUDE_ASM("asm/nonmatchings/unit_7DE70", guMtxIdent);
 
-void func_800DD4F0(f32 mf[4][4], u16 *perspNorm, f32 fovy, f32 aspect, f32 near, f32 far, f32 scale) {
+void guPerspectiveF(f32 mf[4][4], u16 *perspNorm, f32 fovy, f32 aspect, f32 near, f32 far, f32 scale) {
     f32 cot;
     s32 i, j;
 
@@ -56,4 +56,4 @@ void func_800DD4F0(f32 mf[4][4], u16 *perspNorm, f32 fovy, f32 aspect, f32 near,
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_7DE70", func_800DD6A0);
+INCLUDE_ASM("asm/nonmatchings/unit_7DE70", guPerspective);

@@ -3,10 +3,10 @@
 
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_86870", func_800E5C70);
+INCLUDE_ASM("asm/nonmatchings/unit_86870", _Litob);
 
-INCLUDE_ASM("asm/nonmatchings/unit_86870", func_800E5EC0);
+INCLUDE_ASM("asm/nonmatchings/unit_86870", _Ldtob);
 
-INCLUDE_ASM("asm/nonmatchings/unit_86870", func_800E630C);
+INCLUDE_ASM("asm/nonmatchings/unit_86870", _Ldunscale);
 
-INCLUDE_ASM("asm/nonmatchings/unit_86870", func_800E63A4);
+INCLUDE_ASM("asm/nonmatchings/unit_86870", _Genld);

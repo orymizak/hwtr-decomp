@@ -37,7 +37,7 @@ u32 osGetMemSize(void) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_839C0", osInitialize);
 
-void func_800E3090(void) {
+void __createSpeedParam(void) {
     D_801417C4 = 7;
     D_80138024 = 7;
     D_801417C5 = (s8) *(volatile s32 *)0xA4600014;

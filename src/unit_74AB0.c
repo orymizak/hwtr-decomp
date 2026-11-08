@@ -6,7 +6,7 @@ u32 osVirtualToPhysical(void *);
 typedef struct { u16 fc; } LP_;
 typedef struct { u32 input; u32 output; s16 ffcoef; s16 fbcoef; s16 gain; s16 pad; f32 rsinc; f32 rsval; s32 rsdelta; f32 rsgain; LP_ *lp; s32 pad24; } ALDelay_;
 typedef struct { u8 pad0[0x20]; ALDelay_ *delay; } ALFx_;
-extern void func_800D8A30(LP_ *);
+extern void _init_lpfilter(LP_ *);
 extern u8 *D_800FB174;
 
 
@@ -44,7 +44,7 @@ s32 func_800D41C0(void *filter, s32 paramID, void *param) {
     case 7:
         if (f->delay[s].lp) {
             f->delay[s].lp->fc = (s16)val;
-            func_800D8A30(f->delay[s].lp);
+            _init_lpfilter(f->delay[s].lp);
         }
         break;
     }

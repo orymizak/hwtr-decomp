@@ -3,4 +3,4 @@
 
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_822F0", func_800E16F0);
+INCLUDE_ASM("asm/nonmatchings/unit_822F0", osPfsFreeBlocks);

@@ -3,6 +3,6 @@
 
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_81500", func_800E0900);
+INCLUDE_ASM("asm/nonmatchings/unit_81500", osPfsAllocateFile);
 
-INCLUDE_ASM("asm/nonmatchings/unit_81500", func_800E0C0C);
+INCLUDE_ASM("asm/nonmatchings/unit_81500", __osPfsDeclearPage);

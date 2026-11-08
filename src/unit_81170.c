@@ -3,6 +3,6 @@
 
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_81170", func_800E0570);
+INCLUDE_ASM("asm/nonmatchings/unit_81170", __osMotorAccess);
 
-INCLUDE_ASM("asm/nonmatchings/unit_81170", func_800E06B4);
+INCLUDE_ASM("asm/nonmatchings/unit_81170", osMotorInit);

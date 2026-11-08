@@ -9,14 +9,14 @@ void __osSiGetAccess(void);
 void __osSiRelAccess(void);
 s32 __osSiRawStartDma(s32, void *);
 s32 osRecvMesg(void *, void **, s32);
-u8 func_800E4ED0(u16);
-u8 func_800E4F3C(u8 *);
-s32 func_800E1C30(void *, s32);
+u8 __osContAddressCrc(u16);
+u8 __osContDataCrc(u8 *);
+s32 __osPfsGetStatus(void *, s32);
 void bcopy(void *, void *, s32);
 
 
 
-s32 func_800E2940(void *mq, s32 channel, u16 address, u8 *buffer) {
+s32 __osContRamRead(void *mq, s32 channel, u16 address, u8 *buffer) {
     s32 ret;
     s32 i;
     u8 *ptr;
@@ -44,15 +44,15 @@ s32 func_800E2940(void *mq, s32 channel, u16 address, u8 *buffer) {
             ptr += channel;
         }
         ((RamRead_ *)ptr)->addrh = address >> 3;
-        ((RamRead_ *)ptr)->addrl = func_800E4ED0(address) | (address << 5);
+        ((RamRead_ *)ptr)->addrl = __osContAddressCrc(address) | (address << 5);
         ret = __osSiRawStartDma(1, &D_8014C700);
         osRecvMesg(mq, NULL, 1);
         ret = __osSiRawStartDma(0, &D_8014C700);
         osRecvMesg(mq, NULL, 1);
         ret = (((RamRead_ *)ptr)->rxsize & 0xC0) >> 4;
         if (ret == 0) {
-            if (func_800E4F3C(((RamRead_ *)ptr)->data) != ((RamRead_ *)ptr)->datacrc) {
-                ret = func_800E1C30(mq, channel);
+            if (__osContDataCrc(((RamRead_ *)ptr)->data) != ((RamRead_ *)ptr)->datacrc) {
+                ret = __osPfsGetStatus(mq, channel);
                 if (ret != 0) {
                     break;
                 }

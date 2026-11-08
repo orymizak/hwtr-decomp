@@ -3,8 +3,8 @@
 
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_82400", func_800E1800);
+INCLUDE_ASM("asm/nonmatchings/unit_82400", osPfsNumFiles);
 
-INCLUDE_ASM("asm/nonmatchings/unit_82400", func_800E1900);
+INCLUDE_ASM("asm/nonmatchings/unit_82400", osPfsInitPak);
 
-INCLUDE_ASM("asm/nonmatchings/unit_82400", func_800E1AF8);
+INCLUDE_ASM("asm/nonmatchings/unit_82400", __osPfsCheckRamArea);

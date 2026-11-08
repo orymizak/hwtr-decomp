@@ -3,4 +3,4 @@
 
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_85D50", func_800E5150);
+INCLUDE_ASM("asm/nonmatchings/unit_85D50", __osViInit);

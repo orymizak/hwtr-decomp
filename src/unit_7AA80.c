@@ -3,15 +3,15 @@
 
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_7AA80", func_800D9E80);
+INCLUDE_ASM("asm/nonmatchings/unit_7AA80", alEnvmixerPull);
 
-INCLUDE_ASM("asm/nonmatchings/unit_7AA80", func_800DA380);
+INCLUDE_ASM("asm/nonmatchings/unit_7AA80", alEnvmixerParam);
 
-INCLUDE_ASM("asm/nonmatchings/unit_7AA80", func_800DA454);
+INCLUDE_ASM("asm/nonmatchings/unit_7AA80", _pullSubFrame);
 
-INCLUDE_ASM("asm/nonmatchings/unit_7AA80", func_800DA728);
+INCLUDE_ASM("asm/nonmatchings/unit_7AA80", _frexpf);
 
-f64 func_800DA808(f64 arg0, s32 arg2) {
+f64 _ldexpf(f64 arg0, s32 arg2) {
     f64 var_fa0;
 
     var_fa0 = arg0;
@@ -21,9 +21,9 @@ f64 func_800DA808(f64 arg0, s32 arg2) {
     return var_fa0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_7AA80", func_800DA82C);
+INCLUDE_ASM("asm/nonmatchings/unit_7AA80", _getRate);
 
-f32 func_800DAAAC(f32 arg0, s32 arg1, s32 arg2, s32 arg3) {
+f32 _getVol(f32 arg0, s32 arg1, s32 arg2, s32 arg3) {
     f32 var_ft0;
     f32 var_fv1;
     s32 var_a1;
@@ -53,7 +53,7 @@ loop_3:
     return arg0 * var_ft0;
 }
 
-void func_800DAB30(void *arg0, s32 arg1, s32 arg2, s32 arg3) {
+void alFilterNew(void *arg0, s32 arg1, s32 arg2, s32 arg3) {
     *(s32 *)((u8 *)arg0 + 0x0) = 0;
     *(s32 *)((u8 *)arg0 + 0x4) = arg1;
     *(s32 *)((u8 *)arg0 + 0x8) = arg2;

@@ -12,7 +12,7 @@ extern u32 D_80127BBC;
 
 void func_800D23B0(s32 arg0, s32 arg1) {
     func_800D2450((void *) arg0, 0U, arg1);
-    func_800DBC90(&(*(u8 *)&D_80127BA0), (u32) arg0, (u32) arg1);
+    alHeapInit(&(*(u8 *)&D_80127BA0), (u32) arg0, (u32) arg1);
 }
 
 void func_800D23FC(s32 arg0) {

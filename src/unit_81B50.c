@@ -3,6 +3,6 @@
 
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_81B50", func_800E0F50);
+INCLUDE_ASM("asm/nonmatchings/unit_81B50", osPfsReadWriteFile);
 
-INCLUDE_ASM("asm/nonmatchings/unit_81B50", func_800E1390);
+INCLUDE_ASM("asm/nonmatchings/unit_81B50", osPfsFileState);

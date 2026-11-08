@@ -5,18 +5,18 @@ typedef union { struct { u8 bank; u8 page; } inode_t; u16 ipage; } InodeUnitD_;
 typedef struct { u32 game_code; u16 company_code; InodeUnitD_ start_page; u8 status; s8 reserved; u16 data_sum; u8 ext_name[4]; u8 game_name[16]; } PfsDirD_;
 typedef struct { InodeUnitD_ inode_page[128]; } InodeD_;
 void bzero(void *, s32);
-s32 func_800E1530(PfsD_ *, u16, u32, u8 *, u8 *, s32 *);
-s32 func_800E1E40(PfsD_ *, s32);
-s32 func_800E2940(void *, s32, u16, u8 *);
-s32 func_800E25FC(PfsD_ *, InodeD_ *, s32, s32);
-s32 func_800E2B30(void *, s32, u16, u8 *, s32);
+s32 osPfsFindFile(PfsD_ *, u16, u32, u8 *, u8 *, s32 *);
+s32 __osPfsSelectBank(PfsD_ *, s32);
+s32 __osContRamRead(void *, s32, u16, u8 *);
+s32 __osPfsRWInode(PfsD_ *, InodeD_ *, s32, s32);
+s32 __osContRamWrite(void *, s32, u16, u8 *, s32);
 typedef union { struct { u8 bank; u8 page; } t; u16 ipage; } InodeUnit_;
 typedef struct { u8 pad[0x60]; s32 inode_start_page; } Pfs_;
 typedef struct { InodeUnit_ page[128]; } Inode_;
 
 
 
-s32 func_800E0D30(PfsD_ *pfs, u16 company_code, u32 game_code, u8 *game_name, u8 *ext_name) {
+s32 osPfsDeleteFile(PfsD_ *pfs, u16 company_code, u32 game_code, u8 *game_name, u8 *ext_name) {
     s32 file_no;
     s32 ret;
     InodeD_ inode;
@@ -28,24 +28,24 @@ s32 func_800E0D30(PfsD_ *pfs, u16 company_code, u32 game_code, u8 *game_name, u8
     if ((company_code == 0) || (game_code == 0)) {
         return 5;
     }
-    if ((ret = func_800E1530(pfs, company_code, game_code, game_name, ext_name, &file_no)) != 0) {
+    if ((ret = osPfsFindFile(pfs, company_code, game_code, game_name, ext_name, &file_no)) != 0) {
         return ret;
     }
-    if (pfs->activebank != 0 && (ret = func_800E1E40(pfs, 0)) != 0) {
+    if (pfs->activebank != 0 && (ret = __osPfsSelectBank(pfs, 0)) != 0) {
         return ret;
     }
-    if ((ret = func_800E2940(pfs->queue, pfs->channel, (u16)(pfs->dir_table + file_no), (u8 *)&dir)) != 0) {
+    if ((ret = __osContRamRead(pfs->queue, pfs->channel, (u16)(pfs->dir_table + file_no), (u8 *)&dir)) != 0) {
         return ret;
     }
     startpage = dir.start_page.inode_t.page;
     for (bank = dir.start_page.inode_t.bank; bank < pfs->banks;) {
-        if ((ret = func_800E25FC(pfs, &inode, 0, bank)) != 0) {
+        if ((ret = __osPfsRWInode(pfs, &inode, 0, bank)) != 0) {
             return ret;
         }
-        if ((ret = func_800E0EDC((Pfs_ *)pfs, (Inode_ *)&inode, startpage, bank, (InodeUnit_ *)&last_page)) != 0) {
+        if ((ret = __osPfsReleasePages((Pfs_ *)pfs, (Inode_ *)&inode, startpage, bank, (InodeUnit_ *)&last_page)) != 0) {
             return ret;
         }
-        if ((ret = func_800E25FC(pfs, &inode, 1, bank)) != 0) {
+        if ((ret = __osPfsRWInode(pfs, &inode, 1, bank)) != 0) {
             return ret;
         }
         if (last_page.ipage == 1) {
@@ -58,11 +58,11 @@ s32 func_800E0D30(PfsD_ *pfs, u16 company_code, u32 game_code, u8 *game_name, u8
         return 3;
     }
     bzero(&dir, sizeof(PfsDirD_));
-    ret = func_800E2B30(pfs->queue, pfs->channel, (u16)(pfs->dir_table + file_no), (u8 *)&dir, 0);
+    ret = __osContRamWrite(pfs->queue, pfs->channel, (u16)(pfs->dir_table + file_no), (u8 *)&dir, 0);
     return ret;
 }
 
-s32 func_800E0EDC(Pfs_ *pfs, Inode_ *inode, u8 start_page, u8 bank, InodeUnit_ *final_page) {
+s32 __osPfsReleasePages(Pfs_ *pfs, Inode_ *inode, u8 start_page, u8 bank, InodeUnit_ *final_page) {
     InodeUnit_ next;
     InodeUnit_ prev;
 

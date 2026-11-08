@@ -9,11 +9,11 @@ extern f64 D_80101A38;
 extern f64 D_80101A40;
 extern f64 D_80101A48;
 
-INCLUDE_ASM("asm/nonmatchings/unit_7C960", func_800DBD60);
+INCLUDE_ASM("asm/nonmatchings/unit_7C960", alSynNew);
 
-INCLUDE_ASM("asm/nonmatchings/unit_7C960", func_800DC02C);
+INCLUDE_ASM("asm/nonmatchings/unit_7C960", alAudioFrame);
 
-s32 *func_800DC1DC(void) {
+s32 *__allocParam(void) {
     s32 *temp_v0;
     s32 *var_v1;
 
@@ -27,9 +27,9 @@ s32 *func_800DC1DC(void) {
     return var_v1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_7C960", func_800DC208);
+INCLUDE_ASM("asm/nonmatchings/unit_7C960", __freeParam);
 
-void func_800DC220(void *arg0) {
+void _collectPVoices(void *arg0) {
     s32 var_s0;
     void *var_s1;
 
@@ -44,20 +44,20 @@ void func_800DC220(void *arg0) {
     }
 }
 
-void func_800DC274(s32 arg0, s32 arg1) {
+void _freePVoice(s32 arg0, s32 arg1) {
     ((s32 (*)())alUnlink)(arg1);
     ((s32 (*)(s32, s32))alLink)(arg1, arg0 + 0x14);
 }
 
-s32 func_800DC2B4(void *arg0, s32 arg1) {
+s32 _timeToSamplesNoRound(void *arg0, s32 arg1) {
     return (s32) (f32) (((f64) ((f32) arg1 * (f32) *(s32 *)((u8 *)arg0 + 0x44)) / D_80101A30) + D_80101A38);
 }
 
-s32 func_800DC2FC(void *arg0, s32 arg1) {
+s32 _timeToSamples(void *arg0, s32 arg1) {
     return (s32) (f32) (((f64) ((f32) arg1 * (f32) *(s32 *)((u8 *)arg0 + 0x44)) / D_80101A40) + D_80101A48) & ~0xF;
 }
 
-s32 func_800DC348(void *arg0, void **arg1) {
+s32 __nextSampleTime(void *arg0, void **arg1) {
     s32 var_a3;
     void *var_a2;
 

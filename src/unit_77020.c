@@ -1,8 +1,8 @@
 #include "common.h"
 #include "include_asm.h"
-s32 func_800E1BD0();
-s32 func_800E1800();
-s32 func_800E0D30();
+s32 osPfsRepairId();
+s32 osPfsNumFiles();
+s32 osPfsDeleteFile();
 s32 bcopy(void *, s32,s32);
 s32 func_800D7664();
 s32 func_800D768C();
@@ -11,15 +11,15 @@ extern u8 D_80141090;
 s32 func_800D7450(s32 *);
 extern s32 D_800FB1E0;
 s32 func_800D74F0(s32 *);
-s32 func_800E1900(s32 *, void *, s32);
+s32 osPfsInitPak(s32 *, void *, s32);
 extern s32 D_8014EB40;
-s32 func_800E16F0(s32, void *);
-s32 func_800E0F50(s32, s32, u8, s32, s32, s32);
-s32 func_800E0900(s32, u16, s32, s32, s32, s32, s32);
-s32 func_800E1530(s32, u16, s32, s32, s32, s32);
+s32 osPfsFreeBlocks(s32, void *);
+s32 osPfsReadWriteFile(s32, s32, u8, s32, s32, s32);
+s32 osPfsAllocateFile(s32, u16, s32, s32, s32, s32, s32);
+s32 osPfsFindFile(s32, u16, s32, s32, s32, s32);
 extern u16 D_800FB1B0;
 extern s32 D_800FB1B4;
-s32 func_800E1390(s32, s32, s32);
+s32 osPfsFileState(s32, s32, s32);
 
 void func_800D6420(s32 arg0) {
     func_800D7664();
@@ -43,7 +43,7 @@ s32 func_800D64A0(void *arg0) {
     temp_s0 = *(s32 *)((u8 *)arg0 + 0xC);
     temp_a1 = *(s32 *)((u8 *)temp_s0 + 0x0);
     *(s32 *)((u8 *)temp_s0 + 0xC) = 0;
-    temp_v0 = func_800E1900(&D_8014EB40, temp_a1, *(s32 *)((u8 *)temp_a1 + 0x8));
+    temp_v0 = osPfsInitPak(&D_8014EB40, temp_a1, *(s32 *)((u8 *)temp_a1 + 0x8));
     if (temp_v0 == 0) {
         *(s32 *)((u8 *)temp_s0 + 0xC) = 1;
     }
@@ -53,7 +53,7 @@ s32 func_800D64A0(void *arg0) {
 void func_800D64F0(s32 arg0) {
   void ***temp_a1;
   temp_a1 = *((s32 *) (((u8 *) arg0) + 0xC));
-  func_800E16F0(*(*temp_a1), (*((s32 *) (((u8 *) arg0) + 0xC))) + 4);
+  osPfsFreeBlocks(*(*temp_a1), (*((s32 *) (((u8 *) arg0) + 0xC))) + 4);
 }
 
 INCLUDE_ASM("asm/nonmatchings/unit_77020", func_800D6518);
@@ -64,7 +64,7 @@ void func_800D6610(void *arg0) {
     void *temp_v0;
 
     temp_v0 = (*(s32 *)((u8 *)(arg0) + 0xC));
-    func_800E0D30(*(s32 *)(*(s32 *)((u8 *)(temp_v0) + 0x0)), D_800FB1B0, D_800FB1B4, (*(s32 *)((u8 *)(temp_v0) + 0x4)), (*(s32 *)((u8 *)(temp_v0) + 0x8)));
+    osPfsDeleteFile(*(s32 *)(*(s32 *)((u8 *)(temp_v0) + 0x0)), D_800FB1B0, D_800FB1B4, (*(s32 *)((u8 *)(temp_v0) + 0x4)), (*(s32 *)((u8 *)(temp_v0) + 0x8)));
 }
 
 void func_800D6650(void *arg0) {
@@ -73,16 +73,16 @@ void func_800D6650(void *arg0) {
 
     temp_v1 = *(s32 *)((u8 *)arg0 + 0xC);
     temp_v0 = *(s32 *)((u8 *)temp_v1 + 0x0);
-    func_800E1390(*(s32 *)((u8 *)temp_v0 + 0x0), *(s32 *)((u8 *)temp_v0 + 0x4), *(s32 *)((u8 *)temp_v1 + 0x4));
+    osPfsFileState(*(s32 *)((u8 *)temp_v0 + 0x0), *(s32 *)((u8 *)temp_v0 + 0x4), *(s32 *)((u8 *)temp_v1 + 0x4));
 }
 
 void func_800D667C(void *arg0) {
     void *temp_v0;
 
     temp_v0 = (*(s32 *)((u8 *)(arg0) + 0xC));
-    func_800E1800(*(s32 *)(*(s32 *)((u8 *)(temp_v0) + 0x0)), (*(s32 *)((u8 *)(temp_v0) + 0x4)), (*(s32 *)((u8 *)(temp_v0) + 0x8)));
+    osPfsNumFiles(*(s32 *)(*(s32 *)((u8 *)(temp_v0) + 0x0)), (*(s32 *)((u8 *)(temp_v0) + 0x4)), (*(s32 *)((u8 *)(temp_v0) + 0x8)));
 }
 
 void func_800D66A8(void *arg0) {
-    func_800E1BD0(*(s32 *)(*(s32 *)((u8 *)(arg0) + 0xC)));
+    osPfsRepairId(*(s32 *)(*(s32 *)((u8 *)(arg0) + 0xC)));
 }

@@ -5,13 +5,13 @@ typedef struct { u8 p0[0x14]; u32 state; u32 lstate; u8 p1C[0x14]; s32 (*dma)(s3
 
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_79E60", func_800D9260);
+INCLUDE_ASM("asm/nonmatchings/unit_79E60", alAdpcmPull);
 
-INCLUDE_ASM("asm/nonmatchings/unit_79E60", func_800D96A4);
+INCLUDE_ASM("asm/nonmatchings/unit_79E60", alRaw16Pull);
 
-INCLUDE_ASM("asm/nonmatchings/unit_79E60", func_800D9A40);
+INCLUDE_ASM("asm/nonmatchings/unit_79E60", alLoadParam);
 
-Acmd_ *func_800D9BEC(Acmd_ *ptr, Load_ *f, s32 tsam, s32 nbytes, s16 outp, s16 inp, u32 flags) {
+Acmd_ *_decodeChunk(Acmd_ *ptr, Load_ *f, s32 tsam, s32 nbytes, s16 outp, s16 inp, u32 flags) {
     s32 dramAlign, dramLoc;
 
     if (nbytes > 0) {

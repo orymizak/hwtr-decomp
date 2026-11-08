@@ -1,24 +1,24 @@
 #include "common.h"
 #include "include_asm.h"
 
-s32 func_800DBD60();
+s32 alSynNew();
 extern s32 D_800FB5B0;
-s32 func_800DC3A0();
+s32 alSynDelete();
 
-INCLUDE_ASM("asm/nonmatchings/unit_7C710", func_800DBB10);
+INCLUDE_ASM("asm/nonmatchings/unit_7C710", alSavePull);
 
-INCLUDE_ASM("asm/nonmatchings/unit_7C710", func_800DBBB8);
+INCLUDE_ASM("asm/nonmatchings/unit_7C710", alSaveParam);
 
-void func_800DBBE0(s32 arg0) {
+void alInit(s32 arg0) {
     if (D_800FB5B0 == 0) {
         D_800FB5B0 = arg0;
-        func_800DBD60();
+        alSynNew();
     }
 }
 
-void func_800DBC0C(void) {
+void alClose(void) {
     if (D_800FB5B0 != 0) {
-        func_800DC3A0();
+        alSynDelete();
         D_800FB5B0 = 0;
     }
 }

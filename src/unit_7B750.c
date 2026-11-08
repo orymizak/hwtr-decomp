@@ -9,11 +9,11 @@ typedef struct { u8 pad0[0x18]; void *ctrlList; s32 unk1C; s32 unk20; s32 unk24;
 
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_7B750", func_800DAB50);
+INCLUDE_ASM("asm/nonmatchings/unit_7B750", alMainBusPull);
 
 INCLUDE_ASM("asm/nonmatchings/unit_7B750", func_800DAC90);
 
-Acmd_ *func_800DACC0(Resampler_ *f, u16 *outp, s32 outCount, s32 sampleOffset, Acmd_ *p) {
+Acmd_ *alResamplePull(Resampler_ *f, u16 *outp, s32 outCount, s32 sampleOffset, Acmd_ *p) {
     Acmd_ *ptr = p;
     s16 inp;
     s32 inCount;
@@ -58,7 +58,7 @@ Acmd_ *func_800DACC0(Resampler_ *f, u16 *outp, s32 outCount, s32 sampleOffset, A
     return ptr;
 }
 
-s32 func_800DAEAC(void *filter, s32 param, void *value) {
+s32 alResampleParam(void *filter, s32 param, void *value) {
     ALFilter_ *f = filter;
     ALMix_ *e = filter;
 

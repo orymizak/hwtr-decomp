@@ -3,7 +3,7 @@
 
 
 
-void func_800DBD20(void *arg0, void *arg1, s32 arg2) {
+void alCopy(void *arg0, void *arg1, s32 arg2) {
   s32 var_v1;
   u8 temp_v0;
   int new_var;

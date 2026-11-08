@@ -2,7 +2,7 @@
 #include "include_asm.h"
 s32 osRecvMesg(s32, s16 **,s32);
 s32 func_800D23FC();
-s32 func_800DE7A8(s32, s32, s32);
+s32 osScAddClient(s32, s32, s32);
 s32 osCreateMesgQueue(s32, s32,s32);
 extern s32 D_801279D4;
 
@@ -19,7 +19,7 @@ void func_800D1F4C(void) {
     D_801279D4 = temp_v0;
     osCreateMesgQueue(temp_v0 + 8, temp_v0 + 0x20, 4);
     osCreateMesgQueue(D_801279D4 + 0x30, D_801279D4 + 0x48, 4);
-    func_800DE7A8(D_801279D0, D_801279D4, D_801279D4 + 8);
+    osScAddClient(D_801279D0, D_801279D4, D_801279D4 + 8);
 }
 
 void func_800D1FB0(void) {

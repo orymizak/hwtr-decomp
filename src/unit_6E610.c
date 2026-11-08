@@ -550,7 +550,7 @@ s32 func_800D1A80(s32 arg0) {
     func_800D1700(*((s32 *) (((u8 *) (&D_800FAE84)) + (arg0 * 4))));
     new_var = (u8 *) (*(void * *)&D_8014C6D0);
     temp_a2 = *((s32 *) (new_var + 0x34));
-    func_800DB2E4(*((s32 *) (((u8 *) temp_a2) + 0x20)), 1, (s32) temp_a2);
+    alFxParam(*((s32 *) (((u8 *) temp_a2) + 0x20)), 1, (s32) temp_a2);
     return 0;
   }
   if (arg0) {

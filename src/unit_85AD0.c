@@ -3,7 +3,7 @@
 
 
 
-u8 func_800E4ED0(u16 addr) {
+u8 __osContAddressCrc(u16 addr) {
     u32 temp = 0;
     u32 i;
 
@@ -30,7 +30,7 @@ u8 func_800E4ED0(u16 addr) {
     return temp & 0x1F;
 }
 
-u8 func_800E4F3C(u8 *data) {
+u8 __osContDataCrc(u8 *data) {
     u32 temp = 0;
     u32 i, j;
 

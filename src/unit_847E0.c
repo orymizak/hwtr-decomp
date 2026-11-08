@@ -34,4 +34,4 @@ void *osPiGetCmdQueue(void) {
     return D_800FB2A8;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_847E0", func_800E3CD0);
+INCLUDE_ASM("asm/nonmatchings/unit_847E0", __osEPiRawReadIo);
