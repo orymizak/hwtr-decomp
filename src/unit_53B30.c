@@ -68,6 +68,7 @@ extern u8 D_800F6418;
 extern u8 D_80100F88[];
 typedef struct { u8 p0[0x10]; s32 unk10; f32 unk14; } ObjG1_;
 typedef struct { s32 d[0x88C / 4]; } Big88C_;
+void func_800BB350(s32, s32, s32, s32);
 extern void (*D_80141068)(s32);
 void func_800C90DC(void);
 void func_800C9978(void);
@@ -1714,7 +1715,27 @@ void func_800BB32C(void) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800BB350);
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800BB4B0);
+void func_800BB4B0(void) {
+    switch ((u8)D_800F61D3) {
+        case 2:
+            func_800BB350(0, 100, 590, 100);
+            func_800BB350(1, 303, 590, 100);
+            break;
+        case 3:
+            func_800BB350(0, 100, 690, 100);
+            func_800BB350(1, 303, 690, 100);
+            break;
+        case 5:
+            func_800BB350(0, 100, 897, 100);
+            func_800BB350(1, 620, 897, 100);
+            break;
+        default:
+            func_800BB350(0, -1, -1, 0);
+            func_800BB350(1, -1, -1, 0);
+            break;
+    }
+}
+
 
 s32 func_800BB598(s32 arg0) {
   s32 var_a3;

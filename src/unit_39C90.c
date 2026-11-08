@@ -32,6 +32,11 @@ void func_800A25EC(ObjA2_ *);
 typedef struct { u8 pad[0x40]; void *a; void *b; void *c; } Res40_;
 void Memory_Free(void *);
 typedef struct Nd3_ { s32 a; struct Nd3_ *prev; struct Nd3_ *next; } Nd3_;
+void *Memory_Alloc(s32 size);
+void func_800996B8(u8 *, u8 *);
+void func_80099C94(u8 *, u8 *);
+void func_8009A4E4(u8 *);
+void func_800A3978(u8 *, u16, s32);
 
 extern void *D_8011E860;
 extern void *D_8011B334;
@@ -71,7 +76,26 @@ s32 func_800993B8(void) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_80099434);
+void func_80099434(u8 *o) {
+    u8 *n = Memory_Alloc(0x88);
+    u8 i;
+
+    memset(n, 0, 0x88);
+    if (*(s32 *)(o + 0x6D8) == 2) {
+        func_800996B8(n + 0xC, o);
+        *(s32 *)(n + 0x5C) = 3;
+    } else if (*(s32 *)(o + 0x6D8) == 1) {
+        func_80099C94(n + 0xC, o);
+        *(s32 *)(n + 0x5C) = 4;
+    }
+    *(u8 **)(n + 0x60) = o + 0x2C;
+    *(u8 **)(n + 0x64) = o;
+    func_8009A4E4(n);
+    for (i = 0; i < n[0x48]; i++) {
+        func_800A3978(n, (*(u16 **)(n + 0x54))[i], 1);
+    }
+    *(u8 **)(o + 0x758) = n;
+}
 
 void func_8009951C(s32 id) {
     Lnk95_ *n = D_8011B338;

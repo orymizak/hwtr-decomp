@@ -25,6 +25,11 @@ typedef struct { u16 unk0; s16 x; s16 y; s16 z; s32 unk8; s32 unkC; s32 unk10; s
 typedef struct { f32 x; f32 y; f32 z; } Vec3_;
 typedef struct { s32 x; s32 y; s32 z; } Pos_;
 typedef struct { Pos_ p; f32 m[9]; s32 d; f32 e; } Cam_;
+typedef struct { s32 d[0x114 / 4]; } Big114_;
+typedef struct { s32 d[0x40 / 4]; } Big40_;
+s32 File_GetSize(char *);
+extern char D_800FE964[];
+s32 func_800682A4(s32 unused, char *name, Big114_ *a, Big40_ *b);
 extern u8 D_80138150[];
 extern u8 D_80138156[];
 extern f32 D_8013815C;
@@ -38,7 +43,6 @@ s32 func_80073AC8(s32);
 void func_80067A00(u8, u8, f32, f32, f32);
 s32 Memory_Alloc();
 extern u8 D_80101E80;
-s32 func_800682A4(s32, s32,s32,s32);
 
 extern void *D_8013816C;
 extern s32 D_8013818C;
@@ -297,7 +301,20 @@ s32 func_80068270(s32 arg0, s32 arg1, s32 arg2) {
     return func_800682A4(0, arg0, arg1, arg2) & 0xFF;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_800682A4);
+s32 func_800682A4(s32 unused, char *name, Big114_ *a, Big40_ *b) {
+    char path[32];
+    u8 *buf;
+
+    strcpy(path, name);
+    strcat(path, D_800FE964);
+    buf = (u8 *)Memory_Alloc(File_GetSize(path));
+    File_Load(path, (s32)buf);
+    *a = *(Big114_ *)(buf + 4);
+    *b = *(Big40_ *)(buf + 0x118);
+    Memory_Free(buf);
+    return 1;
+}
+
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80068390);
 
