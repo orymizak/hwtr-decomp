@@ -2,6 +2,8 @@
 
 **English** | [Español](README.es.md)
 
+[![Progress](https://bytematch.dev/orymizak/hwtr-decomp.svg)](https://bytematch.dev/orymizak/hwtr-decomp)
+
 A C reconstruction of the code of *Hot Wheels Turbo Racing* for the Nintendo 64. The goal is for the
 code to compile into a ROM that is byte-for-byte identical to the original.
 
