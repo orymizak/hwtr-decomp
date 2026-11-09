@@ -25,6 +25,39 @@ typedef struct { f32 f0; u8 p4[0x48]; } S_D_800EFF54;
 extern S_D_800EFF54 D_800EFF54[];
 extern f64 D_800FE868;
 typedef struct { s32 f0; } S_D_800EFC78;
+extern s32 D_8014C0C0;
+extern s32 D_8014C0A8;
+extern s32 D_8014C0AC;
+extern s32 D_8014C0B0;
+extern s32 D_8014C0C4;
+extern s32 D_8014C0C8;
+extern s32 D_8014C0CC;
+extern s32 D_8014C0D0;
+extern s32 D_8014C0D4;
+extern s32 D_8014C0D8;
+extern s32 D_8014C0DC;
+extern s32 D_8014C0E0;
+extern s32 D_8014C0E4;
+extern s32 D_8014C0E8;
+extern s32 D_8014C0EC;
+extern s32 D_8014C0F0;
+extern s32 D_8014C0F4;
+extern s32 D_8014C0F8;
+extern s32 D_8014C0FC;
+extern s32 D_8014C100;
+extern s32 D_8014C104;
+extern s32 D_8014C108;
+extern s32 D_8014C10C;
+extern s32 D_8014C110;
+extern s32 D_8014C114;
+extern s32 D_8014C118;
+extern s32 D_8014C11C;
+extern s32 D_8014C120;
+extern s32 D_8014C124;
+extern s32 D_8014C12C;
+extern s32 D_8014C130;
+extern s32 D_8014C144;
+extern s32 D_8014C150;
 extern S_D_800EFC78 D_800EFC78[];
 s32 func_800CD8CC(s32, s32,s32,s32, s32);
 extern s32 D_800EFC68;
@@ -222,7 +255,47 @@ INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80060C50);
 
 INCLUDE_ASM("asm/nonmatchings/unit_01050", func_800610DC);
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80061334);
+s32 func_80061334(void) {
+    s32 *p = &D_8014C0C0;
+
+    *p = 0;
+    D_8014C144 = 0;
+    D_8014C0A8 = 0;
+    D_8014C0AC = 0;
+    D_8014C0B0 = 0;
+    *p = 0;
+    D_8014C0C4 = 0;
+    D_8014C0C8 = 0;
+    D_8014C0CC = 0;
+    D_8014C0D0 = 0;
+    D_8014C0D4 = 0;
+    D_8014C0D8 = 0;
+    D_8014C0DC = 0;
+    D_8014C0E0 = 0;
+    D_8014C0E4 = 0;
+    D_8014C0E8 = 0;
+    D_8014C0EC = 0;
+    D_8014C0F0 = 0;
+    D_8014C0F4 = 0;
+    D_8014C0F8 = 0;
+    D_8014C0FC = 0;
+    D_8014C100 = 0;
+    D_8014C10C = 0;
+    D_8014C110 = 0;
+    D_8014C104 = 0;
+    D_8014C108 = 0;
+    D_8014C114 = 0;
+    D_8014C118 = 0;
+    D_8014C11C = 0;
+    D_8014C120 = 0;
+    D_8014C12C = 0;
+    D_8014C130 = 0;
+    D_8014C11C = 0;
+    D_8014C124 = 0;
+    D_8014C150 = 0;
+    return 1;
+}
+
 
 INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80061454);
 
