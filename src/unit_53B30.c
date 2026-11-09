@@ -4,7 +4,6 @@ typedef struct { s32 a; s32 b; s32 c; } V12_;
 extern void (*D_80140FBC)(s32, char *, s32);
 extern void (*D_80140FB8)(char *, void *, void *);
 extern void (*D_80140FD8)(void);
-void func_800C4564(s32, s32, s32, s32);
 void func_800C46C4(void);
 extern void (*D_80141024)(s32);
 extern u8 (*D_80140FFC)(u8);
@@ -70,6 +69,15 @@ typedef struct { u8 p0[0x10]; s32 unk10; f32 unk14; } ObjG1_;
 typedef struct { s32 d[0x88C / 4]; } Big88C_;
 typedef struct { u8 a; u8 pad; s16 x; s16 y; u8 pad2[4]; } E0A4_;
 typedef struct { s32 d[0x50]; } Big140_;
+typedef struct { char *name; u8 pad[0xC]; } N10_;
+typedef struct { f32 x; f32 y; f32 z; f32 x2; f32 y2; u8 pad[0x1C]; u16 h30; u16 h32; } E34b_;
+typedef struct { u8 pad[0x20]; u8 n; u8 p[3]; N10_ *names; E34b_ *objs; } TBL_;
+extern char *D_800F64A8[];
+void func_800C4564(s32 i, s32 x, s32 y, s32 c);
+extern char *D_800F6478[];
+void func_800BB350(s32 i, s32 x, s32 y, s32 c);
+extern char *D_800F646C[];
+void func_800B983C(s32 i, s32 x, s32 y, s32 c);
 extern s32 D_80141504;
 extern s32 D_80141508;
 extern s32 D_8014150C;
@@ -103,10 +111,8 @@ extern void (*D_8014107C)(void);
 extern void (*D_80141088)(void);
 void func_800C9130(void);
 void func_800C9A00(void);
-void func_800B983C(s32, s32, s32, s32);
 extern u32 D_800F6078[];
 u8 func_800C8214(u8 i, s32 k);
-void func_800BB350(s32, s32, s32, s32);
 extern void (*D_80141068)(s32);
 void func_800C90DC(void);
 void func_800C9978(void);
@@ -1475,7 +1481,26 @@ void func_800B982C(void) {
     (*(s8 *)&D_80123EA0) = 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800B983C);
+void func_800B983C(s32 i, s32 x, s32 y, s32 c) {
+    TBL_ *t = (TBL_ *)D_800F5F28;
+    u8 j;
+
+    for (j = 0; j < t->n; j++) {
+        if (strcmp(t->names[j].name, D_800F646C[(u8)i]) == 0) {
+            if ((x < 0) & (y < 0)) {
+                t->objs[j].h30 = (u8)c;
+                return;
+            }
+            t->objs[j].h30 = (u8)c;
+            t->objs[j].x = func_800B1294(x);
+            t->objs[j].y = func_800B12C4(y);
+            t->objs[j].x2 = t->objs[j].x;
+            t->objs[j].y2 = t->objs[j].y;
+            return;
+        }
+    }
+}
+
 
 void func_800B999C(void) {
     switch (D_800F61D2) {
@@ -1921,7 +1946,26 @@ void func_800BB32C(void) {
     func_800B2F20(D_800F5F28);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800BB350);
+void func_800BB350(s32 i, s32 x, s32 y, s32 c) {
+    TBL_ *t = (TBL_ *)D_800F5F2C;
+    u8 j;
+
+    for (j = 0; j < t->n; j++) {
+        if (strcmp(t->names[j].name, D_800F6478[(u8)i]) == 0) {
+            if ((x < 0) & (y < 0)) {
+                t->objs[j].h30 = (u8)c;
+                return;
+            }
+            t->objs[j].h30 = (u8)c;
+            t->objs[j].x = func_800B1294(x);
+            t->objs[j].y = func_800B12C4(y);
+            t->objs[j].x2 = t->objs[j].x;
+            t->objs[j].y2 = t->objs[j].y;
+            return;
+        }
+    }
+}
+
 
 void func_800BB4B0(void) {
     switch ((u8)D_800F61D3) {
@@ -3829,7 +3873,26 @@ void func_800C452C(void) {
     func_800C891C(0x30);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800C4564);
+void func_800C4564(s32 i, s32 x, s32 y, s32 c) {
+    TBL_ *t = (TBL_ *)D_800F5F80;
+    u8 j;
+
+    for (j = 0; j < t->n; j++) {
+        if (strcmp(t->names[j].name, D_800F64A8[(u8)i]) == 0) {
+            if ((x < 0) & (y < 0)) {
+                t->objs[j].h30 = (u8)c;
+                return;
+            }
+            t->objs[j].h30 = (u8)c;
+            t->objs[j].x = func_800B1294(x);
+            t->objs[j].y = func_800B12C4(y);
+            t->objs[j].x2 = t->objs[j].x;
+            t->objs[j].y2 = t->objs[j].y;
+            return;
+        }
+    }
+}
+
 
 void func_800C46C4(void) {
     switch (D_800F61D7) {
