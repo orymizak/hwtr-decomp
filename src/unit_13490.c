@@ -23,6 +23,11 @@ typedef struct { u8 pad[8]; u8 b8; u8 pad2[0xB]; s32 *p14; u8 pad3[0x18]; s32 w3
 typedef struct { u8 pad[0x30]; s32 flags; u8 pad2[8]; Obj74_ *p3C; u8 pad3[0x14]; } Item74_;
 typedef struct { u16 count; u8 pad[0x2A]; Item74_ *items; u8 pad2[4]; s32 w34; } List74_;
 typedef struct { u8 d[0x200]; } B200_;
+typedef struct Node72_ { u8 pad[0x30]; s32 flags; s32 id; s32 p38; s32 p3C; u8 pad2[0xC]; struct Node72_ *next; struct Node72_ *child; } Node72_;
+typedef struct { u32 w0; u32 w1; } G9_;
+extern u8 D_800F1FA8[];
+void GfxPool_Grow(void *, u32);
+void func_80072928(f32 *);
 extern s32 D_800F1EA0;
 extern s32 D_800F2028;
 extern s32 D_800F1EA4;
@@ -84,7 +89,62 @@ void func_80072890(void *arg0, s32 arg1, s32 arg2) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_13490", func_80072928);
 
-INCLUDE_ASM("asm/nonmatchings/unit_13490", func_80072BAC);
+void func_80072BAC(Node72_ *n, s32 arg1, s32 arg2, s32 arg3) {
+    f32 m[12];
+    f32 one;
+    f32 zero;
+
+    if (n != NULL) {
+        one = 1.0f;
+        zero = 0.0f;
+        do {
+            if (n->flags & 0x40) {
+                if ((func_800717C8(arg1, (s32) n, n->p38) & 0xFF) == 1) {
+                    if (n->child != NULL) {
+                        func_80072BAC(n->child, arg1, arg2, arg3);
+                    }
+                    if (n->p3C != 0) {
+                        func_8007AFD4(arg1, (s32) n, m);
+                        if (n->flags & 1) {
+                            m[9] = zero;
+                            m[8] = zero;
+                            m[6] = zero;
+                            m[4] = zero;
+                            m[2] = zero;
+                            m[1] = zero;
+                            m[10] = one;
+                            m[5] = one;
+                            m[0] = one;
+                        }
+                        if (n->flags & 2) {
+                            ((s32 *) m)[2] = 0;
+                            ((s32 *) m)[6] = 0;
+                            ((s32 *) m)[8] = 0;
+                            ((s32 *) m)[9] = 0;
+                            m[10] = one;
+                            func_80072928(m);
+                        }
+                        if (n->flags & 4) {
+                            m[9] = zero;
+                            m[8] = zero;
+                            m[6] = zero;
+                            m[4] = zero;
+                            m[2] = zero;
+                            m[1] = zero;
+                            m[10] = one;
+                            m[5] = one;
+                            m[0] = one;
+                        }
+                        func_80072EE0((u8 *) n, m, func_80070BA4(m), arg2, arg3);
+                    }
+                } else if (n->id != arg2) {
+                    n->flags &= ~0x80;
+                }
+            }
+            n = n->next;
+        } while (n != NULL);
+    }
+}
 
 void func_80072D48(void *arg0) {
     *(s32 *)((u8 *)arg0 + 0x30) = (s32) (*(s32 *)((u8 *)arg0 + 0x30) & ~0x40);
@@ -394,7 +454,34 @@ INCLUDE_ASM("asm/nonmatchings/unit_13490", func_80075A38);
 
 INCLUDE_ASM("asm/nonmatchings/unit_13490", func_80075ABC);
 
-INCLUDE_ASM("asm/nonmatchings/unit_13490", func_80076020);
+void func_80076020(s32 w, s32 h) {
+    s32 g;
+
+    if ((u32) (D_8014EC78 + 0x30) >= (u32) D_8014C740[D_8014C540].f4) {
+        D_8014C740[D_8014C540].f0 = D_8014EC78;
+        GfxPool_Grow(&D_8014C740[D_8014C540], 6U);
+        D_8014EC78 = D_8014C740[D_8014C540].f0;
+    }
+    g = D_8014EC78;
+    D_8014EC78 = g + 8;
+    ((G9_ *)g)[0].w0 = 0xDB060000;
+    ((G9_ *)g)[0].w1 = 0;
+    D_8014EC78 = g + 16;
+    ((G9_ *)g)[1].w0 = 0xD9000000;
+    ((G9_ *)g)[1].w1 = 0;
+    D_8014EC78 = g + 24;
+    ((G9_ *)g)[2].w0 = 0xD7000000;
+    ((G9_ *)g)[2].w1 = 0;
+    D_8014EC78 = g + 32;
+    ((G9_ *)g)[3].w0 = 0xE7000000;
+    ((G9_ *)g)[3].w1 = 0;
+    D_8014EC78 = g + 40;
+    ((G9_ *)g)[4].w0 = 0xED000000;
+    ((G9_ *)g)[4].w1 = ((((s32) ((f32) (w - 1) * 4.0f) & 0xFFF) << 12) | ((s32) ((f32) (h - 1) * 4.0f) & 0xFFF));
+    D_8014EC78 = g + 48;
+    ((G9_ *)g)[5].w0 = 0xDE000000;
+    ((G9_ *)g)[5].w1 = (u32) D_800F1FA8;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_13490", func_800761D4);
 

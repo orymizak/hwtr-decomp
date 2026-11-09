@@ -7,6 +7,13 @@ extern s32 D_801410E0[];
 extern char D_8010080C[];
 s32 sprintf(char *, const char *, ...);
 typedef struct Lnk89_ { s32 *obj; s32 x; struct Lnk89_ *next; } Lnk89_;
+typedef struct { u8 *def; s32 t; u8 pad8; u8 hold; } Tmr89_;
+typedef struct { s32 pad0; u8 id; u8 pad5[3]; s32 on; s32 t; u8 fired; u8 pad11[7]; } Evt18_;
+extern Evt18_ *D_800F3020;
+extern u32 D_800F3024;
+extern void (*D_80141714)(u8, s32, f32);
+u8 *func_800960D8(u8);
+s32 func_800A76D8(void);
 extern Lnk89_ **D_80118470[];
 void func_800A82F8(Lnk89_ **, s32 *);
 void Memory_Free(void *);
@@ -103,7 +110,44 @@ INCLUDE_ASM("asm/nonmatchings/unit_28C10", func_80089FC4);
 
 INCLUDE_ASM("asm/nonmatchings/unit_28C10", func_8008AA9C);
 
-INCLUDE_ASM("asm/nonmatchings/unit_28C10", func_8008AD04);
+void func_8008AD04(void) {
+    s32 now;
+    u32 i;
+    s32 n;
+    Lnk89_ *l;
+    Lnk89_ *next;
+    Tmr89_ *t;
+    u8 *p;
+
+    now = func_800A76D8();
+    for (i = 0; i < 6; i++) {
+        p = func_800960D8(i);
+        l = *D_80118470[i];
+        n = 0;
+        while (l != NULL) {
+            t = (Tmr89_ *) l->obj;
+            next = l->next;
+            n++;
+            if (t->hold == 1) {
+                t->t = func_800A76D8();
+            } else if ((u32) (now - t->t) > (u32) (*(s32 *) (t->def + 0x2C) * 1000)) {
+                func_80088558(t->def, p);
+                func_800A82F8(D_80118470[i], (s32 *) t);
+                Memory_Free(t);
+            }
+            l = next;
+        }
+        if (n == 0) {
+            *(s32 *) (p + 0x6DC) = 0;
+        }
+    }
+    for (i = 0; i < D_800F3024; i++) {
+        if (D_800F3020[i].fired == 0 && (u32) (now - D_800F3020[i].t) > 10000 && D_800F3020[i].on != 0) {
+            D_800F3020[i].fired = 1;
+            D_80141714(D_800F3020[i].id, 1, 1.0f);
+        }
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_28C10", func_8008AEC0);
 

@@ -25,6 +25,10 @@ typedef struct { f32 f0; u8 p4[0x48]; } S_D_800EFF54;
 extern S_D_800EFF54 D_800EFF54[];
 extern f64 D_800FE868;
 typedef struct { s32 f0; } S_D_800EFC78;
+s32 func_800CE550(s32 id, f32 val);
+extern s32 D_800F01A0;
+extern s32 D_800F01A4;
+extern s32 D_800EFC94[];
 extern s32 D_8014C0C0;
 extern s32 D_8014C0A8;
 extern s32 D_8014C0AC;
@@ -301,7 +305,57 @@ INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80061454);
 
 INCLUDE_ASM("asm/nonmatchings/unit_01050", func_800616A0);
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", func_8006185C);
+s32 func_8006185C(u32 id, s32 mode, f32 vol, f32 pitch) {
+    s32 snd;
+    s32 v;
+    s32 pri;
+    s32 h;
+
+    snd = D_800EFC94[id];
+    v = D_800EFC70 * 128.0f * vol;
+    if (snd == 0) {
+        return 0;
+    }
+    if (mode == 0) {
+        pri = 0x30;
+    } else if (mode == 1) {
+        pri = 0x60;
+    } else {
+        return 0;
+    }
+    if (pitch > 12.0) {
+        pitch = 12.0f;
+    }
+    if (v == 0) {
+        v = 1;
+    }
+    switch (id) {
+        case 0x1:
+            if (func_800CE428(D_800F01A0) == 0) {
+                h = func_800CD8CC(snd, v, 0x80, 0, pri);
+                func_800CE550(h, pitch);
+                D_800F01A0 = h;
+            }
+            return 1;
+        case 0xD:
+            if (func_800CE428(D_800F01A4) == 0) {
+                h = func_800CD8CC(snd, v, 0x80, 0, pri);
+                func_800CE550(h, pitch);
+                D_800F01A4 = h;
+            }
+            return 1;
+        case 0x36:
+        case 0x38:
+            D_800F01AC = func_800CD8CC(snd, v, 0x80, 1, pri);
+            return 1;
+        case 0x37:
+            D_800F01A8 = func_800CD8CC(snd, v, 0x80, 1, pri);
+            return 1;
+        default:
+            func_800CE550(func_800CD8CC(snd, v, 0x80, 0, pri), pitch);
+            return 1;
+    }
+}
 
 s32 func_80061A84(u32 arg0) {
     register s32 temp_s0;

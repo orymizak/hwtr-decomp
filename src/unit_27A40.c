@@ -1,5 +1,10 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { u8 ch; s8 k; } Kern2_;
+typedef struct { Kern2_ *list; u8 n; u8 ch; u8 has; u8 pad; } Kern1_;
+typedef struct { Kern1_ *tbl; u16 n; u8 pad[2]; } KernFont_;
+extern KernFont_ D_800F2800[];
+extern s32 D_800F2808;
 extern u8 D_80140F90;
 extern u8 D_80145568;
 extern u8 D_8014C0A8;
@@ -21,7 +26,60 @@ void func_80086F78(void) {
 
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_27A40", func_80086F80);
+s8 func_80086F80(u8 font, u8 a, u8 b) {
+    s16 lo;
+    s16 hi;
+    s16 mid;
+    s16 f1;
+    s16 f2;
+    Kern1_ *t;
+    s8 r;
+
+    lo = 0;
+    f1 = 0xFF;
+    f2 = 0xFF;
+    r = 0;
+    if (D_800F2808 < font) {
+        return -0x80;
+    }
+    hi = D_800F2800[font].n;
+    t = D_800F2800[font].tbl;
+    while (lo <= hi) {
+        mid = (lo + hi) / 2;
+        if (a == t[mid].ch) {
+            f1 = mid;
+            break;
+        }
+        if (t[mid].ch < a) {
+            lo = mid + 1;
+        } else {
+            hi = mid - 1;
+        }
+    }
+    if (f1 != 0xFF) {
+        if (t[f1].has == 0) {
+            return r;
+        }
+        lo = 0;
+        hi = t[f1].n;
+        while (lo <= hi) {
+            mid = (lo + hi) / 2;
+            if (b == t[f1].list[mid].ch) {
+                f2 = mid;
+                break;
+            }
+            if (t[f1].list[mid].ch < b) {
+                lo = mid + 1;
+            } else {
+                hi = mid - 1;
+            }
+        }
+        if (f2 != 0xFF) {
+            return t[f1].list[f2].k;
+        }
+    }
+    return r;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_27A40", func_8008711C);
 

@@ -15,6 +15,8 @@ typedef struct { s32 w; u8 p[16]; } E14t_;
 typedef struct { u8 pad[0x30]; E14t_ e[1]; } T8D_;
 typedef struct { u8 pad[0x12]; u8 b; u8 pad2[0x19]; } E2Cd_;
 typedef struct { u8 pad[0x30]; E2Cd_ e[1]; } T8B_;
+typedef struct { f32 x; f32 y; f32 z; } V3E0_;
+extern void (*D_8014C10C)(u8, s32, f32);
 extern u32 (*D_80141788)(void);
 extern void (*D_80141784)(s32);
 extern s32 (*D_80141698)(void);
@@ -279,7 +281,45 @@ INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", func_8008D9A0);
 
 INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", func_8008DF18);
 
-INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", func_8008E0BC);
+void func_8008E0BC(u8 **pair) {
+    u8 *s;
+    u8 *t;
+    f32 d;
+    V3E0_ v;
+
+    if (D_80118528 != 1) {
+        s = *(u8 **) (pair[0] + 0x64);
+        t = *(u8 **) (pair[1] + 0x64);
+        if ((u32) s < (u32) t) {
+            s = t;
+        }
+        if (s != NULL) {
+            v.x = 0.0f;
+            v.y = 0.0f;
+            v.z = 0.0f;
+            if (*(u8 **) (pair[0] + 0x60) != NULL) {
+                v.x += *(f32 *) (*(u8 **) (pair[0] + 0x60) + 0x84);
+                v.y += *(f32 *) (*(u8 **) (pair[0] + 0x60) + 0x88);
+                v.z += *(f32 *) (*(u8 **) (pair[0] + 0x60) + 0x8C);
+            }
+            if (*(u8 **) (pair[1] + 0x60) != NULL) {
+                v.x -= *(f32 *) (*(u8 **) (pair[1] + 0x60) + 0x84);
+                v.y -= *(f32 *) (*(u8 **) (pair[1] + 0x60) + 0x88);
+                v.z -= *(f32 *) (*(u8 **) (pair[1] + 0x60) + 0x8C);
+            }
+            d = sqrtf(v.x * v.x + v.y * v.y + v.z * v.z);
+            if (d > 176.0f) {
+                if (d < 352.0f) {
+                    D_8014C10C(*s, 2, d / 352.0f);
+                } else if (d < 880.0f) {
+                    D_8014C10C(*s, 3, d / 880.0f);
+                } else {
+                    D_8014C10C(*s, 4, d / 2304.0f);
+                }
+            }
+        }
+    }
+}
 
 void func_8008E2B0(void) {
     u32 i;
