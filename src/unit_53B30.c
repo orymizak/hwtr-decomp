@@ -72,6 +72,8 @@ typedef struct { s32 d[0x50]; } Big140_;
 typedef struct { char *name; u8 pad[0xC]; } N10_;
 typedef struct { f32 x; f32 y; f32 z; f32 x2; f32 y2; u8 pad[0x1C]; u16 h30; u16 h32; } E34b_;
 typedef struct { u8 pad[0x20]; u8 n; u8 p[3]; N10_ *names; E34b_ *objs; } TBL_;
+extern u8 D_80100DF4;
+extern s32 *D_80141480;
 extern u8 D_80100E08;
 extern ObjG1_ D_800F6358;
 u8 func_800AFD1C(void);
@@ -1650,7 +1652,39 @@ void func_800B93D8(void) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800B9440);
+void func_800B9440(void) {
+    s32 a[8];
+    s32 b[8];
+    s32 c[8];
+    u8 *src;
+    s32 *p;
+
+    func_800B2AD0(D_800F5F14);
+    func_800B3144(NULL);
+    func_800B8D74();
+    if (D_80124C7C != 0) {
+        sprintf(a, (s32 *)&D_80100DF4, D_80124148 + 8);
+        src = &D_800F6424;
+        D_80124C7C = 0;
+        D_80124C7E = 1;
+        D_80124C7F = 0;
+    } else {
+        sprintf(a, (s32 *)&D_80100DF4, D_8012414C + 8);
+        src = &D_800F6444;
+        D_80124C7D = 0;
+        D_80124C7E = 0;
+        D_80124C7F = 1;
+    }
+    strcpy(b, (s32)src);
+    ((u8 *)b)[10] = 0;
+    strcpy(c, (s32)(src + 10));
+    ((u8 *)c)[10] = 0;
+    p = &D_800F5F14;
+    func_800B4CC4(*p, 0, D_80141480, 320, 170, 0, 0, 1, 1, 255, 255, 255);
+    func_800B4CC4(*p, 1, a, 320, 195, 0, 0, 1, 1, 255, 255, 255);
+    func_800B4CC4(*p, 2, b, 320, 220, 0, 0, 1, 1, 255, 255, 255);
+    func_800B4CC4(*p, 3, c, 320, 245, 0, 0, 1, 1, 255, 255, 255);
+}
 
 void func_800B9644(void) {
     func_800B2B28(D_800F5F14);
