@@ -69,6 +69,14 @@ extern u8 D_80100F88[];
 typedef struct { u8 p0[0x10]; s32 unk10; f32 unk14; } ObjG1_;
 typedef struct { s32 d[0x88C / 4]; } Big88C_;
 typedef struct { u8 a; u8 pad; s16 x; s16 y; u8 pad2[4]; } E0A4_;
+extern u8 D_801240E4;
+extern u8 D_801240E5;
+extern u8 D_801240E6;
+extern s8 D_801240E7;
+extern u8 D_80100F0C;
+extern u8 D_80100F14;
+extern u8 D_80100F1C;
+void func_800B4CC4(s32, s32, s32 *, s32, s32, s32, s32, s32, s32, s32, s32, s32);
 extern u8 D_801240E0;
 extern u8 D_801240E1;
 extern u8 D_801240E2;
@@ -2294,7 +2302,19 @@ void func_800BD55C(void) {
     D_80124C98 = D_80141048();
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800BD5AC);
+void func_800BD5AC(void) {
+    s32 buf[16];
+    s32 *p;
+
+    ((s32 (*)(s32 *, s32 *))sprintf)(buf, (s32 *)&D_80100F0C);
+    p = &D_800F5F3C;
+    func_800B4CC4(*p, 0, buf, 320, 210, 0, 2, 1, 1, 255, 255, 255);
+    sprintf(buf, (s32 *)&D_80100F14, D_80124148 + 8);
+    func_800B4CC4(*p, 1, buf, 320, 240, 0, 2, 1, 1, 255, 255, 255);
+    ((s32 (*)(s32 *, s32 *))sprintf)(buf, (s32 *)&D_80100F1C);
+    func_800B4CC4(*p, 2, buf, 320, 270, 0, 2, 1, 1, 255, 255, 255);
+}
+
 
 void func_800BD6D8(void) {
     func_800B2B28(D_800F5F3C);
@@ -2561,7 +2581,32 @@ void func_800BF794(void) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800BF7EC);
+void func_800BF7EC(void) {
+    u8 buf[0x40];
+    u8 big[0x118];
+
+    if (D_80123EA0 != 2) {
+        return;
+    }
+    if ((u8)func_800B7DFC(D_801240BA, D_8012414C) != 0) {
+        D_80140FBC(1, ((char **)&D_800FA0DC)[D_801240BA], 1);
+        D_80140FB8(((char **)&D_800FA0DC)[D_801240BA], big, buf);
+        D_80140FD8();
+        *(V12_ *)&D_801240F4 = *(V12_ *)(big + 0x80);
+        D_80124C95 = 0;
+        D_801240E4 = big[0x110];
+        D_801240E5 = big[0x112];
+        D_801240E6 = big[0x111];
+        D_801240E7 = big[0x113];
+    } else {
+        D_801240E7 = -1;
+        D_801240E4 = 0;
+        D_801240E5 = 0;
+        D_801240E6 = 0;
+        D_80124C95 = 1;
+    }
+}
+
 
 void func_800BF920(void) {
     if ((D_80123EA0 == 2) && (func_800B7DFC(D_801240BA, D_8012414C) & 0xFF)) {
