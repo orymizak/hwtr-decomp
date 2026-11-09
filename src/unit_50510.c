@@ -3,7 +3,6 @@
 s32 strcmp(const char *, const char *);
 typedef struct { u8 d[0x2C]; } E2C5_;
 typedef struct { u8 n; u8 pad[3]; E2C5_ *arr; } T2C5_;
-void func_800B192C(E2C5_ *);
 typedef struct { u8 pad[0x14]; u32 lo; u32 hi; } Bits5_;
 extern s8 D_800F5F90[];
 extern u8 D_80123D20[];
@@ -18,6 +17,9 @@ void func_800B11FC(void);
 typedef struct { u8 d[0x140]; } E140_;
 typedef struct { u8 a; u8 pad; u16 x; u16 y; u16 x2; u16 y2; } E0A2_;
 typedef struct { u8 pad[2]; u8 n; u8 pad2; E0A2_ *arr; u8 pad3[0xB]; u8 mode; } T0A2_;
+typedef struct { s16 x; s16 y; } P16b_;
+typedef struct { u8 a; u8 pad; u16 x; u16 y; u16 x2; u16 y2; } E0A5_;
+void func_800B192C(u8 *t);
 extern u32 D_80123D10[];
 extern u32 (*D_80140FEC)(u32);
 s8 func_800B0FB0(char *s);
@@ -236,11 +238,49 @@ INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B1694);
 
 INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B1824);
 
-INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B192C);
+void func_800B192C(u8 *t) {
+    u32 i;
+
+    if (t[0x26] == 2) {
+        for (i = 0; i < t[0x18]; i++) {
+            (*(E0A5_ **)(t + 0x1C))[i].x = (*(E0A5_ **)(t + 0x1C))[i].x2 + 640;
+            (*(E0A5_ **)(t + 0x1C))[i].y = (*(E0A5_ **)(t + 0x1C))[i].y2;
+        }
+    } else if (t[0x26] == 1) {
+        for (i = 0; i < t[0x18]; i++) {
+            (*(E0A5_ **)(t + 0x1C))[i].x = (*(E0A5_ **)(t + 0x1C))[i].x2 - 640;
+            (*(E0A5_ **)(t + 0x1C))[i].y = (*(E0A5_ **)(t + 0x1C))[i].y2;
+        }
+    } else if (t[0x26] == 0) {
+        for (i = 0; i < t[0x18]; i++) {
+            *(P16b_ *)&(*(E0A5_ **)(t + 0x1C))[i].x = *(P16b_ *)&(*(E0A5_ **)(t + 0x1C))[i].x2;
+        }
+    }
+}
+
 
 INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B1A3C);
 
-INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B1B60);
+void func_800B1B60(u8 *t) {
+    u32 i;
+
+    if (t[0x13] == 2) {
+        for (i = 0; i < t[2]; i++) {
+            (*(E0A5_ **)(t + 4))[i].x = (*(E0A5_ **)(t + 4))[i].x2 + 640;
+            (*(E0A5_ **)(t + 4))[i].y = (*(E0A5_ **)(t + 4))[i].y2;
+        }
+    } else if (t[0x13] == 1) {
+        for (i = 0; i < t[2]; i++) {
+            (*(E0A5_ **)(t + 4))[i].x = (*(E0A5_ **)(t + 4))[i].x2 - 640;
+            (*(E0A5_ **)(t + 4))[i].y = (*(E0A5_ **)(t + 4))[i].y2;
+        }
+    } else if (t[0x13] == 0) {
+        for (i = 0; i < t[2]; i++) {
+            *(P16b_ *)&(*(E0A5_ **)(t + 4))[i].x = *(P16b_ *)&(*(E0A5_ **)(t + 4))[i].x2;
+        }
+    }
+}
+
 
 void func_800B1C70(T0A2_ *t) {
     u32 i;
@@ -259,7 +299,26 @@ void func_800B1C70(T0A2_ *t) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B1D30);
+void func_800B1D30(u8 *t) {
+    u32 i;
+
+    if (t[0x13] == 2) {
+        for (i = 0; i < t[2]; i++) {
+            (*(E0A5_ **)(t + 4))[i].x = (*(E0A5_ **)(t + 4))[i].x2 + 640;
+            (*(E0A5_ **)(t + 4))[i].y = (*(E0A5_ **)(t + 4))[i].y2;
+        }
+    } else if (t[0x13] == 1) {
+        for (i = 0; i < t[2]; i++) {
+            (*(E0A5_ **)(t + 4))[i].x = (*(E0A5_ **)(t + 4))[i].x2 - 640;
+            (*(E0A5_ **)(t + 4))[i].y = (*(E0A5_ **)(t + 4))[i].y2;
+        }
+    } else if (t[0x13] == 0) {
+        for (i = 0; i < t[2]; i++) {
+            *(P16b_ *)&(*(E0A5_ **)(t + 4))[i].x = *(P16b_ *)&(*(E0A5_ **)(t + 4))[i].x2;
+        }
+    }
+}
+
 
 void func_800B1E40(T0A2_ *t) {
     u32 i;

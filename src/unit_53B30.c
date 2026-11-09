@@ -69,6 +69,7 @@ extern u8 D_80100F88[];
 typedef struct { u8 p0[0x10]; s32 unk10; f32 unk14; } ObjG1_;
 typedef struct { s32 d[0x88C / 4]; } Big88C_;
 typedef struct { u8 a; u8 pad; s16 x; s16 y; u8 pad2[4]; } E0A4_;
+void func_800B983C(s32, s32, s32, s32);
 extern u32 D_800F6078[];
 u8 func_800C8214(u8 i, s32 k);
 void func_800BB350(s32, s32, s32, s32);
@@ -847,7 +848,29 @@ void func_800B7C0C(void) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800B7C54);
+void func_800B7C54(void) {
+    if (((s32 *)D_80124148)[5] == 0) {
+        ((void (*)(void *, s32))func_800B51C0)((void *)D_80124148, 0);
+    }
+    if (((s32 *)D_8012414C)[5] == 0) {
+        ((void (*)(void *, s32))func_800B51C0)((void *)D_8012414C, 1);
+    }
+    if ((u8)func_800B0024() != 0) {
+    if (((s32 *)D_80124148)[1] == 0) {
+        ((void (*)(void *, s32))func_800C9F18)(&D_800F9F70, 0x31);
+    } else {
+        func_800B0F74(D_80124148, (s32 *)&D_800F6424);
+    }
+    if (D_80123EA0 == 2 && ((s32 *)D_8012414C)[1] == 0) {
+        ((void (*)(void *, s32))func_800C9F18)(&D_800F9F70, 0x31);
+    } else {
+        func_800B0F74(D_8012414C, (s32 *)&D_800F6444);
+    }
+    ((void (*)(void *, s32))func_800C9F18)(&D_800F9F70, 0x33);
+    } else {
+        ((void (*)(void *, s32))func_800C9F18)(&D_800F9F70, 0x32);
+    }
+}
 
 s32 func_800B7D60(void) {
     u8 i;
@@ -1391,7 +1414,30 @@ void func_800B982C(void) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800B983C);
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800B999C);
+void func_800B999C(void) {
+    switch (D_800F61D2) {
+        case 1:
+            func_800B983C(0, 90, 490, 100);
+            func_800B983C(1, 303, 490, 100);
+            break;
+        case 2:
+            func_800B983C(0, 90, 585, 100);
+            func_800B983C(1, 303, 585, 100);
+            break;
+        case 3:
+            func_800B983C(0, 90, 682, 100);
+            func_800B983C(1, 303, 682, 100);
+            break;
+        case 5:
+            func_800B983C(0, 90, 897, 100);
+            func_800B983C(1, 625, 899, 100);
+            break;
+        default:
+            func_800B983C(0, -1, -1, 0);
+            func_800B983C(1, -1, -1, 0);
+            break;
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800B9AB4);
 
