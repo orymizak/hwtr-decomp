@@ -70,6 +70,11 @@ typedef struct { u8 p0[0x10]; s32 unk10; f32 unk14; } ObjG1_;
 typedef struct { s32 d[0x88C / 4]; } Big88C_;
 typedef struct { u8 a; u8 pad; s16 x; s16 y; u8 pad2[4]; } E0A4_;
 typedef struct { s32 d[0x50]; } Big140_;
+extern s32 D_80141504;
+extern s32 D_80141508;
+extern s32 D_8014150C;
+extern u8 D_80100CA0;
+extern u8 D_80100EB4;
 extern u8 D_80100F34;
 extern u8 D_80100F48;
 extern s32 *D_80141248;
@@ -2312,7 +2317,19 @@ void func_800BD2B0(void) {
     D_80124C98 = D_80141048();
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800BD300);
+void func_800BD300(void) {
+    s32 buf[16];
+    s32 *fmt = (s32 *)&D_80100CA0;
+    s32 *p;
+
+    sprintf(buf, fmt, D_80141504);
+    p = &D_800F5F38;
+    func_800B4CC4(*p, 0, buf, 320, 210, 0, 2, 1, 1, 255, 255, 255);
+    ((s32 (*)(s32 *, s32 *, s32, s32))sprintf)(buf, (s32 *)&D_80100EB4, D_80124148 + 8, D_80141508);
+    func_800B4CC4(*p, 1, buf, 320, 240, 0, 2, 1, 1, 255, 255, 255);
+    sprintf(buf, fmt, D_8014150C);
+    func_800B4CC4(*p, 2, buf, 320, 270, 0, 2, 1, 1, 255, 255, 255);
+}
 
 void func_800BD44C(void) {
     func_800B2B28(D_800F5F38);
