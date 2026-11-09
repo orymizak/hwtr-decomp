@@ -1,0 +1,261 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="540" viewBox="0 0 960 540" font-family="-apple-system,Segoe UI,Helvetica,Arial,sans-serif">
+<rect width="960" height="540" fill="#161b22"/>
+<rect x="0.0" y="0.0" width="775.5" height="540.0" fill="#0d1117" stroke="#161b22" stroke-width="2"/>
+<text x="6.0" y="15.0" font-size="12" font-weight="600" fill="#e6edf3">game 21.3%</text>
+<rect x="2.0" y="22.0" width="238.0" height="324.0" fill="#9a6b1c" stroke="#0d1117" stroke-width="1"><title>unit_53B30: 49.8% of 86488 bytes</title></rect>
+<text x="6.0" y="35.0" font-size="10" fill="#e6edf3">unit_53B30</text><text x="6.0" y="46.0" font-size="9" fill="#c9d1d9">50%</text>
+<rect x="2.0" y="346.0" width="238.0" height="192.0" fill="#5d2224" stroke="#0d1117" stroke-width="1"><title>unit_39C90: 2.7% of 51252 bytes</title></rect>
+<text x="6.0" y="359.0" font-size="10" fill="#e6edf3">unit_39C90</text><text x="6.0" y="370.0" font-size="9" fill="#c9d1d9">3%</text>
+<rect x="240.0" y="22.0" width="167.2" height="172.6" fill="#5c2024" stroke="#0d1117" stroke-width="1"><title>unit_31E10: 1.2% of 32376 bytes</title></rect>
+<text x="244.0" y="35.0" font-size="10" fill="#e6edf3">unit_31E10</text><text x="244.0" y="46.0" font-size="9" fill="#c9d1d9">1%</text>
+<rect x="240.0" y="194.6" width="167.2" height="118.9" fill="#6e3622" stroke="#0d1117" stroke-width="1"><title>unit_13490: 15.5% of 22296 bytes</title></rect>
+<text x="244.0" y="207.6" font-size="10" fill="#e6edf3">unit_13490</text><text x="244.0" y="218.6" font-size="9" fill="#c9d1d9">15%</text>
+<rect x="240.0" y="313.5" width="167.2" height="114.1" fill="#5a1f24" stroke="#0d1117" stroke-width="1"><title>unit_22440: 0.4% of 21400 bytes</title></rect>
+<text x="244.0" y="326.5" font-size="10" fill="#e6edf3">unit_22440</text><text x="244.0" y="337.5" font-size="9" fill="#c9d1d9">0%</text>
+<rect x="240.0" y="427.6" width="167.2" height="110.4" fill="#6e3721" stroke="#0d1117" stroke-width="1"><title>unit_06050: 16.0% of 20716 bytes</title></rect>
+<text x="244.0" y="440.6" font-size="10" fill="#e6edf3">unit_06050</text><text x="244.0" y="451.6" font-size="9" fill="#c9d1d9">16%</text>
+<rect x="407.2" y="22.0" width="145.8" height="118.0" fill="#743e21" stroke="#0d1117" stroke-width="1"><title>unit_01050: 20.6% of 19304 bytes</title></rect>
+<text x="411.2" y="35.0" font-size="10" fill="#e6edf3">unit_01050</text><text x="411.2" y="46.0" font-size="9" fill="#c9d1d9">21%</text>
+<rect x="553.0" y="22.0" width="113.1" height="118.0" fill="#632823" stroke="#0d1117" stroke-width="1"><title>unit_28C10: 6.7% of 14980 bytes</title></rect>
+<text x="557.0" y="35.0" font-size="10" fill="#e6edf3">unit_28C10</text><text x="557.0" y="46.0" font-size="9" fill="#c9d1d9">7%</text>
+<rect x="666.2" y="22.0" width="107.4" height="118.0" fill="#602523" stroke="#0d1117" stroke-width="1"><title>unit_49CF0: 4.4% of 14216 bytes</title></rect>
+<text x="670.2" y="35.0" font-size="10" fill="#e6edf3">unit_49CF0</text><text x="670.2" y="46.0" font-size="9" fill="#c9d1d9">4%</text>
+<rect x="407.2" y="140.0" width="103.8" height="119.0" fill="#774120" stroke="#0d1117" stroke-width="1"><title>unit_50510: 22.5% of 13852 bytes</title></rect>
+<text x="411.2" y="153.0" font-size="10" fill="#e6edf3">unit_50510</text><text x="411.2" y="164.0" font-size="9" fill="#c9d1d9">22%</text>
+<rect x="511.0" y="140.0" width="90.6" height="119.0" fill="#6d3422" stroke="#0d1117" stroke-width="1"><title>unit_19D40: 14.5% of 12088 bytes</title></rect>
+<text x="515.0" y="153.0" font-size="10" fill="#e6edf3">unit_19D40</text><text x="515.0" y="164.0" font-size="9" fill="#c9d1d9">15%</text>
+<rect x="601.6" y="140.0" width="88.7" height="119.0" fill="#733c21" stroke="#0d1117" stroke-width="1"><title>unit_2C6A0: 19.3% of 11844 bytes</title></rect>
+<text x="605.6" y="153.0" font-size="10" fill="#e6edf3">unit_2C6A0</text><text x="605.6" y="164.0" font-size="9" fill="#c9d1d9">19%</text>
+<rect x="690.3" y="140.0" width="83.3" height="119.0" fill="#5d2124" stroke="#0d1117" stroke-width="1"><title>unit_1CC80: 2.2% of 11112 bytes</title></rect>
+<text x="694.3" y="153.0" font-size="10" fill="#e6edf3">unit_1CC80</text><text x="694.3" y="164.0" font-size="9" fill="#c9d1d9">2%</text>
+<rect x="407.2" y="259.0" width="90.3" height="103.9" fill="#632823" stroke="#0d1117" stroke-width="1"><title>unit_2F4F0: 6.7% of 10524 bytes</title></rect>
+<text x="411.2" y="272.0" font-size="10" fill="#e6edf3">unit_2F4F0</text><text x="411.2" y="283.0" font-size="9" fill="#c9d1d9">7%</text>
+<rect x="407.2" y="362.9" width="90.3" height="89.9" fill="#8d5b1e" stroke="#0d1117" stroke-width="1"><title>unit_103B0: 39.8% of 9112 bytes</title></rect>
+<text x="411.2" y="375.9" font-size="10" fill="#e6edf3">unit_103B0</text><text x="411.2" y="386.9" font-size="9" fill="#c9d1d9">40%</text>
+<rect x="407.2" y="452.8" width="90.3" height="85.2" fill="#5c2024" stroke="#0d1117" stroke-width="1"><title>unit_4D480: 1.3% of 8628 bytes</title></rect>
+<text x="411.2" y="465.8" font-size="10" fill="#e6edf3">unit_4D480</text><text x="411.2" y="476.8" font-size="9" fill="#c9d1d9">1%</text>
+<rect x="497.5" y="259.0" width="100.6" height="74.1" fill="#743d21" stroke="#0d1117" stroke-width="1"><title>unit_0B140: 20.1% of 8356 bytes</title></rect>
+<text x="501.5" y="272.0" font-size="10" fill="#e6edf3">unit_0B140</text><text x="501.5" y="283.0" font-size="9" fill="#c9d1d9">20%</text>
+<rect x="598.1" y="259.0" width="93.9" height="74.1" fill="#7f4a1f" stroke="#0d1117" stroke-width="1"><title>unit_6C240: 28.6% of 7800 bytes</title></rect>
+<text x="602.1" y="272.0" font-size="10" fill="#e6edf3">unit_6C240</text><text x="602.1" y="283.0" font-size="9" fill="#c9d1d9">29%</text>
+<rect x="692.1" y="259.0" width="81.5" height="74.1" fill="#6e3621" stroke="#0d1117" stroke-width="1"><title>unit_0D1F0: 15.7% of 6768 bytes</title></rect>
+<text x="696.1" y="272.0" font-size="10" fill="#e6edf3">unit_0D1F0</text><text x="696.1" y="283.0" font-size="9" fill="#c9d1d9">16%</text>
+<rect x="497.5" y="333.1" width="68.1" height="75.7" fill="#652b23" stroke="#0d1117" stroke-width="1"><title>unit_464D0: 8.2% of 5784 bytes</title></rect>
+<text x="501.5" y="346.1" font-size="10" fill="#e6edf3">unit_464D0</text><text x="501.5" y="357.1" font-size="9" fill="#c9d1d9">8%</text>
+<rect x="497.5" y="408.8" width="68.1" height="65.8" fill="#693122" stroke="#0d1117" stroke-width="1"><title>unit_6AE90: 12.1% of 5028 bytes</title></rect>
+<text x="501.5" y="421.8" font-size="10" fill="#e6edf3">unit_6AE90</text><text x="501.5" y="432.8" font-size="9" fill="#c9d1d9">12%</text>
+<rect x="497.5" y="474.6" width="68.1" height="63.4" fill="#5f2423" stroke="#0d1117" stroke-width="1"><title>unit_21150: 4.0% of 4840 bytes</title></rect>
+<text x="501.5" y="487.6" font-size="10" fill="#e6edf3">unit_21150</text><text x="501.5" y="498.6" font-size="9" fill="#c9d1d9">4%</text>
+<rect x="565.6" y="333.1" width="65.9" height="60.4" fill="#558c37" stroke="#0d1117" stroke-width="1"><title>file_table: 95.7% of 4468 bytes</title></rect>
+<text x="569.6" y="346.1" font-size="10" fill="#e6edf3">file_table</text><text x="569.6" y="357.1" font-size="9" fill="#c9d1d9">96%</text>
+<rect x="565.6" y="393.5" width="65.9" height="52.6" fill="#774120" stroke="#0d1117" stroke-width="1"><title>unit_69E80: 23.0% of 3892 bytes</title></rect>
+<text x="569.6" y="406.5" font-size="10" fill="#e6edf3">unit_69E80</text><text x="569.6" y="417.5" font-size="9" fill="#c9d1d9">23%</text>
+<rect x="565.6" y="446.2" width="65.9" height="46.0" fill="#7b4620" stroke="#0d1117" stroke-width="1"><title>unit_48FA0: 26.1% of 3404 bytes</title></rect>
+<text x="569.6" y="459.2" font-size="10" fill="#e6edf3">unit_48FA0</text><text x="569.6" y="470.2" font-size="9" fill="#c9d1d9">26%</text>
+<rect x="565.6" y="492.2" width="65.9" height="45.8" fill="#877424" stroke="#0d1117" stroke-width="1"><title>gfx_pools: 62.6% of 3384 bytes</title></rect>
+<text x="569.6" y="505.2" font-size="10" fill="#e6edf3">gfx_pools</text><text x="569.6" y="516.2" font-size="9" fill="#c9d1d9">63%</text>
+<rect x="631.6" y="333.1" width="57.0" height="51.2" fill="#8b591e" stroke="#0d1117" stroke-width="1"><title>unit_68D10: 38.1% of 3276 bytes</title></rect>
+<rect x="688.6" y="333.1" width="44.5" height="51.2" fill="#976c1d" stroke="#0d1117" stroke-width="1"><title>screen: 52.0% of 2556 bytes</title></rect>
+<rect x="733.1" y="333.1" width="40.5" height="51.2" fill="#6b3222" stroke="#0d1117" stroke-width="1"><title>unit_20830: 13.3% of 2324 bytes</title></rect>
+<rect x="631.6" y="384.3" width="49.9" height="40.4" fill="#703921" stroke="#0d1117" stroke-width="1"><title>unit_27A40: 17.5% of 2260 bytes</title></rect>
+<rect x="681.5" y="384.3" width="46.6" height="40.4" fill="#6d3522" stroke="#0d1117" stroke-width="1"><title>unit_482C0: 15.2% of 2108 bytes</title></rect>
+<rect x="728.0" y="384.3" width="45.5" height="40.4" fill="#7a4420" stroke="#0d1117" stroke-width="1"><title>util: 24.7% of 2060 bytes</title></rect>
+<rect x="631.6" y="424.7" width="41.4" height="40.0" fill="#5a1e24" stroke="#0d1117" stroke-width="1"><title>unit_47B70: 0.0% of 1860 bytes</title></rect>
+<rect x="631.6" y="464.7" width="41.4" height="37.6" fill="#6a3222" stroke="#0d1117" stroke-width="1"><title>unit_4FE30: 12.8% of 1748 bytes</title></rect>
+<rect x="631.6" y="502.3" width="41.4" height="35.7" fill="#7a4420" stroke="#0d1117" stroke-width="1"><title>anim_track: 24.8% of 1660 bytes</title></rect>
+<rect x="673.0" y="424.7" width="37.2" height="35.4" fill="#916f20" stroke="#0d1117" stroke-width="1"><title>font: 56.2% of 1480 bytes</title></rect>
+<rect x="710.2" y="424.7" width="33.7" height="35.4" fill="#753e21" stroke="#0d1117" stroke-width="1"><title>unit_4F640: 20.9% of 1340 bytes</title></rect>
+<rect x="743.9" y="424.7" width="29.6" height="35.4" fill="#7c7928" stroke="#0d1117" stroke-width="1"><title>unit_48B00: 69.7% of 1176 bytes</title></rect>
+<rect x="673.0" y="460.1" width="26.6" height="39.2" fill="#6a3122" stroke="#0d1117" stroke-width="1"><title>unit_699E0: 12.3% of 1172 bytes</title></rect>
+<rect x="673.0" y="499.3" width="26.6" height="38.7" fill="#6b3322" stroke="#0d1117" stroke-width="1"><title>debug_text: 13.5% of 1156 bytes</title></rect>
+<rect x="699.6" y="460.1" width="39.5" height="25.3" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>sys_table: 100.0% of 1120 bytes</title></rect>
+<rect x="739.1" y="460.1" width="34.4" height="25.3" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>lz: 100.0% of 976 bytes</title></rect>
+<rect x="699.6" y="485.4" width="23.7" height="26.9" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>memory: 100.0% of 716 bytes</title></rect>
+<rect x="699.6" y="512.3" width="23.7" height="25.7" fill="#93621d" stroke="#0d1117" stroke-width="1"><title>unit_4FB80: 44.4% of 684 bytes</title></rect>
+<rect x="723.3" y="485.4" width="25.1" height="21.9" fill="#5c2024" stroke="#0d1117" stroke-width="1"><title>heap: 1.3% of 616 bytes</title></rect>
+<rect x="748.4" y="485.4" width="25.1" height="21.9" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>game_config: 100.0% of 616 bytes</title></rect>
+<rect x="723.3" y="507.2" width="16.8" height="30.8" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>game_init: 100.0% of 580 bytes</title></rect>
+<rect x="740.2" y="507.2" width="19.4" height="16.4" fill="#5d2124" stroke="#0d1117" stroke-width="1"><title>unit_277E0: 2.2% of 356 bytes</title></rect>
+<rect x="740.2" y="523.6" width="19.4" height="14.4" fill="#834f1f" stroke="#0d1117" stroke-width="1"><title>unit_6E0C0: 32.1% of 312 bytes</title></rect>
+<rect x="759.5" y="507.2" width="14.0" height="14.5" fill="#5e2323" stroke="#0d1117" stroke-width="1"><title>unit_27950: 3.5% of 228 bytes</title></rect>
+<rect x="759.5" y="521.7" width="14.0" height="12.5" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_6ADC0: 100.0% of 196 bytes</title></rect>
+<rect x="759.5" y="534.2" width="14.0" height="3.8" fill="#5a1e24" stroke="#0d1117" stroke-width="1"><title>1000: 0.0% of 60 bytes</title></rect>
+<rect x="775.5" y="0.0" width="184.5" height="303.6" fill="#0d1117" stroke="#161b22" stroke-width="2"/>
+<text x="781.5" y="15.0" font-size="12" font-weight="600" fill="#e6edf3">libultra 90.9%</text>
+<rect x="777.5" y="22.0" width="61.7" height="45.1" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_86870: 100.0% of 3292 bytes</title></rect>
+<rect x="839.2" y="22.0" width="61.4" height="45.1" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_7AA80: 100.0% of 3276 bytes</title></rect>
+<rect x="900.6" y="22.0" width="57.4" height="45.1" fill="#5c8935" stroke="#0d1117" stroke-width="1"><title>unit_84CD0: 91.1% of 3064 bytes</title></rect>
+<rect x="777.5" y="67.1" width="47.7" height="52.5" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_7BB70: 100.0% of 2968 bytes</title></rect>
+<rect x="825.3" y="67.1" width="45.4" height="52.5" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_79E60: 100.0% of 2820 bytes</title></rect>
+<rect x="870.6" y="67.1" width="44.1" height="52.5" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_7F260: 100.0% of 2740 bytes</title></rect>
+<rect x="914.7" y="67.1" width="43.3" height="52.5" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_82AB0: 100.0% of 2692 bytes</title></rect>
+<rect x="777.5" y="119.6" width="51.7" height="41.6" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_85E70: 100.0% of 2548 bytes</title></rect>
+<rect x="829.3" y="119.6" width="48.8" height="41.6" fill="#5a1e24" stroke="#0d1117" stroke-width="1"><title>unit_83D50: 0.0% of 2404 bytes</title></rect>
+<rect x="878.1" y="119.6" width="42.5" height="41.6" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_79630: 100.0% of 2092 bytes</title></rect>
+<rect x="920.6" y="119.6" width="37.4" height="41.6" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_7D730: 100.0% of 1844 bytes</title></rect>
+<rect x="777.5" y="161.3" width="32.3" height="41.8" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_7C960: 100.0% of 1596 bytes</title></rect>
+<rect x="777.5" y="203.0" width="32.3" height="39.1" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_81B50: 100.0% of 1492 bytes</title></rect>
+<rect x="777.5" y="242.1" width="32.3" height="31.7" fill="#86531f" stroke="#0d1117" stroke-width="1"><title>unit_7E470: 34.3% of 1212 bytes</title></rect>
+<rect x="777.5" y="273.8" width="32.3" height="27.8" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_81500: 100.0% of 1060 bytes</title></rect>
+<rect x="809.8" y="161.3" width="29.7" height="30.0" fill="#668431" stroke="#0d1117" stroke-width="1"><title>unit_788B0: 84.8% of 1052 bytes</title></rect>
+<rect x="809.8" y="191.2" width="29.7" height="30.0" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_7B750: 100.0% of 1052 bytes</title></rect>
+<rect x="809.8" y="221.2" width="29.7" height="27.5" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_82400: 100.0% of 964 bytes</title></rect>
+<rect x="809.8" y="248.6" width="29.7" height="27.1" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_78EF0: 100.0% of 952 bytes</title></rect>
+<rect x="809.8" y="275.7" width="29.7" height="25.9" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_81170: 100.0% of 908 bytes</title></rect>
+<rect x="839.5" y="161.3" width="31.5" height="24.2" fill="#8b591e" stroke="#0d1117" stroke-width="1"><title>unit_839C0: 38.1% of 904 bytes</title></rect>
+<rect x="871.0" y="161.3" width="31.0" height="24.2" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_7E0F0: 100.0% of 888 bytes</title></rect>
+<rect x="902.0" y="161.3" width="28.8" height="24.2" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_80800: 100.0% of 824 bytes</title></rect>
+<rect x="930.8" y="161.3" width="27.2" height="24.2" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_7D3B0: 100.0% of 780 bytes</title></rect>
+<rect x="839.5" y="185.5" width="24.8" height="26.4" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_80E00: 100.0% of 776 bytes</title></rect>
+<rect x="839.5" y="211.9" width="24.8" height="25.9" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_80370: 100.0% of 760 bytes</title></rect>
+<rect x="839.5" y="237.7" width="24.8" height="21.8" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_7DE70: 100.0% of 640 bytes</title></rect>
+<rect x="839.5" y="259.5" width="24.8" height="21.6" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_7D130: 100.0% of 636 bytes</title></rect>
+<rect x="839.5" y="281.2" width="24.8" height="20.4" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_847E0: 100.0% of 600 bytes</title></rect>
+<rect x="864.3" y="185.5" width="25.0" height="19.2" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_7EFB0: 100.0% of 568 bytes</title></rect>
+<rect x="889.3" y="185.5" width="23.4" height="19.2" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_81930: 100.0% of 532 bytes</title></rect>
+<rect x="912.7" y="185.5" width="22.7" height="19.2" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_82830: 100.0% of 516 bytes</title></rect>
+<rect x="935.3" y="185.5" width="22.7" height="19.2" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_83730: 100.0% of 516 bytes</title></rect>
+<rect x="864.3" y="204.7" width="21.2" height="19.5" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_83540: 100.0% of 488 bytes</title></rect>
+<rect x="885.5" y="204.7" width="20.6" height="19.5" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_7EDC0: 100.0% of 476 bytes</title></rect>
+<rect x="906.1" y="204.7" width="19.1" height="19.5" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_82130: 100.0% of 440 bytes</title></rect>
+<rect x="925.2" y="204.7" width="16.5" height="19.5" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_7C710: 100.0% of 380 bytes</title></rect>
+<rect x="941.7" y="204.7" width="16.3" height="19.5" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_78D70: 100.0% of 376 bytes</title></rect>
+<rect x="864.3" y="224.2" width="17.8" height="16.9" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_80BF0: 100.0% of 356 bytes</title></rect>
+<rect x="864.3" y="241.1" width="17.8" height="16.9" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_84A40: 100.0% of 356 bytes</title></rect>
+<rect x="864.3" y="258.0" width="17.8" height="14.8" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_79450: 100.0% of 312 bytes</title></rect>
+<rect x="864.3" y="272.8" width="17.8" height="14.6" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_7EB50: 100.0% of 308 bytes</title></rect>
+<rect x="864.3" y="287.4" width="17.8" height="14.2" fill="#96661d" stroke="#0d1117" stroke-width="1"><title>unit_7E930: 46.7% of 300 bytes</title></rect>
+<rect x="882.1" y="224.2" width="16.2" height="15.2" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_7EC90: 100.0% of 292 bytes</title></rect>
+<rect x="898.3" y="224.2" width="15.5" height="15.2" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_7FFD0: 100.0% of 280 bytes</title></rect>
+<rect x="913.8" y="224.2" width="14.9" height="15.2" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_7A970: 100.0% of 268 bytes</title></rect>
+<rect x="928.7" y="224.2" width="14.9" height="15.2" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_822F0: 100.0% of 268 bytes</title></rect>
+<rect x="943.6" y="224.2" width="14.4" height="15.2" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_85D50: 100.0% of 260 bytes</title></rect>
+<rect x="882.1" y="239.4" width="12.6" height="15.5" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_792B0: 100.0% of 232 bytes</title></rect>
+<rect x="882.1" y="255.0" width="12.6" height="15.5" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_7FD20: 100.0% of 232 bytes</title></rect>
+<rect x="882.1" y="270.5" width="12.6" height="15.5" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_7FE10: 100.0% of 232 bytes</title></rect>
+<rect x="882.1" y="286.1" width="12.6" height="15.5" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_85AD0: 100.0% of 232 bytes</title></rect>
+<rect x="894.7" y="239.4" width="14.1" height="13.2" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_85950: 100.0% of 220 bytes</title></rect>
+<rect x="894.7" y="252.6" width="14.1" height="13.0" fill="#5a1e24" stroke="#0d1117" stroke-width="1"><title>unit_7D050: 0.0% of 216 bytes</title></rect>
+<rect x="894.7" y="265.6" width="14.1" height="13.0" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_85BC0: 100.0% of 216 bytes</title></rect>
+<rect x="894.7" y="278.5" width="14.1" height="12.0" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_7FF00: 100.0% of 200 bytes</title></rect>
+<rect x="894.7" y="290.6" width="14.1" height="11.0" fill="#5a1e24" stroke="#0d1117" stroke-width="1"><title>unit_80670: 0.0% of 184 bytes</title></rect>
+<rect x="908.8" y="239.4" width="13.7" height="11.1" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_800F0: 100.0% of 180 bytes</title></rect>
+<rect x="922.6" y="239.4" width="12.8" height="11.1" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_793A0: 100.0% of 168 bytes</title></rect>
+<rect x="935.4" y="239.4" width="11.3" height="11.1" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_78CD0: 100.0% of 148 bytes</title></rect>
+<rect x="946.7" y="239.4" width="11.3" height="11.1" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_79590: 100.0% of 148 bytes</title></rect>
+<rect x="908.8" y="250.5" width="12.6" height="9.9" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_7CFB0: 100.0% of 148 bytes</title></rect>
+<rect x="921.4" y="250.5" width="12.6" height="9.9" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_802D0: 100.0% of 148 bytes</title></rect>
+<rect x="934.1" y="250.5" width="12.0" height="9.9" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_7EA60: 100.0% of 140 bytes</title></rect>
+<rect x="946.0" y="250.5" width="12.0" height="9.9" fill="#5a1e24" stroke="#0d1117" stroke-width="1"><title>unit_846C0: 0.0% of 140 bytes</title></rect>
+<rect x="908.8" y="260.4" width="10.2" height="11.2" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_84750: 100.0% of 136 bytes</title></rect>
+<rect x="908.8" y="271.6" width="10.2" height="10.9" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_80240: 100.0% of 132 bytes</title></rect>
+<rect x="908.8" y="282.5" width="10.2" height="9.6" fill="#5a1e24" stroke="#0d1117" stroke-width="1"><title>unit_84BD0: 0.0% of 116 bytes</title></rect>
+<rect x="908.8" y="292.0" width="10.2" height="9.6" fill="#5a1e24" stroke="#0d1117" stroke-width="1"><title>unit_84C50: 0.0% of 116 bytes</title></rect>
+<rect x="919.1" y="260.4" width="8.5" height="9.9" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_82A40: 100.0% of 100 bytes</title></rect>
+<rect x="927.6" y="260.4" width="7.9" height="9.9" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_81110: 100.0% of 92 bytes</title></rect>
+<rect x="935.5" y="260.4" width="7.5" height="9.9" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_80B40: 100.0% of 88 bytes</title></rect>
+<rect x="943.0" y="260.4" width="7.5" height="9.9" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_827D0: 100.0% of 88 bytes</title></rect>
+<rect x="950.5" y="260.4" width="7.5" height="9.9" fill="#5a1e24" stroke="#0d1117" stroke-width="1"><title>unit_85CA0: 0.0% of 88 bytes</title></rect>
+<rect x="919.1" y="270.3" width="8.4" height="8.4" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_7D6C0: 100.0% of 84 bytes</title></rect>
+<rect x="919.1" y="278.7" width="8.4" height="7.6" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_7F210: 100.0% of 76 bytes</title></rect>
+<rect x="919.1" y="286.3" width="8.4" height="7.6" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_80BA0: 100.0% of 76 bytes</title></rect>
+<rect x="919.1" y="294.0" width="8.4" height="7.6" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_85A30: 100.0% of 76 bytes</title></rect>
+<rect x="927.5" y="270.3" width="7.6" height="8.0" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_7C8D0: 100.0% of 72 bytes</title></rect>
+<rect x="935.1" y="270.3" width="7.6" height="8.0" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_801F0: 100.0% of 72 bytes</title></rect>
+<rect x="942.7" y="270.3" width="7.6" height="8.0" fill="#85511f" stroke="#0d1117" stroke-width="1"><title>unit_85900: 33.3% of 72 bytes</title></rect>
+<rect x="950.4" y="270.3" width="7.6" height="8.0" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_85A80: 100.0% of 72 bytes</title></rect>
+<rect x="927.5" y="278.2" width="7.4" height="7.8" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_80D60: 100.0% of 68 bytes</title></rect>
+<rect x="927.5" y="286.0" width="7.4" height="7.8" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_80DB0: 100.0% of 68 bytes</title></rect>
+<rect x="927.5" y="293.8" width="7.4" height="7.8" fill="#5a1e24" stroke="#0d1117" stroke-width="1"><title>unit_85D00: 0.0% of 68 bytes</title></rect>
+<rect x="934.9" y="278.2" width="8.1" height="6.3" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_807B0: 100.0% of 60 bytes</title></rect>
+<rect x="942.9" y="278.2" width="7.5" height="6.3" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_80730: 100.0% of 56 bytes</title></rect>
+<rect x="950.5" y="278.2" width="7.5" height="6.3" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_80770: 100.0% of 56 bytes</title></rect>
+<rect x="934.9" y="284.5" width="7.7" height="5.7" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_7C890: 100.0% of 52 bytes</title></rect>
+<rect x="934.9" y="290.2" width="7.7" height="5.7" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_7C920: 100.0% of 52 bytes</title></rect>
+<rect x="934.9" y="295.9" width="7.7" height="5.7" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_801B0: 100.0% of 52 bytes</title></rect>
+<rect x="942.6" y="284.5" width="5.9" height="5.7" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_7EAF0: 100.0% of 40 bytes</title></rect>
+<rect x="948.5" y="284.5" width="5.3" height="5.7" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_7EB20: 100.0% of 36 bytes</title></rect>
+<rect x="953.8" y="284.5" width="4.2" height="5.7" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_7F1F0: 100.0% of 28 bytes</title></rect>
+<rect x="942.6" y="290.2" width="5.6" height="4.2" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_839A0: 100.0% of 28 bytes</title></rect>
+<rect x="942.6" y="294.4" width="5.6" height="3.6" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_87550: 100.0% of 24 bytes</title></rect>
+<rect x="942.6" y="298.0" width="5.6" height="3.6" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_87570: 100.0% of 24 bytes</title></rect>
+<rect x="948.2" y="290.2" width="4.5" height="3.8" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_84BB0: 100.0% of 20 bytes</title></rect>
+<rect x="952.7" y="290.2" width="2.7" height="3.8" fill="#5a1e24" stroke="#0d1117" stroke-width="1"><title>unit_7EFA0: 0.0% of 12 bytes</title></rect>
+<rect x="955.3" y="290.2" width="2.7" height="3.8" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_807F0: 100.0% of 12 bytes</title></rect>
+<rect x="948.2" y="294.0" width="2.7" height="3.8" fill="#5a1e24" stroke="#0d1117" stroke-width="1"><title>unit_858D0: 0.0% of 12 bytes</title></rect>
+<rect x="948.2" y="297.8" width="2.7" height="3.8" fill="#5a1e24" stroke="#0d1117" stroke-width="1"><title>unit_858E0: 0.0% of 12 bytes</title></rect>
+<rect x="950.9" y="294.0" width="3.6" height="2.8" fill="#5a1e24" stroke="#0d1117" stroke-width="1"><title>unit_858F0: 0.0% of 12 bytes</title></rect>
+<rect x="954.4" y="294.0" width="3.6" height="2.8" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_85E60: 100.0% of 12 bytes</title></rect>
+<rect x="950.9" y="296.9" width="2.8" height="2.4" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_7CFA0: 100.0% of 8 bytes</title></rect>
+<rect x="950.9" y="299.2" width="2.8" height="2.4" fill="#5a1e24" stroke="#0d1117" stroke-width="1"><title>unit_7D720: 0.0% of 8 bytes</title></rect>
+<rect x="953.7" y="296.9" width="2.1" height="1.6" fill="#5a1e24" stroke="#0d1117" stroke-width="1"><title>unit_83940: 0.0% of 4 bytes</title></rect>
+<rect x="955.9" y="296.9" width="2.1" height="1.6" fill="#5a1e24" stroke="#0d1117" stroke-width="1"><title>unit_83950: 0.0% of 4 bytes</title></rect>
+<rect x="953.7" y="298.4" width="2.1" height="1.6" fill="#5a1e24" stroke="#0d1117" stroke-width="1"><title>unit_83960: 0.0% of 4 bytes</title></rect>
+<rect x="953.7" y="300.0" width="2.1" height="1.6" fill="#5a1e24" stroke="#0d1117" stroke-width="1"><title>unit_83970: 0.0% of 4 bytes</title></rect>
+<rect x="955.9" y="298.4" width="2.1" height="1.6" fill="#5a1e24" stroke="#0d1117" stroke-width="1"><title>unit_83980: 0.0% of 4 bytes</title></rect>
+<rect x="955.9" y="300.0" width="2.1" height="1.6" fill="#5a1e24" stroke="#0d1117" stroke-width="1"><title>unit_83990: 0.0% of 4 bytes</title></rect>
+<rect x="775.5" y="303.6" width="184.5" height="164.7" fill="#0d1117" stroke="#161b22" stroke-width="2"/>
+<text x="781.5" y="318.6" font-size="12" font-weight="600" fill="#e6edf3">audio 40.0%</text>
+<rect x="777.5" y="325.6" width="92.4" height="140.7" fill="#88551e" stroke="#0d1117" stroke-width="1"><title>unit_6E610: 35.6% of 16588 bytes</title></rect>
+<text x="781.5" y="338.6" font-size="10" fill="#e6edf3">unit_6E610</text><text x="781.5" y="349.6" font-size="9" fill="#c9d1d9">36%</text>
+<rect x="870.0" y="325.6" width="53.7" height="57.9" fill="#713921" stroke="#0d1117" stroke-width="1"><title>unit_73220: 17.7% of 3972 bytes</title></rect>
+<rect x="923.7" y="325.6" width="34.3" height="57.9" fill="#905f1d" stroke="#0d1117" stroke-width="1"><title>unit_74AB0: 42.3% of 2536 bytes</title></rect>
+<rect x="870.0" y="383.5" width="30.2" height="47.2" fill="#713921" stroke="#0d1117" stroke-width="1"><title>unit_741B0: 17.8% of 1816 bytes</title></rect>
+<rect x="870.0" y="430.7" width="30.2" height="35.6" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_75AE0: 100.0% of 1368 bytes</title></rect>
+<rect x="900.1" y="383.5" width="35.7" height="24.4" fill="#804b1f" stroke="#0d1117" stroke-width="1"><title>unit_726E0: 29.5% of 1112 bytes</title></rect>
+<rect x="935.8" y="383.5" width="22.2" height="24.4" fill="#5a1e24" stroke="#0d1117" stroke-width="1"><title>unit_72CF0: 0.0% of 692 bytes</title></rect>
+<rect x="900.1" y="408.0" width="21.3" height="23.3" fill="#717f2c" stroke="#0d1117" stroke-width="1"><title>unit_6E200: 77.2% of 632 bytes</title></rect>
+<rect x="921.4" y="408.0" width="20.6" height="23.3" fill="#946e1f" stroke="#0d1117" stroke-width="1"><title>unit_72FB0: 54.2% of 612 bytes</title></rect>
+<rect x="942.0" y="408.0" width="16.0" height="23.3" fill="#632823" stroke="#0d1117" stroke-width="1"><title>unit_748D0: 6.7% of 476 bytes</title></rect>
+<rect x="900.1" y="431.2" width="20.1" height="18.4" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_75570: 100.0% of 472 bytes</title></rect>
+<rect x="900.1" y="449.6" width="20.1" height="16.7" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_72B40: 100.0% of 428 bytes</title></rect>
+<rect x="920.2" y="431.2" width="11.9" height="13.2" fill="#8d5c1e" stroke="#0d1117" stroke-width="1"><title>unit_76090: 40.0% of 200 bytes</title></rect>
+<rect x="920.2" y="444.4" width="11.9" height="11.1" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_75920: 100.0% of 168 bytes</title></rect>
+<rect x="920.2" y="455.5" width="11.9" height="10.8" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_75750: 100.0% of 164 bytes</title></rect>
+<rect x="932.1" y="431.2" width="8.8" height="12.1" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_759D0: 100.0% of 136 bytes</title></rect>
+<rect x="940.9" y="431.2" width="8.5" height="12.1" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_75800: 100.0% of 132 bytes</title></rect>
+<rect x="949.5" y="431.2" width="8.5" height="12.1" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_75890: 100.0% of 132 bytes</title></rect>
+<rect x="932.1" y="443.4" width="8.2" height="11.8" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_754A0: 100.0% of 124 bytes</title></rect>
+<rect x="932.1" y="455.2" width="8.2" height="11.1" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_75A60: 100.0% of 116 bytes</title></rect>
+<rect x="940.4" y="443.4" width="9.0" height="9.4" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_6E530: 100.0% of 108 bytes</title></rect>
+<rect x="949.3" y="443.4" width="8.7" height="9.4" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_6E5A0: 100.0% of 104 bytes</title></rect>
+<rect x="940.4" y="452.8" width="8.8" height="6.8" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_75520: 100.0% of 76 bytes</title></rect>
+<rect x="940.4" y="459.5" width="8.8" height="6.8" fill="#5a1e24" stroke="#0d1117" stroke-width="1"><title>unit_76040: 0.0% of 76 bytes</title></rect>
+<rect x="949.2" y="452.8" width="8.8" height="5.3" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_6E4B0: 100.0% of 60 bytes</title></rect>
+<rect x="949.2" y="458.1" width="5.4" height="8.2" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_6E4F0: 100.0% of 56 bytes</title></rect>
+<rect x="954.5" y="458.1" width="3.5" height="8.2" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_6E480: 100.0% of 36 bytes</title></rect>
+<rect x="775.5" y="468.3" width="128.9" height="71.7" fill="#0d1117" stroke="#161b22" stroke-width="2"/>
+<text x="781.5" y="483.3" font-size="12" font-weight="600" fill="#e6edf3">system 45.0%</text>
+<rect x="777.5" y="490.3" width="31.7" height="47.7" fill="#764020" stroke="#0d1117" stroke-width="1"><title>unit_76160: 21.9% of 2504 bytes</title></rect>
+<rect x="809.3" y="490.3" width="32.3" height="27.5" fill="#7f4b1f" stroke="#0d1117" stroke-width="1"><title>unit_775E0: 29.2% of 1468 bytes</title></rect>
+<rect x="809.3" y="517.8" width="32.3" height="20.2" fill="#9a6b1c" stroke="#0d1117" stroke-width="1"><title>unit_77D30: 50.0% of 1080 bytes</title></rect>
+<rect x="841.6" y="490.3" width="19.7" height="25.2" fill="#847525" stroke="#0d1117" stroke-width="1"><title>unit_78170: 64.4% of 820 bytes</title></rect>
+<rect x="841.6" y="515.5" width="19.7" height="22.5" fill="#602523" stroke="#0d1117" stroke-width="1"><title>unit_78510: 4.4% of 732 bytes</title></rect>
+<rect x="861.2" y="490.3" width="26.0" height="15.8" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_77020: 100.0% of 680 bytes</title></rect>
+<rect x="887.3" y="490.3" width="15.2" height="15.8" fill="#89561e" stroke="#0d1117" stroke-width="1"><title>unit_77BA0: 36.4% of 396 bytes</title></rect>
+<rect x="861.2" y="506.1" width="11.3" height="17.8" fill="#905f1d" stroke="#0d1117" stroke-width="1"><title>unit_76DF0: 42.2% of 332 bytes</title></rect>
+<rect x="861.2" y="523.9" width="11.3" height="14.1" fill="#5a1e24" stroke="#0d1117" stroke-width="1"><title>unit_76CB0: 0.0% of 264 bytes</title></rect>
+<rect x="872.5" y="506.1" width="13.9" height="11.3" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_77370: 100.0% of 260 bytes</title></rect>
+<rect x="886.4" y="506.1" width="9.8" height="11.3" fill="#5a1e24" stroke="#0d1117" stroke-width="1"><title>unit_787F0: 0.0% of 184 bytes</title></rect>
+<rect x="896.2" y="506.1" width="6.2" height="11.3" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_76C30: 100.0% of 116 bytes</title></rect>
+<rect x="872.5" y="517.4" width="8.0" height="7.0" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_76FC0: 100.0% of 92 bytes</title></rect>
+<rect x="872.5" y="524.4" width="8.0" height="7.0" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_784B0: 100.0% of 92 bytes</title></rect>
+<rect x="872.5" y="531.3" width="8.0" height="6.7" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_772D0: 100.0% of 88 bytes</title></rect>
+<rect x="880.5" y="517.4" width="6.2" height="7.0" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_76F40: 100.0% of 72 bytes</title></rect>
+<rect x="880.5" y="524.4" width="6.2" height="7.0" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_774D0: 100.0% of 72 bytes</title></rect>
+<rect x="880.5" y="531.4" width="6.2" height="6.6" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_77480: 100.0% of 68 bytes</title></rect>
+<rect x="886.7" y="517.4" width="5.2" height="6.9" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_76B30: 100.0% of 60 bytes</title></rect>
+<rect x="892.0" y="517.4" width="5.2" height="6.9" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_77520: 100.0% of 60 bytes</title></rect>
+<rect x="897.2" y="517.4" width="5.2" height="6.9" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_775A0: 100.0% of 60 bytes</title></rect>
+<rect x="886.7" y="524.3" width="4.9" height="6.8" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_76B70: 100.0% of 56 bytes</title></rect>
+<rect x="886.7" y="531.2" width="4.9" height="6.8" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_76BB0: 100.0% of 56 bytes</title></rect>
+<rect x="891.7" y="524.3" width="5.4" height="6.3" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_77330: 100.0% of 56 bytes</title></rect>
+<rect x="897.1" y="524.3" width="5.4" height="6.3" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_77560: 100.0% of 56 bytes</title></rect>
+<rect x="891.7" y="530.6" width="6.5" height="4.1" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_76F90: 100.0% of 44 bytes</title></rect>
+<rect x="891.7" y="534.7" width="6.5" height="3.3" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_76DC0: 100.0% of 36 bytes</title></rect>
+<rect x="898.2" y="530.6" width="4.2" height="4.0" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_76BF0: 100.0% of 28 bytes</title></rect>
+<rect x="898.2" y="534.6" width="4.2" height="3.4" fill="#2ea043" stroke="#0d1117" stroke-width="1"><title>unit_76C10: 100.0% of 24 bytes</title></rect>
+<rect x="904.4" y="468.3" width="55.6" height="71.7" fill="#0d1117" stroke="#161b22" stroke-width="2"/>
+<text x="910.4" y="483.3" font-size="12" font-weight="600" fill="#e6edf3">libc 0.0%</text>
+<rect x="906.4" y="490.3" width="51.6" height="47.7" fill="#5a1e24" stroke="#0d1117" stroke-width="1"><title>libc: 0.0% of 4248 bytes</title></rect>
+</svg>

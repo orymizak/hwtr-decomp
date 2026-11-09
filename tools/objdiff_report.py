@@ -80,6 +80,7 @@ def main():
     dest = Path(f"report/{VERSION}/report.json")
     dest.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(out, dest)
+    subprocess.run([sys.executable, "tools/treemap.py", str(dest), str(dest.with_name("units.svg"))], check=True)
     measures = json.loads(out.read_text()).get("measures", {})
     print(f"{dest}: {measures.get('matched_code_percent', 0):.2f}% code, "
           f"{measures.get('matched_functions', 0)}/{measures.get('total_functions', 0)} functions")
