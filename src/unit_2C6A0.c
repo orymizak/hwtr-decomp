@@ -13,6 +13,29 @@ extern s32 D_80118528;
 extern void (*D_8014C13C)(u8, u8, u8 *);
 typedef struct { s32 w; u8 p[16]; } E14t_;
 typedef struct { u8 pad[0x30]; E14t_ e[1]; } T8D_;
+typedef struct { u8 pad[0x12]; u8 b; u8 pad2[0x19]; } E2Cd_;
+typedef struct { u8 pad[0x30]; E2Cd_ e[1]; } T8B_;
+extern u8 (*D_801417B0)(u8 *);
+extern u8 (*D_801417B4)(u8 *);
+extern u8 (*D_801416EC)();
+extern u32 D_80118494;
+extern u8 D_8011849C[];
+extern s32 D_800F36F0;
+u8 func_800AEFBC(u8 *);
+u8 func_800A5950(u8 *);
+u8 func_800A7C2C(u8 *);
+u8 func_80089848(u8 *);
+u8 func_800AF5B4(u8 *);
+u8 func_8008EA64(u8 *);
+u8 func_8008D848(u8 *);
+u8 func_80091BA0(u8 *);
+u8 func_800858E8(u8 *);
+u8 func_800AEAFC(u8 *);
+u8 func_800993B8(u8 *);
+u8 func_80098BEC(u8 *);
+u8 func_800806FC();
+u8 func_80087AD4(u8 *);
+u8 func_800A9370(u8 *);
 extern u8 D_801184C1;
 extern u8 D_800F3700;
 extern E10_ *D_800F3704;
@@ -44,7 +67,40 @@ extern u32 D_80118534;
 
 INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", func_8008BAA0);
 
-INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", func_8008BE7C);
+u8 func_8008BE7C(u8 *o) {
+    s32 err;
+    u8 i;
+
+    memset(o, 0, 0x124);
+    if (D_801417B0(o) == 0) {
+        return 0;
+    }
+    err = func_800AEFBC(o) == 0;
+    err += func_800A5950(o) == 0;
+    err += func_800A7C2C(o) == 0;
+    err += func_80089848(o) == 0;
+    err += func_800AF5B4(o) == 0;
+    err += func_8008EA64(o) == 0;
+    err += func_8008D848(o) == 0;
+    err += func_80091BA0(o) == 0;
+    err += func_800858E8(o) == 0;
+    err += func_800AEAFC(o) == 0;
+    err += func_800993B8(o) == 0;
+    err += func_80098BEC(o) == 0;
+    err += func_800806FC() == 0;
+    err += func_80087AD4(o) == 0;
+    err += D_801416EC() == 0;
+    err += func_800A9370(o) == 0;
+    if (D_801417B4(o) == 0) {
+        return 0;
+    }
+    for (i = 0; i < D_80118494; i++) {
+        ((T8B_ *)o)->e[i].b = D_8011849C[i];
+    }
+    *(s32 *)o = D_800F36F0;
+    return err == 0;
+}
+
 
 s32 func_8008C08C(void) {
   if (D_8014C1A8 != 2) {
