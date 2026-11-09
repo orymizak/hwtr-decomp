@@ -72,6 +72,9 @@ typedef struct { s32 d[0x50]; } Big140_;
 typedef struct { char *name; u8 pad[0xC]; } N10_;
 typedef struct { f32 x; f32 y; f32 z; f32 x2; f32 y2; u8 pad[0x1C]; u16 h30; u16 h32; } E34b_;
 typedef struct { u8 pad[0x20]; u8 n; u8 p[3]; N10_ *names; E34b_ *objs; } TBL_;
+u8 func_800AFD1C(void);
+void *func_800B027C(void);
+s32 func_800B0364(s32);
 extern u8 D_80100DAC;
 extern u8 D_80100D94;
 extern s32 *D_8014158C;
@@ -746,7 +749,39 @@ void func_800B54C0(void) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800B5504);
+void func_800B5504(void) {
+    void (**fp)(s32, s32);
+
+    func_800B5294(&D_80124160);
+    ((void (*)(void *, s32))func_800B51C0)(&D_801249F0, 0);
+    ((void (*)(void *, s32))func_800B51C0)(&D_80124B30, 1);
+    if (func_800AFD1C() == 0) {
+        ((void (*)(void *, s32))func_800C9F18)(&D_800F9F70, 0x23);
+        return;
+    }
+    D_800F641C = func_800B027C();
+    D_80124148 = func_800B0364(0);
+    D_8012414C = func_800B0364(1);
+    if (D_800F641C == NULL) {
+        D_800F641C = &D_80124160;
+        D_80124148 = (s32)&D_801249F0;
+        D_8012414C = (s32)&D_80124B30;
+        ((void (*)(void *, s32))func_800C9F18)(&D_800F9F70, 0x23);
+        return;
+    }
+    if (D_80124148 == 0) {
+        D_80124148 = (s32)&D_801249F0;
+    }
+    if (D_8012414C == 0) {
+        D_8012414C = (s32)&D_80124B30;
+    }
+    D_8014105C(0xFF);
+    fp = &D_801455A8;
+    (*fp)(D_80124148 + 0x40, 0);
+    (*fp)(D_8012414C + 0x40, 1);
+    D_800F6418 = 1;
+    ((void (*)(void *, s32))func_800C9F18)(&D_800F9F70, 0x22);
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800B5680);
 

@@ -1,6 +1,11 @@
 #include "common.h"
 #include "include_asm.h"
 typedef struct { s32 *t; s16 a; s16 b; s32 c; s32 d; s32 e; s16 f; s16 g; } Seq9_;
+typedef struct { s32 a; s32 b; s32 c; } V12_;
+typedef struct { u16 flags; u16 a; u16 b; u16 c; u8 d8; u8 d9; u8 dA; u8 dB; } E0Cc_;
+void func_80087F7C(u16, u16, s32);
+void func_80087EA4(u16, V12_ *);
+u8 func_8008E38C(V12_, u8, u8, s32);
 s32 func_8008E510(u8);
 
 s32 Memory_Alloc(s32);
@@ -62,7 +67,34 @@ void func_800C9B40(void) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_69E80", func_800C9B84);
+void func_800C9B84(s32 i) {
+    E0Cc_ *e = &((E0Cc_ *)D_800F9F94)[i];
+    u8 *s = (u8 *)D_800F9F98 + i * 2;
+    V12_ v;
+    u16 f = e->flags;
+
+    if (f & 1) {
+        return;
+    }
+    if (f & 2) {
+        func_80087F7C(e->a, e->c, i);
+        func_80087EA4(e->a, &v);
+        if (e->flags & 0x28) {
+            func_8008E38C(v, e->d8, e->dA, 0);
+        } else if (e->flags & 0x10) {
+            s[0] = func_8008E38C(v, e->d8, e->dA, 1);
+        }
+        if (e->flags & 4) {
+            func_80087F7C(e->b, e->c, i);
+            func_80087EA4(e->b, &v);
+            if (e->flags & 0x28) {
+                func_8008E38C(v, e->d9, e->dB, 0);
+            } else if (e->flags & 0x10) {
+                s[1] = func_8008E38C(v, e->d9, e->dB, 1);
+            }
+        }
+    }
+}
 
 void func_800C9D00(s32 arg0) {
     u16 *temp_s0;
