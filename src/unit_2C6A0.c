@@ -15,6 +15,15 @@ typedef struct { s32 w; u8 p[16]; } E14t_;
 typedef struct { u8 pad[0x30]; E14t_ e[1]; } T8D_;
 typedef struct { u8 pad[0x12]; u8 b; u8 pad2[0x19]; } E2Cd_;
 typedef struct { u8 pad[0x30]; E2Cd_ e[1]; } T8B_;
+extern u32 (*D_80141788)(void);
+extern void (*D_80141784)(s32);
+extern s32 (*D_80141698)(void);
+extern void (*D_801417B8)(s32);
+extern u8 D_801184B0;
+extern u8 D_801184AF;
+extern u8 D_801184AB;
+extern s32 D_800F36DC;
+extern s32 D_800F36D8;
 extern u8 (*D_801417B0)(u8 *);
 extern u8 (*D_801417B4)(u8 *);
 extern u8 (*D_801416EC)();
@@ -127,7 +136,50 @@ void func_8008CDAC(void) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", func_8008CDFC);
+void func_8008E80C(void);
+void func_8008CDFC(void) {
+    s32 v;
+
+    switch (D_80141788()) {
+        case 1:
+            D_80141784(1);
+            func_8008E80C();
+            D_801184B0 = 0;
+            D_801184AF = 0;
+            v = D_80141698();
+            D_800F36DC = v;
+            D_800F36D8 = v;
+            D_8014C1A8 = 0;
+            break;
+        case 2:
+            D_80141784(2);
+            D_801184B0 = 0;
+            D_801184AF = 0;
+            v = D_80141698();
+            D_800F36DC = v;
+            D_800F36D8 = v;
+            D_8014C1A8 = 2;
+            D_800F36F0 = 2;
+            break;
+        case 3:
+            D_80141784(3);
+            D_801184B0 = 0;
+            D_801184AF = 0;
+            v = D_80141698();
+            D_800F36DC = v;
+            D_800F36D8 = v;
+            if (D_800F36F4 == 0) {
+                D_8014C1A8 = 2;
+            } else {
+                D_8014C1A8 = 0;
+                D_800F36F4 = 2;
+                D_801417B8(3);
+                D_801184AB = 1;
+            }
+            D_800F36F0 = 3;
+            break;
+    }
+}
 
 u8 func_8008CF90(void) {
     u8 ok = 1;

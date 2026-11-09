@@ -72,6 +72,8 @@ typedef struct { s32 d[0x50]; } Big140_;
 typedef struct { char *name; u8 pad[0xC]; } N10_;
 typedef struct { f32 x; f32 y; f32 z; f32 x2; f32 y2; u8 pad[0x1C]; u16 h30; u16 h32; } E34b_;
 typedef struct { u8 pad[0x20]; u8 n; u8 p[3]; N10_ *names; E34b_ *objs; } TBL_;
+typedef struct { u8 pad[8]; char name[0xC]; s32 w14; s32 w18; s32 w1C; u8 pad2[0x120]; } E140b_;
+s32 func_800B0454(u32 i, E140b_ *src);
 extern char D_80100F70[];
 extern s32 *D_80141268;
 s32 *func_8008D460(s32);
@@ -4066,7 +4068,51 @@ void func_800C36B8(void) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800C36DC);
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800C3954);
+void func_800C3954(void) {
+    E140b_ l;
+    s32 p;
+
+    switch ((u32)D_801240D8) {
+        case 0:
+            if (D_801240B8 == 0) {
+                p = D_80124148;
+            } else {
+                p = D_8012414C;
+            }
+            strcpy((s32 *)(p + 8), (s32)&D_801240C0);
+            ((void (*)(void *, s32))func_800C9F18)(&D_800F9F70, 0x75);
+            break;
+        case 1:
+            if (D_801240B8 == 0) {
+                ((void (*)(void *, s32))func_800B51C0)(&l, 0);
+                l.w14 |= ((E140b_ *)D_80124148)->w14;
+                l.w18 |= ((E140b_ *)D_80124148)->w18;
+                l.w1C |= ((E140b_ *)D_80124148)->w1C;
+                strcpy((s32 *)l.name, (s32)&D_801240C0);
+                func_800B0454(D_800F6420, &l);
+            } else {
+                ((void (*)(void *, s32))func_800B51C0)(&l, 0);
+                l.w14 |= ((E140b_ *)D_8012414C)->w14;
+                l.w18 |= ((E140b_ *)D_8012414C)->w18;
+                l.w1C |= ((E140b_ *)D_8012414C)->w1C;
+                strcpy((s32 *)l.name, (s32)&D_801240C0);
+                func_800B0454(D_800F6421, &l);
+            }
+            if ((u8)func_800B0024() != 0) {
+                ((void (*)(void *, s32))func_800C9F18)(&D_800F9F70, 0x76);
+            } else {
+                func_800B8DA8();
+                ((void (*)(void *, s32))func_800C9F18)(&D_800F9F70, 0x68);
+            }
+            break;
+        case 2:
+            ((void (*)(void *, s32))func_800C9F18)(&D_800F9F70, 0x76);
+            break;
+        default:
+            ((void (*)(void *, s32))func_800C9F18)(&D_800F9F70, 0x77);
+            break;
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800C3AF8);
 
