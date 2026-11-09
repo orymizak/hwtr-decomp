@@ -72,6 +72,11 @@ typedef struct { s32 d[0x50]; } Big140_;
 typedef struct { char *name; u8 pad[0xC]; } N10_;
 typedef struct { f32 x; f32 y; f32 z; f32 x2; f32 y2; u8 pad[0x1C]; u16 h30; u16 h32; } E34b_;
 typedef struct { u8 pad[0x20]; u8 n; u8 p[3]; N10_ *names; E34b_ *objs; } TBL_;
+extern char D_80100F70[];
+extern s32 *D_80141268;
+s32 *func_8008D460(s32);
+s32 *func_8008D48C(s32);
+void func_800BFC68(void);
 extern u8 D_80100DF4;
 extern s32 *D_80141480;
 extern u8 D_80100E08;
@@ -346,7 +351,6 @@ extern s32 D_80124148;
 extern u8 D_80123EA0;
 extern u8 D_801240BA;
 extern s32 D_8012414C;
-s32 func_800BFC68();
 extern s32 D_800F5F48;
 extern s32 D_800F6370;
 extern s32 D_80100F78;
@@ -3096,7 +3100,26 @@ void func_800BFC24(void) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800BFC68);
+void func_800BFC68(void) {
+    TBL_ *t = (TBL_ *)D_800F5F48;
+    u8 j;
+
+    for (j = 0; j < t->n; j++) {
+        if (strcmp(t->names[j].name, D_80100F70) == 0) {
+            t->objs[j].x = func_800B1294(D_80124C71 * 185 + 460);
+            t->objs[j].y = func_800B12C4(725);
+            t->objs[j].x2 = t->objs[j].x;
+            t->objs[j].y2 = t->objs[j].y;
+        }
+    }
+    if (D_80124C71 == 2) {
+        func_800B4CC4((s32)t, 0, D_80141268, 73, 418, 0, 1, 0, 1, 127, 127, 127);
+    } else {
+        func_800B4CC4((s32)t, 0, (s32 *)&D_80100CC8, 73, 414, 0, 1, 0, 1, 127, 127, 127);
+    }
+    func_800B4CC4((s32)t, 1, func_8008D460((u8)D_800F6464), 426, 385, 0, 0, 1, 1, 255, 255, 255);
+    func_800B4CC4((s32)t, 2, func_8008D48C((u8)D_800F6464), 426, 410, 0, 0, 1, 1, 255, 255, 255);
+}
 
 void func_800BFE68(void) {
     func_800B3144(&D_80100F78);
