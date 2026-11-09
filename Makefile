@@ -53,7 +53,7 @@ endif
 GCC_URL      := https://github.com/decompals/mips-gcc-2.7.2/releases/download/v0.1/gcc-2.7.2-$(TOOLCHAIN_OS).tar.gz
 BINUTILS_URL := https://github.com/decompals/mips-binutils-2.6/releases/download/v0.3/binutils-2.6-$(TOOLCHAIN_OS).tar.gz
 
-.PHONY: all split extract verify progress clean toolchain
+.PHONY: all split extract verify progress report clean toolchain
 
 all: verify
 
@@ -71,6 +71,10 @@ extract:
 
 progress: $(ELF)
 	$(PYTHON) tools/progress.py --readme
+
+# objdiff report for ByteMatch; commit report/us/report.json afterwards.
+report: verify
+	$(PYTHON) tools/objdiff_report.py
 
 verify: $(ROM)
 	@sha1=$$(shasum $(ROM) | cut -d' ' -f1); \

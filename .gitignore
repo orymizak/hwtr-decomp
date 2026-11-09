@@ -16,3 +16,4 @@ tools/gcc_2.7.2/
 __pycache__/
 tools/decomp-permuter/
 tools/ultralib/
+tools/objdiff-cli

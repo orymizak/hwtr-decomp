@@ -1,0 +1,2678 @@
+{
+  "min_version": "2.0.0",
+  "custom_make": "make",
+  "build_target": false,
+  "build_base": false,
+  "units": [
+    {
+      "name": "game/1000",
+      "target_path": "build/expected/asm/1000.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "asm/1000.s"
+      }
+    },
+    {
+      "name": "game/unit_01050",
+      "target_path": "build/expected/src/unit_01050.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/unit_01050.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_01050.o"
+    },
+    {
+      "name": "game/debug_text",
+      "target_path": "build/expected/src/debug_text.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/debug_text.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/debug_text.o"
+    },
+    {
+      "name": "game/unit_06050",
+      "target_path": "build/expected/src/unit_06050.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/unit_06050.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_06050.o"
+    },
+    {
+      "name": "game/unit_0B140",
+      "target_path": "build/expected/src/unit_0B140.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/unit_0B140.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_0B140.o"
+    },
+    {
+      "name": "game/unit_0D1F0",
+      "target_path": "build/expected/src/unit_0D1F0.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/unit_0D1F0.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_0D1F0.o"
+    },
+    {
+      "name": "game/file_table",
+      "target_path": "build/expected/src/file_table.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/file_table.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/file_table.o"
+    },
+    {
+      "name": "game/font",
+      "target_path": "build/expected/src/font.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/font.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/font.o"
+    },
+    {
+      "name": "game/unit_103B0",
+      "target_path": "build/expected/src/unit_103B0.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/unit_103B0.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_103B0.o"
+    },
+    {
+      "name": "game/gfx_pools",
+      "target_path": "build/expected/src/gfx_pools.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/gfx_pools.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/gfx_pools.o"
+    },
+    {
+      "name": "game/unit_13490",
+      "target_path": "build/expected/src/unit_13490.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/unit_13490.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_13490.o"
+    },
+    {
+      "name": "game/screen",
+      "target_path": "build/expected/src/screen.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/screen.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/screen.o"
+    },
+    {
+      "name": "game/game_init",
+      "target_path": "build/expected/src/game_init.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/game_init.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/game_init.o"
+    },
+    {
+      "name": "game/heap",
+      "target_path": "build/expected/src/heap.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/heap.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/heap.o"
+    },
+    {
+      "name": "game/memory",
+      "target_path": "build/expected/src/memory.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/memory.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/memory.o"
+    },
+    {
+      "name": "game/unit_19D40",
+      "target_path": "build/expected/src/unit_19D40.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/unit_19D40.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_19D40.o"
+    },
+    {
+      "name": "game/unit_1CC80",
+      "target_path": "build/expected/src/unit_1CC80.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/unit_1CC80.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_1CC80.o"
+    },
+    {
+      "name": "game/sys_table",
+      "target_path": "build/expected/src/sys_table.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/sys_table.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/sys_table.o"
+    },
+    {
+      "name": "game/lz",
+      "target_path": "build/expected/src/lz.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/lz.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/lz.o"
+    },
+    {
+      "name": "game/util",
+      "target_path": "build/expected/src/util.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/util.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/util.o"
+    },
+    {
+      "name": "game/unit_20830",
+      "target_path": "build/expected/src/unit_20830.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/unit_20830.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_20830.o"
+    },
+    {
+      "name": "game/unit_21150",
+      "target_path": "build/expected/src/unit_21150.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/unit_21150.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_21150.o"
+    },
+    {
+      "name": "game/unit_22440",
+      "target_path": "build/expected/src/unit_22440.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/unit_22440.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_22440.o"
+    },
+    {
+      "name": "game/unit_277E0",
+      "target_path": "build/expected/src/unit_277E0.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/unit_277E0.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_277E0.o"
+    },
+    {
+      "name": "game/unit_27950",
+      "target_path": "build/expected/src/unit_27950.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/unit_27950.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_27950.o"
+    },
+    {
+      "name": "game/unit_27A40",
+      "target_path": "build/expected/src/unit_27A40.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/unit_27A40.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_27A40.o"
+    },
+    {
+      "name": "game/game_config",
+      "target_path": "build/expected/src/game_config.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/game_config.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/game_config.o"
+    },
+    {
+      "name": "game/anim_track",
+      "target_path": "build/expected/src/anim_track.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/anim_track.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/anim_track.o"
+    },
+    {
+      "name": "game/unit_28C10",
+      "target_path": "build/expected/src/unit_28C10.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/unit_28C10.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_28C10.o"
+    },
+    {
+      "name": "game/unit_2C6A0",
+      "target_path": "build/expected/src/unit_2C6A0.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/unit_2C6A0.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_2C6A0.o"
+    },
+    {
+      "name": "game/unit_2F4F0",
+      "target_path": "build/expected/src/unit_2F4F0.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/unit_2F4F0.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_2F4F0.o"
+    },
+    {
+      "name": "game/unit_31E10",
+      "target_path": "build/expected/src/unit_31E10.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/unit_31E10.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_31E10.o"
+    },
+    {
+      "name": "game/unit_39C90",
+      "target_path": "build/expected/src/unit_39C90.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/unit_39C90.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_39C90.o"
+    },
+    {
+      "name": "game/unit_464D0",
+      "target_path": "build/expected/src/unit_464D0.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/unit_464D0.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_464D0.o"
+    },
+    {
+      "name": "game/unit_47B70",
+      "target_path": "build/expected/src/unit_47B70.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/unit_47B70.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_47B70.o"
+    },
+    {
+      "name": "game/unit_482C0",
+      "target_path": "build/expected/src/unit_482C0.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/unit_482C0.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_482C0.o"
+    },
+    {
+      "name": "game/unit_48B00",
+      "target_path": "build/expected/src/unit_48B00.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/unit_48B00.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_48B00.o"
+    },
+    {
+      "name": "game/unit_48FA0",
+      "target_path": "build/expected/src/unit_48FA0.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/unit_48FA0.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_48FA0.o"
+    },
+    {
+      "name": "game/unit_49CF0",
+      "target_path": "build/expected/src/unit_49CF0.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/unit_49CF0.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_49CF0.o"
+    },
+    {
+      "name": "game/unit_4D480",
+      "target_path": "build/expected/src/unit_4D480.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/unit_4D480.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_4D480.o"
+    },
+    {
+      "name": "game/unit_4F640",
+      "target_path": "build/expected/src/unit_4F640.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/unit_4F640.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_4F640.o"
+    },
+    {
+      "name": "game/unit_4FB80",
+      "target_path": "build/expected/src/unit_4FB80.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/unit_4FB80.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_4FB80.o"
+    },
+    {
+      "name": "game/unit_4FE30",
+      "target_path": "build/expected/src/unit_4FE30.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/unit_4FE30.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_4FE30.o"
+    },
+    {
+      "name": "game/unit_50510",
+      "target_path": "build/expected/src/unit_50510.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/unit_50510.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_50510.o"
+    },
+    {
+      "name": "game/unit_53B30",
+      "target_path": "build/expected/src/unit_53B30.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/unit_53B30.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_53B30.o"
+    },
+    {
+      "name": "game/unit_68D10",
+      "target_path": "build/expected/src/unit_68D10.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/unit_68D10.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_68D10.o"
+    },
+    {
+      "name": "game/unit_699E0",
+      "target_path": "build/expected/src/unit_699E0.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/unit_699E0.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_699E0.o"
+    },
+    {
+      "name": "game/unit_69E80",
+      "target_path": "build/expected/src/unit_69E80.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/unit_69E80.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_69E80.o"
+    },
+    {
+      "name": "game/unit_6ADC0",
+      "target_path": "build/expected/src/unit_6ADC0.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/unit_6ADC0.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_6ADC0.o"
+    },
+    {
+      "name": "game/unit_6AE90",
+      "target_path": "build/expected/src/unit_6AE90.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/unit_6AE90.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_6AE90.o"
+    },
+    {
+      "name": "game/unit_6C240",
+      "target_path": "build/expected/src/unit_6C240.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/unit_6C240.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_6C240.o"
+    },
+    {
+      "name": "game/unit_6E0C0",
+      "target_path": "build/expected/src/unit_6E0C0.o",
+      "metadata": {
+        "progress_categories": [
+          "game"
+        ],
+        "source_path": "src/unit_6E0C0.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_6E0C0.o"
+    },
+    {
+      "name": "audio/unit_6E200",
+      "target_path": "build/expected/src/unit_6E200.o",
+      "metadata": {
+        "progress_categories": [
+          "audio"
+        ],
+        "source_path": "src/unit_6E200.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_6E200.o"
+    },
+    {
+      "name": "audio/unit_6E480",
+      "target_path": "build/expected/src/unit_6E480.o",
+      "metadata": {
+        "progress_categories": [
+          "audio"
+        ],
+        "source_path": "src/unit_6E480.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_6E480.o"
+    },
+    {
+      "name": "audio/unit_6E4B0",
+      "target_path": "build/expected/src/unit_6E4B0.o",
+      "metadata": {
+        "progress_categories": [
+          "audio"
+        ],
+        "source_path": "src/unit_6E4B0.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_6E4B0.o"
+    },
+    {
+      "name": "audio/unit_6E4F0",
+      "target_path": "build/expected/src/unit_6E4F0.o",
+      "metadata": {
+        "progress_categories": [
+          "audio"
+        ],
+        "source_path": "src/unit_6E4F0.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_6E4F0.o"
+    },
+    {
+      "name": "audio/unit_6E530",
+      "target_path": "build/expected/src/unit_6E530.o",
+      "metadata": {
+        "progress_categories": [
+          "audio"
+        ],
+        "source_path": "src/unit_6E530.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_6E530.o"
+    },
+    {
+      "name": "audio/unit_6E5A0",
+      "target_path": "build/expected/src/unit_6E5A0.o",
+      "metadata": {
+        "progress_categories": [
+          "audio"
+        ],
+        "source_path": "src/unit_6E5A0.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_6E5A0.o"
+    },
+    {
+      "name": "audio/unit_6E610",
+      "target_path": "build/expected/src/unit_6E610.o",
+      "metadata": {
+        "progress_categories": [
+          "audio"
+        ],
+        "source_path": "src/unit_6E610.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_6E610.o"
+    },
+    {
+      "name": "audio/unit_726E0",
+      "target_path": "build/expected/src/unit_726E0.o",
+      "metadata": {
+        "progress_categories": [
+          "audio"
+        ],
+        "source_path": "src/unit_726E0.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_726E0.o"
+    },
+    {
+      "name": "audio/unit_72B40",
+      "target_path": "build/expected/src/unit_72B40.o",
+      "metadata": {
+        "progress_categories": [
+          "audio"
+        ],
+        "source_path": "src/unit_72B40.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_72B40.o"
+    },
+    {
+      "name": "audio/unit_72CF0",
+      "target_path": "build/expected/src/unit_72CF0.o",
+      "metadata": {
+        "progress_categories": [
+          "audio"
+        ],
+        "source_path": "src/unit_72CF0.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_72CF0.o"
+    },
+    {
+      "name": "audio/unit_72FB0",
+      "target_path": "build/expected/src/unit_72FB0.o",
+      "metadata": {
+        "progress_categories": [
+          "audio"
+        ],
+        "source_path": "src/unit_72FB0.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_72FB0.o"
+    },
+    {
+      "name": "audio/unit_73220",
+      "target_path": "build/expected/src/unit_73220.o",
+      "metadata": {
+        "progress_categories": [
+          "audio"
+        ],
+        "source_path": "src/unit_73220.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_73220.o"
+    },
+    {
+      "name": "audio/unit_741B0",
+      "target_path": "build/expected/src/unit_741B0.o",
+      "metadata": {
+        "progress_categories": [
+          "audio"
+        ],
+        "source_path": "src/unit_741B0.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_741B0.o"
+    },
+    {
+      "name": "audio/unit_748D0",
+      "target_path": "build/expected/src/unit_748D0.o",
+      "metadata": {
+        "progress_categories": [
+          "audio"
+        ],
+        "source_path": "src/unit_748D0.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_748D0.o"
+    },
+    {
+      "name": "audio/unit_74AB0",
+      "target_path": "build/expected/src/unit_74AB0.o",
+      "metadata": {
+        "progress_categories": [
+          "audio"
+        ],
+        "source_path": "src/unit_74AB0.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_74AB0.o"
+    },
+    {
+      "name": "audio/unit_754A0",
+      "target_path": "build/expected/src/unit_754A0.o",
+      "metadata": {
+        "progress_categories": [
+          "audio"
+        ],
+        "source_path": "src/unit_754A0.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_754A0.o"
+    },
+    {
+      "name": "audio/unit_75520",
+      "target_path": "build/expected/src/unit_75520.o",
+      "metadata": {
+        "progress_categories": [
+          "audio"
+        ],
+        "source_path": "src/unit_75520.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_75520.o"
+    },
+    {
+      "name": "audio/unit_75570",
+      "target_path": "build/expected/src/unit_75570.o",
+      "metadata": {
+        "progress_categories": [
+          "audio"
+        ],
+        "source_path": "src/unit_75570.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_75570.o"
+    },
+    {
+      "name": "audio/unit_75750",
+      "target_path": "build/expected/src/unit_75750.o",
+      "metadata": {
+        "progress_categories": [
+          "audio"
+        ],
+        "source_path": "src/unit_75750.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_75750.o"
+    },
+    {
+      "name": "audio/unit_75800",
+      "target_path": "build/expected/src/unit_75800.o",
+      "metadata": {
+        "progress_categories": [
+          "audio"
+        ],
+        "source_path": "src/unit_75800.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_75800.o"
+    },
+    {
+      "name": "audio/unit_75890",
+      "target_path": "build/expected/src/unit_75890.o",
+      "metadata": {
+        "progress_categories": [
+          "audio"
+        ],
+        "source_path": "src/unit_75890.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_75890.o"
+    },
+    {
+      "name": "audio/unit_75920",
+      "target_path": "build/expected/src/unit_75920.o",
+      "metadata": {
+        "progress_categories": [
+          "audio"
+        ],
+        "source_path": "src/unit_75920.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_75920.o"
+    },
+    {
+      "name": "audio/unit_759D0",
+      "target_path": "build/expected/src/unit_759D0.o",
+      "metadata": {
+        "progress_categories": [
+          "audio"
+        ],
+        "source_path": "src/unit_759D0.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_759D0.o"
+    },
+    {
+      "name": "audio/unit_75A60",
+      "target_path": "build/expected/src/unit_75A60.o",
+      "metadata": {
+        "progress_categories": [
+          "audio"
+        ],
+        "source_path": "src/unit_75A60.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_75A60.o"
+    },
+    {
+      "name": "audio/unit_75AE0",
+      "target_path": "build/expected/src/unit_75AE0.o",
+      "metadata": {
+        "progress_categories": [
+          "audio"
+        ],
+        "source_path": "src/unit_75AE0.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_75AE0.o"
+    },
+    {
+      "name": "audio/unit_76040",
+      "target_path": "build/expected/src/unit_76040.o",
+      "metadata": {
+        "progress_categories": [
+          "audio"
+        ],
+        "source_path": "src/unit_76040.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_76040.o"
+    },
+    {
+      "name": "audio/unit_76090",
+      "target_path": "build/expected/src/unit_76090.o",
+      "metadata": {
+        "progress_categories": [
+          "audio"
+        ],
+        "source_path": "src/unit_76090.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_76090.o"
+    },
+    {
+      "name": "system/unit_76160",
+      "target_path": "build/expected/src/unit_76160.o",
+      "metadata": {
+        "progress_categories": [
+          "system"
+        ],
+        "source_path": "src/unit_76160.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_76160.o"
+    },
+    {
+      "name": "system/unit_76B30",
+      "target_path": "build/expected/src/unit_76B30.o",
+      "metadata": {
+        "progress_categories": [
+          "system"
+        ],
+        "source_path": "src/unit_76B30.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_76B30.o"
+    },
+    {
+      "name": "system/unit_76B70",
+      "target_path": "build/expected/src/unit_76B70.o",
+      "metadata": {
+        "progress_categories": [
+          "system"
+        ],
+        "source_path": "src/unit_76B70.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_76B70.o"
+    },
+    {
+      "name": "system/unit_76BB0",
+      "target_path": "build/expected/src/unit_76BB0.o",
+      "metadata": {
+        "progress_categories": [
+          "system"
+        ],
+        "source_path": "src/unit_76BB0.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_76BB0.o"
+    },
+    {
+      "name": "system/unit_76BF0",
+      "target_path": "build/expected/src/unit_76BF0.o",
+      "metadata": {
+        "progress_categories": [
+          "system"
+        ],
+        "source_path": "src/unit_76BF0.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_76BF0.o"
+    },
+    {
+      "name": "system/unit_76C10",
+      "target_path": "build/expected/src/unit_76C10.o",
+      "metadata": {
+        "progress_categories": [
+          "system"
+        ],
+        "source_path": "src/unit_76C10.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_76C10.o"
+    },
+    {
+      "name": "system/unit_76C30",
+      "target_path": "build/expected/src/unit_76C30.o",
+      "metadata": {
+        "progress_categories": [
+          "system"
+        ],
+        "source_path": "src/unit_76C30.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_76C30.o"
+    },
+    {
+      "name": "system/unit_76CB0",
+      "target_path": "build/expected/src/unit_76CB0.o",
+      "metadata": {
+        "progress_categories": [
+          "system"
+        ],
+        "source_path": "src/unit_76CB0.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_76CB0.o"
+    },
+    {
+      "name": "system/unit_76DC0",
+      "target_path": "build/expected/src/unit_76DC0.o",
+      "metadata": {
+        "progress_categories": [
+          "system"
+        ],
+        "source_path": "src/unit_76DC0.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_76DC0.o"
+    },
+    {
+      "name": "system/unit_76DF0",
+      "target_path": "build/expected/src/unit_76DF0.o",
+      "metadata": {
+        "progress_categories": [
+          "system"
+        ],
+        "source_path": "src/unit_76DF0.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_76DF0.o"
+    },
+    {
+      "name": "system/unit_76F40",
+      "target_path": "build/expected/src/unit_76F40.o",
+      "metadata": {
+        "progress_categories": [
+          "system"
+        ],
+        "source_path": "src/unit_76F40.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_76F40.o"
+    },
+    {
+      "name": "system/unit_76F90",
+      "target_path": "build/expected/src/unit_76F90.o",
+      "metadata": {
+        "progress_categories": [
+          "system"
+        ],
+        "source_path": "src/unit_76F90.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_76F90.o"
+    },
+    {
+      "name": "system/unit_76FC0",
+      "target_path": "build/expected/src/unit_76FC0.o",
+      "metadata": {
+        "progress_categories": [
+          "system"
+        ],
+        "source_path": "src/unit_76FC0.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_76FC0.o"
+    },
+    {
+      "name": "system/unit_77020",
+      "target_path": "build/expected/src/unit_77020.o",
+      "metadata": {
+        "progress_categories": [
+          "system"
+        ],
+        "source_path": "src/unit_77020.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_77020.o"
+    },
+    {
+      "name": "system/unit_772D0",
+      "target_path": "build/expected/src/unit_772D0.o",
+      "metadata": {
+        "progress_categories": [
+          "system"
+        ],
+        "source_path": "src/unit_772D0.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_772D0.o"
+    },
+    {
+      "name": "system/unit_77330",
+      "target_path": "build/expected/src/unit_77330.o",
+      "metadata": {
+        "progress_categories": [
+          "system"
+        ],
+        "source_path": "src/unit_77330.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_77330.o"
+    },
+    {
+      "name": "system/unit_77370",
+      "target_path": "build/expected/src/unit_77370.o",
+      "metadata": {
+        "progress_categories": [
+          "system"
+        ],
+        "source_path": "src/unit_77370.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_77370.o"
+    },
+    {
+      "name": "system/unit_77480",
+      "target_path": "build/expected/src/unit_77480.o",
+      "metadata": {
+        "progress_categories": [
+          "system"
+        ],
+        "source_path": "src/unit_77480.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_77480.o"
+    },
+    {
+      "name": "system/unit_774D0",
+      "target_path": "build/expected/src/unit_774D0.o",
+      "metadata": {
+        "progress_categories": [
+          "system"
+        ],
+        "source_path": "src/unit_774D0.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_774D0.o"
+    },
+    {
+      "name": "system/unit_77520",
+      "target_path": "build/expected/src/unit_77520.o",
+      "metadata": {
+        "progress_categories": [
+          "system"
+        ],
+        "source_path": "src/unit_77520.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_77520.o"
+    },
+    {
+      "name": "system/unit_77560",
+      "target_path": "build/expected/src/unit_77560.o",
+      "metadata": {
+        "progress_categories": [
+          "system"
+        ],
+        "source_path": "src/unit_77560.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_77560.o"
+    },
+    {
+      "name": "system/unit_775A0",
+      "target_path": "build/expected/src/unit_775A0.o",
+      "metadata": {
+        "progress_categories": [
+          "system"
+        ],
+        "source_path": "src/unit_775A0.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_775A0.o"
+    },
+    {
+      "name": "system/unit_775E0",
+      "target_path": "build/expected/src/unit_775E0.o",
+      "metadata": {
+        "progress_categories": [
+          "system"
+        ],
+        "source_path": "src/unit_775E0.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_775E0.o"
+    },
+    {
+      "name": "system/unit_77BA0",
+      "target_path": "build/expected/src/unit_77BA0.o",
+      "metadata": {
+        "progress_categories": [
+          "system"
+        ],
+        "source_path": "src/unit_77BA0.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_77BA0.o"
+    },
+    {
+      "name": "system/unit_77D30",
+      "target_path": "build/expected/src/unit_77D30.o",
+      "metadata": {
+        "progress_categories": [
+          "system"
+        ],
+        "source_path": "src/unit_77D30.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_77D30.o"
+    },
+    {
+      "name": "system/unit_78170",
+      "target_path": "build/expected/src/unit_78170.o",
+      "metadata": {
+        "progress_categories": [
+          "system"
+        ],
+        "source_path": "src/unit_78170.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_78170.o"
+    },
+    {
+      "name": "system/unit_784B0",
+      "target_path": "build/expected/src/unit_784B0.o",
+      "metadata": {
+        "progress_categories": [
+          "system"
+        ],
+        "source_path": "src/unit_784B0.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_784B0.o"
+    },
+    {
+      "name": "system/unit_78510",
+      "target_path": "build/expected/src/unit_78510.o",
+      "metadata": {
+        "progress_categories": [
+          "system"
+        ],
+        "source_path": "src/unit_78510.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_78510.o"
+    },
+    {
+      "name": "system/unit_787F0",
+      "target_path": "build/expected/src/unit_787F0.o",
+      "metadata": {
+        "progress_categories": [
+          "system"
+        ],
+        "source_path": "src/unit_787F0.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_787F0.o"
+    },
+    {
+      "name": "libultra/unit_788B0",
+      "target_path": "build/expected/src/unit_788B0.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_788B0.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_788B0.o"
+    },
+    {
+      "name": "libultra/unit_78CD0",
+      "target_path": "build/expected/src/unit_78CD0.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_78CD0.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_78CD0.o"
+    },
+    {
+      "name": "libultra/unit_78D70",
+      "target_path": "build/expected/src/unit_78D70.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_78D70.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_78D70.o"
+    },
+    {
+      "name": "libultra/unit_78EF0",
+      "target_path": "build/expected/src/unit_78EF0.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_78EF0.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_78EF0.o"
+    },
+    {
+      "name": "libultra/unit_792B0",
+      "target_path": "build/expected/src/unit_792B0.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_792B0.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_792B0.o"
+    },
+    {
+      "name": "libultra/unit_793A0",
+      "target_path": "build/expected/src/unit_793A0.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_793A0.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_793A0.o"
+    },
+    {
+      "name": "libultra/unit_79450",
+      "target_path": "build/expected/src/unit_79450.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_79450.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_79450.o"
+    },
+    {
+      "name": "libultra/unit_79590",
+      "target_path": "build/expected/src/unit_79590.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_79590.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_79590.o"
+    },
+    {
+      "name": "libultra/unit_79630",
+      "target_path": "build/expected/src/unit_79630.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_79630.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_79630.o"
+    },
+    {
+      "name": "libultra/unit_79E60",
+      "target_path": "build/expected/src/unit_79E60.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_79E60.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_79E60.o"
+    },
+    {
+      "name": "libultra/unit_7A970",
+      "target_path": "build/expected/src/unit_7A970.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_7A970.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_7A970.o"
+    },
+    {
+      "name": "libultra/unit_7AA80",
+      "target_path": "build/expected/src/unit_7AA80.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_7AA80.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_7AA80.o"
+    },
+    {
+      "name": "libultra/unit_7B750",
+      "target_path": "build/expected/src/unit_7B750.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_7B750.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_7B750.o"
+    },
+    {
+      "name": "libultra/unit_7BB70",
+      "target_path": "build/expected/src/unit_7BB70.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_7BB70.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_7BB70.o"
+    },
+    {
+      "name": "libultra/unit_7C710",
+      "target_path": "build/expected/src/unit_7C710.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_7C710.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_7C710.o"
+    },
+    {
+      "name": "libultra/unit_7C890",
+      "target_path": "build/expected/src/unit_7C890.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_7C890.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_7C890.o"
+    },
+    {
+      "name": "libultra/unit_7C8D0",
+      "target_path": "build/expected/src/unit_7C8D0.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_7C8D0.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_7C8D0.o"
+    },
+    {
+      "name": "libultra/unit_7C920",
+      "target_path": "build/expected/src/unit_7C920.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_7C920.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_7C920.o"
+    },
+    {
+      "name": "libultra/unit_7C960",
+      "target_path": "build/expected/src/unit_7C960.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_7C960.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_7C960.o"
+    },
+    {
+      "name": "libultra/unit_7CFA0",
+      "target_path": "build/expected/src/unit_7CFA0.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_7CFA0.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_7CFA0.o"
+    },
+    {
+      "name": "libultra/unit_7CFB0",
+      "target_path": "build/expected/src/unit_7CFB0.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_7CFB0.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_7CFB0.o"
+    },
+    {
+      "name": "libultra/unit_7D050",
+      "target_path": "build/expected/src/unit_7D050.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_7D050.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_7D050.o"
+    },
+    {
+      "name": "libultra/unit_7D130",
+      "target_path": "build/expected/src/unit_7D130.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_7D130.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_7D130.o"
+    },
+    {
+      "name": "libultra/unit_7D3B0",
+      "target_path": "build/expected/src/unit_7D3B0.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_7D3B0.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_7D3B0.o"
+    },
+    {
+      "name": "libultra/unit_7D6C0",
+      "target_path": "build/expected/src/unit_7D6C0.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_7D6C0.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_7D6C0.o"
+    },
+    {
+      "name": "libultra/unit_7D720",
+      "target_path": "build/expected/src/unit_7D720.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_7D720.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_7D720.o"
+    },
+    {
+      "name": "libultra/unit_7D730",
+      "target_path": "build/expected/src/unit_7D730.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_7D730.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_7D730.o"
+    },
+    {
+      "name": "libultra/unit_7DE70",
+      "target_path": "build/expected/src/unit_7DE70.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_7DE70.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_7DE70.o"
+    },
+    {
+      "name": "libultra/unit_7E0F0",
+      "target_path": "build/expected/src/unit_7E0F0.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_7E0F0.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_7E0F0.o"
+    },
+    {
+      "name": "libultra/unit_7E470",
+      "target_path": "build/expected/src/unit_7E470.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_7E470.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_7E470.o"
+    },
+    {
+      "name": "libultra/unit_7E930",
+      "target_path": "build/expected/src/unit_7E930.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_7E930.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_7E930.o"
+    },
+    {
+      "name": "libultra/unit_7EA60",
+      "target_path": "build/expected/src/unit_7EA60.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_7EA60.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_7EA60.o"
+    },
+    {
+      "name": "libultra/unit_7EAF0",
+      "target_path": "build/expected/src/unit_7EAF0.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_7EAF0.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_7EAF0.o"
+    },
+    {
+      "name": "libultra/unit_7EB20",
+      "target_path": "build/expected/src/unit_7EB20.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_7EB20.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_7EB20.o"
+    },
+    {
+      "name": "libultra/unit_7EB50",
+      "target_path": "build/expected/src/unit_7EB50.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_7EB50.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_7EB50.o"
+    },
+    {
+      "name": "libultra/unit_7EC90",
+      "target_path": "build/expected/src/unit_7EC90.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_7EC90.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_7EC90.o"
+    },
+    {
+      "name": "libultra/unit_7EDC0",
+      "target_path": "build/expected/src/unit_7EDC0.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_7EDC0.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_7EDC0.o"
+    },
+    {
+      "name": "libultra/unit_7EFA0",
+      "target_path": "build/expected/src/unit_7EFA0.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_7EFA0.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_7EFA0.o"
+    },
+    {
+      "name": "libultra/unit_7EFB0",
+      "target_path": "build/expected/src/unit_7EFB0.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_7EFB0.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_7EFB0.o"
+    },
+    {
+      "name": "libultra/unit_7F1F0",
+      "target_path": "build/expected/src/unit_7F1F0.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_7F1F0.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_7F1F0.o"
+    },
+    {
+      "name": "libultra/unit_7F210",
+      "target_path": "build/expected/src/unit_7F210.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_7F210.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_7F210.o"
+    },
+    {
+      "name": "libultra/unit_7F260",
+      "target_path": "build/expected/src/unit_7F260.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_7F260.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_7F260.o"
+    },
+    {
+      "name": "libultra/unit_7FD20",
+      "target_path": "build/expected/src/unit_7FD20.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_7FD20.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_7FD20.o"
+    },
+    {
+      "name": "libultra/unit_7FE10",
+      "target_path": "build/expected/src/unit_7FE10.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_7FE10.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_7FE10.o"
+    },
+    {
+      "name": "libultra/unit_7FF00",
+      "target_path": "build/expected/src/unit_7FF00.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_7FF00.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_7FF00.o"
+    },
+    {
+      "name": "libultra/unit_7FFD0",
+      "target_path": "build/expected/src/unit_7FFD0.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_7FFD0.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_7FFD0.o"
+    },
+    {
+      "name": "libultra/unit_800F0",
+      "target_path": "build/expected/src/unit_800F0.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_800F0.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_800F0.o"
+    },
+    {
+      "name": "libultra/unit_801B0",
+      "target_path": "build/expected/src/unit_801B0.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_801B0.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_801B0.o"
+    },
+    {
+      "name": "libultra/unit_801F0",
+      "target_path": "build/expected/src/unit_801F0.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_801F0.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_801F0.o"
+    },
+    {
+      "name": "libultra/unit_80240",
+      "target_path": "build/expected/src/unit_80240.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_80240.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_80240.o"
+    },
+    {
+      "name": "libultra/unit_802D0",
+      "target_path": "build/expected/src/unit_802D0.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_802D0.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_802D0.o"
+    },
+    {
+      "name": "libultra/unit_80370",
+      "target_path": "build/expected/src/unit_80370.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_80370.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_80370.o"
+    },
+    {
+      "name": "libultra/unit_80670",
+      "target_path": "build/expected/src/unit_80670.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_80670.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_80670.o"
+    },
+    {
+      "name": "libultra/unit_80730",
+      "target_path": "build/expected/src/unit_80730.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_80730.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_80730.o"
+    },
+    {
+      "name": "libultra/unit_80770",
+      "target_path": "build/expected/src/unit_80770.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_80770.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_80770.o"
+    },
+    {
+      "name": "libultra/unit_807B0",
+      "target_path": "build/expected/src/unit_807B0.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_807B0.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_807B0.o"
+    },
+    {
+      "name": "libultra/unit_807F0",
+      "target_path": "build/expected/src/unit_807F0.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_807F0.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_807F0.o"
+    },
+    {
+      "name": "libultra/unit_80800",
+      "target_path": "build/expected/src/unit_80800.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_80800.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_80800.o"
+    },
+    {
+      "name": "libultra/unit_80B40",
+      "target_path": "build/expected/src/unit_80B40.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_80B40.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_80B40.o"
+    },
+    {
+      "name": "libultra/unit_80BA0",
+      "target_path": "build/expected/src/unit_80BA0.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_80BA0.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_80BA0.o"
+    },
+    {
+      "name": "libultra/unit_80BF0",
+      "target_path": "build/expected/src/unit_80BF0.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_80BF0.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_80BF0.o"
+    },
+    {
+      "name": "libultra/unit_80D60",
+      "target_path": "build/expected/src/unit_80D60.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_80D60.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_80D60.o"
+    },
+    {
+      "name": "libultra/unit_80DB0",
+      "target_path": "build/expected/src/unit_80DB0.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_80DB0.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_80DB0.o"
+    },
+    {
+      "name": "libultra/unit_80E00",
+      "target_path": "build/expected/src/unit_80E00.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_80E00.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_80E00.o"
+    },
+    {
+      "name": "libultra/unit_81110",
+      "target_path": "build/expected/src/unit_81110.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_81110.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_81110.o"
+    },
+    {
+      "name": "libultra/unit_81170",
+      "target_path": "build/expected/src/unit_81170.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_81170.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_81170.o"
+    },
+    {
+      "name": "libultra/unit_81500",
+      "target_path": "build/expected/src/unit_81500.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_81500.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_81500.o"
+    },
+    {
+      "name": "libultra/unit_81930",
+      "target_path": "build/expected/src/unit_81930.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_81930.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_81930.o"
+    },
+    {
+      "name": "libultra/unit_81B50",
+      "target_path": "build/expected/src/unit_81B50.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_81B50.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_81B50.o"
+    },
+    {
+      "name": "libultra/unit_82130",
+      "target_path": "build/expected/src/unit_82130.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_82130.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_82130.o"
+    },
+    {
+      "name": "libultra/unit_822F0",
+      "target_path": "build/expected/src/unit_822F0.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_822F0.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_822F0.o"
+    },
+    {
+      "name": "libultra/unit_82400",
+      "target_path": "build/expected/src/unit_82400.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_82400.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_82400.o"
+    },
+    {
+      "name": "libultra/unit_827D0",
+      "target_path": "build/expected/src/unit_827D0.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_827D0.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_827D0.o"
+    },
+    {
+      "name": "libultra/unit_82830",
+      "target_path": "build/expected/src/unit_82830.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_82830.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_82830.o"
+    },
+    {
+      "name": "libultra/unit_82A40",
+      "target_path": "build/expected/src/unit_82A40.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_82A40.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_82A40.o"
+    },
+    {
+      "name": "libultra/unit_82AB0",
+      "target_path": "build/expected/src/unit_82AB0.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_82AB0.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_82AB0.o"
+    },
+    {
+      "name": "libultra/unit_83540",
+      "target_path": "build/expected/src/unit_83540.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_83540.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_83540.o"
+    },
+    {
+      "name": "libultra/unit_83730",
+      "target_path": "build/expected/src/unit_83730.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_83730.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_83730.o"
+    },
+    {
+      "name": "libultra/unit_83940",
+      "target_path": "build/expected/src/unit_83940.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_83940.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_83940.o"
+    },
+    {
+      "name": "libultra/unit_83950",
+      "target_path": "build/expected/src/unit_83950.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_83950.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_83950.o"
+    },
+    {
+      "name": "libultra/unit_83960",
+      "target_path": "build/expected/src/unit_83960.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_83960.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_83960.o"
+    },
+    {
+      "name": "libultra/unit_83970",
+      "target_path": "build/expected/src/unit_83970.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_83970.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_83970.o"
+    },
+    {
+      "name": "libultra/unit_83980",
+      "target_path": "build/expected/src/unit_83980.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_83980.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_83980.o"
+    },
+    {
+      "name": "libultra/unit_83990",
+      "target_path": "build/expected/src/unit_83990.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_83990.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_83990.o"
+    },
+    {
+      "name": "libultra/unit_839A0",
+      "target_path": "build/expected/src/unit_839A0.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_839A0.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_839A0.o"
+    },
+    {
+      "name": "libultra/unit_839C0",
+      "target_path": "build/expected/src/unit_839C0.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_839C0.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_839C0.o"
+    },
+    {
+      "name": "libultra/unit_83D50",
+      "target_path": "build/expected/src/unit_83D50.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_83D50.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_83D50.o"
+    },
+    {
+      "name": "libultra/unit_846C0",
+      "target_path": "build/expected/src/unit_846C0.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_846C0.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_846C0.o"
+    },
+    {
+      "name": "libultra/unit_84750",
+      "target_path": "build/expected/src/unit_84750.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_84750.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_84750.o"
+    },
+    {
+      "name": "libultra/unit_847E0",
+      "target_path": "build/expected/src/unit_847E0.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_847E0.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_847E0.o"
+    },
+    {
+      "name": "libultra/unit_84A40",
+      "target_path": "build/expected/src/unit_84A40.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_84A40.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_84A40.o"
+    },
+    {
+      "name": "libultra/unit_84BB0",
+      "target_path": "build/expected/src/unit_84BB0.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_84BB0.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_84BB0.o"
+    },
+    {
+      "name": "libultra/unit_84BD0",
+      "target_path": "build/expected/src/unit_84BD0.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_84BD0.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_84BD0.o"
+    },
+    {
+      "name": "libultra/unit_84C50",
+      "target_path": "build/expected/src/unit_84C50.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_84C50.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_84C50.o"
+    },
+    {
+      "name": "libultra/unit_84CD0",
+      "target_path": "build/expected/src/unit_84CD0.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_84CD0.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_84CD0.o"
+    },
+    {
+      "name": "libultra/unit_858D0",
+      "target_path": "build/expected/src/unit_858D0.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_858D0.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_858D0.o"
+    },
+    {
+      "name": "libultra/unit_858E0",
+      "target_path": "build/expected/src/unit_858E0.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_858E0.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_858E0.o"
+    },
+    {
+      "name": "libultra/unit_858F0",
+      "target_path": "build/expected/src/unit_858F0.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_858F0.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_858F0.o"
+    },
+    {
+      "name": "libultra/unit_85900",
+      "target_path": "build/expected/src/unit_85900.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_85900.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_85900.o"
+    },
+    {
+      "name": "libultra/unit_85950",
+      "target_path": "build/expected/src/unit_85950.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_85950.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_85950.o"
+    },
+    {
+      "name": "libultra/unit_85A30",
+      "target_path": "build/expected/src/unit_85A30.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_85A30.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_85A30.o"
+    },
+    {
+      "name": "libultra/unit_85A80",
+      "target_path": "build/expected/src/unit_85A80.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_85A80.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_85A80.o"
+    },
+    {
+      "name": "libultra/unit_85AD0",
+      "target_path": "build/expected/src/unit_85AD0.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_85AD0.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_85AD0.o"
+    },
+    {
+      "name": "libultra/unit_85BC0",
+      "target_path": "build/expected/src/unit_85BC0.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_85BC0.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_85BC0.o"
+    },
+    {
+      "name": "libultra/unit_85CA0",
+      "target_path": "build/expected/src/unit_85CA0.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_85CA0.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_85CA0.o"
+    },
+    {
+      "name": "libultra/unit_85D00",
+      "target_path": "build/expected/src/unit_85D00.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_85D00.c",
+        "complete": false
+      },
+      "base_path": "build/base/src/unit_85D00.o"
+    },
+    {
+      "name": "libultra/unit_85D50",
+      "target_path": "build/expected/src/unit_85D50.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_85D50.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_85D50.o"
+    },
+    {
+      "name": "libultra/unit_85E60",
+      "target_path": "build/expected/src/unit_85E60.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_85E60.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_85E60.o"
+    },
+    {
+      "name": "libultra/unit_85E70",
+      "target_path": "build/expected/src/unit_85E70.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_85E70.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_85E70.o"
+    },
+    {
+      "name": "libultra/unit_86870",
+      "target_path": "build/expected/src/unit_86870.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_86870.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_86870.o"
+    },
+    {
+      "name": "libultra/unit_87550",
+      "target_path": "build/expected/src/unit_87550.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_87550.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_87550.o"
+    },
+    {
+      "name": "libultra/unit_87570",
+      "target_path": "build/expected/src/unit_87570.o",
+      "metadata": {
+        "progress_categories": [
+          "libultra"
+        ],
+        "source_path": "src/unit_87570.c",
+        "complete": true
+      },
+      "base_path": "build/base/src/unit_87570.o"
+    },
+    {
+      "name": "libc/libc",
+      "target_path": "build/expected/asm/libc.o",
+      "metadata": {
+        "progress_categories": [
+          "libc"
+        ],
+        "source_path": "asm/libc.s"
+      }
+    }
+  ],
+  "progress_categories": [
+    {
+      "id": "game",
+      "name": "game"
+    },
+    {
+      "id": "audio",
+      "name": "audio"
+    },
+    {
+      "id": "system",
+      "name": "system"
+    },
+    {
+      "id": "libultra",
+      "name": "libultra"
+    },
+    {
+      "id": "libc",
+      "name": "libc"
+    }
+  ]
+}
