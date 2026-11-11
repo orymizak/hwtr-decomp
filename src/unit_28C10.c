@@ -9,6 +9,12 @@ s32 sprintf(char *, const char *, ...);
 typedef struct Lnk89_ { s32 *obj; s32 x; struct Lnk89_ *next; } Lnk89_;
 typedef struct { u8 *def; s32 t; u8 pad8; u8 hold; } Tmr89_;
 typedef struct { s32 pad0; u8 id; u8 pad5[3]; s32 on; s32 t; u8 fired; u8 pad11[7]; } Evt18_;
+extern void (*D_8014C0A8)(s32, s32, f32, f32);
+void func_800A8268(Lnk89_ **, s32 *);
+void *Memory_Alloc(u32 size);
+u8 *func_80089B10(u8 *);
+s32 func_80089FC4(u8 *);
+void func_80088010(u8 *, u8 *);
 extern Evt18_ *D_800F3020;
 extern u32 D_800F3024;
 extern void (*D_80141714)(u8, s32, f32);
@@ -108,7 +114,76 @@ void func_80089F28(u8 *o) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_28C10", func_80089FC4);
 
-INCLUDE_ASM("asm/nonmatchings/unit_28C10", func_8008AA9C);
+s32 func_8008AA9C(u8 *o, u8 *q) {
+    u8 *d;
+    Tmr89_ *t;
+    Lnk89_ *l;
+    Lnk89_ *m;
+    s32 n;
+    Tmr89_ *nt;
+    s32 r;
+
+    if (q[0x10] == 0) {
+        return 0;
+    }
+    d = func_80089B10(q);
+    if (d == NULL) {
+        return 0;
+    }
+
+    l = *D_80118470[*o];
+    while (l != NULL) {
+        t = (Tmr89_ *) l->obj;
+        l = l->next;
+        func_80088558(t->def, o);
+        func_800A82F8(D_80118470[*o], (s32 *) t);
+        Memory_Free(t);
+    }
+
+    m = *D_80118470[*o];
+    n = 0;
+    while (m != NULL) {
+        n += (((Tmr89_ *) m->obj)->hold != 0);
+        m = m->next;
+    }
+
+    if (n == 0) {
+        nt = Memory_Alloc(0xC);
+        nt->t = func_800A76D8();
+        nt->def = d;
+        nt->hold = d[0xAC];
+        nt->pad8 = *(s32 *) (d + 0x30);
+        if (d[0xAC] != 0) {
+            m = *D_80118470[*o];
+            while (m != NULL) {
+                t = (Tmr89_ *) m->obj;
+                m = m->next;
+                if (t->hold != 0) {
+                    func_80088558(t->def, o);
+                    func_800A82F8(D_80118470[*o], (s32 *) t);
+                    Memory_Free(t);
+                    break;
+                }
+            }
+        }
+        func_800A8268(D_80118470[*o], (s32 *) nt);
+        if (nt->hold == 0) {
+            func_80088010(d, func_800960D8(*o));
+        }
+        D_80141714(q[4], 0, 0.0f);
+        r = func_80089FC4(d);
+        *(s32 *) (o + 0x6DC) = r;
+        if (r == 1) {
+            *(s32 *) (o + 0x6DC) = 0;
+        }
+        if (*(s32 *) (o + 4) & 3) {
+            D_8014C0A8(0x18, 0, 1.0f, 1.0f);
+        }
+    }
+    *(s32 *) (q + 0xC) = func_800A76D8();
+    q[0x10] = 0;
+    return 1;
+}
 
 void func_8008AD04(void) {
     s32 now;

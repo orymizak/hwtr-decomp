@@ -21,6 +21,11 @@ typedef struct { s16 x; s16 y; } P16b_;
 typedef struct { u8 a; u8 pad; u16 x; u16 y; u16 x2; u16 y2; } E0A5_;
 typedef struct { s32 pad0; s16 a; s16 b; s16 c; u8 kind; u8 padB; u16 d; u16 padE; } Src10_;
 typedef struct { f32 p[3]; f32 q[3]; f32 v[3]; f32 w[3]; u16 e; u16 f; } Dst34_;
+void *memset(void *, s32, u32);
+extern u8 D_80123D28[];
+extern u8 D_80123D24[];
+extern s32 D_80138098[];
+extern s32 (*D_80140FE8[])(s32);
 extern s32 (*D_80141048)(void);
 void func_800B2440(s32, f32);
 void func_800B2540(s32, f32);
@@ -50,7 +55,51 @@ s32 func_800B1FE4();
 s32 func_800B2330(s32);
 s32 func_800C9130();
 
-INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800AF910);
+s32 func_800AF910(void) {
+    u32 i;
+    u32 j;
+    s32 s;
+    s32 ok;
+
+    for (i = 0; i < 4; i++) {
+        memset(&D_801206D0 + i * 0x88C, 0, 0x88C);
+        D_80123D28[i] = 0;
+    }
+    memset(D_80123D24, 0, 4);
+    for (i = 0; i < 4; i++) {
+        for (j = 0; j < 4; j++) {
+            memset(&D_80122900[i][j], 0, 0x140);
+        }
+    }
+    for (i = 0; i < 4; i++) {
+        D_80138098[i] = 0;
+        D_80123D00[i] = 0;
+    }
+    for (i = 0; i < 4; i++) {
+        D_80140FE8[0](i);
+        s = D_80140FE8[1](i);
+        D_80123D10[i] = s;
+        if (s != 4) {
+            D_80123D24[i] = 1;
+        } else {
+            D_80123D24[i] = 0;
+        }
+        if (D_80123D10[i] != 1) {
+            D_80123D20[i] = 1;
+        } else {
+            D_80123D20[i] = 0;
+        }
+    }
+    if (D_80123D20[0] || D_80123D20[1] || D_80123D20[2] || D_80123D20[3]) {
+        ok = 0;
+        if (!(D_80123D20[0] && D_80123D10[0]) && !(D_80123D20[1] && D_80123D10[1]) &&
+            !(D_80123D20[2] && D_80123D10[2]) && !(D_80123D20[3] && D_80123D10[3])) {
+            ok = 1;
+        }
+        return ok;
+    }
+    return 0;
+}
 
 s32 func_800AFB74(void) {
     return 1;
