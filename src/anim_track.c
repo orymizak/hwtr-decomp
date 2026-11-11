@@ -37,7 +37,69 @@ s32 func_80087AD4(void) {
 
 INCLUDE_ASM("asm/nonmatchings/anim_track", func_80087B08);
 
-INCLUDE_ASM("asm/nonmatchings/anim_track", func_80087C28);
+typedef struct { f32 x; f32 y; f32 z; f32 w; } Quat_;
+typedef struct { f32 x; f32 y; f32 z; } Vec3_;
+typedef struct { f32 m[3][3]; } Mat3_;
+typedef struct {
+    /* 0x00 */ u32 duration;
+    /* 0x04 */ u32 keyCount;
+    /* 0x08 */ u8 unk08[4];
+    /* 0x0C */ s32 id;
+    /* 0x10 */ u32 time;
+    /* 0x14 */ u8 active;
+    /* 0x18 */ u32 seekTime;
+    /* 0x1C */ s32 seekMode;
+    /* 0x20 */ s32 key;
+    /* 0x24 */ Vec3_ pos0;
+    /* 0x30 */ Quat_ rot0;
+    /* 0x40 */ Vec3_ pos1;
+    /* 0x4C */ Quat_ rot1;
+    /* 0x5C */ Vec3_ result;
+} AnimTrk_;
+extern void (*D_80141728)(s32, s32, Vec3_ *, Quat_ *);
+extern void (*D_8014172C)(s32, Vec3_ *, Mat3_ *);
+Vec3_ func_800A9068(f32 t, Vec3_ a, Vec3_ b);
+Quat_ func_800A8EBC(f32 t, Quat_ a, Quat_ b);
+void func_800A8BA4(Quat_ q, Mat3_ *out);
+
+void func_80087C28(s32 index) {
+    AnimTrk_ *t = (AnimTrk_ *)&D_800F3014[index];
+    Mat3_ m;
+    Mat3_ m2;
+    Quat_ q;
+    Vec3_ v;
+    u32 kc1;
+    s32 key;
+    s32 key1;
+    f32 f;
+    void (**fp)(s32, s32, Vec3_ *, Quat_ *);
+
+    t->time = t->time % t->duration;
+    kc1 = t->keyCount - 1;
+    key = t->time * kc1 / t->duration;
+    key1 = key + 1;
+    if (key != t->key) {
+        fp = &D_80141728;
+        (*fp)(index, key, &t->pos0, &t->rot0);
+        (*fp)(index, key1, &t->pos1, &t->rot1);
+        t->key = key;
+    }
+    f = (f32)(u32)(kc1 * t->time - key * t->duration) / (f32)t->duration;
+    v = func_800A9068(f, t->pos0, t->pos1);
+    t->result = v;
+    q = func_800A8EBC(f, t->rot0, t->rot1);
+    func_800A8BA4(q, &m);
+    m2.m[0][0] = m.m[0][0];
+    m2.m[0][1] = m.m[1][0];
+    m2.m[0][2] = m.m[2][0];
+    m2.m[1][0] = m.m[0][1];
+    m2.m[1][1] = m.m[1][1];
+    m2.m[1][2] = m.m[2][1];
+    m2.m[2][0] = m.m[0][2];
+    m2.m[2][1] = m.m[1][2];
+    m2.m[2][2] = m.m[2][2];
+    D_8014172C(index, &t->result, &m2);
+}
 
 void func_80087EA4(s32 index, Vec3 *out) {
     AnimTrack *track = &D_800F3014[index];

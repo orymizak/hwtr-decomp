@@ -7,6 +7,9 @@ void func_800D7150(void);
 void *memset(void *dst, s32 value, u32 size);
 typedef struct { u16 button; s8 stick_x; s8 stick_y; u8 errnum; u8 pad; } Pad_;
 typedef struct { u8 buf[8]; s32 st; s32 mode; } PakSt_;
+typedef struct { s32 keys[6]; u8 pad[0x54 - 0x18]; } KeySet_;
+extern KeySet_ D_800F0404[];
+void func_800D63C0(Pad_ *, s32);
 s32 func_800D6FA0(s32);
 void func_800D7030(s32, s32);
 void func_800D66D0(PakSt_ *, s32);
@@ -251,7 +254,43 @@ INCLUDE_ASM("asm/nonmatchings/unit_0B140", func_8006BD78);
 
 INCLUDE_ASM("asm/nonmatchings/unit_0B140", func_8006BDA8);
 
-INCLUDE_ASM("asm/nonmatchings/unit_0B140", func_8006BE34);
+s32 func_8006BE34(u8 ch, s32 slot) {
+    Pad_ pad;
+    s32 mask;
+
+    func_800D63C0(&pad, ch);
+    mask = 0;
+    if (mask == 0 && pad.stick_x > 0x28) mask = 0x10000;
+    if (mask == 0 && pad.stick_x < -0x28) mask = 0x20000;
+    if (mask == 0 && pad.stick_y > 0x28) mask = 0x80000;
+    if (mask == 0 && pad.stick_y < -0x28) mask = 0x40000;
+    if (mask == 0 && (pad.button & 0x8000)) mask = 0x8000;
+    if (mask == 0 && (pad.button & 0x4000)) mask = 0x4000;
+    if (mask == 0 && (pad.button & 0x20)) mask = 0x20;
+    if (mask == 0 && (pad.button & 0x10)) mask = 0x10;
+    if (mask == 0 && (pad.button & 0x2000)) mask = 0x2000;
+    if (mask == 0 && (pad.button & 0x800)) mask = 0x800;
+    if (mask == 0 && (pad.button & 0x200)) mask = 0x200;
+    if (mask == 0 && (pad.button & 0x100)) mask = 0x100;
+    if (mask == 0 && (pad.button & 0x400)) mask = 0x400;
+    if (mask == 0 && (pad.button & 8)) mask = 8;
+    if (mask == 0 && (pad.button & 2)) mask = 2;
+    if (mask == 0 && (pad.button & 1)) mask = 1;
+    if (mask == 0 && (pad.button & 4)) mask = 4;
+    if (mask != 0) {
+        if (slot == 0 || slot == 5) {
+            D_800F0404[ch].keys[0] = mask;
+            D_800F0404[ch].keys[5] = mask;
+        } else if (slot == 1 || slot == 4) {
+            D_800F0404[ch].keys[1] = mask;
+            D_800F0404[ch].keys[4] = mask;
+        } else {
+            D_800F0404[ch].keys[slot] = mask;
+        }
+        return 1;
+    }
+    return 0;
+}
 
 u8 func_8006C0A0(void) {
     return D_800F03EB;
