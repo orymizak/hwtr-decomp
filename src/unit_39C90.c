@@ -32,9 +32,11 @@ void func_800A25EC(ObjA2_ *);
 typedef struct { u8 pad[0x40]; void *a; void *b; void *c; } Res40_;
 void Memory_Free(void *);
 typedef struct Nd3_ { s32 a; struct Nd3_ *prev; struct Nd3_ *next; } Nd3_;
+typedef struct { f32 x; f32 y; f32 z; } Vec3f_;
+s16 func_8009A9A0(Vec3f_);
+void func_80099C94(u8 *n, u8 *o);
 void *Memory_Alloc(s32 size);
 void func_800996B8(u8 *, u8 *);
-void func_80099C94(u8 *, u8 *);
 void func_8009A4E4(u8 *);
 void func_800A3978(u8 *, u16, s32);
 
@@ -122,7 +124,39 @@ INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_80099594);
 
 INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_800996B8);
 
-INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_80099C94);
+void func_80099C94(u8 *n, u8 *o) {
+    s32 zero[3];
+    Vec3f_ v;
+    Vec3f_ p;
+    s16 id;
+    u8 i;
+
+    zero[0] = 0;
+    zero[1] = 0;
+    zero[2] = 0;
+    v = *(Vec3f_ *)(o + 0x5E8);
+    v.x *= 0.5f;
+    v.y *= 0.5f;
+    v.z *= 0.5f;
+    *(Vec3f_ *)(n + 0xC) = v;
+    n[0x3C] = 1;
+    *(void **)(n + 0x40) = Memory_Alloc(0xC);
+    *(void **)(n + 0x44) = Memory_Alloc(n[0x3C] * 0xC);
+    memset(*(void **)(n + 0x40), 0, n[0x3C] * 0xC);
+    memset(*(void **)(n + 0x44), 0, n[0x3C] * 0xC);
+    (*(s32 **)(n + 0x40))[0] = 0;
+    (*(s32 **)(n + 0x40))[1] = 0;
+    (*(s32 **)(n + 0x40))[2] = 0;
+    *(void **)(n + 0x48) = Memory_Alloc(n[0x3C] * 2);
+    p.x = *(f32 *)(o + 0x98) + *(f32 *)(o + 0x8C);
+    p.y = *(f32 *)(o + 0x9C) + *(f32 *)(o + 0x90);
+    p.z = *(f32 *)(o + 0xA0) + *(f32 *)(o + 0x94);
+    id = func_8009A9A0(p);
+    for (i = 0; i < n[0x3C]; i++) {
+        (*(s16 **)(n + 0x48))[i] = id;
+    }
+    *(f32 *)(n + 0x4C) = sqrtf(*(f32 *)(n + 0xC) * *(f32 *)(n + 0xC) + *(f32 *)(n + 0x10) * *(f32 *)(n + 0x10) + *(f32 *)(n + 0x14) * *(f32 *)(n + 0x14));
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_80099E78);
 

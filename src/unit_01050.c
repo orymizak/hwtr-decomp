@@ -25,6 +25,10 @@ typedef struct { f32 f0; u8 p4[0x48]; } S_D_800EFF54;
 extern S_D_800EFF54 D_800EFF54[];
 extern f64 D_800FE868;
 typedef struct { s32 f0; } S_D_800EFC78;
+typedef struct { u8 kind; u8 mode; u8 pad[2]; u8 flag; u8 pad2[0x47]; } Slot_;
+extern Slot_ D_800EFF7C[];
+extern u8 D_800F0104;
+u8 *func_800960D8(u8);
 s32 func_800CE550(s32 id, f32 val);
 extern s32 D_800F01A0;
 extern s32 D_800F01A4;
@@ -301,7 +305,67 @@ s32 func_80061334(void) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80061454);
+void func_80061454(s32 unused, u8 count, u8 *info) {
+    s32 i;
+    u32 type;
+
+    for (i = 0; i < count; i++) {
+        D_800EFF7C[i].flag = 0;
+        type = *(u32 *)(func_800960D8(i) + 0x540) & 0xFF000000;
+        switch (type) {
+        case 0x00000000:
+            D_800EFF7C[i].kind = 4;
+            D_800EFF7C[i].mode = 3;
+            break;
+        case 0x01000000:
+            D_800EFF7C[i].kind = 6;
+            D_800EFF7C[i].mode = 5;
+            break;
+        case 0x02000000:
+            D_800EFF7C[i].kind = 8;
+            D_800EFF7C[i].mode = 7;
+            break;
+        case 0x03000000:
+            D_800EFF7C[i].kind = 10;
+            D_800EFF7C[i].mode = 9;
+            break;
+        case 0x04000000:
+            D_800EFF7C[i].kind = 12;
+            D_800EFF7C[i].mode = 11;
+            break;
+        case 0x05000000:
+            D_800EFF7C[i].kind = 14;
+            D_800EFF7C[i].mode = 13;
+            break;
+        case 0x06000000:
+            D_800EFF7C[i].kind = 16;
+            D_800EFF7C[i].mode = 15;
+            break;
+        case 0x07000000:
+            D_800EFF7C[i].kind = 18;
+            D_800EFF7C[i].mode = 17;
+            break;
+        case 0x08000000:
+            D_800EFF7C[i].kind = 20;
+            D_800EFF7C[i].mode = 19;
+            break;
+        case 0x09000000:
+            D_800EFF7C[i].kind = 2;
+            D_800EFF7C[i].mode = 1;
+            break;
+        case 0x0A000000:
+            D_800EFF7C[i].kind = 21;
+            D_800EFF7C[i].mode = 22;
+            break;
+        default:
+            D_800EFF7C[i].kind = 10;
+            D_800EFF7C[i].mode = 9;
+            break;
+        }
+    }
+    D_800F0104 = info[0x16] * 3 + (info[0x17] - 1);
+    D_800F0105 = 0;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_01050", func_800616A0);
 

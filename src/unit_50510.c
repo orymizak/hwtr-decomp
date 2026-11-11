@@ -21,6 +21,10 @@ typedef struct { s16 x; s16 y; } P16b_;
 typedef struct { u8 a; u8 pad; u16 x; u16 y; u16 x2; u16 y2; } E0A5_;
 typedef struct { s32 pad0; s16 a; s16 b; s16 c; u8 kind; u8 padB; u16 d; u16 padE; } Src10_;
 typedef struct { f32 p[3]; f32 q[3]; f32 v[3]; f32 w[3]; u16 e; u16 f; } Dst34_;
+typedef struct { s32 d[0x88C / 4]; } Big88C_;
+typedef struct { s32 d[0x140 / 4]; } Blk140_;
+void *Memory_Alloc(s32);
+void Memory_Free(void *);
 void *memset(void *, s32, u32);
 extern u8 D_80123D28[];
 extern u8 D_80123D24[];
@@ -142,7 +146,52 @@ INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800AFC40);
 
 INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800AFD1C);
 
-INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B0024);
+void func_800B0624(void);
+s32 func_800B0024(void) {
+    u8 *buf;
+    u32 i;
+    u32 j;
+    u16 k;
+    s32 sum;
+    s32 done;
+    s32 *id;
+    u8 *c;
+    u16 n;
+
+    done = 0;
+    buf = Memory_Alloc(0xDA0);
+    for (i = 0; i < 4; i++) {
+        if (D_80123D20[i] != 0 && (D_80123D24[i] != 0 || (done ^ 1))) {
+            *(Big88C_ *)buf = *(Big88C_ *)(&D_801206D0 + i * 0x88C);
+            id = &D_80138098[i];
+            if (*id == 0) {
+                *id = ((s32 (*)(void))func_800B0624)();
+            }
+            *(s32 *)buf = *id;
+            buf[0x88C] = D_80123D00[i];
+            for (j = 0; j < (u32)D_80123D00[i]; j++) {
+                *(Blk140_ *)(buf + 0x890 + j * 0x140) = *(Blk140_ *)&D_80122900[i][j];
+            }
+            sum = 0;
+            c = buf;
+            n = 0xD90;
+            for (k = 0; k < n; k++) {
+                sum += *c++;
+            }
+            *(s32 *)(buf + 0xD90) = sum;
+            if (((s32 (*)(s32, u8 *))D_80140FE8[3])(i, buf) == 0) {
+                D_80123D10[i] = ((u32 (*)(u32))D_80140FE8[1])(i);
+                Memory_Free(buf);
+                return 0;
+            }
+            if (D_80123D24[i] == 0) {
+                done = 1;
+            }
+        }
+    }
+    Memory_Free(buf);
+    return 1;
+}
 
 u8 *func_800B027C(void) {
     u8 i;
