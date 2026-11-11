@@ -74,6 +74,7 @@ typedef struct { f32 x; f32 y; f32 z; f32 x2; f32 y2; u8 pad[0x1C]; u16 h30; u16
 typedef struct { u8 pad[0x20]; u8 n; u8 p[3]; N10_ *names; E34b_ *objs; } TBL_;
 typedef struct { u8 pad[8]; char name[0xC]; s32 w14; s32 w18; s32 w1C; u8 pad2[0x120]; } E140b_;
 typedef struct { u16 idx; u8 pad[2]; s32 lo; s32 hi; s32 y; s32 reset; f32 x; } Scroll4E_;
+typedef struct { u8 a; u8 b; u8 c; s8 lv; } Bars4_;
 extern u8 *D_801410E0[];
 extern s32 (*D_80141008)(s32, u8);
 s8 func_80086F80(s32, u8, u8);
@@ -2927,7 +2928,49 @@ void func_800BD9CC(void) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800BD9DC);
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800BDA10);
+void func_800BDA10(Bars4_ s, s32 x) {
+    u16 i;
+    u8 r;
+    u8 g;
+    u8 b;
+
+    for (i = 0; i < (u8) (s.a / 5); i++) {
+        ((void (*)(u8 arg0, u8 arg1, s32 arg2, s32 arg3, u8 arg4, u8 arg5, u8 arg6, u8 arg7))func_800B32F4)(0x9A, 0, x + i * 3, 0x9D, 1, 0xF0, 0, 0x14);
+    }
+    for (i = 0; i < (u8) (s.b / 5); i++) {
+        ((void (*)(u8 arg0, u8 arg1, s32 arg2, s32 arg3, u8 arg4, u8 arg5, u8 arg6, u8 arg7))func_800B32F4)(0x9A, 0, x + i * 3, 0xB3, 1, 0, 0xF0, 0x14);
+    }
+    for (i = 0; i < (u8) (s.c / 5); i++) {
+        ((void (*)(u8 arg0, u8 arg1, s32 arg2, s32 arg3, u8 arg4, u8 arg5, u8 arg6, u8 arg7))func_800B32F4)(0x9A, 0, x + i * 3, 0xC8, 1, 0x14, 0, 0xF0);
+    }
+    if (s.lv >= 0) {
+        switch (s.lv) {
+            case 0:
+                r = 0x4E;
+                g = 0xB0;
+                b = 0x53;
+                break;
+            case 1:
+                r = 0xF6;
+                g = 0xF6;
+                b = 0x24;
+                break;
+            case 2:
+                r = 0xF0;
+                g = 0x28;
+                b = 0x28;
+                break;
+            default:
+                r = 0xF0;
+                g = 0x46;
+                b = 0xB4;
+                break;
+        }
+        for (i = 0; i < (s.lv + 1) * 12; i++) {
+            ((void (*)(u8 arg0, u8 arg1, s32 arg2, s32 arg3, u8 arg4, u8 arg5, u8 arg6, u8 arg7))func_800B32F4)(0x9A, 0, x + i * 3, 0xDF, 1, r, g, b);
+        }
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800BDCF0);
 
