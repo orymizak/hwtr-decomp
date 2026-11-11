@@ -75,8 +75,8 @@ The ROM rebuilds identically; the remaining code is still generated assembly.
 <!-- progress -->
 | Area | Functions | Code bytes | Progress |
 |---|---|---|---|
-| total | 1330/1917 | 181076/554576 | 32.65% |
-| game | 912/1373 | 108284/446896 | 24.23% |
+| total | 1332/1917 | 182344/554576 | 32.88% |
+| game | 914/1373 | 109552/446896 | 24.51% |
 | audio | 142/188 | 13128/32608 | 40.26% |
 | system | 66/87 | 4608/10064 | 45.79% |
 | libultra | 210/244 | 55056/60640 | 90.79% |

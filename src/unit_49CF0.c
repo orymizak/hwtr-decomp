@@ -6,6 +6,7 @@ extern u16 D_800F3B38[];
 typedef struct { u8 a[32]; } E32_;
 typedef struct { E32_ e[7]; u8 pad[16]; } E240_;
 typedef struct { s32 t; u8 a; u8 b; u8 c; u8 d; s32 pad; } E0Cb_;
+extern s32 D_800F3B30;
 extern char D_80100A9C[];
 extern void (*D_801416DC)(s32, s32, u16, u16, s32);
 extern void (*D_801416E0)(s32, s32, s32);
@@ -41,7 +42,49 @@ INCLUDE_ASM("asm/nonmatchings/unit_49CF0", func_800A93B4);
 
 INCLUDE_ASM("asm/nonmatchings/unit_49CF0", func_800A9604);
 
-INCLUDE_ASM("asm/nonmatchings/unit_49CF0", func_800A978C);
+void func_800A978C(u8 idx, u8 flag) {
+    u8 buf[80];
+    u8 *p;
+    u8 *c;
+    s32 x;
+    s32 color;
+    s32 t;
+
+    p = func_800960D8((&D_800F3B40)[idx]);
+    D_801416E0(0xFF, 0xFF, 0xFF);
+    if (flag == 0) {
+        x = 0xCB;
+        color = 0x15;
+    } else {
+        x = 0xCB;
+        color = (-(idx != 0) & 0x7F) | 0x15;
+    }
+    D_801416DC(1, 1, x, color, 2);
+    D_801416E0(0, 0xFF, 0);
+    t = D_800F3B30 - (((s32 (*)(void))func_800A76D8)() - *(s32 *)(p + 0x440));
+    if (t < 0) {
+        t = 0;
+    }
+    sprintf(buf, D_80100A9C, t / 60000, (u32)(t % 60000) / 1000, ((u32)(t % 60000) % 1000) / 100, (((u32)(t % 60000) % 1000) % 100) / 10);
+    if (flag == 0) {
+        x = 0xCF;
+        color = 0x12;
+    } else {
+        x = 0xCF;
+        color = 0x7C;
+        if (idx == 0) {
+            color = 0x12;
+        }
+    }
+    for (c = buf; *c != 0; c++) {
+        D_801416DC(1, *c, x, color, 1);
+        if (*c < '0' || *c > '9') {
+            x += 7;
+        } else {
+            x += 13;
+        }
+    }
+}
 
 void func_800A99D0(u8 idx, u8 flag) {
     u8 buf[80];
