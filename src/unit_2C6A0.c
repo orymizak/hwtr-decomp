@@ -18,6 +18,15 @@ typedef struct { u8 pad[0x30]; E2Cd_ e[1]; } T8B_;
 typedef struct { f32 x; f32 y; f32 z; } V3E0_;
 typedef struct { s32 kind; u8 p4; u8 slot; u8 p6[14]; } E20_;
 typedef struct { u8 p0[0x30]; E20_ ent[6]; } Cfg8B_;
+typedef struct { u32 time; u32 best; u8 id; } Res8C_;
+extern s32 D_800F3740[];
+extern s32 D_80118490;
+extern u8 D_801184AD;
+void func_800AEFF8(void);
+void func_800A7C8C(u8, u32 *, u32 *);
+void func_800ABEA8(u8, u8);
+void func_800ABEBC(u8);
+void func_8008E5B8(void);
 extern u8 D_8011849A[];
 extern u8 D_801184A8;
 extern u8 D_801184A9;
@@ -277,7 +286,80 @@ s32 func_8008C08C(void) {
   }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", func_8008C0D4);
+void func_8008C0D4(void) {
+    Res8C_ r[6];
+    Res8C_ tmp;
+    s8 i;
+    s8 j;
+    s8 b;
+    Res8C_ *p;
+
+    func_800AEFF8();
+    D_80118490 = D_800F36D8;
+    for (i = 0; i < (s8)D_80118494; i++) {
+        func_800A7C8C(i, &r[i].time, &r[i].best);
+        r[i].id = i;
+    }
+    for (i = 0; i < (s8)D_80118494; i++) {
+        b = i;
+        for (j = i + 1; j < (s8)D_80118494; j++) {
+            if (r[j].time != 0 && (r[j].time < r[b].time || r[b].time == 0)) {
+                b = j;
+            }
+        }
+        if (b != i) {
+            tmp.time = r[i].time;
+            tmp.id = r[i].id;
+            tmp.best = r[i].best;
+            r[i].time = r[b].time;
+            r[i].id = r[b].id;
+            r[i].best = r[b].best;
+            r[b].time = tmp.time;
+            r[b].id = tmp.id;
+            r[b].best = tmp.best;
+        }
+        p = &r[i];
+        func_800ABEA8(p->id, i + 1);
+        if (p->time != 0) {
+            switch (i) {
+            case 0:
+                D_8011849C[r[i].id] = 10;
+                break;
+            case 1:
+                D_8011849C[r[i].id] = 8;
+                break;
+            case 2:
+                D_8011849C[r[i].id] = 7;
+                break;
+            case 3:
+                D_8011849C[r[i].id] = 6;
+                break;
+            case 4:
+                D_8011849C[r[i].id] = 5;
+                break;
+            case 5:
+                D_8011849C[r[i].id] = 4;
+                break;
+            default:
+                D_8011849C[p->id] = 0;
+                break;
+            }
+        } else {
+            D_8011849C[p->id] = 0;
+        }
+    }
+    b = -1;
+    for (j = 0; j < (s8)D_80118494; j++) {
+        if (r[j].best != 0 && (b == -1 || r[j].best < r[b].best || r[b].best == 0)) {
+            b = j;
+        }
+    }
+    if (b != -1) {
+        func_800ABEBC(r[b].id);
+    }
+    func_8008E5B8();
+    D_801184AD = 0;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", func_8008C548);
 
@@ -400,7 +482,14 @@ s32 func_8008D48C(u32 i) {
     return D_80141448;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", func_8008D4B8);
+s32 func_8008D4B8(u32 i) {
+    i &= 0xFF;
+    if (i < 12) {
+        return D_800F3740[i];
+    }
+    return 0;
+}
+
 
 s32 func_8008D4E4(u8 *t) {
     u8 n;

@@ -23,6 +23,7 @@ typedef struct { s32 pad0; s16 a; s16 b; s16 c; u8 kind; u8 padB; u16 d; u16 pad
 typedef struct { f32 p[3]; f32 q[3]; f32 v[3]; f32 w[3]; u16 e; u16 f; } Dst34_;
 typedef struct { s32 d[0x88C / 4]; } Big88C_;
 typedef struct { s32 d[0x140 / 4]; } Blk140_;
+f32 func_800B12C4(s32 ms);
 void *Memory_Alloc(s32);
 void Memory_Free(void *);
 void *memset(void *, s32, u32);
@@ -35,7 +36,6 @@ void func_800B2440(s32, f32);
 void func_800B2540(s32, f32);
 void func_800B2640(s32, f32);
 void func_800B271C(s32, f32);
-f32 func_800B12C4(s32);
 s32 func_800B2170(s32 arg0);
 void func_800B133C(u8 *t);
 s32 func_800C8EE4(s32, u8, u8);
@@ -332,7 +332,13 @@ f32 func_800B1294(s32 arg0) {
     return (((f32) arg0 / 1000.0f) * 1000.0f) + -500.0f;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B12C4);
+f32 func_800B12C4(s32 ms) {
+    f32 t;
+    t = ms / 1000.0f;
+    t = -t * 750.0f;
+    return t + 375.0f;
+}
+
 
 f32 func_800B1308(s32 arg0) {
     return (((f32) (arg0 + 0x1F4) / 1000.0f) * 1000.0f) + -500.0f;
@@ -682,4 +688,6 @@ INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B2DA0);
 
 INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B2E60);
 
-INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B2F20);
+void func_800B2F20(s32 a) {
+    s32 x[4];
+}

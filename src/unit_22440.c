@@ -65,7 +65,12 @@ void func_80084FDC(void) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_22440", func_800853B4);
+f32 func_800853B4(u8 i) {
+    if (i < 6) {
+        return D_80114830[i].f218;
+    }
+    return 0.0f;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_22440", func_800853F4);
 

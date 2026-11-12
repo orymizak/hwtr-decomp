@@ -141,7 +141,13 @@ f32 func_8007AD24(f32 arg0) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_8007ADF0);
 
-INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_8007AFAC);
+f32 func_8007AFAC(f32 x) {
+    if (0.0f <= x) {
+        return x;
+    }
+    return -x;
+}
+
 
 void func_8007AFD4(void *arg0, void *arg1, void *arg2) {
     *(f32 *)((u8 *)arg2 + 0x0) = (f32) ((*(f32 *)((u8 *)arg0 + 0x0) * *(f32 *)((u8 *)arg1 + 0x0)) + (*(f32 *)((u8 *)arg0 + 0x4) * *(f32 *)((u8 *)arg1 + 0x10)) + (*(f32 *)((u8 *)arg0 + 0x8) * *(f32 *)((u8 *)arg1 + 0x20)));

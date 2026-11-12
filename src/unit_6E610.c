@@ -52,6 +52,8 @@ extern u8 D_800FAE84;
 f32 sinf(f32);
 s32 func_800D0444(s32, s32, s16, s16, s32);
 typedef struct { s32 f0; s32 f4; s32 f8; s32 fC; u16 f10; u16 f12; s32 f14; s32 f18; s32 f1C; s32 f20; s32 f24; s32 f28; s32 f2C; s32 f30; s32 f34; s32 f38; s32 f3C; s32 f40; s32 f44; u8 p48[0xC]; s32 f54; s32 f58; s32 f5C; s32 f60; s32 f64; s32 f68; s32 f6C; u8 p70[0x1C]; s32 f8C; u8 p90[0x4]; s32 f94; s32 f98; u8 p9C[0xA0]; } S_D_8012793C;
+typedef struct { s32 a; s32 b; } Ent89_;
+typedef struct { s32 n; u8 p4[8]; s32 flags; s32 unk10; s32 unk14; Ent89_ e[1]; } Bank89_;
 extern S_D_8012793C D_8012793C[];
 extern u8 D_800FACF8;
 extern s32 D_800FB170;
@@ -402,9 +404,42 @@ void func_800CE810(s32 arg) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CE840);
+s32 func_800CE840(s32 a) {
+    struct { u8 type; u8 p[3]; s32 val; } m;
+    s32 r;
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CE89C);
+    r = 1;
+    if (a == 0) {
+        m.type = 2;
+        m.val = D_80127964;
+        D_80127964 = m.val;
+        r = func_800CEB34((AudMsgE_ *)&m);
+    }
+    if (r != 0) {
+        D_80127960 = a;
+    }
+    return r;
+}
+
+void func_800CE89C(u8 *base) {
+    s32 i;
+    Bank89_ *b;
+
+    b = (Bank89_ *)base;
+    if (b->flags & 1) {
+        return;
+    }
+    if (D_80127968 == 0) {
+        D_80127968 = (s32)base;
+    }
+    b->flags = 1;
+    b->unk10 = 0;
+    b->unk14 = (s32)base + b->unk14;
+    for (i = 0; i < b->n; i++) {
+        b->e[i].a = (s32)base + b->e[i].a;
+    }
+}
+
 
 s32 func_800CE920(void *arg0) {
     return *(s32 *)((u8 *)arg0 + 0x4);
@@ -798,7 +833,18 @@ u8 *func_800D0B6C(SeqJ_ *s, u8 *p) {
     return p + 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800D0BDC);
+u8 *func_800D0BDC(SeqJ_ *s, u8 *p) {
+    f32 a;
+    f32 b;
+
+    s->unkB6 = *p++;
+    s->unkD5 = *p++;
+    a = 6.2831852 / (f32)*(volatile u8 *)&s->unkD5;
+    b = -(f32)*p++ / 50.0;
+    s->unkDC = a;
+    s->unk20 = b;
+    return p;
+}
 
 s32 func_800D0C50(void *arg0, s32 arg1) {
     *(u8 *)((u8 *)arg0 + 0xD5) = 0;

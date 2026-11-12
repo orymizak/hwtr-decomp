@@ -8,6 +8,8 @@ void *memset(void *dst, s32 value, u32 size);
 typedef struct { u16 button; s8 stick_x; s8 stick_y; u8 errnum; u8 pad; } Pad_;
 typedef struct { u8 buf[8]; s32 st; s32 mode; } PakSt_;
 typedef struct { s32 keys[6]; u8 pad[0x54 - 0x18]; } KeySet_;
+typedef struct { u8 c[0x54]; } Row6B_;
+extern Row6B_ D_800F043C[];
 extern KeySet_ D_800F0404[];
 void func_800D63C0(Pad_ *, s32);
 s32 func_800D6FA0(s32);
@@ -250,7 +252,9 @@ s32 func_8006B894(s32 key) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_0B140", func_8006BA98);
 
-INCLUDE_ASM("asm/nonmatchings/unit_0B140", func_8006BD78);
+u8 func_8006BD78(u8 a, s32 b) {
+    return D_800F043C[a].c[b];
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_0B140", func_8006BDA8);
 

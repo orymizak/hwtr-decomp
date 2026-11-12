@@ -46,7 +46,19 @@ void func_800D2450(void *arg0, u8 arg1, s32 arg2) {
   }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_72FB0", func_800D247C);
+void func_800D247C(u8 *dst, u8 *src, s32 n) {
+    if (src < dst) {
+        dst += n;
+        src += n;
+        for (n--; n != -1; n--) {
+            *--dst = *--src;
+        }
+    } else {
+        for (n--; n != -1; n--) {
+            *dst++ = *src++;
+        }
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_72FB0", func_800D24F0);
 
