@@ -622,7 +622,7 @@
           "game"
         ],
         "source_path": "src/unit_6E0C0.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_6E0C0.o"
     },
@@ -634,7 +634,7 @@
           "audio"
         ],
         "source_path": "src/unit_6E200.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_6E200.o"
     },
@@ -790,7 +790,7 @@
           "audio"
         ],
         "source_path": "src/unit_748D0.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_748D0.o"
     },
@@ -934,7 +934,7 @@
           "audio"
         ],
         "source_path": "src/unit_76040.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_76040.o"
     },
@@ -946,7 +946,7 @@
           "audio"
         ],
         "source_path": "src/unit_76090.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_76090.o"
     },
@@ -1042,7 +1042,7 @@
           "system"
         ],
         "source_path": "src/unit_76CB0.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_76CB0.o"
     },
@@ -1066,7 +1066,7 @@
           "system"
         ],
         "source_path": "src/unit_76DF0.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_76DF0.o"
     },
@@ -1246,7 +1246,7 @@
           "system"
         ],
         "source_path": "src/unit_77D30.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_77D30.o"
     },
