@@ -61,7 +61,22 @@ void func_800CD6C4(void) {
     func_800D5910(&D_80144450, &D_80145528, 3);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E200", func_800CD728);
+void func_800CD728(void) {
+    s16 *msg;
+
+    for (;;) {
+        osRecvMesg(&D_80145528, (void **)&msg, 1);
+        if (*msg == 1) {
+            return;
+        }
+        if (*msg == 2) {
+            if (D_800FABA4 != NULL) {
+                D_800FABA4(2, D_800FABA1);
+            }
+            D_800FABA1++;
+        }
+    }
+}
 
 void func_800CD7B8(u32 *a) {
     if ((*(u8 *)&D_800FABA0) == 1) {

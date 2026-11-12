@@ -54,6 +54,8 @@ s32 func_800D0444(s32, s32, s16, s16, s32);
 typedef struct { s32 f0; s32 f4; s32 f8; s32 fC; u16 f10; u16 f12; s32 f14; s32 f18; s32 f1C; s32 f20; s32 f24; s32 f28; s32 f2C; s32 f30; s32 f34; s32 f38; s32 f3C; s32 f40; s32 f44; u8 p48[0xC]; s32 f54; s32 f58; s32 f5C; s32 f60; s32 f64; s32 f68; s32 f6C; u8 p70[0x1C]; s32 f8C; u8 p90[0x4]; s32 f94; s32 f98; u8 p9C[0xA0]; } S_D_8012793C;
 typedef struct { s32 a; s32 b; } Ent89_;
 typedef struct { s32 n; u8 p4[8]; s32 flags; s32 unk10; s32 unk14; Ent89_ e[1]; } Bank89_;
+typedef struct { u8 p0[0x58]; f32 unk58; f32 unk5C; f32 unk60; s32 unk64; u8 p68[0x57]; u8 unkBF; u8 unkC0; u8 unkC1; u8 unkC2; u8 pC3[3]; u8 unkC6; u8 unkC7; u8 unkC8; } SeqE9_;
+void func_800D15B8();
 extern S_D_8012793C D_8012793C[];
 extern u8 D_800FACF8;
 extern s32 D_800FB170;
@@ -784,7 +786,32 @@ s32 func_800D091C(void *arg0, s32 arg1) {
     return arg1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800D0928);
+u8 *func_800D0928(SeqE9_ *s, u8 *p) {
+    u8 n;
+    u8 c;
+
+    n = *p++;
+    if (n == 0) {
+        n = 1;
+    }
+    s->unkBF = n;
+    s->unk64 = 1024 / n;
+    s->unkC0 = *p++;
+    n = *p++;
+    s->unkC6 = n;
+    c = *p++;
+    s->unk58 = (1.0 / (f32)n) * (f32)(c - s->unkC0);
+    s->unkC1 = c;
+    n = *p++;
+    s->unkC7 = n;
+    c = *p++;
+    s->unk5C = (1.0 / (f32)n) * (f32)(c - s->unkC1);
+    s->unkC2 = c;
+    n = *p++;
+    s->unkC8 = n;
+    s->unk60 = 1.0 / (f32)n;
+    return p;
+}
 
 u8 *func_800D0A50(SeqZ_ *s, u8 *p) {
     s32 tempo = ((*p * 0x6000) / 120) / D_80127944;
@@ -1115,9 +1142,40 @@ void func_800D1290(s32 arg0, s32 arg1) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800D12F8);
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800D1568);
+s32 func_800D1568(s32 arg0) {
+    s32 temp_s0;
+    int new_var;
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800D15B8);
+    temp_s0 = ((s32)(arg0 << 0x10)) >> 0xE;
+    func_800D15B8((*((s32 *)(((u8 *)D_800FB174) + 0x34))) + (temp_s0 + (new_var = 0x24)));
+    return *((s32 *)((temp_s0 + (*((s32 *)(((u8 *)D_800FB174) + 0x34)))) + 0x24));
+}
+
+
+s32 alHeapDBAlloc(s32, s32, void *, s32, s32);
+s32 alFxParamHdl();
+extern s32 D_8014C6E0;
+extern s32 D_8014C6E4;
+extern s32 D_8014C6E8;
+extern s32 D_8014C6EC;
+extern s32 D_8014C6F0;
+extern s32 D_8014C6F4;
+
+void func_800D15B8(s32 *rp, u8 *c, void *hp) {
+    s32 r;
+
+    r = alHeapDBAlloc(0, 0, hp, 1, 0x2C);
+    *rp = r;
+    *(void **)(r + 0x28) = alFxParamHdl;
+    D_8014C6E0 = alHeapDBAlloc(0, 0, hp, func_800D19F8(), 0x28);
+    D_8014C6E4 = alHeapDBAlloc(0, 0, hp, func_800D1A3C(), 2);
+    D_8014C6E8 = alHeapDBAlloc(0, 0, hp, 1, 0x34);
+    D_8014C6EC = alHeapDBAlloc(0, 0, hp, 1, 0x20);
+    D_8014C6F0 = alHeapDBAlloc(0, 0, hp, 1, 0x30);
+    D_8014C6F4 = alHeapDBAlloc(0, 0, hp, 1, 8);
+    func_800D1700(*(s32 *)(c + 0x20));
+}
+
 
 INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800D1700);
 

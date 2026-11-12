@@ -104,4 +104,17 @@ AcmdO_ *func_800D46E8(FxO_ *r, s16 *curr_ptr, s32 buff, AcmdO_ *p) {
     return ptr;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_74AB0", func_800D4800);
+Acmd_ *func_800D4800(u8 *s, s32 flags, Acmd_ *ptr) {
+    s32 t;
+    Acmd_ *r;
+
+    t = flags >> 8;
+    ptr[0].w0 = 0x0B000020;
+    ptr[0].w1 = osVirtualToPhysical(s + 8);
+    ptr[1].w0 = 0x0E000000 | (s[0x2F] << 16) | *(u16 *)(s + 2);
+    r = ptr + 2;
+    ptr[1].w1 = (t << 24) | (osVirtualToPhysical(*(void **)(s + 0x28)) & 0xFFFFFF);
+    *(s32 *)(s + 0x2C) = 0;
+    return r;
+}
+
