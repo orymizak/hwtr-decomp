@@ -36,9 +36,95 @@ void func_800D6A40(void) {
     func_800D74F0(&D_800FB210);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_775E0", func_800D6A60);
+s32 __osMotorAccess(PfsG_ *, s32);
+extern PakSlotQ_ D_80140F68[4];
+extern u32 D_800FB1F0;
+s32 func_800D6A60(PakSlotQ_ *r, u32 ch) {
+    s32 ret;
+    u32 n;
 
-INCLUDE_ASM("asm/nonmatchings/unit_775E0", func_800D6C4C);
+    ret = 0;
+    switch (r->state) {
+    case 2:
+        break;
+    case 1:
+        if (r->id != 0) {
+            ret = __osMotorAccess(&D_8014E998[ch], 0);
+        } else {
+            r->state = 2;
+        }
+        r->id--;
+        break;
+    case 3:
+        if (r->b != 0) {
+            r->id += r->a;
+            n = r->id >> 8;
+            r->id &= 0xFF;
+            if (n != 0) {
+                ret = __osMotorAccess(&D_8014E998[ch], 1);
+            } else {
+                ret = __osMotorAccess(&D_8014E998[ch], 0);
+            }
+        } else {
+            ret = __osMotorAccess(&D_8014E998[ch], 0);
+            r->state = 1;
+            r->id = 2;
+        }
+        r->b--;
+        break;
+    case 4:
+        ret = osMotorInit(D_8014EB40, &D_8014E998[ch], ch);
+        if (ret == 0) {
+            __osMotorAccess(&D_8014E998[ch], 0);
+        }
+        r->state = 1;
+        r->id = 2;
+        break;
+    }
+    return ret;
+}
+
+s32 func_800D6C4C(void *mesg) {
+    u32 i;
+    PakSlotQ_ *r;
+
+    for (i = 0; i < 4; i++) {
+        r = &D_80140F68[i];
+        switch (r->flags) {
+        case 0:
+            break;
+        case 1:
+            if (func_800D6A60(r, i)) {
+                r->flags = 0;
+            }
+            break;
+        case 2:
+            if (!r->x) {
+                if (!(r->id % D_800FB1F0)) {
+                    if (!osMotorInit(D_8014EB40, &D_8014E998[i], i)) {
+                        r->x = 1;
+                        r->y = 2;
+                    }
+                }
+                r->id++;
+            } else {
+                if (func_800D6A60(r, i)) {
+                    r->id = i;
+                    r->x = 0;
+                    r->y = 0;
+                }
+            }
+            break;
+        case 0x81:
+        case 0x82:
+            if (r->y == 2) {
+                func_800D6A60(r, i);
+            }
+            break;
+        }
+    }
+    return 0;
+}
 
 s32 func_800D6DCC(ReqG_ *r) {
     u8 ch = r->args[0];
@@ -46,7 +132,15 @@ s32 func_800D6DCC(ReqG_ *r) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_775E0", func_800D6E14);
+s32 func_800D6E14(void) {
+    u32 i;
+
+    for (i = 0; i < 4; i++) {
+        D_80140F6C[i].state = 4;
+        D_80140F6C[i].flags |= 0x80;
+    }
+    return 0;
+}
 
 s32 func_800D6E5C(void) {
     u32 var_a0;
@@ -62,7 +156,6 @@ s32 func_800D6E5C(void) {
     return 0;
 }
 
-extern PakSlotQ_ D_80140F68[4];
 s32 func_800D6E8C(ReqQ_ *r) {
     ArgsQ_ *a = r->args;
     PakInfoQ_ *info = a->info;

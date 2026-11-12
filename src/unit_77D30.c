@@ -65,7 +65,62 @@ void func_800D728C(void) {
     osStartThread(&D_8012FE90);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_77D30", func_800D72AC);
+typedef struct { s16 mesg; u8 p2[2]; void *rtnMesgQ; s32 error; } SiMesgT_;
+typedef struct { u8 b[0x10]; } SiClientT_;
+void func_800D5910(void *c, void *mq, s32 flags);
+void func_800D59A0(void *arg0, s16 arg1);
+void osStopThread(void *);
+void func_800D72AC(void *arg) {
+    SiClientT_ client;
+    void *buf[8];
+    SiMesgT_ *msg;
+    NodeT_ **cb;
+    s32 ret;
+    u16 major;
+    u16 minor;
+
+    osCreateMesgQueue(D_80144460, buf, 8);
+    func_800D5910(&client, D_80144460, 1);
+    while (1) {
+        osRecvMesg(D_80144460, (void **)&msg, 1);
+        cb = &D_800FB220;
+        switch (msg->mesg) {
+        case 1:
+            while (*cb) {
+                if ((*cb)->entries[0]) {
+                    ret = ((s32 (*)(SiMesgT_ *))(*cb)->entries[0])(msg);
+                }
+                if (ret) {
+                    break;
+                }
+                cb = &(*cb)->next;
+            }
+            break;
+        case 0x7F00:
+            osSendMesg(msg->rtnMesgQ, 0, 1);
+            func_800D59A0(&client, 0);
+            osStopThread(0);
+            func_800D59A0(&client, 1);
+            break;
+        default:
+            major = msg->mesg & 0xFF00;
+            minor = msg->mesg & 0xFF;
+            while (*cb) {
+                if ((*cb)->id == major) {
+                    if (minor < (*cb)->count) {
+                        msg->error = ((s32 (*)(SiMesgT_ *))(*cb)->entries[minor])(msg);
+                    }
+                    if (msg->rtnMesgQ) {
+                        osSendMesg(msg->rtnMesgQ, 0, 1);
+                    }
+                    break;
+                }
+                cb = &(*cb)->next;
+            }
+            break;
+        }
+    }
+}
 
 void func_800D7450(NodeT_ *n) {
     NodeT_ **pp = &D_800FB220;
@@ -87,4 +142,19 @@ void func_800D7450(NodeT_ *n) {
     osSetIntMask(mask);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_77D30", func_800D74F0);
+void func_800D74F0(NodeT_ *n) {
+    NodeT_ **pp;
+    s32 mask;
+
+    pp = &D_800FB220;
+    while (*pp != 0) {
+        if ((*pp)->next == n) {
+            mask = osSetIntMask(1);
+            (*pp)->next = n->next;
+            n->next = 0;
+            osSetIntMask(mask);
+            return;
+        }
+        pp = &(*pp)->next;
+    }
+}

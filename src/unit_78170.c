@@ -15,7 +15,40 @@ extern u8 D_8014ECB0;
 s32 func_800D74F0(s32 *);
 extern s32 D_800FB248;
 
-INCLUDE_ASM("asm/nonmatchings/unit_78170", func_800D7570);
+typedef struct { u16 type; u8 status; u8 errnum; } ContStatusM_;
+extern ContStatusM_ D_801380B8[4];
+extern s32 D_80132040;
+extern s32 D_80132044;
+extern s32 D_80143840;
+void func_800D78E0(void);
+void func_800D7910(void);
+void osCreateMesgQueue(void *, void *, s32);
+s32 func_800D7450(void *);
+u8 func_800D7570(void) {
+    s32 i;
+    s32 pattern;
+    s32 bit;
+
+    func_800D78E0();
+    osCreateMesgQueue(&D_801347A0, &D_80132040, 1);
+    osCreateMesgQueue(&D_8014ECB0, &D_80132044, 1);
+    func_800D7450(&D_800FB248);
+    func_800D7910();
+    bit = 1;
+    pattern = 0;
+    D_80143840 = 0;
+    for (i = 0; i < 4; i++) {
+        if (D_801380B8[i].errnum != 0) {
+            continue;
+        }
+        if ((D_801380B8[i].type & 0x1F07) == 5) {
+            D_80143840++;
+            pattern |= bit;
+        }
+        bit <<= 1;
+    }
+    return pattern;
+}
 
 void func_800D7644(void) {
     func_800D74F0(&D_800FB248);
