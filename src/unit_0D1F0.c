@@ -6,6 +6,16 @@ typedef struct { u8 p0[0x34]; GfxA_ *unk34; } ObjA2_;
 extern s32 D_80138AA8;
 extern s32 D_8014C1A8;
 typedef struct { s32 f0; s32 f4; u8 p8[0x548]; } S_D_801455C0;
+void func_80075600(s32 arg0, s8 arg1, s8 arg2, s8 arg3);
+void func_80075640(s32 arg0, f32 arg1, f32 arg2, f32 arg3, f32 arg4);
+f32 sinf(f32);
+typedef struct { s16 x; s16 y; s16 z; u8 pad[10]; } Vtx6D_;
+typedef struct { Vtx6D_ v[32]; u8 p200[0x30]; f32 r; f32 a; u8 p238; u8 mode; } Ring6D_;
+f64 func_800E6E80(f64);
+f64 func_800E6F60(f64);
+void func_8006D6EC(Ring6D_ *s, u32 t);
+void func_8006D608(s32 *, s32);
+void func_8006CF10(s32 *p, s32 dt);
 extern S_D_801455C0 D_801455C0[];
 void func_8006CA88(S_D_801455C0 *, s32, f32, u8);
 s32 func_8007F5C4(s32,s32);
@@ -13,7 +23,6 @@ s32 func_8006DD60(s32 *,s32,s32);
 extern s32 D_8014D980;
 
 s32 func_800757E8(s32);
-s32 func_8006CF10(s32 *, s32);
 s32 func_8006D15C(s32 *, s32, s32);
 s32 Memory_Free(s32);
 extern s32 D_800F05E0;
@@ -24,13 +33,64 @@ INCLUDE_ASM("asm/nonmatchings/unit_0D1F0", func_8006C5F0);
 
 INCLUDE_ASM("asm/nonmatchings/unit_0D1F0", func_8006CA88);
 
-INCLUDE_ASM("asm/nonmatchings/unit_0D1F0", func_8006CF10);
+void func_8006CF10(s32 *p, s32 dt) {
+    u8 v;
+    f32 t;
+    u32 i;
+
+    if (dt >= p[0]) {
+        p[0] = 0;
+        if (p[1] != -1) {
+            func_800757E8(p[1]);
+            p[1] = -1;
+        }
+        return;
+    }
+    if (p[1] != -1) {
+        v = p[0] * 255.0f / 1000.0f;
+        func_80075600(p[1], v, v, v);
+        func_80075640(p[1], sinf(p[0] / 1000.0f * 3.141592f) * 1800.0f, *(f32 *)&p[135], *(f32 *)&p[139], *(f32 *)&p[143]);
+    }
+    p[0] -= dt;
+    if (p[0] < 900) {
+        t = (u32)dt / ((930 - p[0]) / 30);
+    } else {
+        t = (u32)dt;
+    }
+    func_8006D6EC((Ring6D_ *)(p + 4), t);
+    for (i = 0; i < 12; i++) {
+        func_8006D608(p + 148 + i * 16, dt);
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_0D1F0", func_8006D15C);
 
 INCLUDE_ASM("asm/nonmatchings/unit_0D1F0", func_8006D608);
 
-INCLUDE_ASM("asm/nonmatchings/unit_0D1F0", func_8006D6EC);
+void func_8006D6EC(Ring6D_ *s, u32 t) {
+    u32 i;
+    f32 ang;
+
+    if (s->mode == 0) {
+        for (i = 0; i < 32; i++) {
+            ang = (f32) i * 3.14159265 / 16.0 + s->a;
+            s->v[i].x = func_800E6E80(ang) * (s->r + (i & 1) * 65.0);
+            s->v[i].y = func_800E6F60(ang) * (s->r + (i & 1) * 65.0);
+            s->v[i].z = -((i & 1) * 65.0 / 3.0);
+        }
+    } else if (s->mode != 2) {
+        for (i = 0; i < 32; i++) {
+            ang = (f32) i * 3.14159265 / 16.0 + s->a;
+            s->v[i].x = func_800E6E80(ang) * (s->r + (i & 1) * 65.0);
+            s->v[i].y = func_800E6F60(ang) * (s->r + (i & 1) * 65.0);
+            s->v[i].z = 0;
+        }
+    } else {
+        return;
+    }
+    s->r = s->r + (f32) t * 3.5;
+    s->a = s->a + (f32) t * 0.001;
+}
 
 void func_8006DA40(void *arg0) {
     s32 temp_a0;

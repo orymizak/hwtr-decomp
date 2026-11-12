@@ -16,6 +16,41 @@ typedef struct { u8 pad[0x30]; E14t_ e[1]; } T8D_;
 typedef struct { u8 pad[0x12]; u8 b; u8 pad2[0x19]; } E2Cd_;
 typedef struct { u8 pad[0x30]; E2Cd_ e[1]; } T8B_;
 typedef struct { f32 x; f32 y; f32 z; } V3E0_;
+typedef struct { s32 kind; u8 p4; u8 slot; u8 p6[14]; } E20_;
+typedef struct { u8 p0[0x30]; E20_ ent[6]; } Cfg8B_;
+extern u8 D_8011849A[];
+extern u8 D_801184A8;
+extern u8 D_801184A9;
+extern u8 D_801184AA;
+extern u8 D_801184AC;
+extern u8 D_801184AE;
+extern s32 D_801184A4;
+extern s32 D_800F36E0;
+extern u8 (*D_801417A8)(u8 *);
+extern u8 (*D_801416E8)(u8 *);
+extern u8 (*D_801417AC)(u8 *);
+extern void (*D_8014559C)(void);
+u8 func_8008D5EC(void);
+void func_800A76F0(void);
+void func_800908E8(void);
+s32 func_800908A8(void);
+void func_80090934(void);
+void func_8009ABC8(void);
+void func_80085780(void);
+u8 func_800A90F0(u8 *);
+u8 func_800AEA40(u8 *);
+u8 func_80087990(u8 *);
+u8 func_80080550(u8 *);
+u8 func_80098BC0(u8 *);
+u8 func_8009930C(u8 *);
+u8 func_800853F4(u8 *);
+u8 func_80091210(u8 *);
+u8 func_8008E8F0(u8 *);
+u8 func_800AF230(u8 *);
+u8 func_8008955C(u8 *);
+u8 func_800A7B88(u8 *);
+u8 func_800A58D0(u8 *);
+u8 func_800AEF80(u8 *);
 extern void (*D_8014C10C)(u8, s32, f32);
 extern u32 (*D_80141788)(void);
 extern void (*D_80141784)(s32);
@@ -76,7 +111,122 @@ extern s32 D_8011852C;
 extern u8 D_80118530;
 extern u32 D_80118534;
 
-INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", func_8008BAA0);
+void func_8008D3B8(void *arg0);
+void func_8008D3D4(void);
+s32 func_8008D4E4(u8 *t);
+s32 func_8008BAA0(u8 *cfg) {
+    u8 i;
+
+    D_800F36F0 = 0;
+    D_80118494 = cfg[0x18];
+    D_800F36E4 = 0;
+    for (i = 0; i < D_80118494; i++) {
+        D_8011849C[i] = 0;
+        if (((Cfg8B_ *)cfg)->ent[i].kind == 1) {
+            D_8011849A[((Cfg8B_ *)cfg)->ent[i].slot] = i;
+            D_800F36E4++;
+        }
+    }
+    for (i = 0; i < 2; i++) {
+        D_80118498[i] = 0;
+    }
+    if (*(s32 *)cfg & 4) {
+        D_800F36EC = *(s32 *)(cfg + 0x20);
+        D_800F36E8 = 1;
+    } else {
+        D_800F36E8 = 0;
+    }
+    D_801184AC = *(s32 *)cfg & 1;
+    D_801184AA = 0;
+    D_801184A9 = 0;
+    D_801184A8 = 0;
+    D_801184AB = 0;
+    D_801184AF = 1;
+    D_801184AE = 0;
+    D_801184B0 = 0;
+    if (!D_801417A8(cfg)) {
+        return 0;
+    }
+    ((void (*)(u8 *))func_8008D3B8)(cfg);
+    func_8008D3D4();
+    if (!func_800A90F0(cfg)) {
+        return 0;
+    }
+    func_8008D3D4();
+    func_8008D3D4();
+    if (!D_801416E8(cfg)) {
+        return 0;
+    }
+    func_8008D3D4();
+    if (!func_80087990(cfg)) {
+        return 0;
+    }
+    if (!func_80080550(cfg)) {
+        return 0;
+    }
+    if (!func_80098BC0(cfg)) {
+        return 0;
+    }
+    if (!func_8009930C(cfg)) {
+        return 0;
+    }
+    func_8008D3D4();
+    if (!func_800AEA40(cfg)) {
+        return 0;
+    }
+    if (!func_800853F4(cfg)) {
+        return 0;
+    }
+    if (!func_80091210(cfg)) {
+        return 0;
+    }
+    if (!((u8 (*)(u8 *))func_8008D4E4)(cfg)) {
+        return 0;
+    }
+    if (!func_8008E8F0(cfg)) {
+        return 0;
+    }
+    if (!func_800AF230(cfg)) {
+        return 0;
+    }
+    if (!func_8008955C(cfg)) {
+        return 0;
+    }
+    if (!func_800A7B88(cfg)) {
+        return 0;
+    }
+    if (!func_800A58D0(cfg)) {
+        return 0;
+    }
+    if (!func_800AEF80(cfg)) {
+        return 0;
+    }
+    if (!func_8008D5EC()) {
+        return 0;
+    }
+    func_8008D3D4();
+    if (!D_801417AC(cfg)) {
+        return 0;
+    }
+    D_8014C1A8 = 0;
+    D_800F36F4 = 0;
+    D_801417B8(0);
+    func_800A76F0();
+    func_800908E8();
+    if (D_800F36E4 == 1 && D_80118494 == 6) {
+        D_801184A4 = func_800908A8();
+    } else {
+        D_801184A4 = 0;
+        func_80090934();
+    }
+    D_800F36DC = 0;
+    D_800F36D8 = 0;
+    D_800F36E0 = D_80141698();
+    func_8009ABC8();
+    func_80085780();
+    D_8014559C();
+    return 1;
+}
 
 u8 func_8008BE7C(u8 *o) {
     s32 err;

@@ -27,6 +27,10 @@ typedef struct { s32 x; s32 y; s32 z; } Pos_;
 typedef struct { Pos_ p; f32 m[9]; s32 d; f32 e; } Cam_;
 typedef struct { s32 d[0x114 / 4]; } Big114_;
 typedef struct { s32 d[0x40 / 4]; } Big40_;
+s32 rand(void);
+f32 sqrtf(f32);
+void func_8007A858(u8 *, u8 *, s32 *, s32);
+void func_8007DE54(Vec3f_, u32, u8 *, Vec3f_);
 s32 File_GetSize(char *);
 extern char D_800FE964[];
 s32 func_800682A4(s32 unused, char *name, Big114_ *a, Big40_ *b);
@@ -370,7 +374,50 @@ void func_800688F4(s32 idx, Vec3_ pos, f32 *m) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_800689A4);
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80068E98);
+void func_80068E98(u8 *o, Vec3f_ vel, u8 *verts) {
+    Vec3f_ v;
+    Vec3f_ p;
+    s32 idx[16];
+    u8 *m;
+    u32 n;
+    u32 sz;
+    u32 i;
+    f32 sp;
+
+    if (o == NULL) {
+        return;
+    }
+    m = *(u8 **)(o + 0x3C);
+    if (m != NULL) {
+        n = *(u16 *)(m + 2) >> 1;
+        if (n > 16) {
+            n = 16;
+        }
+        if (n < 6) {
+            n = 6;
+        }
+    } else {
+        n = (rand() & 7) + 7;
+    }
+    func_8007A858(m, verts, idx, 16);
+    sz = *(f32 *)(o + 0x38) / 2.5f;
+    vel.x /= 14.0f;
+    vel.y /= 14.0f;
+    vel.z /= 14.0f;
+    sp = sqrtf(vel.x * vel.x + vel.y * vel.y + vel.z * vel.z);
+    for (i = 0; i < n; i++) {
+        p.x = *(f32 *)(o + 0xC);
+        p.y = *(f32 *)(o + 0x1C);
+        p.z = *(f32 *)(o + 0x2C);
+        p.x += ((rand() & 0x7F) - 64) / 128.0f * sz;
+        p.y += ((rand() & 0x7F) - 64) / 128.0f * sz;
+        p.z += ((rand() & 0x7F) - 64) / 128.0f * sz;
+        v.x = vel.x + ((rand() & 0x7F) - 64.0f) / 127.0f * sp;
+        v.y = vel.y + ((rand() & 0x7F) - 64.0f) / 127.0f * sp;
+        v.z = vel.z + ((rand() & 0x7F) - 64.0f) / 127.0f * sp;
+        func_8007DE54(p, sz, verts + idx[rand() & 0xF] * 8, v);
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80069214);
 

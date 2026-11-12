@@ -11,6 +11,16 @@ typedef struct { u8 on; u8 pad[0x63]; } Ent64_;
 extern Ent64_ D_801185B4[];
 extern u8 D_80118620;
 typedef struct { s32 x; s32 y; s32 z; } Pos_;
+typedef struct { f32 x; f32 y; f32 z; } Vec3f_;
+typedef struct { u8 p0[0x44]; s32 mode; u8 pt; u8 car; u8 p4A[2]; u8 b4C; u8 p4D[3]; s32 timer; } Cam90_;
+extern u8 (*D_80141718)(void);
+extern void (*D_8014171C)(u8, Vec3f_ *, void *, s32 *, s32 *);
+extern u8 (*D_8014169C)(s32);
+extern u8 D_80118621;
+extern s32 *D_80118624;
+s32 func_80096100(void);
+u8 *func_800960D8(u8);
+f32 sqrtf(f32);
 extern u8 D_80118558[];
 s32 func_800A5894(void);
 extern u8 D_801185AC;
@@ -63,7 +73,89 @@ void func_80090550(s32 arg0, s8 arg1) {
     *(u8 *)(&D_801185A2 + ((arg0 & 0xFF) * 0x64)) = arg1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_2F4F0", func_80090578);
+void func_80090578(Cam90_ *cam, u32 dt) {
+    Vec3f_ pos;
+    Vec3f_ p;
+    Vec3f_ d;
+    u8 b[0x28];
+    s32 flags;
+    s32 x;
+    f32 radius;
+    f32 mind;
+    f32 dist;
+    u32 i;
+    u32 j;
+    u32 count;
+    u32 best;
+    u32 bestCount;
+    u32 bestPt;
+    u32 bestCar;
+    u8 *car;
+    s32 v;
+    s32 w;
+
+    best = 0;
+    radius = 0.0f;
+    bestCar = 0;
+    if (cam->timer < dt) {
+        bestCount = 0;
+        bestPt = 0;
+        for (i = 0; i < D_80141718(); i++) {
+            D_8014171C(i, &pos, b, &flags, &x);
+            flags |= 1;
+            if (flags & 2) {
+                continue;
+            }
+            count = 0;
+            if (flags & 1) {
+                p = pos;
+                radius = 5400.0f;
+            } else {
+                radius = 0.0f;
+            }
+            mind = 0.0f;
+            for (j = 0; j < func_80096100(); j++) {
+                car = func_800960D8(j);
+                d.x = p.x - *(f32 *)(car + 0x98);
+                d.y = p.y - *(f32 *)(car + 0x9C);
+                d.z = p.z - *(f32 *)(car + 0xA0);
+                dist = sqrtf(d.x * d.x + d.y * d.y + d.z * d.z);
+                if (dist < radius && 0.0f < d.x * *(f32 *)(car + 0xB0) + d.y * *(f32 *)(car + 0xB4) + d.z * *(f32 *)(car + 0xB8)) {
+                    count++;
+                    if (mind < dist) {
+                        mind = dist;
+                        best = j;
+                    }
+                }
+            }
+            if (bestCount < count) {
+                bestCount = count;
+                bestPt = i;
+                bestCar = best;
+            }
+        }
+        if (bestCount != 0) {
+            v = flags;
+            cam->car = bestCar;
+            cam->pt = bestPt;
+            cam->mode = (-(v & 1) & 3) | 2;
+        } else {
+            do {
+                cam->pt = D_8014169C(D_80118621);
+            } while ((w = D_80118624[cam->pt * 5]) == 0);
+            cam->mode = w;
+            for (j = 0; j < 10; j++) {
+                cam->car = D_8014169C(func_80096100());
+                if (func_800960D8(cam->car)[0x4B8] == 0) {
+                    break;
+                }
+            }
+        }
+        cam->b4C = 1;
+        cam->timer = 4000;
+    }
+    cam->timer -= dt;
+}
 
 void func_800908A0(void) {
 
