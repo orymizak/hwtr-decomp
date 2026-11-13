@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HWTR Car Viewer</title>
+<!-- Template: run tools/car_viewer.py to embed the car data. -->
+<style>
+  :root { --bg:#14161a; --panel:#1e2127e6; --fg:#e6e6e6; --dim:#9aa0a8; --accent:#4fa3ff; --red:#ff4d4d; --green:#4ad66d; }
+  html, body { margin:0; height:100%; background:var(--bg); color:var(--fg); font:13px/1.4 system-ui, sans-serif; overflow:hidden; }
+  canvas { display:block; }
+  #panel { position:absolute; top:12px; left:12px; width:260px; background:var(--panel); border-radius:8px; padding:12px; }
+  #panel h1 { font-size:15px; margin:0 0 8px; }
+  select, input[type=range] { width:100%; }
+  .row { display:flex; justify-content:space-between; margin:3px 0; }
+  .lbl { color:var(--dim); }
+  .bar { height:6px; background:#333; border-radius:3px; overflow:hidden; margin:2px 0 6px; }
+  .bar > div { height:100%; width:0; }
+  #thr > div { background:var(--green); } #brk > div { background:var(--red); }
+  #gear { font-size:22px; font-weight:700; }
+  #speed { font-size:22px; font-weight:700; font-variant-numeric:tabular-nums; }
+  .keys { color:var(--dim); font-size:12px; margin-top:8px; }
+  kbd { background:#333; border-radius:3px; padding:0 4px; font-size:11px; }
+  details { margin-top:8px; color:var(--dim); font-size:12px; }
+  label { display:block; margin:4px 0; }
+  hr { border:0; border-top:1px solid #333; margin:8px 0; }
+</style>
+</head>
+<body>
+<div id="panel">
+  <h1>HWTR Car Viewer</h1>
+  <select id="car"></select>
+  <hr>
+  <div class="row"><span id="speed">0</span><span id="gear">N</span></div>
+  <div class="row"><span class="lbl">mph</span><span class="lbl">gear</span></div>
+  <div class="lbl">Throttle</div><div class="bar" id="thr"><div></div></div>
+  <div class="lbl">Brake</div><div class="bar" id="brk"><div></div></div>
+  <div class="row"><span class="lbl">Steer input</span><span id="steerIn">0.00</span></div>
+  <div class="row"><span class="lbl">Wheel angle (L / R)</span><span id="steerDeg">0° / 0°</span></div>
+  <div class="row"><span class="lbl">Steer limit by speed</span><span id="steerPct">100%</span></div>
+  <div class="row"><span class="lbl">Wheel rpm (front / rear)</span><span id="rpm">0 / 0</span></div>
+  <hr>
+  <label>Time scale <span id="tsv">1.00</span>×<input id="ts" type="range" min="0.05" max="1" step="0.05" value="1"></label>
+  <label><input id="body" type="checkbox" checked> Show body box</label>
+  <label><input id="follow" type="checkbox" checked> Camera follows car</label>
+  <div class="keys">
+    <kbd>W</kbd>/<kbd>↑</kbd> throttle · <kbd>S</kbd>/<kbd>↓</kbd> brake, then reverse<br>
+    <kbd>A</kbd><kbd>D</kbd>/<kbd>←</kbd><kbd>→</kbd> steer · <kbd>Space</kbd> handbrake · <kbd>R</kbd> reset<br>
+    Drag to orbit · wheel to zoom
+  </div>
+  <details>
+    <summary>Data sources</summary>
+    From the game: wheel positions and radii, bounding box (.CAR); max steer, mass, thrust, drag Cd (.CWH);
+    speed-sensitive steering (func_8008D060); gravity 386 in/s²; air drag (func_800946DC).<br>
+    Placeholders: brake force, reverse thrust and top speed, rolling resistance, steering ramp,
+    no-slip turning, body pitch/roll, and drag frontal area taken from the bounding box.
+  </details>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const CARS = /*CAR_DATA*/[];
+
+// ---- Constants: game values and placeholders -------------------------------
+const G = 386;                    // in/s², func_80095970
+const MPH = 17.6;                 // in/s per mph
+const STEER_U = 30 * MPH;         // Tuning.prm 0x08
+const STEER_TOP = 2304;           // func_8008D060
+const STEER_PCT_LO = 30, STEER_PCT_HI = 50; // Tuning.prm 0x09, 0x3A
+const AIR = 2.377 / 1000;         // slug/ft³, func_800946DC
+// Placeholders (not read from the game yet):
+const BRAKE_G = 1.1, HANDBRAKE_G = 0.6, REVERSE_FRACTION = 0.35, REVERSE_MAX = 25 * MPH;
+const ROLL_G = 0.02, STEER_RATE = 3.5;
+
+// ---- Scene -------------------------------------------------------------------
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(devicePixelRatio);
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x14161a);
+scene.fog = new THREE.Fog(0x14161a, 1500, 6000);
+const camera = new THREE.PerspectiveCamera(45, 1, 5, 20000);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x303040, 0.8));
+const sun = new THREE.DirectionalLight(0xffffff, 0.8);
+sun.position.set(300, 600, 200);
+scene.add(sun);
+
+const grid = new THREE.GridHelper(24000, 200, 0x5a6478, 0x343a46);
+scene.add(grid);
+// Lane markers so forward motion is visible even when the camera follows.
+const markers = new THREE.Group();
+const markMat = new THREE.MeshBasicMaterial({ color: 0x555b66 });
+for (let i = -60; i <= 60; i++) {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(6, 60), markMat);
+  m.rotation.x = -Math.PI / 2; m.position.set(0, 0.2, i * 200);
+  markers.add(m);
+}
+scene.add(markers);
+
+// game (x, y, z) -> three (x, z, -y): forward is -Z, up is +Y.
+const g2t = (p) => new THREE.Vector3(p[0], p[2], -p[1]);
+
+// ---- Car model -----------------------------------------------------------------
+const carRoot = new THREE.Group();   // position + heading on the ground
+const chassis = new THREE.Group();   // pitch / roll
+carRoot.add(chassis);
+scene.add(carRoot);
+let car = null, wheels = [], bodyMesh = null, lights = {};
+
+function makeWheel(radius, width) {
+  const steer = new THREE.Group(), spin = new THREE.Group();
+  steer.add(spin);
+  const tire = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, width, 32),
+    new THREE.MeshStandardMaterial({ color: 0x1b1b1b, roughness: 0.9 }));
+  tire.rotation.z = Math.PI / 2;
+  spin.add(tire);
+  const rimMat = new THREE.MeshStandardMaterial({ color: 0xb8bec8, metalness: 0.6, roughness: 0.4 });
+  const rim = new THREE.Mesh(new THREE.CylinderGeometry(radius * 0.6, radius * 0.6, width + 0.4, 24), rimMat);
+  rim.rotation.z = Math.PI / 2;
+  spin.add(rim);
+  // Coloured spokes make the rotation readable.
+  const spokeMat = new THREE.MeshStandardMaterial({ color: 0xffb300 });
+  for (let i = 0; i < 2; i++) {
+    const s = new THREE.Mesh(new THREE.BoxGeometry(width + 1, radius * 1.9, radius * 0.18), i ? spokeMat : rimMat);
+    s.rotation.x = i * Math.PI / 2;
+    spin.add(s);
+  }
+  return { steer, spin };
+}
+
+function buildCar(data) {
+  car = data;
+  chassis.clear();
+  wheels = [];
+  const lo = data.bbox_min, hi = data.bbox_max;
+  const ys = data.wheels.map(w => w.pos[1]);
+  const frontY = Math.max(...ys), rearY = Math.min(...ys);
+  const ground = Math.min(...data.wheels.map(w => w.pos[2] - w.radius));
+  chassis.position.y = -ground;
+
+  for (const w of data.wheels) {
+    const front = Math.abs(w.pos[1] - frontY) < 1;
+    const { steer, spin } = makeWheel(w.radius, Math.max(6, w.radius * 0.6));
+    steer.position.copy(g2t(w.pos));
+    chassis.add(steer);
+    wheels.push({ ...w, front, rear: Math.abs(w.pos[1] - rearY) < 1, steer, spin, angle: 0 });
+  }
+  car.wheelbase = Math.max(1, frontY - rearY);
+  const fw = wheels.filter(w => w.front);
+  car.track = fw.length > 1 ? Math.abs(fw[0].pos[0] - fw[1].pos[0]) : 60;
+
+  // Body: translucent box from the bounding box, lifted to clear the wheels a little.
+  const size = [hi[0] - lo[0], hi[1] - lo[1], hi[2] - lo[2]];
+  const center = [(hi[0] + lo[0]) / 2, (hi[1] + lo[1]) / 2, (hi[2] + lo[2]) / 2];
+  const geo = new THREE.BoxGeometry(size[0], size[2], size[1]);
+  bodyMesh = new THREE.Group();
+  bodyMesh.add(new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ color: 0x4fa3ff, transparent: true, opacity: 0.18, depthWrite: false })));
+  bodyMesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({ color: 0x4fa3ff })));
+  bodyMesh.position.copy(g2t(center));
+  bodyMesh.visible = document.getElementById('body').checked;
+  chassis.add(bodyMesh);
+
+  // Rear lights at the back of the bounding box; front marker at the nose.
+  const mkLight = (x, color) => {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(10, 5, 2), new THREE.MeshStandardMaterial({ color: 0x222222, emissive: color, emissiveIntensity: 0 }));
+    m.position.copy(g2t([x, lo[1] - 1, center[2]]));
+    chassis.add(m);
+    return m;
+  };
+  lights.brake = [mkLight(lo[0] + 8, 0xff2020), mkLight(hi[0] - 8, 0xff2020)];
+  lights.reverse = [mkLight(lo[0] + 20, 0xffffff), mkLight(hi[0] - 20, 0xffffff)];
+  const nose = new THREE.Mesh(new THREE.ConeGeometry(6, 14, 12), new THREE.MeshBasicMaterial({ color: 0x4ad66d }));
+  nose.rotation.x = -Math.PI / 2;
+  nose.position.copy(g2t([center[0], hi[1] + 10, center[2]]));
+  chassis.add(nose);
+
+  const h = data.handling || {};
+  car.maxSteer = h.max_steer ?? 0.65;
+  car.mass = h.mass ?? 4.2;
+  car.thrust = h.thrust_g ?? 4;
+  car.cd = h.drag_cd ?? 0.5;
+  car.areaFt2 = (size[0] / 12) * (size[2] / 12);
+  reset();
+}
+
+// ---- Simulation ---------------------------------------------------------------
+const keys = new Set();
+const state = { v: 0, heading: 0, steer: 0, throttle: 0, brake: 0, gear: 'N', pitch: 0, roll: 0, steerPct: 1, pos: new THREE.Vector3() };
+
+function reset() {
+  Object.assign(state, { v: 0, heading: 0, steer: 0, throttle: 0, brake: 0, pitch: 0, roll: 0 });
+  state.pos.set(0, 0, 0);
+}
+
+function steerFactor(v) {
+  // func_8008D060: applies only above U (30 mph); documented as-is.
+  if (v <= STEER_U) return 1;
+  const f = Math.min(1, Math.max(0, 1 - (v - STEER_U) / (STEER_TOP - STEER_U)));
+  return (f * (STEER_PCT_HI - STEER_PCT_LO) + STEER_PCT_LO) / 100;
+}
+
+function step(dt) {
+  const up = keys.has('KeyW') || keys.has('ArrowUp');
+  const down = keys.has('KeyS') || keys.has('ArrowDown');
+  const left = keys.has('KeyA') || keys.has('ArrowLeft');
+  const right = keys.has('KeyD') || keys.has('ArrowRight');
+  const hand = keys.has('Space');
+
+  const target = (left ? 1 : 0) - (right ? 1 : 0);
+  const ds = STEER_RATE * dt;
+  state.steer += Math.max(-ds, Math.min(ds, target - state.steer));
+
+  let v = state.v, accel = 0, braking = 0, throttle = 0;
+  const stopped = Math.abs(v) < 0.5 * MPH;
+  if (up && v >= -0.5 * MPH) { throttle = 1; state.gear = 'D'; }
+  else if (up) braking = 1;                                    // forward while rolling back
+  if (down && v > 0.5 * MPH) braking = 1;
+  else if (down && (stopped || v < 0)) { throttle = -1; state.gear = 'R'; }
+  if (!up && !down && stopped) state.gear = 'N';
+
+  if (throttle > 0) accel += car.thrust * G;
+  if (throttle < 0 && v > -REVERSE_MAX) accel -= car.thrust * G * REVERSE_FRACTION;
+  const vft = Math.abs(v) / 12;
+  const drag = 0.5 * AIR * vft * vft * car.areaFt2 * car.cd / car.mass * 12; // in/s²
+  let resist = drag + ROLL_G * G + braking * BRAKE_G * G + (hand ? HANDBRAKE_G * G : 0);
+  if (throttle === 0 && stopped) { v = 0; resist = 0; }
+  const sign = Math.sign(v);
+  const nv = v + accel * dt - sign * resist * dt;
+  state.v = (sign !== 0 && Math.sign(nv) !== sign && Math.sign(accel) !== Math.sign(nv)) ? 0 : nv;
+
+  state.steerPct = steerFactor(Math.abs(state.v));
+  const angle = state.steer * car.maxSteer * state.steerPct;
+  const yawRate = state.v * Math.tan(angle) / car.wheelbase;
+  state.heading += yawRate * dt;
+  state.pos.x -= Math.sin(state.heading) * state.v * dt;
+  state.pos.z -= Math.cos(state.heading) * state.v * dt;
+
+  // Visual body motion only.
+  const longAccel = (state.v - v) / Math.max(dt, 1e-4);
+  state.pitch += ((longAccel / G) * 0.03 - state.pitch) * Math.min(1, dt * 6);
+  state.roll += ((-state.v * yawRate / G) * 0.04 - state.roll) * Math.min(1, dt * 6);
+  state.throttle = Math.abs(throttle);
+  state.brake = Math.max(braking, hand ? 1 : 0);
+
+  // Wheels: Ackermann angles on steered wheels, spin from ground speed.
+  const steered = Math.abs(angle) > 1e-4;
+  const R = steered ? car.wheelbase / Math.tan(angle) : Infinity; // >0 turning left
+  for (const w of wheels) {
+    if (w.front) {
+      w.steerAngle = steered ? Math.atan(car.wheelbase / (R + w.pos[0])) : 0;
+      w.steer.rotation.y = w.steerAngle;
+    }
+    const locked = hand && w.rear;
+    w.omega = locked ? 0 : state.v / w.radius;
+    w.spin.rotation.x -= w.omega * dt;
+  }
+}
+
+// ---- Camera ---------------------------------------------------------------------
+const orbit = { yaw: 0.7, pitch: 0.35, dist: 520, target: new THREE.Vector3() };
+let drag = null;
+renderer.domElement.addEventListener('pointerdown', e => { drag = { x: e.clientX, y: e.clientY }; renderer.domElement.setPointerCapture(e.pointerId); });
+renderer.domElement.addEventListener('pointerup', () => drag = null);
+renderer.domElement.addEventListener('pointermove', e => {
+  if (!drag) return;
+  orbit.yaw -= (e.clientX - drag.x) * 0.006;
+  orbit.pitch = Math.min(1.45, Math.max(0.03, orbit.pitch + (e.clientY - drag.y) * 0.006));
+  drag = { x: e.clientX, y: e.clientY };
+});
+renderer.domElement.addEventListener('wheel', e => {
+  e.preventDefault();
+  orbit.dist = Math.min(4000, Math.max(120, orbit.dist * Math.exp(e.deltaY * 0.001)));
+}, { passive: false });
+
+function updateCamera() {
+  const follow = document.getElementById('follow').checked;
+  const target = follow ? state.pos.clone().add(new THREE.Vector3(0, 30, 0)) : new THREE.Vector3(0, 30, 0);
+  orbit.target.lerp(target, 0.25);
+  const yaw = orbit.yaw + (follow ? state.heading : 0);
+  camera.position.set(
+    orbit.target.x + orbit.dist * Math.cos(orbit.pitch) * Math.sin(yaw),
+    orbit.target.y + orbit.dist * Math.sin(orbit.pitch),
+    orbit.target.z + orbit.dist * Math.cos(orbit.pitch) * Math.cos(yaw));
+  camera.lookAt(orbit.target);
+}
+
+// ---- UI ---------------------------------------------------------------------------
+const $ = (id) => document.getElementById(id);
+const select = $('car');
+CARS.forEach((c, i) => select.add(new Option(`${c.name}  (${c.wheels.length} wheels)`, i)));
+select.onchange = () => { buildCar(CARS[select.value]); select.blur(); };
+$('body').onchange = (e) => { if (bodyMesh) bodyMesh.visible = e.target.checked; };
+$('ts').oninput = (e) => { $('tsv').textContent = (+e.target.value).toFixed(2); };
+addEventListener('keydown', e => {
+  if (e.target.tagName === 'SELECT') return;
+  if (e.code === 'KeyR') reset();
+  keys.add(e.code);
+  if (e.code.startsWith('Arrow') || e.code === 'Space') e.preventDefault();
+});
+addEventListener('keyup', e => keys.delete(e.code));
+addEventListener('blur', () => keys.clear());
+
+function updateHud() {
+  $('speed').textContent = (Math.abs(state.v) / MPH).toFixed(1);
+  $('gear').textContent = state.gear;
+  $('gear').style.color = state.gear === 'R' ? 'var(--red)' : state.gear === 'D' ? 'var(--green)' : 'var(--fg)';
+  $('thr').firstElementChild.style.width = state.throttle * 100 + '%';
+  $('brk').firstElementChild.style.width = state.brake * 100 + '%';
+  $('steerIn').textContent = state.steer.toFixed(2);
+  const fl = wheels.find(w => w.front && w.pos[0] < 0), fr = wheels.find(w => w.front && w.pos[0] > 0);
+  const deg = (w) => w ? (w.steerAngle * 180 / Math.PI || 0).toFixed(1) + '°' : '–';
+  $('steerDeg').textContent = `${deg(fl)} / ${deg(fr)}`;
+  $('steerPct').textContent = Math.round(state.steerPct * 100) + '%';
+  const rpm = (w) => w ? Math.abs(w.omega * 60 / (2 * Math.PI)).toFixed(0) : '0';
+  $('rpm').textContent = `${rpm(wheels.find(w => w.front))} / ${rpm(wheels.find(w => w.rear))}`;
+  for (const l of lights.brake) l.material.emissiveIntensity = state.brake ? 1.5 : 0.15;
+  for (const l of lights.reverse) l.material.emissiveIntensity = state.gear === 'R' ? 1.5 : 0;
+}
+
+function resize() {
+  renderer.setSize(innerWidth, innerHeight);
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+}
+addEventListener('resize', resize);
+resize();
+
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000) * +$('ts').value;
+  last = now;
+  if (car) {
+    step(dt);
+    carRoot.position.copy(state.pos);
+    carRoot.rotation.y = state.heading;
+    chassis.rotation.set(state.pitch, 0, state.roll);
+    updateHud();
+  }
+  updateCamera();
+  renderer.render(scene, camera);
+  requestAnimationFrame(frame);
+}
+
+if (CARS.length) buildCar(CARS[0]);
+else document.getElementById('panel').insertAdjacentHTML('beforeend', '<p style="color:var(--red)">No data: open the page generated by tools/car_viewer.py.</p>');
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
