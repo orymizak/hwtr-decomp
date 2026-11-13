@@ -2,6 +2,13 @@
 #include "include_asm.h"
 typedef struct { s32 x; s32 y; s32 z; } V3i9_;
 typedef struct { s32 d[0x22]; } B88_;
+typedef struct { f32 x, y, z; } V3_D34;
+typedef struct { f32 m[3][4]; } M_D34;
+typedef struct { V3_D34 pos; u8 p0C[8]; u8 flags; u8 p15[3]; V3_D34 dir; V3_D34 world; u8 contact; u8 p31[3]; V3_D34 n; V3_D34 pt; V3_D34 vel; u8 p58[0x18]; } W_D34;
+typedef struct { u8 p0[0x10]; f32 yaw; u8 p14[0x6C]; V3_D34 up; u8 p8C[0xC]; V3_D34 pos; u8 pA4[0xC]; V3_D34 vel; u8 pBC[4]; f32 rot[3][3]; u8 pE4[0x30]; V3_D34 av; u8 p120[0x24]; W_D34 w[(0x3E4 - 0x144) / 0x70]; u8 n; u8 p3E5[2]; u8 cnt; u8 cnt2; u8 p3E9[0x1F3]; V3_D34 c; } C_D34;
+f32 sinf(f32);
+f32 cosf(f32);
+f32 sqrtf(f32);
 void func_80094234(void);
 void func_800863A4(u8 *, u8 *);
 B88_ *func_8008637C(u8 *);
@@ -93,7 +100,104 @@ INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_80093998);
 
 INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_80093B74);
 
-INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_80093D34);
+void func_80093D34(C_D34 *car) {
+    V3_D34 col1;
+    V3_D34 col0;
+    V3_D34 r1;
+    V3_D34 r2;
+    M_D34 m;
+    V3_D34 rel;
+    V3_D34 t;
+    V3_D34 a;
+    V3_D34 b;
+    V3_D34 d;
+    V3_D34 cr;
+    f32 c, s, inv;
+    u32 i;
+    f32 rx, ry, rz;
+
+    m.m[0][0] = car->rot[0][0];
+    m.m[0][1] = car->rot[0][1];
+    m.m[0][2] = car->rot[0][2];
+    m.m[0][3] = car->pos.x;
+    m.m[1][0] = car->rot[1][0];
+    m.m[1][1] = car->rot[1][1];
+    m.m[1][2] = car->rot[1][2];
+    m.m[1][3] = car->pos.y;
+    m.m[2][0] = car->rot[2][0];
+    m.m[2][1] = car->rot[2][1];
+    m.m[2][2] = car->rot[2][2];
+    m.m[2][3] = car->pos.z;
+    col0.x = car->rot[0][0];
+    col0.y = car->rot[1][0];
+    col0.z = car->rot[2][0];
+    col1.x = car->rot[0][1];
+    col1.y = car->rot[1][1];
+    col1.z = car->rot[2][1];
+    c = cosf(-car->yaw);
+    s = sinf(-car->yaw);
+    a.x = col0.x * s;
+    a.y = col0.y * s;
+    a.z = col0.z * s;
+    b.x = col1.x * c;
+    b.y = col1.y * c;
+    b.z = col1.z * c;
+    r1.x = b.x - a.x;
+    r1.y = b.y - a.y;
+    r1.z = b.z - a.z;
+    r2.x = b.x + a.x;
+    r2.y = b.y + a.y;
+    r2.z = b.z + a.z;
+    car->cnt = 0;
+    car->cnt2 = 0;
+    for (i = 0; i < car->n; i++) {
+        if (car->w[i].flags & 2) {
+            if (i < 2) {
+                car->w[i].dir = r1;
+            } else {
+                car->w[i].dir = r2;
+            }
+        } else {
+            car->w[i].dir = col1;
+        }
+        if (car->w[i].contact) {
+            t.x = car->w[i].n.x * (car->w[i].dir.x * car->w[i].n.x + car->w[i].dir.y * car->w[i].n.y + car->w[i].dir.z * car->w[i].n.z);
+            t.y = car->w[i].n.y * (car->w[i].dir.x * car->w[i].n.x + car->w[i].dir.y * car->w[i].n.y + car->w[i].dir.z * car->w[i].n.z);
+            t.z = car->w[i].n.z * (car->w[i].dir.x * car->w[i].n.x + car->w[i].dir.y * car->w[i].n.y + car->w[i].dir.z * car->w[i].n.z);
+            t.x = car->w[i].dir.x - t.x;
+            t.y = car->w[i].dir.y - t.y;
+            t.z = car->w[i].dir.z - t.z;
+            inv = 1.0f / sqrtf(t.x * t.x + t.y * t.y + t.z * t.z);
+            t.x *= inv;
+            t.y *= inv;
+            t.z *= inv;
+            car->w[i].dir = t;
+        }
+        rel.x = rx = car->w[i].pos.x - car->c.x;
+        rel.y = ry = car->w[i].pos.y - car->c.y;
+        rel.z = rz = car->w[i].pos.z - car->c.z;
+        car->w[i].world.x = m.m[0][0] * rx + m.m[0][1] * ry + m.m[0][2] * rz + m.m[0][3];
+        car->w[i].world.y = m.m[1][0] * rx + m.m[1][1] * ry + m.m[1][2] * rz + m.m[1][3];
+        car->w[i].world.z = m.m[2][0] * rx + m.m[2][1] * ry + m.m[2][2] * rz + m.m[2][3];
+        if (car->w[i].contact) {
+            d.x = car->w[i].pt.x - car->pos.x;
+            d.y = car->w[i].pt.y - car->pos.y;
+            d.z = car->w[i].pt.z - car->pos.z;
+            cr.x = car->av.y * d.z - d.y * car->av.z;
+            cr.y = d.x * car->av.z - car->av.x * d.z;
+            cr.z = car->av.x * d.y - d.x * car->av.y;
+            car->w[i].vel.x = car->vel.x + cr.x;
+            car->w[i].vel.y = car->vel.y + cr.y;
+            car->w[i].vel.z = car->vel.z + cr.z;
+            if (car->w[i].contact) {
+                car->cnt++;
+                if (-(car->w[i].n.x * car->up.x + car->w[i].n.y * car->up.y + car->w[i].n.z * car->up.z) > 0.5f) {
+                    car->cnt2++;
+                }
+            }
+        }
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_80094234);
 

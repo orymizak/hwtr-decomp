@@ -31,6 +31,10 @@ typedef struct { u8 p0[0xFE]; s8 id; u8 pFF; u8 cur; u8 tgt; u8 r; u8 g; u8 b; u
 typedef struct { s32 cur[6]; s32 tgt[6]; s32 dt; } Fade65_;
 typedef struct { f32 x; f32 y; f32 z; } V3f69_;
 typedef struct { f32 f0; s32 i4; f32 f8; f32 fC; u8 p10[0x30]; V3f69_ pos; V3f69_ vel; f32 f58; f32 f5C; u8 p60[4]; s16 h64; u8 b66; u8 c[3]; u8 b6A; u8 p6B; u16 s6C; s16 s6E; } Pt94_;
+typedef struct { f32 x, y, z; } V3_9A4;
+typedef struct { u8 p0[0xC]; f32 x; u8 p10[0xC]; f32 y; u8 p20[0xC]; f32 z; u8 p30[8]; f32 r; } O_9A4;
+void func_8007E694(V3_9A4, V3_9A4);
+void func_8007E974(V3_9A4, V3_9A4);
 extern u8 D_80138A6C[];
 extern s32 D_80138A90[];
 extern u8 D_800F20F6;
@@ -464,7 +468,51 @@ void func_800688F4(s32 idx, Vec3_ pos, f32 *m) {
     q[11] = pos.z;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_800689A4);
+void func_800689A4(O_9A4 *o, V3_9A4 v) {
+    V3_9A4 d;
+    V3_9A4 p;
+    u32 s;
+    f32 len;
+    u32 i, n;
+
+    if (o == NULL) {
+        return;
+    }
+    s = o->r / 2.5f;
+    v.x /= 14.0f;
+    v.y /= 14.0f;
+    v.z /= 14.0f;
+    len = sqrtf(v.x * v.x + v.y * v.y + v.z * v.z);
+    n = (rand() & 7) + 12;
+    for (i = 0; i < n; i++) {
+        p.x = o->x;
+        p.y = o->y;
+        p.z = o->z;
+        p.x += (f32)((rand() & 0x7F) - 64) / 128.0f * (f32)s;
+        p.y += (f32)((rand() & 0x7F) - 64) / 128.0f * (f32)s;
+        p.z += (f32)((rand() & 0x7F) - 64) / 128.0f * (f32)s;
+        d.x = v.x + ((f32)(rand() & 0x7F) - 64.0f) / 64.0f * len;
+        d.y = v.y + ((f32)(rand() & 0x7F) - 64.0f) / 64.0f * len;
+        d.z = v.z + ((f32)(rand() & 0x7F) - 64.0f) / 64.0f * len;
+        func_8007E694(p, d);
+    }
+    n = (rand() & 7) + 12;
+    v.x /= 3.0f;
+    v.y /= 3.0f;
+    v.z /= 3.0f;
+    for (i = 0; i < n; i++) {
+        p.x = o->x;
+        p.y = o->y;
+        p.z = o->z;
+        p.x += (f32)((rand() & 0x7F) - 64) / 128.0f * (f32)s;
+        p.y += (f32)((rand() & 0x7F) - 64) / 128.0f * (f32)s;
+        p.z += (f32)((rand() & 0x7F) - 64) / 128.0f * (f32)s;
+        d.x = v.x + ((f32)(rand() & 0x7F) - 64.0f) / 127.0f * len;
+        d.y = v.y + ((f32)(rand() & 0x7F) - 64.0f) / 127.0f * len;
+        d.z = v.z + ((f32)(rand() & 0x7F) - 64.0f) / 127.0f * len;
+        func_8007E974(p, d);
+    }
+}
 
 void func_80068E98(u8 *o, Vec3f_ vel, u8 *verts) {
     Vec3f_ v;

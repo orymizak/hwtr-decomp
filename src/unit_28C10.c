@@ -9,12 +9,23 @@ s32 sprintf(char *, const char *, ...);
 typedef struct Lnk89_ { s32 *obj; s32 x; struct Lnk89_ *next; } Lnk89_;
 typedef struct { u8 *def; s32 t; u8 pad8; u8 hold; } Tmr89_;
 typedef struct { s32 pad0; u8 id; u8 pad5[3]; s32 on; s32 t; u8 fired; u8 pad11[7]; } Evt18_;
+typedef struct { f32 x, y, z; } V3_8010;
+typedef struct { u8 id; u8 p1[0x3]; s32 flags; u8 p8[0x6C]; f32 scale; f32 inv; u8 p7C[0x28]; V3_8010 vel; u8 pB0[0x10]; f32 rot[9]; u8 pE4[0x31C]; f32 k400; f32 k404; u8 p408[0x24]; f32 k42C; u8 p430[0x98]; u8 col[4]; f32 k4CC; f32 k[0x18]; f32 k530; u8 p534[0x8]; f32 k53C; u8 p540[0x17C]; u8 b[5]; u8 p6C1[0xB]; u8 n6CC; u8 p6CD[0xB]; s32 state; } C_8010;
+typedef struct { u8 p0[0x34]; s32 flags; f32 f[0x18]; V3_8010 v; f32 fA4; u8 col[4]; } P_8010;
+extern u16 D_800F302A;
+extern u16 D_800F302C;
+extern u16 D_800F302E;
+extern u16 D_800F3030;
+extern u16 D_800F3032;
+extern u16 D_800F3034;
+void func_800AC6EC(u8, s32);
+void func_800B0614(u8, s32);
+void func_80088010(u8 *arg0, u8 *arg1);
 extern void (*D_8014C0A8)(s32, s32, f32, f32);
 void func_800A8268(Lnk89_ **, s32 *);
 void *Memory_Alloc(u32 size);
 u8 *func_80089B10(u8 *);
 s32 func_80089FC4(u8 *);
-void func_80088010(u8 *, u8 *);
 extern Evt18_ *D_800F3020;
 extern u32 D_800F3024;
 extern void (*D_80141714)(u8, s32, f32);
@@ -28,7 +39,116 @@ extern s32 (*D_80141768)(u8,s32);
 
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_28C10", func_80088010);
+void func_80088010(u8 *arg0, u8 *arg1) {
+    P_8010 *p = (P_8010 *)arg0;
+    C_8010 *c = (C_8010 *)arg1;
+    V3_8010 v;
+    V3_8010 d;
+    V3_8010 t;
+
+    if (c->state != 2) {
+        return;
+    }
+    v.x = p->v.x * c->scale;
+    v.y = p->v.y * c->scale;
+    v.z = p->v.z * c->scale;
+    t.x = c->rot[0] * v.x + c->rot[1] * v.y + c->rot[2] * v.z;
+    t.y = c->rot[3] * v.x + c->rot[4] * v.y + c->rot[5] * v.z;
+    t.z = c->rot[6] * v.x + c->rot[7] * v.y + c->rot[8] * v.z;
+    d = t;
+    c->vel.x = d.x + c->vel.x;
+    c->vel.y = d.y + c->vel.y;
+    c->vel.z = d.z + c->vel.z;
+    c->k4CC *= p->fA4;
+    c->col[0] += p->col[0];
+    c->col[1] += p->col[1];
+    c->col[2] += p->col[2];
+    c->col[3] += p->col[3];
+    c->k[0] *= p->f[0];
+    c->k[1] *= p->f[1];
+    c->k[2] *= p->f[2];
+    c->k[3] *= p->f[3];
+    c->k[4] *= p->f[4];
+    c->k[5] *= p->f[5];
+    c->k[6] *= p->f[6];
+    c->k[7] *= p->f[7];
+    c->k[8] *= p->f[8];
+    c->k[9] *= p->f[9];
+    c->k[10] *= p->f[13];
+    c->k[11] *= p->f[14];
+    c->k[13] *= p->f[15];
+    c->k[14] *= p->f[16];
+    c->k[16] *= p->f[17];
+    c->k[17] *= p->f[18];
+    c->k[19] *= p->f[19];
+    c->k[20] *= p->f[20];
+    c->k[22] *= p->f[11];
+    c->k530 *= p->f[10];
+    c->k[23] *= p->f[12];
+    c->k400 *= p->f[21];
+    c->k404 *= p->f[22];
+    c->k42C *= p->f[23];
+    if (p->flags & 8) {
+        c->b[1] = 1;
+    }
+    if (p->flags & 0x10) {
+        c->b[2] = 1;
+        c->k53C *= 10.0f;
+    }
+    if (p->flags & 0x20) {
+        c->b[3] = 1;
+    }
+    if (p->flags & 0x40) {
+        c->b[4] = 1;
+    }
+    if (p->flags & 1) {
+        c->b[0] = 1;
+    }
+    if (p->flags & 2) {
+        D_80141768(c->id, 1);
+    }
+    if ((p->flags & 4) && c->n6CC < 10) {
+        func_800AC6EC(c->id, 1);
+        c->n6CC++;
+    }
+    if (c->flags & 1) {
+        if (p->flags & 0x01000000) {
+            if (c->id == 0) {
+                D_800F302E = D_800F302A;
+            } else if (c->id == 1) {
+                D_800F3030 = D_800F302A;
+            }
+        }
+        if (p->flags & 0x02000000) {
+            if (c->id == 0) {
+                D_800F3032 = D_800F302C;
+            } else if (c->id == 1) {
+                D_800F3034 = D_800F302C;
+            }
+        }
+        if (p->flags & 0x04000000) {
+            func_800B0614(c->id, 3);
+        }
+        if (p->flags & 0x08000000) {
+            func_800B0614(c->id, 4);
+        }
+        if (p->flags & 0x10000000) {
+            func_800B0614(c->id, 5);
+        }
+        if (p->flags & 0x20000000) {
+            func_800B0614(c->id, 6);
+        }
+        if (p->flags & 0x40000000) {
+            func_800B0614(c->id, 7);
+        }
+        if (p->flags & 0x80000000) {
+            func_800B0614(c->id, 8);
+        }
+    }
+    func_80095970(c);
+    c->scale = c->k[0];
+    c->inv = 1.0f / c->k[0];
+}
 
 void func_80088558(void *arg0, void *arg1) {
     if ((*(s32 *)((u8 *)(arg1) + 0x6D8)) == 2) {
