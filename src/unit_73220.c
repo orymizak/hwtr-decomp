@@ -13,6 +13,16 @@ typedef struct { u8 filter[0x14]; void *state; f32 ratio; s32 upitch; f32 delta;
 typedef struct { u32 input; u32 output; s16 ffcoef; s16 fbcoef; s16 gain; f32 rsinc; f32 rsval; s32 rsdelta; f32 rsgain; LPF_ *lp; RSF_ *rs; } DLF_;
 typedef struct { u8 filter[0x14]; s16 *base; s16 *input; u32 length; DLF_ *delay; u8 section_count; s32 pad28; } FXF_;
 typedef struct { s32 maxVVoices; s32 maxPVoices; s32 maxUpdates; s32 maxFXbusses; void *dmaproc; void *heap; s32 outputRate; u8 fxType; s32 *params; } SCF_;
+typedef struct { u32 w0; u32 w1; } AcmdM_;
+typedef struct CPM_ { struct CPM_ *next; s32 delta; s16 type; s16 unity; union { f32 f; s32 i; void *p; } data; union { f32 f; s32 i; } moredata; } CPM_;
+typedef struct { struct CPM_ *next; s32 delta; s16 type; s16 unity; f32 pitch; s16 volume; u8 pan; u8 fxMix; s32 samples; void *wave; } SPAM_;
+typedef struct { struct CPM_ *next; s32 delta; s16 type; s16 unity; void *wave; } SPM_;
+typedef struct { u8 p0[0x88]; s32 offset; } PVM_;
+typedef struct { struct CPM_ *next; s32 delta; s16 type; s16 pad; PVM_ *pvoice; } FPM_;
+typedef struct { u8 p0[0x44]; f32 ratio; s32 upitch; u8 p4C[8]; void *state; s16 pan; s16 volume; s16 cvolL; s16 cvolR; s16 dryamt; s16 wetamt; u16 lratl; s16 lratm; s16 ltgt; u16 rratl; s16 rratm; s16 rtgt; s32 delta; s32 segEnd; s32 first; CPM_ *ctrlList; CPM_ *ctrlTail; s32 motion; } EnvM_;
+void func_800D535C(PVM_ *pv);
+void func_800D52E4(CPM_ *p);
+AcmdM_ *func_800D2BE0(void *filter, s32 sampleOffset, AcmdM_ *p);
 void _init_lpfilter(void *);
 extern s32 D_800FAED0[];
 extern s32 D_800FAF38[];
@@ -25,7 +35,6 @@ s16 func_800D341C(f64, f64, s32, u16 *);
 AcmdE_ *func_800D3CD0(void *, s16 *, AcmdE_ *);
 u32 osVirtualToPhysical(void *);
 extern DrvG_ *D_800FB174;
-AcmdF_ *func_800D2BE0(void *src, s32 a, AcmdF_ *p);
 s32 alHeapDBAlloc(s32, s32, void *, s32, s32);
 
 
@@ -135,7 +144,147 @@ void func_800D2AAC(s32 arg0, void *arg1, s32 arg2) {
     (*(s32 *)((u8 *)(arg0) + 0x80)) = 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_73220", func_800D2BE0);
+s32 func_800D3158(ObjF_ *e, s32 id, void *param);
+AcmdE_ *func_800D31FC(void *filter, s16 *inp, s16 *outp, s32 outCount, AcmdE_ *p);
+s32 func_800D355C(s32 arg0, s32 arg1, s16 arg2, s32 arg3);
+AcmdM_ *func_800D2BE0(void *filter, s32 sampleOffset, AcmdM_ *p) {
+    AcmdM_ *ptr = p;
+    EnvM_ *e = (EnvM_ *)filter;
+    s16 inp;
+    s32 lastOffset;
+    s32 thisOffset = sampleOffset;
+    s32 samples;
+    s16 loutp = 0;
+    s32 fVol;
+    s32 outCount = 184;
+    CPM_ *thisParam;
+
+    inp = 0;
+
+    while (e->ctrlList != 0) {
+        lastOffset = thisOffset;
+        thisOffset = e->ctrlList->delta;
+        samples = ((thisOffset - lastOffset + 92) / 184) * 184;
+        if (samples == 0)
+            thisOffset = lastOffset;
+        if (samples > outCount)
+            break;
+
+        switch (e->ctrlList->type) {
+        case 13: {
+            SPAM_ *param = (SPAM_ *)e->ctrlList;
+            s32 tmp;
+
+            if (param->unity) {
+                e->upitch = 1;
+            }
+            ((void (*)(void *e, s32 id, void *param))func_800D39F8)(e, 5, param->wave);
+            e->motion = 1;
+            e->first = 1;
+            e->delta = 0;
+            e->segEnd = ((param->samples + 92) / 184) * 184;
+            tmp = ((s32)param->volume * (s32)param->volume) >> 15;
+            e->volume = (s16)tmp;
+            e->pan = param->pan;
+            e->dryamt = D_800FB060[param->fxMix];
+            e->wetamt = D_800FB060[128 - param->fxMix - 1];
+            if (param->samples) {
+                e->cvolL = 1;
+                e->cvolR = 1;
+            } else {
+                e->cvolL = (e->volume * D_800FB060[e->pan]) >> 15;
+                e->cvolR = (e->volume * D_800FB060[128 - e->pan - 1]) >> 15;
+            }
+            e->ratio = param->pitch;
+        } break;
+
+        case 16:
+        case 12:
+        case 11:
+            ptr = ((AcmdM_ * (*)(void *filter, s16 *inp, s16 *outp, s32 outCount, AcmdM_ *p))func_800D31FC)(e, &inp, &loutp, samples, ptr);
+            if (e->delta >= e->segEnd) {
+                e->ltgt = (e->volume * D_800FB060[e->pan]) >> 15;
+                e->rtgt = (e->volume * D_800FB060[128 - e->pan - 1]) >> 15;
+                e->delta = e->segEnd;
+                e->cvolL = e->ltgt;
+                e->cvolR = e->rtgt;
+            } else {
+                e->cvolL = ((s32 (*)(s32 arg0, s32 arg1, s16 arg2, s32 arg3))func_800D355C)(e->cvolL, e->delta, e->lratm, e->lratl);
+                e->cvolR = ((s32 (*)(s32 arg0, s32 arg1, s16 arg2, s32 arg3))func_800D355C)(e->cvolR, e->delta, e->rratm, e->rratl);
+            }
+            if (e->cvolL == 0) e->cvolL = 1;
+            if (e->cvolR == 0) e->cvolR = 1;
+            if (e->ctrlList->type == 12)
+                e->pan = (s16)e->ctrlList->data.i;
+            if (e->ctrlList->type == 11) {
+                e->delta = 0;
+                fVol = (e->ctrlList->data.i);
+                fVol = (fVol * fVol) >> 15;
+                e->volume = (s16)fVol;
+                e->segEnd = ((e->ctrlList->moredata.i + 92) / 184) * 184;
+            }
+            if (e->ctrlList->type == 16) {
+                e->dryamt = D_800FB060[e->ctrlList->data.i];
+                e->wetamt = D_800FB060[128 - e->ctrlList->data.i - 1];
+            }
+            e->first = 1;
+            break;
+
+        case 14: {
+            SPM_ *sp = (SPM_ *)e->ctrlList;
+            if (sp->unity) {
+                e->upitch = 1;
+            }
+            ((void (*)(void *e, s32 id, void *param))func_800D39F8)(e, 5, sp->wave);
+            e->motion = 1;
+        } break;
+
+        case 15:
+            ptr = ((AcmdM_ * (*)(void *filter, s16 *inp, s16 *outp, s32 outCount, AcmdM_ *p))func_800D31FC)(e, &inp, &loutp, samples, ptr);
+            ((s32 (*)(void *e, s32 id, void *param))func_800D3158)(e, 4, 0);
+            break;
+
+        case 0: {
+            FPM_ *param = (FPM_ *)e->ctrlList;
+            param->pvoice->offset = 0;
+            func_800D535C(param->pvoice);
+        } break;
+
+        case 7:
+            ptr = ((AcmdM_ * (*)(void *filter, s16 *inp, s16 *outp, s32 outCount, AcmdM_ *p))func_800D31FC)(e, &inp, &loutp, samples, ptr);
+            e->ratio = e->ctrlList->data.f;
+            break;
+
+        case 8:
+            ptr = ((AcmdM_ * (*)(void *filter, s16 *inp, s16 *outp, s32 outCount, AcmdM_ *p))func_800D31FC)(e, &inp, &loutp, samples, ptr);
+            e->upitch = 1;
+            break;
+
+        case 5:
+            ptr = ((AcmdM_ * (*)(void *filter, s16 *inp, s16 *outp, s32 outCount, AcmdM_ *p))func_800D31FC)(e, &inp, &loutp, samples, ptr);
+            ((void (*)(void *e, s32 id, void *param))func_800D39F8)(e, 5, e->ctrlList->data.p);
+            break;
+
+        default:
+            ptr = ((AcmdM_ * (*)(void *filter, s16 *inp, s16 *outp, s32 outCount, AcmdM_ *p))func_800D31FC)(e, &inp, &loutp, samples, ptr);
+            ((s32 (*)(void *e, s32 id, void *param))func_800D3158)(e, e->ctrlList->type, e->ctrlList->data.p);
+            break;
+        }
+        loutp += (samples << 1);
+        outCount -= samples;
+
+        thisParam = e->ctrlList;
+        e->ctrlList = e->ctrlList->next;
+        if (e->ctrlList == 0)
+            e->ctrlTail = 0;
+        func_800D52E4(thisParam);
+    }
+
+    ptr = ((AcmdM_ * (*)(void *filter, s16 *inp, s16 *outp, s32 outCount, AcmdM_ *p))func_800D31FC)(e, &inp, &loutp, outCount, ptr);
+    if (e->delta > e->segEnd)
+        e->delta = e->segEnd;
+    return ptr;
+}
 
 s32 func_800D3158(ObjF_ *e, s32 id, void *param) {
     switch (id) {

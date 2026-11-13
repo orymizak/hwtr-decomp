@@ -290,7 +290,152 @@ u16 func_8009A9A0(Vec3f_ pos) {
     return bi;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_8009ABC8);
+typedef struct { f32 x; f32 y; f32 z; } V3AB_;
+typedef struct {
+    u8 pad0[4]; u32 flags; u8 pad8[0x4B0]; u8 b4B8; u8 pad4B9[0x205]; u8 b6BE; u8 b6BF; u8 pad6C0[0x50]; u8 b710; u8 pad711[0xF];
+    V3AB_ n720; u8 pad72C[0x44]; s32 w770;
+} PlAB_;
+typedef struct { u8 pad0[4]; u32 flags; u8 pad8[0x54]; s32 type; u8 pad60[4]; PlAB_ *pl; u8 pad68[0xC]; s32 frame; V3AB_ pos; } ObjAB_;
+typedef struct { ObjAB_ *obj; u8 pad4[0xC]; V3AB_ pos; u8 idx; u8 pad1D[3]; } EntAB_;
+typedef struct { ObjAB_ *a; ObjAB_ *b; u8 pad8[0x18]; } PairAB_;
+extern u16 D_8011B350;
+extern EntAB_ D_8011B358[];
+extern u16 D_8011B558;
+extern PairAB_ D_8011B560[];
+extern u8 D_800F38E4[];
+extern void (*D_8014177C)(EntAB_ *, f32);
+void func_8009B0AC(void);
+void func_8009B56C(void);
+void func_8009D574(void);
+void func_8008DF18(EntAB_ *);
+void func_80091DC4(PlAB_ *);
+void func_80098D84(EntAB_ *);
+void func_800A66C0(EntAB_ *);
+void func_80096954(PlAB_ *, EntAB_ *);
+s32 func_800A76D8(void);
+f32 func_800AD774(EntAB_ *, f32);
+void func_8008E0BC(PairAB_ *);
+void func_80098E84(PairAB_ *, s32);
+void func_800A6850(PairAB_ *, s32);
+void func_800ADE1C(PairAB_ *);
+void func_800AEFF8(void);
+void func_8009ABC8(void) {
+    u32 i;
+    EntAB_ *e;
+    PairAB_ *pr;
+    PlAB_ *pl;
+    PlAB_ *pa;
+    PlAB_ *pb;
+    u8 changed;
+    u8 isRacer;
+    u8 isCar;
+    u8 flag;
+    f32 f;
+    f32 r;
+
+    D_8011B558 = 0;
+    D_8011B350 = 0;
+    D_8011B330++;
+    func_8009B0AC();
+    func_8009B56C();
+    func_8009D574();
+    for (i = 0, e = D_8011B358; i < D_8011B350; e++, i++) {
+        changed = e->obj->frame != D_8011B330;
+        if (changed) {
+            func_8008DF18(e);
+        }
+        isRacer = e->obj->type == 3;
+        isCar = 0;
+        if (isRacer || e->obj->type == 4) {
+            isCar = 1;
+        }
+        flag = 0;
+        if (isCar) {
+            flag = e->obj->pl->b4B8;
+        }
+        pl = e->obj->pl;
+        if (isRacer && !flag) {
+            if (changed) {
+                func_80091DC4(pl);
+                if (pl->flags & 1) {
+                    func_80098D84(e);
+                }
+            }
+            func_800A66C0(e);
+            if (pl->b710 && e->pos.x * pl->n720.x + e->pos.y * pl->n720.y + e->pos.z * pl->n720.z > 0.866f) {
+                func_80096954(pl, e);
+            }
+            pl->w770 = func_800A76D8();
+        }
+        e->obj->frame = D_8011B330;
+        e->obj->pos = e->pos;
+        f = D_800F38E4[e->idx] / 100.0f;
+        if (isCar && !isRacer && !flag) {
+            f *= 4.0f;
+        }
+        r = func_800AD774(e, f);
+        if (isRacer & changed) {
+            D_8014177C(e, r);
+        }
+    }
+    for (i = 0, pr = D_8011B560; i < D_8011B558; pr++, i++) {
+        pa = NULL;
+        if (pr->a->type == 3 || pr->a->type == 4) {
+            pa = pr->a->pl;
+        }
+        pb = NULL;
+        if (pr->b->type == 3 || pr->b->type == 4) {
+            pb = pr->b->pl;
+        }
+        func_8008E0BC(pr);
+        if (pa != NULL) {
+            if (pa->flags & 1) {
+                func_80098E84(pr, 0);
+            }
+            func_800A6850(pr, 0);
+        }
+        if (pb != NULL) {
+            if (pb->flags & 1) {
+                func_80098E84(pr, 1);
+            }
+            func_800A6850(pr, 1);
+        }
+        if (pa != NULL) {
+            if (pa->b6BE) {
+                pr->a->flags |= 0x20;
+            }
+            if (pa->b6BF) {
+                pr->a->flags |= 0x40;
+            }
+        }
+        if (pb != NULL) {
+            if (pb->b6BE) {
+                pr->b->flags |= 0x20;
+            }
+            if (pb->b6BF) {
+                pr->b->flags |= 0x40;
+            }
+        }
+        if ((pr->a->flags & 0x20) && (pr->b->flags & 0x20)) {
+            pr->a->flags &= ~0x20;
+            pr->b->flags &= ~0x20;
+        }
+        if ((pr->a->flags & 0x40) && (pr->b->flags & 0x40)) {
+            pr->a->flags &= ~0x40;
+            pr->b->flags &= ~0x40;
+        }
+        func_800ADE1C(pr);
+        if (pa != NULL) {
+            pr->a->flags &= ~0x60;
+        }
+        if (pb != NULL) {
+            pr->b->flags &= ~0x60;
+        }
+        if (pa != NULL && pb != NULL && (pa->flags & 1) && (pb->flags & 1)) {
+            func_800AEFF8();
+        }
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_8009B0AC);
 

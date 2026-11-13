@@ -53,7 +53,50 @@ void func_8007C2C8(void *arg0) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_1CC80", func_8007C318);
+typedef struct { u8 kind; u8 frames; } PDef_;
+typedef struct {
+    u8 pad0[0x60];
+    PDef_ *def;
+    s16 life; u8 flags; u8 r; u8 g; u8 b; u8 kind; u8 frames; s16 h6C; s16 h6E;
+} Prt70_;
+typedef struct { u32 cap; s32 tail; s32 head; Prt70_ *buf; } PPool_;
+extern PDef_ *D_800F2330[];
+static inline void Pool_Fix(PPool_ *pool) {
+    u32 i;
+    Prt70_ *e;
+
+    if (pool != NULL) {
+        i = pool->head + 15;
+        if (i >= pool->cap) {
+            i -= pool->cap;
+        }
+        e = &pool->buf[i];
+        if (e->flags & 4) {
+            e->h6E = -0xE00;
+        }
+    }
+}
+void func_8007C318(PPool_ *pool, Prt70_ *p) {
+    if (pool != NULL) {
+        if (!(p->flags & 0x80)) {
+            p->def = D_800F2330[p->kind];
+            p->kind = p->def->kind;
+            p->frames = p->def->frames;
+        } else {
+            p->frames = 0;
+        }
+        pool->buf[pool->head] = *p;
+        if (++pool->head == pool->cap) {
+            pool->head = 0;
+        }
+        if (pool->head == pool->tail) {
+            if (++pool->tail == pool->cap) {
+                pool->tail = 0;
+            }
+        }
+        Pool_Fix(pool);
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_1CC80", func_8007C434);
 

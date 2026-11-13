@@ -13,6 +13,32 @@ code to compile into a ROM that is byte-for-byte identical to the original.
 legally obtained copy of the ROM: everything else is extracted from it on your machine. Do not share the
 ROM, `assets/`, `asm/` or `build/`.
 
+## Status
+
+The ROM rebuilds identically; the remaining code is still generated assembly.
+
+<!-- progress -->
+| Area | Functions | Code bytes | Progress |
+|---|---|---|---|
+| total | 1415/1917 | 220856/554576 | 39.82% |
+| game | 955/1373 | 132152/446896 | 29.57% |
+| audio | 167/188 | 23744/32608 | 72.82% |
+| system | 82/87 | 9344/10064 | 92.85% |
+| libultra | 211/244 | 55616/60640 | 91.72% |
+| libc | 0/25 | 0/4368 | 0.00% |
+<!-- /progress -->
+
+`make progress` updates this table.
+
+- **Compiler:** a KMC-compatible GCC 2.7.2 reproduces the tested functions exactly. Optimization flags vary
+  per file (`-O2`, `-O3` for most of libultra, `-O0` in a few places).
+- **Libraries:** libultra (SDK 2.0K/L), libc and an audio driver are separated from the game in the ROM map.
+  libultra and libaudio functions were identified by compiling [ultralib](https://github.com/decompals/ultralib)
+  and comparing; ultralib is used as a reference only and is not included.
+- **.rodata:** starts at ROM offset `0x9F3B0` and is split per unit in `asm/data/`. `tools/cc.py` makes the C
+  code use those symbols instead of emitting duplicates.
+- **To do:** the rest of the game code and the audio driver.
+
 ## Required ROM
 
 | | |
@@ -67,32 +93,6 @@ make extract
 | `tools/match/` | matching tools (see its README) |
 
 `make split` generates `asm/`, `assets/` and the linker script from your ROM. None of that is versioned.
-
-## Status
-
-The ROM rebuilds identically; the remaining code is still generated assembly.
-
-<!-- progress -->
-| Area | Functions | Code bytes | Progress |
-|---|---|---|---|
-| total | 1401/1917 | 210324/554576 | 37.93% |
-| game | 946/1373 | 125380/446896 | 28.06% |
-| audio | 165/188 | 21248/32608 | 65.16% |
-| system | 80/87 | 8640/10064 | 85.85% |
-| libultra | 210/244 | 55056/60640 | 90.79% |
-| libc | 0/25 | 0/4368 | 0.00% |
-<!-- /progress -->
-
-`make progress` updates this table.
-
-- **Compiler:** a KMC-compatible GCC 2.7.2 reproduces the tested functions exactly. Optimization flags vary
-  per file (`-O2`, `-O3` for most of libultra, `-O0` in a few places).
-- **Libraries:** libultra (SDK 2.0K/L), libc and an audio driver are separated from the game in the ROM map.
-  libultra and libaudio functions were identified by compiling [ultralib](https://github.com/decompals/ultralib)
-  and comparing; ultralib is used as a reference only and is not included.
-- **.rodata:** starts at ROM offset `0x9F3B0` and is split per unit in `asm/data/`. `tools/cc.py` makes the C
-  code use those symbols instead of emitting duplicates.
-- **To do:** the rest of the game code and the audio driver.
 
 ## License
 

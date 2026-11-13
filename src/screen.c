@@ -3,6 +3,14 @@
 
 #define SCREEN_BG_BUFFER_SIZE 0x4B200
 
+typedef struct { u32 w0; u32 w1; } GfxWT_;
+typedef union { GfxWT_ words; s64 force; } GfxT_;
+typedef struct { GfxT_ *f0; GfxT_ *f4; u8 p8[0x318]; } PoolT_;
+extern PoolT_ D_8014C740[];
+extern s32 D_8014C540;
+extern GfxT_ *D_8014EC78;
+void GfxPool_Grow(PoolT_ *, u32);
+
 extern void *D_800F20F0;
 extern u8 D_800F20F4;
 extern u8 D_800F20F5;
@@ -26,7 +34,7 @@ extern f32 D_800F211C;
 extern f32 D_800F2120;
 extern f32 D_800F2124;
 extern s32 D_800F2168;
-extern s32 D_800F216C;
+extern s32 D_800F216C[];
 extern s32 D_800F2170;
 extern s32 D_800F2174;
 extern s32 D_800F2178;
@@ -78,7 +86,7 @@ s32 func_80077FD0(void) {
     D_800F210A = 0;
     D_800F210E = 240;
     D_800F2168 = 0;
-    D_800F216C = 0;
+    D_800F216C[0] = 0;
     D_800F2170 = 0;
     D_800F2110 = 1.0f;
     D_800F211C = 1000.0f;
@@ -151,7 +159,25 @@ u8 func_80078320(s32 arg0) {
 
 INCLUDE_ASM("asm/nonmatchings/screen", func_80078388);
 
-INCLUDE_ASM("asm/nonmatchings/screen", func_800784F0);
+void func_800804B4(void);
+void func_80080500(void);
+void GfxPools_Swap(s32);
+s32 func_800784F0(void) {
+    func_800804B4();
+    func_80080500();
+    if ((u32) (D_8014EC78 + (2)) >= (u32) D_8014C740[D_8014C540].f4) { D_8014C740[D_8014C540].f0 = D_8014EC78; GfxPool_Grow(&D_8014C740[D_8014C540], (2)); D_8014EC78 = D_8014C740[D_8014C540].f0; };
+    { GfxT_ *_g = (GfxT_ *) (D_8014EC78++); _g->words.w0 = ((u32) (((u32) ( 0xE9) & ((0x01 << (8)) - 1)) << (24))); _g->words.w1 = 0; };
+    { GfxT_ *_g = (GfxT_ *) (D_8014EC78++); _g->words.w0 = ((u32) (((u32) ( 0xDF) & ((0x01 << (8)) - 1)) << (24))); _g->words.w1 = 0; };
+    GfxPools_Swap(0);
+    D_800F20F8 = 1;
+    D_800F20F4 = 0;
+    D_800F2168 = 0;
+    D_800F216C[0] = 0;
+    D_800F2170 = 0;
+    D_800F217C = 0;
+    D_800F2180 = 0;
+    return 1;
+}
 
 u16 func_80078624(void) {
     return D_800F20FA;
@@ -169,7 +195,21 @@ void func_8007863C(s16 x, s16 y, s16 width, s16 height) {
     func_80070F38();
 }
 
-INCLUDE_ASM("asm/nonmatchings/screen", func_80078684);
+typedef struct { f32 m[3][4]; } M34S_;
+extern M34S_ D_800F2138;
+s32 func_80070BA4(M34S_ *);
+void func_80078684(M34S_ *m) {
+    M34S_ t;
+    D_800F2138 = *m;
+    t = *m;
+    D_800F216C[0] = func_80070BA4(&t);
+    if ((u32) (D_8014EC78 + (1)) >= (u32) D_8014C740[D_8014C540].f4) { D_8014C740[D_8014C540].f0 = D_8014EC78; GfxPool_Grow(&D_8014C740[D_8014C540], (1)); D_8014EC78 = D_8014C740[D_8014C540].f0; };
+    {
+        GfxT_ *_g = (GfxT_ *) (D_8014EC78++);
+        _g->words.w0 = 0xDA380003;
+        _g->words.w1 = D_800F216C[0] - 0x80000000;
+    }
+}
 
 void func_800787EC(f32 arg0, f32 arg1, f32 arg2, f32 arg3) {
     func_80078878(arg0, arg1, arg2 * 1.04, arg3);
