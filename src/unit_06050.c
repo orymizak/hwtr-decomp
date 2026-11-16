@@ -614,7 +614,153 @@ void func_80069494(u8 **car, f32 speed, V3f69_ pos, V3f69_ vel) {
     func_8007C318(&D_80145488, &pt);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_800698C0);
+typedef struct { u8 p0[0x6C]; V3f69_ pos; u8 p78[0xC]; V3f69_ vel; f32 speed; f32 r[3][3]; } Bds9_;
+typedef struct { u8 p0[0x18]; f32 w; f32 h; f32 l; u8 p24[0x3C]; Bds9_ *body; } Cars9_;
+typedef struct { Cars9_ *car; V3f69_ pos; V3f69_ n; u8 flag; } Hits9_;
+extern u32 (*D_8014169C)(s32);
+
+extern inline void Sparks9_(V3f69_ pos, V3f69_ vel) {
+    f32 pad[2];
+    Pt94_ pt;
+
+    pt.pos = pos;
+    pt.vel = vel;
+    pt.vel.x /= -15.0f;
+    pt.vel.y /= -15.0f;
+    pt.vel.z = pt.vel.z / -15.0f + 1.0f;
+    pt.b66 = 0x20;
+    pt.h64 = 1000;
+    pt.b6A = 4;
+    pt.s6C = 0x8C00;
+    pt.i4 = 0;
+    pt.f8 = 0.0f;
+    pt.fC = 0.0f;
+    pt.s6E = -0x200;
+    pt.f58 = -3.0f;
+    pt.f0 = 4.0f;
+    pt.c[2] = (rand() & 0xF) - 0x65;
+    pt.c[1] = (rand() & 0xF) - 0x65;
+    pt.c[0] = (rand() & 0xF) - 0x65;
+    pt.f5C = 100.0f;
+    func_8007C318(&D_80145488, &pt);
+}
+
+void func_800698C0(Hits9_ *h, f32 speed) {
+    V3f69_ t;
+    V3f69_ v;
+    V3f69_ ax;
+    V3f69_ ay;
+    V3f69_ az;
+    V3f69_ q;
+    V3f69_ p;
+    Bds9_ *b;
+    f32 dx;
+    f32 dy;
+    f32 dz;
+    f32 d;
+    f32 k;
+
+    if (h->flag == 1) {
+        return;
+    }
+    b = h->car->body;
+    v = b->vel;
+    if (v.x * v.x + v.y * v.y + v.z * v.z > 100.0f) {
+        d = v.x * h->n.x + v.y * h->n.y + v.z * h->n.z;
+        t.x = h->n.x * d;
+        t.y = h->n.y * d;
+        t.z = h->n.z * d;
+        v.x = v.x - t.x;
+        v.y = v.y - t.y;
+        v.z = v.z - t.z;
+        t.x = h->n.x * 10.0f;
+        t.y = h->n.y * 10.0f;
+        t.z = h->n.z * 60.0f;
+        v.x = v.x + t.x;
+        v.y = v.y + t.y;
+        v.z = v.z + t.z;
+        ax.x = b->r[0][0];
+        ax.y = b->r[1][0];
+        ax.z = b->r[2][0];
+        ay.x = b->r[0][1];
+        ay.y = b->r[1][1];
+        ay.z = b->r[2][1];
+        az.x = b->r[0][2];
+        az.y = b->r[1][2];
+        az.z = b->r[2][2];
+        dx = ax.x * h->n.x + ax.y * h->n.y + ax.z * h->n.z;
+        dy = ay.x * h->n.x + ay.y * h->n.y + ay.z * h->n.z;
+        dz = az.x * h->n.x + az.y * h->n.y + az.z * h->n.z;
+        if ((dx < 0.0f ? -dx : dx) > 0.9f) {
+            if (dx > 0.0f) {
+                t.x = -h->car->w;
+                t.y = 0.0f;
+                t.z = 0.0f;
+            } else {
+                t.x = h->car->w;
+                t.y = 0.0f;
+                t.z = 0.0f;
+            }
+            k = D_8014169C(2000) * 0.001f + -1.0f;
+            t.y += k * h->car->h;
+            k = D_8014169C(2000) * 0.001f + -1.0f;
+            t.z += k * h->car->l;
+            p.x = b->r[0][0] * t.x + b->r[0][1] * t.y + b->r[0][2] * t.z;
+            p.y = b->r[1][0] * t.x + b->r[1][1] * t.y + b->r[1][2] * t.z;
+            p.z = b->r[2][0] * t.x + b->r[2][1] * t.y + b->r[2][2] * t.z;
+            q = p;
+            q.x += b->pos.x;
+            q.y += b->pos.y;
+            q.z += b->pos.z;
+        } else if ((dy < 0.0f ? -dy : dy) > 0.9f) {
+            if (dy > 0.0f) {
+                t.x = 0.0f;
+                t.y = -h->car->h;
+                t.z = 0.0f;
+            } else {
+                t.x = 0.0f;
+                t.y = h->car->h;
+                t.z = 0.0f;
+            }
+            k = D_8014169C(2000) * 0.001f + -1.0f;
+            t.x += k * h->car->w;
+            k = D_8014169C(2000) * 0.001f + -1.0f;
+            t.z += k * h->car->l;
+            p.x = b->r[0][0] * t.x + b->r[0][1] * t.y + b->r[0][2] * t.z;
+            p.y = b->r[1][0] * t.x + b->r[1][1] * t.y + b->r[1][2] * t.z;
+            p.z = b->r[2][0] * t.x + b->r[2][1] * t.y + b->r[2][2] * t.z;
+            q = p;
+            q.x += b->pos.x;
+            q.y += b->pos.y;
+            q.z += b->pos.z;
+        } else if ((dz < 0.0f ? -dz : dz) > 0.9f) {
+            if (dz > 0.0f) {
+                t.x = 0.0f;
+                t.y = 0.0f;
+                t.z = -h->car->l;
+            } else {
+                t.x = 0.0f;
+                t.y = 0.0f;
+                t.z = h->car->l;
+            }
+            k = D_8014169C(2000) * 0.001f + -1.0f;
+            t.x += k * h->car->w;
+            k = D_8014169C(2000) * 0.001f + -1.0f;
+            t.y += k * h->car->h;
+            p.x = b->r[0][0] * t.x + b->r[0][1] * t.y + b->r[0][2] * t.z;
+            p.y = b->r[1][0] * t.x + b->r[1][1] * t.y + b->r[1][2] * t.z;
+            p.z = b->r[2][0] * t.x + b->r[2][1] * t.y + b->r[2][2] * t.z;
+            q = p;
+            q.x += b->pos.x;
+            q.y += b->pos.y;
+            q.z += b->pos.z;
+        } else {
+            q = h->pos;
+        }
+        Sparks9_(q, v);
+        func_80069494((u8 **)h, speed, q, v);
+    }
+}
 
 u16 func_8006A1E0(void) {
     return *(u16 *)((u8 *)D_8013816C + 0xC);

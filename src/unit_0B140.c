@@ -9,6 +9,25 @@ typedef struct { u16 button; s8 stick_x; s8 stick_y; u8 errnum; u8 pad; } Pad_;
 typedef struct { u8 buf[8]; s32 st; s32 mode; } PakSt_;
 typedef struct { s32 keys[6]; u8 pad[0x54 - 0x18]; } KeySet_;
 typedef struct { u8 c[0x54]; } Row6B_;
+typedef struct { u32 w0; u32 w1; } GfxWAA_;
+typedef union { GfxWAA_ words; s64 force; } GfxAA_;
+typedef struct { GfxAA_ *f0; GfxAA_ *f4; u8 p8[0x318]; } PoolAA_;
+typedef struct { f32 x; f32 y; f32 z; u8 pC[8]; u8 type; } EntAA_;
+extern PoolAA_ D_8014C740[];
+extern s32 D_8014C540;
+extern GfxAA_ *D_8014EC78;
+void GfxPool_Grow(PoolAA_ *, u32);
+extern s32 D_80101E90;
+extern u8 D_80101E94;
+extern u8 D_80101E95;
+extern u8 D_80101E96;
+extern EntAA_ D_80101EA8[];
+extern f32 D_800F02D0;
+extern u8 D_800F0318[];
+extern u8 D_800F0338[];
+void func_8006B1AC(void);
+void func_8007AFD4(s32, f32 (*)[4], f32 (*)[4]);
+s32 func_80070BA4(f32 (*)[4]);
 extern Row6B_ D_800F043C[];
 extern KeySet_ D_800F0404[];
 void func_800D63C0(Pad_ *, s32);
@@ -58,7 +77,68 @@ s32 func_8006AA34(void) {
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_0B140", func_8006AA84);
+s32 func_8006AA84(s32 cam, f32 *pos) {
+    f32 m[3][4];
+    f32 o[3][4];
+    f32 d[2];
+    s32 i;
+    s32 j;
+    s32 n = 0;
+    s32 mtx;
+    EntAA_ *e;
+    m[0][0] = m[0][1] = m[0][2] = m[0][3] = m[1][0] = m[1][1] = m[1][2] = m[1][3] = m[2][0] = m[2][1] = m[2][2] = m[2][3] = 0.0f;
+    m[0][0] = m[1][1] = m[2][2] = 1.0f;
+    func_8006B1AC();
+    if ((u32) (D_8014EC78 + (9)) >= (u32) D_8014C740[D_8014C540].f4) { D_8014C740[D_8014C540].f0 = D_8014EC78; GfxPool_Grow(&D_8014C740[D_8014C540], (9)); D_8014EC78 = D_8014C740[D_8014C540].f0; };
+    { GfxAA_ *_g = (GfxAA_ *) (D_8014EC78++); _g->words.w0 = (0xDB040004); _g->words.w1 = (u32) ( 1); };
+    { GfxAA_ *_g = (GfxAA_ *) (D_8014EC78++); _g->words.w0 = (0xDB04000C); _g->words.w1 = (u32) ( 1); };
+    { GfxAA_ *_g = (GfxAA_ *) (D_8014EC78++); _g->words.w0 = (0xDB040014); _g->words.w1 = (u32) ( 0xFFFF); };
+    { GfxAA_ *_g = (GfxAA_ *) (D_8014EC78++); _g->words.w0 = (0xDB04001C); _g->words.w1 = (u32) ( 0xFFFF); };
+    { GfxAA_ *_g = (GfxAA_ *) (D_8014EC78++); _g->words.w0 = (0xDE000000); _g->words.w1 = (u32) ( D_800F0338); };
+    { GfxAA_ *_g = (GfxAA_ *) (D_8014EC78++); _g->words.w0 = (0xE7000000); _g->words.w1 = (u32) ( 0); };
+    { GfxAA_ *_g = (GfxAA_ *) (D_8014EC78++); _g->words.w0 = (0xFA000000); _g->words.w1 = (u32) ( (D_80101E94 << 24) | (D_80101E95 << 16) | (D_80101E96 << 8) | 0xC0); };
+    { GfxAA_ *_g = (GfxAA_ *) (D_8014EC78++); _g->words.w0 = (0xE2001D00); _g->words.w1 = (u32) ( 4); };
+    { GfxAA_ *_g = (GfxAA_ *) (D_8014EC78++); _g->words.w0 = (0xEE000000); _g->words.w1 = (u32) ( 0xFFFC0000); };
+    for (i = 0; i < 3; i++) {
+        if ((u32) (D_8014EC78 + (7)) >= (u32) D_8014C740[D_8014C540].f4) { D_8014C740[D_8014C540].f0 = D_8014EC78; GfxPool_Grow(&D_8014C740[D_8014C540], (7)); D_8014EC78 = D_8014C740[D_8014C540].f0; };
+        { GfxAA_ *_g = (GfxAA_ *) (D_8014EC78++); _g->words.w0 = (0xFD900000); _g->words.w1 = (u32) ( (&D_80102208)[i]); };
+        { GfxAA_ *_g = (GfxAA_ *) (D_8014EC78++); _g->words.w0 = (0xF5900000); _g->words.w1 = (u32) ( 0x07000000); };
+        { GfxAA_ *_g = (GfxAA_ *) (D_8014EC78++); _g->words.w0 = (0xE6000000); _g->words.w1 = (u32) ( 0); };
+        { GfxAA_ *_g = (GfxAA_ *) (D_8014EC78++); _g->words.w0 = (0xF3000000); _g->words.w1 = (u32) ( 0x070FF400); };
+        { GfxAA_ *_g = (GfxAA_ *) (D_8014EC78++); _g->words.w0 = (0xE7000000); _g->words.w1 = (u32) ( 0); };
+        { GfxAA_ *_g = (GfxAA_ *) (D_8014EC78++); _g->words.w0 = (0xF5800400); _g->words.w1 = (u32) ( 0); };
+        { GfxAA_ *_g = (GfxAA_ *) (D_8014EC78++); _g->words.w0 = (0xF2000000); _g->words.w1 = (u32) ( 0x0007C07C); };
+        for (j = 0, e = D_80101EA8; j < D_80101E90; e++, j++) {
+            if (e->type == i) {
+                d[0] = pos[0] - e->x;
+                d[1] = pos[1] - e->y;
+                if (d[0] * d[0] + d[1] * d[1] < 1.296e9f) {
+                    m[0][3] = e->x;
+                    m[1][3] = e->y;
+                    m[2][3] = e->z;
+                    func_8007AFD4(cam, m, o);
+                    o[0][3] *= D_800F02D0;
+                    o[1][3] *= D_800F02D0;
+                    o[2][3] *= D_800F02D0;
+                    mtx = func_80070BA4(o);
+                    if ((u32) (D_8014EC78 + (2)) >= (u32) D_8014C740[D_8014C540].f4) { D_8014C740[D_8014C540].f0 = D_8014EC78; GfxPool_Grow(&D_8014C740[D_8014C540], (2)); D_8014EC78 = D_8014C740[D_8014C540].f0; };
+                    { GfxAA_ *_g = (GfxAA_ *) (D_8014EC78++); _g->words.w0 = (0xDA380003); _g->words.w1 = (u32) ( mtx); };
+                    { GfxAA_ *_g = (GfxAA_ *) (D_8014EC78++); _g->words.w0 = (0xDE000000); _g->words.w1 = (u32) ( D_800F0318); };
+                    n += 2;
+                }
+            }
+        }
+    }
+    if ((u32) (D_8014EC78 + (7)) >= (u32) D_8014C740[D_8014C540].f4) { D_8014C740[D_8014C540].f0 = D_8014EC78; GfxPool_Grow(&D_8014C740[D_8014C540], (7)); D_8014EC78 = D_8014C740[D_8014C540].f0; };
+    { GfxAA_ *_g = (GfxAA_ *) (D_8014EC78++); _g->words.w0 = (0xDB040004); _g->words.w1 = (u32) ( 3); };
+    { GfxAA_ *_g = (GfxAA_ *) (D_8014EC78++); _g->words.w0 = (0xDB04000C); _g->words.w1 = (u32) ( 3); };
+    { GfxAA_ *_g = (GfxAA_ *) (D_8014EC78++); _g->words.w0 = (0xDB040014); _g->words.w1 = (u32) ( 0xFFFD); };
+    { GfxAA_ *_g = (GfxAA_ *) (D_8014EC78++); _g->words.w0 = (0xDB04001C); _g->words.w1 = (u32) ( 0xFFFD); };
+    { GfxAA_ *_g = (GfxAA_ *) (D_8014EC78++); _g->words.w0 = (0xE7000000); _g->words.w1 = (u32) ( 0); };
+    { GfxAA_ *_g = (GfxAA_ *) (D_8014EC78++); _g->words.w0 = (0xE3001801); _g->words.w1 = (u32) ( 0); };
+    { GfxAA_ *_g = (GfxAA_ *) (D_8014EC78++); _g->words.w0 = (0xE2001D00); _g->words.w1 = (u32) ( 0); };
+    return n;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_0B140", func_8006B1AC);
 

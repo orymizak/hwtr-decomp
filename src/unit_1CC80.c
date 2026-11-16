@@ -60,6 +60,40 @@ typedef struct {
     s16 life; u8 flags; u8 r; u8 g; u8 b; u8 kind; u8 frames; s16 h6C; s16 h6E;
 } Prt70_;
 typedef struct { u32 cap; s32 tail; s32 head; Prt70_ *buf; } PPool_;
+typedef struct { u32 w0; u32 w1; } GfxWC4_;
+typedef union { GfxWC4_ words; s64 force; } GfxC4_;
+typedef struct { GfxC4_ *f0; GfxC4_ *f4; u8 p8[0x318]; } PoolC4_;
+typedef struct { s16 x; s16 y; s16 z; u16 flag; s16 s; s16 t; u8 c[4]; } VtxC4_;
+typedef struct { s32 w[16]; } Vtx4C4_;
+typedef struct { s32 w[12]; } Vtx3C4_;
+typedef struct { u8 kind; u8 frames; u8 p2[2]; f32 scale; } PDefC4_;
+typedef struct { f32 x; f32 y; f32 z; f32 w; } QC4_;
+typedef struct { f32 x; f32 y; f32 z; } V3C4_;
+typedef struct { QC4_ q; V3C4_ axis; f32 angle; f32 f20; u8 pad24[0x1C]; V3C4_ pos; f32 vx; f32 vy; f32 vz; f32 f58; f32 f5C; PDefC4_ *def; u16 life; u8 flags; u8 r; u8 g; u8 b; u8 kind; u8 frames; u16 h6C; s16 h6E; } PrtC4_;
+typedef struct { u32 cap; s32 tail; s32 head; PrtC4_ *buf; } PoolPC4_;
+extern PoolC4_ D_8014C740[];
+extern s32 D_8014C540;
+extern GfxC4_ *D_8014EC78;
+extern VtxC4_ *D_8014445C;
+extern PDefC4_ *D_801380C8[];
+extern Vtx3C4_ D_800F23C0;
+extern u8 D_800F23A8[];
+extern u8 D_800F2400[];
+extern u8 D_800F2418[];
+extern u8 D_800F2480[];
+extern u8 D_800F2490[];
+extern u8 D_800F24F8[];
+extern u8 D_800F2508[];
+extern u8 D_800F25B0[];
+extern u8 D_800F25C8[];
+void GfxPool_Grow(PoolC4_ *, u32);
+void GfxPools_ReserveVtx(s32);
+s32 func_80070BA4(f32 (*)[4]);
+u8 func_800717C8(f32 (*)[4], f32 (*)[4], f32);
+void func_8007AFD4(f32 (*)[4], f32 (*)[4], f32 (*)[4]);
+GfxC4_ *func_8007F61C(GfxC4_ *, PDefC4_ *);
+void func_800A8670(QC4_ *, f32, V3C4_);
+void func_800A8BA4(QC4_, f32 (*)[3]);
 extern PDef_ *D_800F2330[];
 static inline void Pool_Fix(PPool_ *pool) {
     u32 i;
@@ -98,7 +132,200 @@ void func_8007C318(PPool_ *pool, Prt70_ *p) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_1CC80", func_8007C434);
+void func_8007C434(PoolPC4_ *pool, f32 (*m)[4]) {
+    f32 a[3][4];
+    f32 b[3][4];
+    f32 r[3][3];
+    f32 ma[3][3];
+    f32 mb[3][3];
+    QC4_ q;
+    u8 *last;
+    s32 i;
+    PrtC4_ *p;
+    PDefC4_ *cur;
+    PDefC4_ *tex;
+    s32 k;
+    s32 changed;
+    s32 mtx;
+    u8 *dl;
+    u8 *dl2;
+    f32 c;
+    f32 s;
+    f32 u;
+    f32 v;
+    f32 sc;
+
+    if (pool != NULL) {
+        if ((u32) (D_8014EC78 + (1)) >= (u32) D_8014C740[D_8014C540].f4) { D_8014C740[D_8014C540].f0 = D_8014EC78; GfxPool_Grow(&D_8014C740[D_8014C540], (1)); D_8014EC78 = D_8014C740[D_8014C540].f0; };
+        cur = NULL;
+        changed = 0;
+        last = NULL;
+        { GfxC4_ *_g = (GfxC4_ *) (D_8014EC78++); _g->words.w0 = (0xE7000000); _g->words.w1 = (u32) ( 0); };
+        for (i = pool->tail; ; i++) {
+            if (i == pool->cap) {
+                i = 0;
+            }
+            if (i == pool->head) {
+                break;
+            }
+            p = &pool->buf[i];
+            if (p->life == 0) {
+                continue;
+            }
+            r[0][0] = r[0][1] = r[0][2] = r[1][0] = r[1][1] = r[1][2] = r[2][0] = r[2][1] = r[2][2] = 0.0f;
+            r[0][0] = r[1][1] = r[2][2] = 1.0f;
+            a[0][0] = 1.0f;
+            a[0][1] = 0.0f;
+            a[0][2] = 0.0f;
+            a[0][3] = p->pos.x;
+            a[1][0] = 0.0f;
+            a[1][1] = 1.0f;
+            a[1][2] = 0.0f;
+            a[1][3] = p->pos.y;
+            a[2][0] = 0.0f;
+            a[2][1] = 0.0f;
+            a[2][2] = 1.0f;
+            a[2][3] = p->pos.z;
+            if (func_800717C8(m, a, p->f5C) != 1) {
+                continue;
+            }
+            if (p->flags & 1) {
+                b[0][1] = b[0][2] = b[1][0] = b[1][2] = b[2][0] = b[2][1] = 0.0f;
+                b[0][0] = b[1][1] = b[2][2] = p->q.x / 256.0f * p->def->scale;
+                b[0][3] = m[0][0] * a[0][3] + m[0][1] * a[1][3] + m[0][2] * a[2][3] + m[0][3];
+                b[1][3] = m[1][0] * a[0][3] + m[1][1] * a[1][3] + m[1][2] * a[2][3] + m[1][3];
+                b[2][3] = m[2][0] * a[0][3] + m[2][1] * a[1][3] + m[2][2] * a[2][3] + m[2][3];
+                c = cosf(p->q.z);
+                s = sinf(p->q.z);
+                u = b[0][0] * c + b[0][1] * s; v = b[0][1] * c - b[0][0] * s; b[0][0] = u; b[0][1] = v;
+                u = b[1][0] * c + b[1][1] * s; v = b[1][1] * c - b[1][0] * s; b[1][0] = u; b[1][1] = v;
+                u = b[2][0] * c + b[2][1] * s; v = b[2][1] * c - b[2][0] * s; b[2][0] = u; b[2][1] = v;
+            } else if (p->flags & 8) {
+                func_800A8670(&q, p->angle, p->axis);
+                func_800A8BA4(q, mb);
+                func_800A8BA4(p->q, ma);
+                r[0][0] = mb[0][0] * ma[0][0] + mb[0][1] * ma[1][0] + mb[0][2] * ma[2][0];
+                r[0][1] = mb[0][0] * ma[0][1] + mb[0][1] * ma[1][1] + mb[0][2] * ma[2][1];
+                r[0][2] = mb[0][0] * ma[0][2] + mb[0][1] * ma[1][2] + mb[0][2] * ma[2][2];
+                r[1][0] = mb[1][0] * ma[0][0] + mb[1][1] * ma[1][0] + mb[1][2] * ma[2][0];
+                r[1][1] = mb[1][0] * ma[0][1] + mb[1][1] * ma[1][1] + mb[1][2] * ma[2][1];
+                r[1][2] = mb[1][0] * ma[0][2] + mb[1][1] * ma[1][2] + mb[1][2] * ma[2][2];
+                r[2][0] = mb[2][0] * ma[0][0] + mb[2][1] * ma[1][0] + mb[2][2] * ma[2][0];
+                r[2][1] = mb[2][0] * ma[0][1] + mb[2][1] * ma[1][1] + mb[2][2] * ma[2][1];
+                r[2][2] = mb[2][0] * ma[0][2] + mb[2][1] * ma[1][2] + mb[2][2] * ma[2][2];
+                a[0][0] = r[0][0];
+                a[0][1] = r[0][1];
+                a[0][2] = r[0][2];
+                a[0][3] = p->pos.x;
+                a[1][0] = r[1][0];
+                a[1][1] = r[1][1];
+                a[1][2] = r[1][2];
+                a[1][3] = p->pos.y;
+                a[2][0] = r[2][0];
+                a[2][1] = r[2][1];
+                a[2][2] = r[2][2];
+                a[2][3] = p->pos.z;
+                sc = p->f5C / 256.0f;
+                a[0][0] *= sc;
+                a[0][1] *= sc;
+                a[0][2] *= sc;
+                a[1][0] *= sc;
+                a[1][1] *= sc;
+                a[1][2] *= sc;
+                a[2][0] *= sc;
+                a[2][1] *= sc;
+                a[2][2] *= sc;
+                func_8007AFD4(m, a, b);
+            } else {
+                b[0][0] = m[0][0];
+                b[0][1] = m[0][1];
+                b[0][2] = m[0][2];
+                b[1][0] = m[1][0];
+                b[1][1] = m[1][1];
+                b[1][2] = m[1][2];
+                b[2][0] = m[2][0];
+                b[2][1] = m[2][1];
+                b[2][2] = m[2][2];
+                b[0][3] = m[0][0] * a[0][3] + m[0][1] * a[1][3] + m[0][2] * a[2][3] + m[0][3];
+                b[1][3] = m[1][0] * a[0][3] + m[1][1] * a[1][3] + m[1][2] * a[2][3] + m[1][3];
+                b[2][3] = m[2][0] * a[0][3] + m[2][1] * a[1][3] + m[2][2] * a[2][3] + m[2][3];
+            }
+            mtx = func_80070BA4(b);
+            if ((u32) (D_8014EC78 + (14)) >= (u32) D_8014C740[D_8014C540].f4) { D_8014C740[D_8014C540].f0 = D_8014EC78; GfxPool_Grow(&D_8014C740[D_8014C540], (14)); D_8014EC78 = D_8014C740[D_8014C540].f0; };
+            { GfxC4_ *_g = (GfxC4_ *) (D_8014EC78++); _g->words.w0 = (0xDA380003); _g->words.w1 = (u32) ( mtx - 0x80000000); };
+            { GfxC4_ *_g = (GfxC4_ *) (D_8014EC78++); _g->words.w0 = (0xE7000000); _g->words.w1 = (u32) ( 0); };
+            if (!(p->flags & 0x80)) {
+                k = p->kind;
+                tex = D_801380C8[k];
+                if (cur != tex && k != 0) {
+                    cur = tex;
+                    changed = 1;
+                }
+            } else if (cur != p->def) {
+                cur = p->def;
+                changed = 1;
+            }
+            if (changed == 1) {
+                D_8014EC78 = func_8007F61C(D_8014EC78, cur);
+                changed = 0;
+            }
+            if (p->flags & 2) {
+                dl = D_800F2490;
+                dl2 = D_800F2480;
+            } else if (p->flags & 0x20) {
+                dl = D_800F2508;
+                dl2 = D_800F24F8;
+            } else if (p->flags & 0x40) {
+                dl = D_800F25C8;
+                dl2 = D_800F25B0;
+            } else {
+                dl = D_800F2418;
+                dl2 = D_800F2400;
+                if (cur->kind == 0x10) {
+                    dl2 = D_800F23A8;
+                }
+            }
+            if (last != dl) {
+                last = dl;
+                { GfxC4_ *_g = (GfxC4_ *) (D_8014EC78++); _g->words.w0 = (0xDE000000); _g->words.w1 = (u32) ( (u32) last - 0x80000000); };
+            }
+            { GfxC4_ *_g = (GfxC4_ *) (D_8014EC78++); _g->words.w0 = (0xE7000000); _g->words.w1 = (u32) ( 0); };
+            { GfxC4_ *_g = (GfxC4_ *) (D_8014EC78++); _g->words.w0 = (0xFA000000); _g->words.w1 = (u32) ( (p->r << 24) | (p->g << 16) | (p->b << 8) | (p->h6C >> 8)); };
+            if (p->flags & 2) {
+                GfxPools_ReserveVtx(4);
+                *(Vtx4C4_ *) D_8014445C = *(Vtx4C4_ *) p;
+                { GfxC4_ *_g = (GfxC4_ *) (D_8014EC78++); _g->words.w0 = (0x01004008); _g->words.w1 = (u32) ( (u32) D_8014445C - 0x80000000); };
+                D_8014445C += 4;
+            } else if (p->flags & 0x20) {
+                GfxPools_ReserveVtx(3);
+                *(Vtx3C4_ *) D_8014445C = D_800F23C0;
+                D_8014445C[1].x = 1;
+                D_8014445C[0].x = 0;
+                D_8014445C[0].y = 0;
+                D_8014445C[0].z = 0;
+                D_8014445C[1].y = 1;
+                D_8014445C[1].z = 1;
+                D_8014445C[2].x = p->vx * p->q.x;
+                D_8014445C[2].y = p->vy * p->q.x;
+                D_8014445C[2].z = p->vz * p->q.x;
+                D_8014445C[1].c[0] = D_8014445C[0].c[0] = p->r;
+                D_8014445C[1].c[1] = D_8014445C[0].c[1] = p->g;
+                D_8014445C[1].c[2] = D_8014445C[0].c[2] = p->b;
+                D_8014445C[1].c[3] = D_8014445C[0].c[3] = p->h6C >> 8;
+                D_8014445C[2].c[0] = p->r;
+                D_8014445C[2].c[1] = 0;
+                D_8014445C[2].c[2] = 0;
+                D_8014445C[2].c[3] = p->h6C >> 8;
+                { GfxC4_ *_g = (GfxC4_ *) (D_8014EC78++); _g->words.w0 = (0x01003006); _g->words.w1 = (u32) ( (u32) D_8014445C - 0x80000000); };
+                D_8014445C += 3;
+            }
+            { GfxC4_ *_g = (GfxC4_ *) (D_8014EC78++); _g->words.w0 = (0xDE000000); _g->words.w1 = (u32) ( (u32) dl2 - 0x80000000); };
+        }
+        if ((u32) (D_8014EC78 + (1)) >= (u32) D_8014C740[D_8014C540].f4) { D_8014C740[D_8014C540].f0 = D_8014EC78; GfxPool_Grow(&D_8014C740[D_8014C540], (1)); D_8014EC78 = D_8014C740[D_8014C540].f0; };
+        { GfxC4_ *_g = (GfxC4_ *) (D_8014EC78++); _g->words.w0 = (0xE7000000); _g->words.w1 = (u32) ( 0); };
+    }
+}
+
 
 INCLUDE_ASM("asm/nonmatchings/unit_1CC80", func_8007D14C);
 
@@ -108,7 +335,162 @@ INCLUDE_ASM("asm/nonmatchings/unit_1CC80", func_8007D808);
 
 INCLUDE_ASM("asm/nonmatchings/unit_1CC80", func_8007DB10);
 
-INCLUDE_ASM("asm/nonmatchings/unit_1CC80", func_8007DE54);
+typedef struct { f32 x; f32 y; f32 z; } V3Q_;
+typedef struct { f32 x; f32 y; f32 z; f32 w; } Q4Q_;
+typedef struct { Q4Q_ q; f32 f10; f32 f14; f32 f18; f32 f1C; f32 f20; u8 pad24[0x1C]; V3Q_ pos; f32 vx; f32 vy; f32 vz; f32 f58; f32 f5C; PDef_ *def; s16 life; u8 flags; u8 r; u8 g; u8 b; u8 kind; u8 frames; u16 h6C; s16 h6E; } PrtQ_;
+typedef struct { u32 cap; s32 tail; s32 head; PrtQ_ *buf; } PPoolQ_;
+typedef struct { f32 m[3][4]; } M34Q_;
+extern PPoolQ_ D_80148088;
+s32 rand(void);
+f32 cosf(f32);
+f32 sinf(f32);
+void func_800A83A0(Q4Q_ *, f32 (*)[3]);
+static inline void RotA_(M34Q_ *m, f32 a) {
+    f32 c, s, u, v;
+
+    c = cosf(a);
+    s = sinf(a);
+    u = m->m[0][0] * c + m->m[0][1] * s; v = m->m[0][1] * c - m->m[0][0] * s; m->m[0][0] = u; m->m[0][1] = v;
+    u = m->m[1][0] * c + m->m[1][1] * s; v = m->m[1][1] * c - m->m[1][0] * s; m->m[1][0] = u; m->m[1][1] = v;
+    u = m->m[2][0] * c + m->m[2][1] * s; v = m->m[2][1] * c - m->m[2][0] * s; m->m[2][0] = u; m->m[2][1] = v;
+}
+static inline void RotB_(M34Q_ *m, f32 a) {
+    f32 c, s, u, v;
+
+    c = cosf(a);
+    s = sinf(a);
+    u = m->m[0][0] * c - m->m[0][2] * s; v = m->m[0][2] * c + m->m[0][0] * s; m->m[0][0] = u; m->m[0][2] = v;
+    u = m->m[1][0] * c - m->m[1][2] * s; v = m->m[1][2] * c + m->m[1][0] * s; m->m[1][0] = u; m->m[1][2] = v;
+    u = m->m[2][0] * c - m->m[2][2] * s; v = m->m[2][2] * c + m->m[2][0] * s; m->m[2][0] = u; m->m[2][2] = v;
+}
+static inline void RotC_(M34Q_ *m, f32 a) {
+    f32 c, s, u, v;
+
+    c = cosf(a);
+    s = sinf(a);
+    u = m->m[0][1] * c + m->m[0][2] * s; v = m->m[0][2] * c - m->m[0][1] * s; m->m[0][1] = u; m->m[0][2] = v;
+    u = m->m[1][1] * c + m->m[1][2] * s; v = m->m[1][2] * c - m->m[1][1] * s; m->m[1][1] = u; m->m[1][2] = v;
+    u = m->m[2][1] * c + m->m[2][2] * s; v = m->m[2][2] * c - m->m[2][1] * s; m->m[2][1] = u; m->m[2][2] = v;
+}
+static inline void PushQ_(PPoolQ_ *pool, PrtQ_ *p) {
+    u32 i;
+    PrtQ_ *e;
+
+    if (pool != NULL) {
+        if (!(p->flags & 0x80)) {
+            p->def = D_800F2330[p->kind];
+            p->kind = p->def->kind;
+            p->frames = p->def->frames;
+        } else {
+            p->frames = 0;
+        }
+        pool->buf[pool->head] = *p;
+        if (++pool->head == pool->cap) {
+            pool->head = 0;
+        }
+        if (pool->head == pool->tail) {
+            if (++pool->tail == pool->cap) {
+                pool->tail = 0;
+            }
+        }
+        if (pool != NULL) {
+            i = pool->head + 15;
+            if (i >= pool->cap) {
+                i -= pool->cap;
+            }
+            e = &pool->buf[i];
+            if (e->flags & 4) {
+                e->h6E = -0xE00;
+            }
+        }
+    }
+}
+void func_8007DE54(V3Q_ pos, u32 n, PDef_ *def, V3Q_ vel) {
+    PrtQ_ p;
+    M34Q_ m;
+    V3Q_ t;
+    f32 r[3][3];
+    Q4Q_ q;
+    s32 bits;
+    f32 a;
+
+    p.pos = pos;
+    p.vx = vel.x;
+    p.vy = vel.y;
+    p.vz = vel.z;
+    p.f58 = -5.0f;
+    p.flags = 0x98;
+    p.f5C = n + (rand() & 0xF);
+    p.kind = 0;
+    bits = rand();
+    m.m[0][0] = m.m[0][1] = m.m[0][2] = m.m[0][3] = m.m[1][0] = m.m[1][1] = m.m[1][2] = m.m[1][3] = m.m[2][0] = m.m[2][1] = m.m[2][2] = m.m[2][3] = 0.0f;
+    m.m[0][0] = m.m[1][1] = m.m[2][2] = 1.0f;
+    a = (f32) (rand() & 0x3F) / 32.0f;
+    if (bits & 1) {
+        a = -a;
+    }
+    RotA_(&m, a);
+    a = (f32) (rand() & 0x3F) / 32.0f;
+    if (bits & 2) {
+        a = -a;
+    }
+    RotB_(&m, a);
+    a = (f32) (rand() & 0x3F) / 32.0f;
+    if (bits & 4) {
+        a = -a;
+    }
+    RotC_(&m, a);
+    r[0][0] = m.m[0][0];
+    r[0][1] = m.m[0][1];
+    r[0][2] = m.m[0][2];
+    r[1][0] = m.m[1][0];
+    r[1][1] = m.m[1][1];
+    r[1][2] = m.m[1][2];
+    r[2][0] = m.m[2][0];
+    r[2][1] = m.m[2][1];
+    r[2][2] = m.m[2][2];
+    t.x = m.m[0][3];
+    t.y = m.m[1][3];
+    t.z = m.m[2][3];
+    func_800A83A0(&q, r);
+    p.q = q;
+    a = (f32) (rand() & 0x3F) / 16.0f;
+    if (bits & 0x10) {
+        a = -a;
+    }
+    RotA_(&m, a);
+    a = (f32) (rand() & 0x3F) / 16.0f;
+    if (bits & 0x20) {
+        a = -a;
+    }
+    RotB_(&m, a);
+    a = (f32) (rand() & 0x3F) / 16.0f;
+    if (bits & 0x40) {
+        a = -a;
+    }
+    RotC_(&m, a);
+    p.f10 = m.m[0][0];
+    p.f14 = m.m[0][1];
+    p.f18 = m.m[0][2];
+    a = (f32) (rand() & 0x3F) / 128.0f;
+    if (bits & 8) {
+        a = -a;
+    }
+    p.f1C = a;
+    a = (f32) (rand() & 0x3F) / 128.0f;
+    if (bits & 0x10) {
+        a = -a;
+    }
+    p.f20 = a;
+    p.life = 1000;
+    p.h6C = 0xFFFF;
+    p.h6E = -((rand() & 3) + 8) << 8;
+    p.r = 0xDC;
+    p.g = 0xDC;
+    p.b = 0xDC;
+    p.def = def;
+    PushQ_(&D_80148088, &p);
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_1CC80", func_8007E694);
 

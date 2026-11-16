@@ -26,6 +26,10 @@ extern S_D_800EFF54 D_800EFF54[];
 extern f64 D_800FE868;
 typedef struct { s32 f0; } S_D_800EFC78;
 typedef struct { u8 kind; u8 mode; u8 pad[2]; u8 flag; u8 pad2[0x47]; } Slot_;
+typedef struct { s32 h[6]; f32 rpm; f32 f1C; f32 f20; f32 f24; f32 f28; u8 p2C[0x18]; u8 b44; u8 b45; u8 p46[6]; } Snd29_;
+typedef struct Nd29_ { u8 p0[0x10]; s32 h; struct Nd29_ *next; } Nd29_;
+extern Snd29_ D_800EFF38[];
+void func_800CE4E0(s32, s32);
 extern Slot_ D_800EFF7C[];
 extern u8 D_800F0104;
 u8 *func_800960D8(u8);
@@ -455,7 +459,190 @@ INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80061B94);
 
 INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80061C70);
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80062950);
+s32 func_80062950(void) {
+    s32 p0;
+    s32 p1;
+    s32 p2;
+    s32 p3;
+    s32 p4;
+    s32 p5;
+    s32 i;
+    s32 v;
+    s32 pan;
+    f32 vol;
+    f32 x;
+    f32 zero;
+    f32 pitch;
+    Nd29_ *n;
+
+    n = (*(Nd29_ * *)&D_800F0100);
+    i = 0;
+    p1 = func_800CE428(D_800EFF38[i].h[1]);
+    p0 = func_800CE428(D_800EFF38[i].h[0]);
+    p2 = func_800CE428(D_800EFF38[i].h[2]);
+    p3 = func_800CE428(D_800EFF38[i].h[3]);
+    p4 = func_800CE428(D_800EFF38[i].h[4]);
+    p5 = func_800CE428(D_800EFF38[i].h[5]);
+    if (p0 || p2 || p3 || p4 || p5 || p1) {
+        vol = D_800EFC70;
+        x = D_800EFF38[i].f1C;
+        zero = 0.0f;
+        pan = 0x80;
+        if (p1) {
+            pitch = (D_800EFF38[i].b45 != 13) ? (D_800EFF38[i].rpm - 1000.0f) * 0.0021818182f + -17.0f : 0.0f;
+            pitch = pitch + zero;
+            if (pitch > 12.0) {
+                pitch = 12.0f;
+            }
+            v = vol * 128.0f * (1.0 - x);
+            if (v == 0) {
+                v = 1;
+            }
+            func_800CE480(D_800EFF38[i].h[1], v);
+            func_800CE4E0(D_800EFF38[i].h[1], pan);
+            func_800CE550(D_800EFF38[i].h[1], pitch);
+        }
+        if (p0) {
+            pitch = (D_800EFF38[i].rpm - 1000.0f) * 0.0021818182f + -17.0f;
+            pitch = pitch + zero;
+            if (pitch > 12.0) {
+                pitch = 12.0f;
+            }
+            v = vol * 128.0f * x;
+            if (v == 0) {
+                v = 1;
+            }
+            func_800CE480(D_800EFF38[i].h[0], v);
+            func_800CE4E0(D_800EFF38[i].h[0], pan);
+            func_800CE550(D_800EFF38[i].h[0], pitch);
+        }
+        if (p2) {
+            v = D_800EFF38[i].f20 * 128.0f * vol;
+            if (v == 0) {
+                v = 1;
+            }
+            func_800CE480(D_800EFF38[i].h[2], v);
+            func_800CE4E0(D_800EFF38[i].h[2], pan);
+            func_800CE550(D_800EFF38[i].h[2], zero);
+        }
+        if (p3) {
+            v = D_800EFF38[i].f24 * 128.0f * vol;
+            if (v == 0) {
+                v = 1;
+            }
+            func_800CE480(D_800EFF38[i].h[3], v);
+            func_800CE4E0(D_800EFF38[i].h[3], pan);
+            func_800CE550(D_800EFF38[i].h[3], zero);
+        }
+        if (p4) {
+            v = vol * 128.0f;
+            if (v == 0) {
+                v = 1;
+            }
+            func_800CE480(D_800EFF38[i].h[4], v);
+            func_800CE4E0(D_800EFF38[i].h[4], pan);
+            func_800CE550(D_800EFF38[i].h[4], zero);
+        }
+        if (p5) {
+            v = D_800EFF38[i].f28 * 128.0f * vol;
+            if (v == 0) {
+                v = 1;
+            }
+            func_800CE480(D_800EFF38[i].h[5], v);
+            func_800CE4E0(D_800EFF38[i].h[5], pan);
+            func_800CE550(D_800EFF38[i].h[5], zero);
+        }
+    }
+    i++;
+    p1 = func_800CE428(D_800EFF38[i].h[1]);
+    p0 = func_800CE428(D_800EFF38[i].h[0]);
+    p2 = func_800CE428(D_800EFF38[i].h[2]);
+    p3 = func_800CE428(D_800EFF38[i].h[3]);
+    p4 = func_800CE428(D_800EFF38[i].h[4]);
+    p5 = func_800CE428(D_800EFF38[i].h[5]);
+    if (p0 || p2 || p3 || p4 || p5 || p1) {
+        vol = D_800EFC70;
+        x = D_800EFF38[i].f1C;
+        zero = 0.0f;
+        pan = 0x80;
+        if (p1) {
+            pitch = (D_800EFF38[i].b45 != 13) ? (D_800EFF38[i].rpm - 1000.0f) * 0.0021818182f + -17.0f : 0.0f;
+            pitch = pitch + zero;
+            if (pitch > 12.0) {
+                pitch = 12.0f;
+            }
+            v = vol * 128.0f * (1.0 - x);
+            if (v == 0) {
+                v = 1;
+            }
+            func_800CE480(D_800EFF38[i].h[1], v);
+            func_800CE4E0(D_800EFF38[i].h[1], pan);
+            func_800CE550(D_800EFF38[i].h[1], pitch);
+        }
+        if (p0) {
+            if (D_800EFF38[i].b44 != 14) {
+                pitch = (D_800EFF38[i].rpm - 1000.0f) * 0.0021818182f + -17.0f;
+            } else {
+                pitch = 0.0f;
+            }
+            pitch = pitch + zero;
+            if (pitch > 12.0) {
+                pitch = 12.0f;
+            }
+            v = vol * 128.0f;
+            if (v == 0) {
+                v = 1;
+            }
+            func_800CE480(D_800EFF38[i].h[0], v);
+            func_800CE4E0(D_800EFF38[i].h[0], pan);
+            func_800CE550(D_800EFF38[i].h[0], pitch);
+        }
+        if (p2) {
+            v = D_800EFF38[i].f20 * 128.0f * vol;
+            if (v == 0) {
+                v = 1;
+            }
+            func_800CE480(D_800EFF38[i].h[2], v);
+            func_800CE4E0(D_800EFF38[i].h[2], pan);
+            func_800CE550(D_800EFF38[i].h[2], zero);
+        }
+        if (p3) {
+            v = D_800EFF38[i].f24 * 128.0f * vol;
+            if (v == 0) {
+                v = 1;
+            }
+            func_800CE480(D_800EFF38[i].h[3], v);
+            func_800CE4E0(D_800EFF38[i].h[3], pan);
+            func_800CE550(D_800EFF38[i].h[3], zero);
+        }
+        if (p4) {
+            v = vol * 128.0f;
+            if (v == 0) {
+                v = 1;
+            }
+            func_800CE480(D_800EFF38[i].h[4], v);
+            func_800CE4E0(D_800EFF38[i].h[4], pan);
+            func_800CE550(D_800EFF38[i].h[4], zero);
+        }
+        if (p5) {
+            v = D_800EFF38[i].f28 * 128.0f * vol;
+            if (v == 0) {
+                v = 1;
+            }
+            func_800CE480(D_800EFF38[i].h[5], v);
+            func_800CE4E0(D_800EFF38[i].h[5], pan);
+            func_800CE550(D_800EFF38[i].h[5], zero);
+        }
+    }
+    while (n != NULL) {
+        if (n->h != 0) {
+            ((void (*)(s32, s32))func_800CE374)(n->h, 1);
+            n->h = 0;
+        }
+        n = n->next;
+    }
+    return 1;
+}
 
 s32 func_80063434(Vec3I_ v) {
     D_800EFF08 = v;
