@@ -1,5 +1,6 @@
 #include "common.h"
 #include "include_asm.h"
+#include "car.h"
 extern u8 D_800F3B3C[];
 extern u16 D_800F3B34[];
 extern u16 D_800F3B38[];
@@ -19,7 +20,7 @@ extern void (*D_801416E0)(s32, s32, s32);
 s32 sprintf(char *, const char *, ...);
 extern E0Cb_ D_800F3B18[];
 extern u8 D_800F3B42;
-u8 *func_800960D8(u8);
+Car *func_800960D8(u8);
 extern E240_ D_800F3951[];
 extern E240_ D_800F3961[];
 extern s32 (*D_801416D4)(s32);
@@ -50,7 +51,7 @@ INCLUDE_ASM("asm/nonmatchings/unit_49CF0", func_800A9604);
 
 void func_800A978C(u8 idx, u8 flag) {
     u8 buf[80];
-    u8 *p;
+    Car *p;
     u8 *c;
     s32 x;
     s32 color;
@@ -67,7 +68,7 @@ void func_800A978C(u8 idx, u8 flag) {
     }
     D_801416DC(1, 1, x, color, 2);
     D_801416E0(0, 0xFF, 0);
-    t = D_800F3B30 - (((s32 (*)(void))func_800A76D8)() - *(s32 *)(p + 0x440));
+    t = D_800F3B30 - (((s32 (*)(void))func_800A76D8)() - p->unk440);
     if (t < 0) {
         t = 0;
     }
@@ -94,7 +95,7 @@ void func_800A978C(u8 idx, u8 flag) {
 
 void func_800A99D0(u8 idx, u8 flag) {
     u8 buf[80];
-    u8 *p;
+    Car *p;
     u8 *c;
     s32 x;
     s32 color;
@@ -111,7 +112,7 @@ void func_800A99D0(u8 idx, u8 flag) {
     }
     D_801416DC(1, 1, x, color, 2);
     D_801416E0(0, 0xFF, 0);
-    t = ((s32 (*)(void))func_800A76D8)() - *(s32 *)(p + (p[0x478] << 2) + 0x44C);
+    t = ((s32 (*)(void))func_800A76D8)() - p->lapStart[p->lap - 1];
     sprintf(buf, D_80100A9C, t / 60000, (t % 60000) / 1000, ((t % 60000) % 1000) / 100, (((t % 60000) % 1000) % 100) / 10);
     if (flag == 0) {
         x = 0xCF;
@@ -246,7 +247,7 @@ INCLUDE_ASM("asm/nonmatchings/unit_49CF0", func_800ABF2C);
 void func_800AC6EC(u8 i, s32 n) {
     if (i < D_800F3B42) {
         D_800F3B18[i].t = ((s32 (*)(void))func_800A76D8)();
-        D_800F3B18[i].a = func_800960D8((&D_800F3B40)[i])[0x6CC];
+        D_800F3B18[i].a = func_800960D8((&D_800F3B40)[i])->n6CC;
         D_800F3B18[i].b = n;
         if (D_800F3B18[i].a + (u8)n >= 11) {
             D_800F3B18[i].b = 10 - D_800F3B18[i].a;

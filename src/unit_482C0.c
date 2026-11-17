@@ -1,5 +1,6 @@
 #include "common.h"
 #include "include_asm.h"
+#include "car.h"
 typedef struct { s32 flags; u8 p4[0x13]; u8 b17; u8 p18; u8 b19; u8 b1A; } TrkCfg_;
 typedef struct { u8 p0[0x440]; s32 w440; u8 b444[0xC]; s32 w450[8]; s32 w470; u8 p474[4]; u8 b478; u8 b479; } CrA76_;
 extern void (*D_801416E4)(s32);
@@ -8,7 +9,7 @@ extern s32 D_800F3914;
 s32 func_8009610C(s32);
 extern void (*D_8014C0A8)(s32, s32, f32, f32);
 void func_800ABEC8(u8, u32, u8);
-void *func_800960D8(u32);
+Car *func_800960D8(u8);
 extern s32 D_800F3908;
 extern s32 D_800F390C;
 extern s32 D_800F3910;
@@ -66,7 +67,7 @@ void func_800A76FC(void) {
 }
 
 s32 func_800A780C(u8 ch, u8 cp) {
-    u8 *c;
+    Car *c;
     u8 ok;
     u8 k;
     u8 i;
@@ -75,27 +76,27 @@ s32 func_800A780C(u8 ch, u8 cp) {
 
     c = func_800960D8(ch);
     best = 0;
-    if (c[0x47B] != 0) {
+    if (c->unk47B != 0) {
         return 1;
     }
     k = cp - 1;
     ok = 1;
     for (i = 0; i < k; i++) {
-        if ((c + i)[0x444] == 0) {
+        if (c->checkpoints[i] == 0) {
             ok = 0;
             break;
         }
     }
     if ((D_800F391A == 0) & (ok == 0)) {
         if ((u8)func_8009610C(ch) != 0) {
-            if (c[0x479] != 0 || k != D_800F3910 - 1) {
-                if (k != c[0x479] - 1) {
+            if (c->unk479 != 0 || k != D_800F3910 - 1) {
+                if (k != c->unk479 - 1) {
                     D_8014C0A8(11, 0, 1.0f, 1.0f);
                 }
             }
         }
     }
-    if (!ok || (c + k)[0x444] != 0) {
+    if (!ok || c->checkpoints[k] != 0) {
         return 0;
     }
     if (k < (u32)(D_800F3910 - 1)) {
@@ -104,8 +105,8 @@ s32 func_800A780C(u8 ch, u8 cp) {
                 D_8014C0A8(10, 0, 1.0f, 1.0f);
             }
         }
-        (c + k)[0x444] = 1;
-        c[0x479]++;
+        c->checkpoints[k] = 1;
+        c->unk479++;
         goto done;
     }
     if (k != D_800F3910 - 1) {
@@ -117,33 +118,33 @@ s32 func_800A780C(u8 ch, u8 cp) {
         }
         t = D_800F3900;
         if (D_800F3918 == 1) {
-            if (*(u32 *)(c + 0x470) == 0 || t - *(u32 *)(c + 0x450) < *(u32 *)(c + 0x470)) {
-                *(u32 *)(c + 0x470) = t - *(u32 *)(c + 0x450);
+            if (c->bestLap == 0 || t - c->lapStart[0] < c->bestLap) {
+                c->bestLap = t - c->lapStart[0];
                 best = 1;
             }
             if ((u8)func_8009610C(ch) != 0) {
-                func_800ABEC8(c[0xC], t - *(u32 *)(c + 0x450), best);
+                func_800ABEC8(c->unk00C, t - c->lapStart[0], best);
             }
-            *(u32 *)(c + 0x450) = t;
-            c[0x478] = 1;
+            c->lapStart[0] = t;
+            c->lap = 1;
         } else {
-            if (*(u32 *)(c + 0x470) == 0 || t - *(u32 *)(c + (c[0x478] << 2) + 0x44C) < *(u32 *)(c + 0x470)) {
-                *(u32 *)(c + 0x470) = t - *(u32 *)(c + (c[0x478] << 2) + 0x44C);
+            if (c->bestLap == 0 || t - c->lapStart[c->lap - 1] < c->bestLap) {
+                c->bestLap = t - c->lapStart[c->lap - 1];
                 best = 1;
             }
             if ((u8)func_8009610C(ch) != 0) {
-                func_800ABEC8(c[0xC], t - *(u32 *)(c + (c[0x478] << 2) + 0x44C), best);
+                func_800ABEC8(c->unk00C, t - c->lapStart[c->lap - 1], best);
             }
-            *(u32 *)(c + c[0x478] * 4 + 0x450) = t;
-            c[0x478]++;
-            if (D_800F3919 == 0 && c[0x478] == D_800F390C) {
-                c[0x47B] = 1;
+            c->lapStart[c->lap] = t;
+            c->lap++;
+            if (D_800F3919 == 0 && c->lap == D_800F390C) {
+                c->unk47B = 1;
             }
         }
     }
-    c[0x479] = 0;
+    c->unk479 = 0;
     for (i = 0; i < 10; i++) {
-        (c + i)[0x444] = 0;
+        c->checkpoints[i] = 0;
     }
 done:
     return 1;
@@ -179,15 +180,15 @@ s32 func_800A7C2C(void) {
 }
 
 s32 func_800A7C34(u8 i) {
-    u8 *p = func_800960D8(i);
+    Car *p = func_800960D8(i);
 
-    if (p[0x47B] != 0) {
-        *(s32 *)(p + 0x14) = 0;
-        *(s32 *)(p + 0x18) = 0;
-        p[0x24] = 1;
-        p[0x25] = 0;
-        p[0x27] = 0;
-        *(f32 *)(p + 0x10) = 1.0f;
+    if (p->unk47B != 0) {
+        p->unk014 = 0.0f;
+        p->unk018 = 0.0f;
+        p->unk024 = 1;
+        p->unk025 = 0;
+        p->unk027 = 0;
+        p->yaw = 1.0f;
         return 1;
     }
     return 0;

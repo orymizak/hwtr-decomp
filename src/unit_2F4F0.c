@@ -1,5 +1,6 @@
 #include "common.h"
 #include "include_asm.h"
+#include "car.h"
 typedef struct { s32 a; s32 b; s32 c; } V12_;
 typedef struct { f32 x; f32 y; f32 z; } V3f_;
 extern V12_ D_8011855C;
@@ -11,10 +12,9 @@ typedef struct { u8 on; u8 pad[0x63]; } Ent64_;
 extern Ent64_ D_801185B4[];
 extern u8 D_80118620;
 typedef struct { s32 x; s32 y; s32 z; } Pos_;
-typedef struct { f32 x; f32 y; f32 z; } Vec3f_;
+typedef Vec3f Vec3f_;
 typedef struct { u8 p0[0x44]; s32 mode; u8 pt; u8 car; u8 p4A[2]; u8 b4C; u8 p4D[3]; s32 timer; } Cam90_;
 typedef struct { u8 p0[4]; Vec3f_ pos; Vec3f_ vel; f32 m[3][3]; f32 fov; s32 mode; u8 pt; u8 car; u8 b4A; u8 b4B; u8 b4C; u8 p4D[7]; u32 shake; f32 f58; u8 b5C; u8 p5D[3]; u32 b60; } CamE_;
-typedef struct { u8 p0[4]; s32 flags; u8 p8[0x84]; Vec3f_ p8C; Vec3f_ pos; u8 pA4[0xC]; Vec3f_ vel; f32 fBC; f32 m[3][3]; u8 pE4[0x58]; u8 b13C; u8 p13D[0x2A7]; u8 b3E4; u8 p3E5[2]; u8 b3E7; u8 p3E8[0xD8]; u8 b4C0; u8 p4C1[3]; f32 f4C4; u8 p4C8[0x27C]; u8 b744; } CarE_;
 typedef struct { s32 mode; Vec3f_ ofs; f32 dist; } CamT_;
 f32 sinf(f32);
 extern u8 D_80118550;
@@ -32,7 +32,7 @@ extern u8 (*D_8014169C)(s32);
 extern u8 D_80118621;
 extern s32 *D_80118624;
 s32 func_80096100(void);
-u8 *func_800960D8(u8);
+Car *func_800960D8(u8);
 f32 sqrtf(f32);
 extern u8 D_80118558[];
 s32 func_800A5894(void);
@@ -68,7 +68,7 @@ void func_8008EA6C(u32 dt) {
     u32 i;
     CamE_ *cam;
     f32 k;
-    CarE_ *car;
+    Car *car;
     u8 vis;
     u8 b3E7;
     f32 f4C4;
@@ -94,25 +94,25 @@ void func_8008EA6C(u32 dt) {
             continue;
         }
         vis = 1;
-        car = (CarE_ *)func_800960D8((*cam).car);
-        pos.x = car->pos.x + car->p8C.x;
-        pos.y = car->pos.y + car->p8C.y;
-        pos.z = car->pos.z + car->p8C.z;
-        m[0][0] = car->m[0][0];
-        m[0][1] = car->m[0][1];
-        m[0][2] = car->m[0][2];
-        m[1][0] = car->m[1][0];
-        m[1][1] = car->m[1][1];
-        m[1][2] = car->m[1][2];
-        m[2][0] = car->m[2][0];
-        m[2][1] = car->m[2][1];
-        m[2][2] = car->m[2][2];
+        car = func_800960D8((*cam).car);
+        pos.x = car->pos.x + car->v8C.x;
+        pos.y = car->pos.y + car->v8C.y;
+        pos.z = car->pos.z + car->v8C.z;
+        m[0][0] = car->rot.m[0][0];
+        m[0][1] = car->rot.m[0][1];
+        m[0][2] = car->rot.m[0][2];
+        m[1][0] = car->rot.m[1][0];
+        m[1][1] = car->rot.m[1][1];
+        m[1][2] = car->rot.m[1][2];
+        m[2][0] = car->rot.m[2][0];
+        m[2][1] = car->rot.m[2][1];
+        m[2][2] = car->rot.m[2][2];
         vel = car->vel;
         flags = car->flags;
         if (func_8008D3AC() != 0) {
             vis = car->b13C;
         }
-        b3E7 = car->b3E7;
+        b3E7 = car->cnt3E7;
         b4C0 = car->b4C0;
         f4C4 = car->f4C4;
         fBC = car->fBC;
@@ -331,7 +331,7 @@ void func_8008EA6C(u32 dt) {
                 (*cam).mode = (((CamT_ *)D_80118624)[idx]).mode;
                 (*cam).b4C = 1;
                 if ((*cam).b60 != 0) {
-                    car->b3E7 = car->b3E4;
+                    car->cnt3E7 = car->nPoints;
                     (*cam).b60 = 0;
                 }
             }
@@ -394,7 +394,7 @@ void func_80090578(Cam90_ *cam, u32 dt) {
     u32 bestCount;
     u32 bestPt;
     u32 bestCar;
-    u8 *car;
+    Car *car;
     s32 v;
     s32 w;
 
@@ -420,11 +420,11 @@ void func_80090578(Cam90_ *cam, u32 dt) {
             mind = 0.0f;
             for (j = 0; j < func_80096100(); j++) {
                 car = func_800960D8(j);
-                d.x = p.x - *(f32 *)(car + 0x98);
-                d.y = p.y - *(f32 *)(car + 0x9C);
-                d.z = p.z - *(f32 *)(car + 0xA0);
+                d.x = p.x - car->pos.x;
+                d.y = p.y - car->pos.y;
+                d.z = p.z - car->pos.z;
                 dist = sqrtf(d.x * d.x + d.y * d.y + d.z * d.z);
-                if (dist < radius && 0.0f < d.x * *(f32 *)(car + 0xB0) + d.y * *(f32 *)(car + 0xB4) + d.z * *(f32 *)(car + 0xB8)) {
+                if (dist < radius && 0.0f < d.x * car->vel.x + d.y * car->vel.y + d.z * car->vel.z) {
                     count++;
                     if (mind < dist) {
                         mind = dist;
@@ -450,7 +450,7 @@ void func_80090578(Cam90_ *cam, u32 dt) {
             cam->mode = w;
             for (j = 0; j < 10; j++) {
                 cam->car = D_8014169C(func_80096100());
-                if (func_800960D8(cam->car)[0x4B8] == 0) {
+                if (func_800960D8(cam->car)->b4B8 == 0) {
                     break;
                 }
             }

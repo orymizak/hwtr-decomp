@@ -29,7 +29,7 @@ s32 func_80089FC4(u8 *);
 extern Evt18_ *D_800F3020;
 extern u32 D_800F3024;
 extern void (*D_80141714)(u8, s32, f32);
-u8 *func_800960D8(u8);
+Car *func_800960D8(u8);
 s32 func_800A76D8(void);
 extern Lnk89_ **D_80118470[];
 void func_800A82F8(Lnk89_ **, s32 *);
@@ -312,7 +312,7 @@ void func_8008AD04(void) {
     Lnk89_ *l;
     Lnk89_ *next;
     Tmr89_ *t;
-    u8 *p;
+    Car *p;
 
     now = func_800A76D8();
     for (i = 0; i < 6; i++) {
@@ -333,7 +333,7 @@ void func_8008AD04(void) {
             l = next;
         }
         if (n == 0) {
-            *(s32 *) (p + 0x6DC) = 0;
+            *(s32 *) ((u8 *)p + 0x6DC) = 0;
         }
     }
     for (i = 0; i < D_800F3024; i++) {

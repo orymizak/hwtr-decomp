@@ -1,5 +1,6 @@
 #include "common.h"
 #include "include_asm.h"
+#include "car.h"
 extern s32 D_8011B330;
 extern s32 D_8011C820;
 extern s32 D_8011C824;
@@ -79,7 +80,7 @@ typedef struct {
     /* 0x58 */ u8 p58[4];
     /* 0x5C */ s32 type;
     /* 0x60 */ void *p60;
-    /* 0x64 */ u8 *car;
+    /* 0x64 */ Car *car;
     /* 0x68 */ u8 p68[8];
     /* 0x70 */ Nd4_ *list;
 } RObj_;
@@ -456,8 +457,7 @@ typedef struct { ObjAB_ *a; ObjAB_ *b; u8 pad8[0x18]; } PairAB_;
 typedef struct { f32 x; f32 y; f32 z; } V3C7_;
 typedef struct { V3C7_ pos; f32 ext[3]; f32 m[3][3]; u8 cnt; u8 p3D[7]; V3C7_ *verts; u8 p48[4]; f32 rad; } BoxC7_;
 typedef struct { u8 p0[0x60]; V3C7_ v60; V3C7_ v6C; u8 p78[0xC]; V3C7_ off; u8 p90[0x80]; u8 b110; } PrC7_;
-typedef struct { u8 p0[0x3E4]; u8 n; u8 p3E5[0x15B]; u32 w540; u8 p544[0x179]; u8 b6BD; } CarC7_;
-typedef struct { s32 id; u32 flags; u8 p8[4]; BoxC7_ b; s32 type; PrC7_ *p60; CarC7_ *car; u8 p68[0x1C]; u32 w84; } ObjC7_;
+typedef struct { s32 id; u32 flags; u8 p8[4]; BoxC7_ b; s32 type; PrC7_ *p60; Car *car; u8 p68[0x1C]; u32 w84; } ObjC7_;
 typedef struct { ObjC7_ *a; ObjC7_ *b; V3C7_ p; V3C7_ n; } RecC7_;
 typedef struct { f32 x; f32 y; f32 z; u8 pC[0x40]; f32 rad; } B_56C;
 typedef struct { u8 p0[0x110]; u8 b110; } P60_56C;
@@ -475,7 +475,7 @@ typedef struct NdCD8_ { s32 a; struct NdCD8_ *prev; struct NdCD8_ *next; s32 c; 
 typedef struct { u8 p0[4]; u32 flags; } CrD57_;
 typedef struct { u8 p0[4]; u32 flags; u8 p8[0x4C]; u16 *p54; u8 p58[0xC]; CrD57_ *car; } ObD57_;
 typedef struct LnD57_ { ObD57_ *obj; s32 x; struct LnD57_ *next; } LnD57_;
-void func_800961B0(u8 *p, u8 id, u8 flip);
+void func_800961B0(Car *p, u8 id, u8 flip);
 void func_8009DBF8(void);
 void func_8009EC8C(void);
 void func_8009F7D4(void);
@@ -745,13 +745,13 @@ void func_8009C758(ObjC7_ *a, ObjC7_ *b) {
     qb = b->p60;
     y = pb;
     if (a->type == 3) {
-        va += a->car->n;
-        if (a->car->b6BD != 0 || (a->car->w540 & 1)) {
+        va += a->car->nPoints;
+        if (a->car->pickupFx[1] != 0 || (a->car->w540 & 1)) {
             flag = 1;
         }
     }
     if (b->type == 3) {
-        vb += b->car->n;
+        vb += b->car->nPoints;
     }
     code = D_8011B7A0[a->id][b->id];
     if (code == 0 && a->p60 != NULL) {
@@ -971,11 +971,11 @@ void func_8009D574(void) {
         o = it->obj;
         c = o->car;
         if (c->flags & 0x800) {
-            func_800961B0((u8 *)c, 0, 1);
+            func_800961B0(c, 0, 1);
         } else if (c->flags & 0x1000) {
-            func_800961B0((u8 *)c, 0, 0);
+            func_800961B0(c, 0, 0);
         } else if (c->flags & 0x2000) {
-            func_800961B0((u8 *)c, 0, 0);
+            func_800961B0(c, 0, 0);
         }
     }
 }
@@ -1110,83 +1110,83 @@ INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_800A34B4);
 
 void func_800A3978(RObj_ *o, u16 idx, s32 arg2) {
     Room_ *r;
-    u8 *c;
+    Car *c;
     u32 m;
 
     r = &D_8011B334->rooms[idx];
     if (o->type == 3 || o->type == 4) {
         c = o->car;
-        if (c[0x4B8] == 0) {
+        if (c->b4B8 == 0) {
             if ((r->flags & 1) && (u8)arg2 == 0) {
-                func_800A780C(c[0], r->param.b[1], 1);
+                func_800A780C(c->id, r->param.b[1], 1);
             }
             if (r->flags & 0x10) {
-                *(s32 *)(c + 8) |= 1;
+                c->flags2 |= 1;
             } else {
-                *(s32 *)(c + 8) &= ~1;
+                c->flags2 &= ~1;
             }
             if ((r->flags & 8) || (D_8011C820 & 0x80)) {
-                *(s32 *)(c + 8) |= 2;
+                c->flags2 |= 2;
             } else {
-                *(s32 *)(c + 8) &= ~2;
+                c->flags2 &= ~2;
             }
-            *(s32 *)(c + 4) &= ~0x1C;
+            c->flags &= ~0x1C;
             m = r->flags & 0x9000;
             if (m == 0x9000) {
-                *(s32 *)(c + 4) |= 0x10;
+                c->flags |= 0x10;
             } else if (m == 0x8000) {
-                *(s32 *)(c + 4) |= 8;
+                c->flags |= 8;
             } else if (m == 0x1000) {
-                *(s32 *)(c + 4) |= 4;
+                c->flags |= 4;
             }
             if (r->flags & 0x40) {
-                *(s32 *)(c + 4) |= 0x20;
+                c->flags |= 0x20;
             } else {
-                *(s32 *)(c + 4) &= ~0x20;
+                c->flags &= ~0x20;
             }
             if (r->flags & 0x80) {
-                *(s32 *)(c + 4) |= 0x40;
+                c->flags |= 0x40;
             } else {
-                *(s32 *)(c + 4) &= ~0x40;
+                c->flags &= ~0x40;
             }
             if (r->flags & 4) {
-                *(s32 *)(c + 4) |= 0x80;
+                c->flags |= 0x80;
             } else {
-                *(s32 *)(c + 4) &= ~0x80;
+                c->flags &= ~0x80;
             }
             if (r->flags & 0x100) {
-                *(s32 *)(c + 4) |= 0x100;
+                c->flags |= 0x100;
             } else {
-                *(s32 *)(c + 4) &= ~0x100;
+                c->flags &= ~0x100;
             }
             if (r->flags & 0x200) {
-                *(s32 *)(c + 4) |= 0x200;
+                c->flags |= 0x200;
             } else {
-                *(s32 *)(c + 4) &= ~0x200;
+                c->flags &= ~0x200;
             }
             if (r->flags & 0x400) {
-                *(s32 *)(c + 4) |= 0x4000;
+                c->flags |= 0x4000;
             } else {
-                *(s32 *)(c + 4) &= ~0x4000;
-                *(s32 *)(c + 0x474) = r->time * 10;
-                if ((u32)*(s32 *)(c + 0x474) < D_8011C830[c[0x479]]) {
-                    *(s32 *)(c + 0x474) += D_8011C824;
+                c->flags &= ~0x4000;
+                c->unk474 = r->time * 10;
+                if ((u32)c->unk474 < D_8011C830[c->unk479]) {
+                    c->unk474 += D_8011C824;
                 }
             }
             if (r->flags & 0x2000) {
-                *(s32 *)(c + 4) |= 0x400;
+                c->flags |= 0x400;
             } else {
-                *(f32 *)(c + 0x80) = 0.0f;
-                *(f32 *)(c + 0x84) = 0.0f;
-                *(s32 *)(c + 4) &= ~0x400;
-                *(f32 *)(c + 0x88) = -1.0f;
+                c->up.x = 0.0f;
+                c->up.y = 0.0f;
+                c->flags &= ~0x400;
+                c->up.z = -1.0f;
             }
             if (r->flags & 0x20) {
-                *(f32 *)(c + 0x7C) = r->param.val / 256.0f * 386.0f;
+                c->topSpeed = r->param.val / 256.0f * 386.0f;
             } else {
-                *(f32 *)(c + 0x7C) = 386.0f;
+                c->topSpeed = 386.0f;
             }
-            if ((r->flags & 0x4000) && *(s32 *)(c + 0x6D8) == 2) {
+            if ((r->flags & 0x4000) && c->state == 2) {
                 if (r->flags & 0x800) {
                     func_800979F4(c);
                 } else {

@@ -67,7 +67,10 @@ typedef struct Car {
     /* 0x0B0 */ Vec3f vel;
     /* 0x0BC */ f32 fBC;
     /* 0x0C0 */ Mtx3f rot;
-    /* 0x0E4 */ u8 pad0E4[0x30];
+    /* 0x0E4 */ f32 unk0E4;
+    /* 0x0E8 */ f32 unk0E8;
+    /* 0x0EC */ f32 unk0EC;
+    /* 0x0F0 */ u8 pad0F0[0x24];
     /* 0x114 */ Vec3f angVel;
     /* 0x120 */ u8 pad120[0x4];
     /* 0x124 */ Vec3f force;
@@ -83,7 +86,15 @@ typedef struct Car {
     /* 0x3EC */ CarRange r3EC;
     /* 0x408 */ u8 pad408[0x24];
     /* 0x42C */ f32 k42C;
-    /* 0x430 */ u8 pad430[0x4B];
+    /* 0x430 */ u8 pad430[0x10];
+    /* 0x440 */ s32 unk440;
+    /* 0x444 */ u8 checkpoints[12]; /* passed flags per checkpoint */
+    /* 0x450 */ u32 lapStart[8]; /* race time at the start of each lap */
+    /* 0x470 */ u32 bestLap;
+    /* 0x474 */ s32 unk474;
+    /* 0x478 */ u8 lap;
+    /* 0x479 */ u8 unk479;
+    /* 0x47A */ u8 pad47A[0x1];
     /* 0x47B */ u8 unk47B;
     /* 0x47C */ Vec3f v47C;
     /* 0x488 */ Vec3f v488;
@@ -143,7 +154,11 @@ typedef struct Car {
     /* 0x72C */ f32 unk72C;
     /* 0x730 */ u8 pad730[0x14];
     /* 0x744 */ u8 b744;
-    /* 0x745 */ u8 pad745[0x13];
+    /* 0x745 */ u8 pad745[0x3];
+    /* 0x748 */ f32 unk748;
+    /* 0x74C */ f32 unk74C;
+    /* 0x750 */ f32 unk750;
+    /* 0x754 */ u8 pad754[0x4];
     /* 0x758 */ void *roomObj;
     /* 0x75C */ u32 unk75C;
     /* 0x760 */ u32 unk760;

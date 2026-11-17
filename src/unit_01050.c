@@ -1,5 +1,6 @@
 #include "common.h"
 #include "include_asm.h"
+#include "car.h"
 void func_800CE480(s32, s32);
 void *Memory_Alloc(s32);
 extern void *D_80101E70;
@@ -59,7 +60,7 @@ extern Snd29_ D_800EFF38[];
 void func_800CE4E0(s32, s32);
 extern Slot_ D_800EFF7C[];
 extern u8 D_800F0104;
-u8 *func_800960D8(u8);
+Car *func_800960D8(u8);
 s32 func_800CE550(s32 id, f32 val);
 extern s32 D_800F01A0;
 extern s32 D_800F01A4;
@@ -381,7 +382,7 @@ void func_80061454(s32 unused, u8 count, u8 *info) {
 
     for (i = 0; i < count; i++) {
         D_800EFF7C[i].flag = 0;
-        type = *(u32 *)(func_800960D8(i) + 0x540) & 0xFF000000;
+        type = func_800960D8(i)->w540 & 0xFF000000;
         switch (type) {
         case 0x00000000:
             D_800EFF7C[i].kind = 4;

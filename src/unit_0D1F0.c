@@ -11,6 +11,9 @@ void func_80075640(s32 arg0, f32 arg1, f32 arg2, f32 arg3, f32 arg4);
 f32 sinf(f32);
 typedef struct { s16 x; s16 y; s16 z; u8 pad[10]; } Vtx6D_;
 typedef struct { Vtx6D_ v[32]; u8 p200[0x30]; f32 r; f32 a; u8 p238; u8 mode; } Ring6D_;
+/* TODO (Clean version):
+Definición duplicada idéntica a S_D_801455C0 empleada para forzar el casteo en func_8006DC28. En C limpio debe eliminarse y reutilizar S_D_801455C0; se mantiene para preservar el matching binario.
+*/
 typedef struct { s32 f0; s32 f4; u8 p8[0x548]; } S_D2_;
 typedef struct { f32 x; f32 y; f32 z; } V3D6_;
 typedef struct { u32 t; V3D6_ pos; V3D6_ vel; f32 m[9]; } MvD6_;
@@ -36,6 +39,9 @@ INCLUDE_ASM("asm/nonmatchings/unit_0D1F0", func_8006C5F0);
 
 INCLUDE_ASM("asm/nonmatchings/unit_0D1F0", func_8006CA88);
 
+/* TODO (Clean version):
+Aritmética manual de punteros y accesos a campos reinterpretando un arreglo s32* (como *(f32 *)&p[135], (Ring6D_ *)(p + 4) y p + 148 + i * 16). En C limpio se debería definir y pasar un puntero a una estructura completa con sus miembros (Ring6D_, coordenadas float y arreglo de MvD6_); se mantiene para el match.
+*/
 void func_8006CF10(s32 *p, s32 dt) {
     u8 v;
     f32 t;
@@ -172,6 +178,9 @@ void func_8006DB84(s32 a, f32 b, u8 c) {
 }
 
 
+/* TODO (Clean version):
+Casteo innecesario a la estructura duplicada S_D2_ (&((S_D2_ *)&D_801455C0)[i]). En C limpio se iteraría directamente sobre el arreglo original (ej. S_D_801455C0 *p = &D_801455C0[i];); se mantiene para el match.
+*/
 void func_8006DC28(void) {
     u32 i;
     S_D2_ *p;
@@ -205,6 +214,13 @@ void func_8006DCE8(s32 arg0) {
     D_800F05E0 = func_8007F57C(arg0);
 }
 
+/* TODO (Clean version):
+Reinterpretación forzada de la variable global D_800F05E0 mediante doble puntero (*(GfxA_ * *)&D_800F05E0). En C limpio, con D_800F05E0 correctamente tipada (o con casteo simple (GfxA_ *)D_800F05E0), se escribiría:
+if (D_800F05E0 != NULL) {
+    *o->unk34 = *(GfxA_ *)D_800F05E0;
+}
+Se mantiene para el match.
+*/
 void func_8006DD34(ObjA2_ *o) {
     if ((*(GfxA_ * *)&D_800F05E0) != 0) {
         *o->unk34 = *(*(GfxA_ * *)&D_800F05E0);
@@ -214,6 +230,9 @@ void func_8006DD34(ObjA2_ *o) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_0D1F0", func_8006DD60);
 
+/* TODO (Clean version):
+Casteo forzado mediante doble puntero (*(BufD_ * *)&D_800F05E0). En C limpio bastaría con ((BufD_ *)D_800F05E0)->unk4 o tipar D_800F05E0 como puntero; se mantiene para el match.
+*/
 void func_8006DEF4(u16 *pal, s32 *idx) {
     s32 i;
     u16 *dst = (*(BufD_ * *)&D_800F05E0)->unk4;
@@ -223,6 +242,9 @@ void func_8006DEF4(u16 *pal, s32 *idx) {
     }
 }
 
+/* TODO (Clean version):
+Múltiples artefactos de permuter para emparejar registros e instrucciones: uso explícito de 'register', casteo de puntero *(void **)&D_800F05E0, truco sin ramas con '&' bitwise en la condición ((1 != D_8014C1A8) & (D_80138AA8 != 0)), y bucle do-while con punteros incrementados manualmente. En C limpio se escribiría con condiciones lógicas estándar (&&) y un bucle for indexado (dst[i] = samples[idx[i]]); se mantiene para el match.
+*/
 void func_8006DF34(s16 *samples) {
     register s32 i;
     register s32 *idx;

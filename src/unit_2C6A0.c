@@ -1,5 +1,6 @@
 #include "common.h"
 #include "include_asm.h"
+#include "car.h"
 extern void (*D_80141780)(void);
 extern void (*D_8014C0A8)(s32, s32, f32, f32);
 extern u8 (*D_8014C120)(void);
@@ -41,7 +42,7 @@ void func_80087B08(void);
 void func_800ABC80(u8, s32, u8);
 void func_800AEE20(u32);
 void func_800A76FC(void);
-u8 *func_800960D8(u8);
+Car *func_800960D8(u8);
 u32 func_800AF174(void);
 void func_800AF180(u32);
 void func_800CC2B4(u8);
@@ -395,7 +396,7 @@ void func_8008C548(void) {
     s32 prev;
     u32 i;
     u32 n;
-    u8 *c;
+    Car *c;
     s32 unused[2];
 
     now = D_80141698();
@@ -491,13 +492,13 @@ void func_8008C548(void) {
                 D_800F36F0 = 1;
                 for (i = 0; i < D_80118494; i++) {
                     c = func_800960D8(i);
-                    if (*(s32 *)(c + 4) & 3) {
-                        *(f32 *)(c + 0x10) = 1.0f;
-                        *(s32 *)(c + 0x14) = 0;
-                        *(s32 *)(c + 0x18) = 0;
-                        c[0x24] = 1;
-                        c[0x25] = 0;
-                        c[0x27] = 0;
+                    if (c->flags & 3) {
+                        c->yaw = 1.0f;
+                        *(s32 *)((u8 *)c + 0x14) = 0;
+                        *(s32 *)((u8 *)c + 0x18) = 0;
+                        c->unk024 = 1;
+                        c->unk025 = 0;
+                        c->unk027 = 0;
                     }
                 }
             } else {
@@ -511,13 +512,13 @@ void func_8008C548(void) {
         D_800F36F4 = 3;
         for (i = 0; i < D_80118494; i++) {
             c = func_800960D8(i);
-            if (*(s32 *)(c + 4) & 3) {
-                *(f32 *)(c + 0x10) = 1.0f;
-                *(s32 *)(c + 0x14) = 0;
-                *(s32 *)(c + 0x18) = 0;
-                c[0x24] = 1;
-                c[0x25] = 0;
-                c[0x27] = 0;
+            if (c->flags & 3) {
+                c->yaw = 1.0f;
+                *(s32 *)((u8 *)c + 0x14) = 0;
+                *(s32 *)((u8 *)c + 0x18) = 0;
+                c->unk024 = 1;
+                c->unk025 = 0;
+                c->unk027 = 0;
             }
         }
         D_80118490 = D_800F36D8 - 4000;

@@ -1,5 +1,6 @@
 #include "common.h"
 #include "include_asm.h"
+#include "car.h"
 typedef struct { f32 x; f32 y; f32 z; } Vec3f_;
 typedef struct { u8 id; u8 p1[3]; u8 *car; u8 p8[0x1C]; f32 f24; u8 p28[0x1F0]; f32 f218; u8 p21C[0xC]; Vec3f_ v228; u8 p234[0xC]; Vec3f_ v240; u8 p24C[0x5C]; } Slot85_;
 typedef struct { f32 x; f32 y; f32 z; } V3d_;
@@ -21,7 +22,7 @@ u32 func_800A76D8(void);
 extern Slot85_ D_80114830[];
 extern s32 D_80115824;
 extern f32 D_80115820;
-u8 *func_800960D8(u8);
+Car *func_800960D8(u8);
 void func_80084B9C(u8 *);
 extern u8 D_80114838;
 
@@ -37,46 +38,46 @@ INCLUDE_ASM("asm/nonmatchings/unit_22440", func_80084B9C);
 
 void func_80084FDC(void) {
     u32 i;
-    u8 *c1;
-    u8 *car;
+    Car *c1;
+    Car *car;
     Vec3f_ t;
     s32 n;
 
     for (i = 0; i < 6; i++) {
         c1 = func_800960D8(i);
-        if (*(s32 *)(c1 + 0x6D8) != 1) {
-            D_80114830[i].f24 = *(u32 *)(c1 + 0x474) / 1000.0f;
+        if (c1->state != 1) {
+            D_80114830[i].f24 = *(u32 *)((u8 *)c1 + 0x474) / 1000.0f;
         }
         n = D_80115824 - 1;
-        D_80114830[i].f218 = (u32)(n - c1[0x478]) * D_80115820 + D_80114830[i].f24;
+        D_80114830[i].f218 = (u32)(n - c1->lap) * D_80115820 + D_80114830[i].f24;
     }
     for (i = 0; i < 6; i++) {
         car = func_800960D8(D_80114830[i].id);
-        if (*(s32 *)(car + 0x6D8) != 1 || car[0x4B8] != 0 || car[0x47B] != 0) {
+        if (car->state != 1 || car->b4B8 != 0 || car->unk47B != 0) {
             continue;
         }
-        if ((*(f32 *)(car + 0xA4)) < 0.0f || 0.0f < (*(f32 *)(car + 0xA4)) || (*(f32 *)(car + 0xA8)) < 0.0f || 0.0f < (*(f32 *)(car + 0xA8)) || (*(f32 *)(car + 0xAC)) < 0.0f || 0.0f < (*(f32 *)(car + 0xAC))) {
-            t.x = (*(f32 *)(car + 0x748)) * ((*(f32 *)(car + 0x748)) * (*(f32 *)(car + 0xA4)) + (*(f32 *)(car + 0x74C)) * (*(f32 *)(car + 0xA8)) + (*(f32 *)(car + 0x750)) * (*(f32 *)(car + 0xAC)));
-            t.y = (*(f32 *)(car + 0x74C)) * ((*(f32 *)(car + 0x748)) * (*(f32 *)(car + 0xA4)) + (*(f32 *)(car + 0x74C)) * (*(f32 *)(car + 0xA8)) + (*(f32 *)(car + 0x750)) * (*(f32 *)(car + 0xAC)));
-            t.z = (*(f32 *)(car + 0x750)) * ((*(f32 *)(car + 0x748)) * (*(f32 *)(car + 0xA4)) + (*(f32 *)(car + 0x74C)) * (*(f32 *)(car + 0xA8)) + (*(f32 *)(car + 0x750)) * (*(f32 *)(car + 0xAC)));
-            (*(f32 *)(car + 0xA4)) -= t.x;
-            (*(f32 *)(car + 0xA8)) -= t.y;
-            (*(f32 *)(car + 0xAC)) -= t.z;
-            D_80114830[i].v228.x = (*(f32 *)(car + 0xA4)) + D_80114830[i].v228.x;
-            D_80114830[i].v228.y = (*(f32 *)(car + 0xA8)) + D_80114830[i].v228.y;
-            D_80114830[i].v228.z = (*(f32 *)(car + 0xAC)) + D_80114830[i].v228.z;
+        if ((car->impulse.x) < 0.0f || 0.0f < (car->impulse.x) || (car->impulse.y) < 0.0f || 0.0f < (car->impulse.y) || (car->impulse.z) < 0.0f || 0.0f < (car->impulse.z)) {
+            t.x = (car->unk748) * ((car->unk748) * (car->impulse.x) + (car->unk74C) * (car->impulse.y) + (car->unk750) * (car->impulse.z));
+            t.y = (car->unk74C) * ((car->unk748) * (car->impulse.x) + (car->unk74C) * (car->impulse.y) + (car->unk750) * (car->impulse.z));
+            t.z = (car->unk750) * ((car->unk748) * (car->impulse.x) + (car->unk74C) * (car->impulse.y) + (car->unk750) * (car->impulse.z));
+            (car->impulse.x) -= t.x;
+            (car->impulse.y) -= t.y;
+            (car->impulse.z) -= t.z;
+            D_80114830[i].v228.x = (car->impulse.x) + D_80114830[i].v228.x;
+            D_80114830[i].v228.y = (car->impulse.y) + D_80114830[i].v228.y;
+            D_80114830[i].v228.z = (car->impulse.z) + D_80114830[i].v228.z;
             func_80084B9C(car);
-            (*(f32 *)(car + 0xA4)) = 0.0f;
-            (*(f32 *)(car + 0xA8)) = 0.0f;
-            (*(f32 *)(car + 0xAC)) = 0.0f;
+            (car->impulse.x) = 0.0f;
+            (car->impulse.y) = 0.0f;
+            (car->impulse.z) = 0.0f;
         }
-        if ((*(f32 *)(car + 0xE4)) < 0.0f || 0.0f < (*(f32 *)(car + 0xE4)) || (*(f32 *)(car + 0xE8)) < 0.0f || 0.0f < (*(f32 *)(car + 0xE8)) || (*(f32 *)(car + 0xEC)) < 0.0f || 0.0f < (*(f32 *)(car + 0xEC))) {
-            D_80114830[i].v240.x = (*(f32 *)(car + 0xE4)) + D_80114830[i].v240.x;
-            D_80114830[i].v240.y = (*(f32 *)(car + 0xE8)) + D_80114830[i].v240.y;
-            D_80114830[i].v240.z = (*(f32 *)(car + 0xEC)) + D_80114830[i].v240.z;
-            (*(f32 *)(car + 0xE4)) = 0.0f;
-            (*(f32 *)(car + 0xE8)) = 0.0f;
-            (*(f32 *)(car + 0xEC)) = 0.0f;
+        if ((car->unk0E4) < 0.0f || 0.0f < (car->unk0E4) || (car->unk0E8) < 0.0f || 0.0f < (car->unk0E8) || (car->unk0EC) < 0.0f || 0.0f < (car->unk0EC)) {
+            D_80114830[i].v240.x = (car->unk0E4) + D_80114830[i].v240.x;
+            D_80114830[i].v240.y = (car->unk0E8) + D_80114830[i].v240.y;
+            D_80114830[i].v240.z = (car->unk0EC) + D_80114830[i].v240.z;
+            (car->unk0E4) = 0.0f;
+            (car->unk0E8) = 0.0f;
+            (car->unk0EC) = 0.0f;
         }
     }
 }
