@@ -52,6 +52,11 @@ void Memory_Free(void *ptr);
 
 typedef s32 (*AnimFn_)();
 typedef struct { AnimFn_ count; AnimFn_ info; AnimFn_ keys; } AnimIf_;
+    /* TODO (Clean version):
+    Using raw function pointer typedefs without explicit parameter signatures 
+    (e.g. `s32 (*count)(void)`) bypasses type safety, though it matches 
+    the original SDK/compiler ABI layout.
+    */
 extern AnimIf_ D_80141720;
 void *Memory_Alloc(s32 size);
 void *memset(void *dst, s32 value, u32 size);
@@ -252,6 +257,10 @@ void func_80087F7C(s32 index, u32 t, s32 mode) {
 s32 func_80087FF4(s32 arg0, u32 arg1) {
     return (arg1 >= 4) * 4;
 }
+    /* TODO (Clean version):
+    This can be written using a standard ternary operator for clarity:
+    return (arg1 >= 4) ? 4 : 0;
+    */
 
 void func_80088004(void) {
 }

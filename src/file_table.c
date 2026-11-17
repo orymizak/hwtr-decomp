@@ -313,6 +313,22 @@ s32 File_Load(char *name, void *dst) {
             high = mid - 1;
         }
     }
+    /* TODO (Clean version):
+    The binary search logic is duplicated across File_Load, File_LoadAsync, and File_GetSize.
+    A helper function like `static s32 File_FindEntry(const char *name)` should be used:
+    
+    static FileEntry* File_FindEntry(const char *name) {
+        s32 low = 0, high = gFileSystem.count - 1;
+        while (low <= high) {
+            s32 mid = (low + high) / 2;
+            s32 cmp = strcasecmp(name, gFileSystem.table[mid].name);
+            if (cmp == 0) return &gFileSystem.table[mid];
+            if (cmp > 0) low = mid + 1;
+            else high = mid - 1;
+        }
+        return NULL;
+    }
+    */
     if (cmp != 0) {
         return 0;
     }
@@ -332,6 +348,12 @@ s32 File_Load(char *name, void *dst) {
             } else {
                 func_800D6240(gFileSystem.table[mid].romStart, dst, size);
             }
+            /* TODO (Clean version):
+            CHECK_1
+            The odd-size alignment check can be cleanly encapsulated in an alignment macro:
+            #define ALIGN_2(val) (((val) + 1) & ~1)
+            func_800D6240(romStart, dst, ALIGN_2(size));
+            */
             break;
     }
     return gFileSystem.table[mid].size;
@@ -389,6 +411,11 @@ s32 File_LoadAsync(char *name, void *dst) {
             } else {
                 Rom_ReadAsync(gFileSystem.table[mid].romStart, dst, size, &gAsyncReads[slot]);
             }
+            /* TODO (Clean version):
+            CHECK_2
+            The odd-size alignment check can be cleanly encapsulated in an alignment macro,
+            similar to CHECK_1
+            */
             break;
     }
     return slot;
@@ -442,12 +469,12 @@ s32 func_8006E578(s32 port) {
     if (handle->status != 0) {
         gFileSystem.handles[port] = handle;
         switch (handle->status) {
-            case 1:
+            case 1: // Pak error / missing
                 Memory_Free(handle);
                 gFileSystem.handles[port] = NULL;
                 D_800F1C9C[port] = 1;
                 return 1;
-            case 11:
+            case 11: // Full or needs formatting
                 Memory_Free(handle);
                 gFileSystem.handles[port] = NULL;
                 if (func_8006C4BC(port)) {
@@ -456,6 +483,17 @@ s32 func_8006E578(s32 port) {
                     D_800F1C9C[port] = 0x80;
                 }
                 return D_800F1C9C[port];
+                /* TODO (Clean version):
+                Controller Pak error codes should be mapped to an enum for readability:
+                typedef enum {
+                    PAK_ERR_OK = 0,
+                    PAK_ERR_NOPAK = 1,
+                    PAK_ERR_CORRUPT = 2,
+                    PAK_ERR_FULL = 5,
+                    PAK_ERR_IDLE = 10,
+                    PAK_ERR_PORK = 11
+                } PakErrorStatus;
+                */
             case 2:
                 D_800F1C9C[port] = 2;
                 return 2;
@@ -542,6 +580,13 @@ u8 Save_IsChecksumValid(SaveBlock *block) {
         sum += *p++;
     }
     return *(s32 *)&block->data[0xD90] == sum;
+    /* TODO (Clean version):
+    Replace magic offsets with `offsetof` or an explicit struct layout:
+    typedef struct {
+        u8 data[0xD90];
+        s32 checksum;
+    } CleanSaveBlock;
+    */
 }
 
 s32 Save_Read(s32 port, SaveBlock *dst) {
@@ -564,6 +609,27 @@ s32 Save_Read(s32 port, SaveBlock *dst) {
         if (Save_IsChecksumValid(blocks[1]) && !errors[1]) {
             goto second_only;
         }
+        /* TODO (Clean version):
+        The control flow can be refactored into a clear conditional block without gotos:
+        
+        bool valid0 = !errors[0] && Save_IsChecksumValid(blocks[0]);
+        bool valid1 = !errors[1] && Save_IsChecksumValid(blocks[1]);
+        
+        if (valid0) {
+            *dst = *blocks[0];
+            if (!valid1) {
+                func_800D68D0(handle, sizeof(SaveBlock), sizeof(SaveBlock), blocks[0], 1);
+            }
+        } else if (valid1) {
+            *dst = *blocks[1];
+            func_800D68D0(handle, 0, sizeof(SaveBlock), blocks[1], 1);
+        } else {
+            // Handle total read/checksum failure
+            Memory_Free(blocks[0]);
+            Memory_Free(blocks[1]);
+            return 0;
+        }
+        */
     }
     Memory_Free(blocks[0]);
     Memory_Free(blocks[1]);
@@ -606,6 +672,10 @@ s32 Save_Write(s32 port, SaveBlock *src) {
     func_800D68D0(handle, 0, sizeof(SaveBlock), src, 1);
     func_800D68D0(handle, sizeof(SaveBlock), sizeof(SaveBlock), src, 1);
     return handle->status == 0;
+    /* TODO (Clean version):
+    Document the dual-write strategy for backup resilience:
+    // Write primary block and secondary backup block to prevent save corruption.
+    */
 }
 
 s32 func_8006EDD4(s32 port) {
@@ -645,6 +715,12 @@ s32 File_LoadLZ(s32 index, void *dst) {
 s32 File_LoadLZChunked(s32 index, u8 *dst) {
     u8 mesg[0x38];
     u8 *buffer = D_80102220;
+    /* TODO (Clean version):
+    Magic numbers like `0x38` for message queues and raw buffer increments (`buffer += 8`) 
+    should be replaced with explicit struct definitions or descriptive macros:
+    #define LZ_CHUNK_HEADER_SIZE 8
+    buffer += LZ_CHUNK_HEADER_SIZE;
+    */
     u8 *out = dst;
     u32 offset = 0;
     u32 chunkSize = gFileSystem.table[index].firstChunkSize;

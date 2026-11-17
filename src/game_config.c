@@ -32,6 +32,11 @@ s32 func_800877A0(char *name) {
 
     for (i = 0; i < 4; i++) {
         for (j = 0; j < 3; j++) {
+            /* TODO (Clean version):
+            Magic dimensions (4 and 3) used for the 2D array lookup should be defined 
+            using constants or macros (e.g., `#define MENU_ROWS 4`, `#define MENU_COLS 3`) 
+            to prevent hardcoding issues if the grid size changes.
+            */
             if (strcmp(name, D_800F9FA0[i][j]) == 0) {
                 return i * 3 + j;
             }
@@ -45,6 +50,22 @@ extern char *gCheatButtonCodes[];
 extern char *D_800F3008[];
 extern char *D_800F300C[];
 s8 func_800B513C(char *s);
+    /* TODO (Clean version):
+    Both `func_find` and `func_find2` perform table lookups for cheat codes but modify 
+    different configuration fields. They could be unified into a single lookup function 
+    that iterates over a unified table of cheat definitions, or handled via a generalized 
+    flag-setting routine:
+
+    static inline u8 Config_MatchCode(const char *code, const char **table, u32 size, s32 *out_index) {
+        for (u32 i = 0; i < size; i++) {
+            if (strcmp(code, table[i]) == 0) {
+                *out_index = i;
+                return 1;
+            }
+        }
+        return 0;
+    }
+    */
 static inline u8 func_find(char *code, CheatCfg_ *cfg) {
     u32 i;
 
@@ -61,7 +82,19 @@ static inline u8 func_find2(char *code, CheatCfg_ *cfg) {
     s8 bit;
 
     for (j = 0; j < 1; j++) {
+        /* TODO (Clean version):
+        The loop `for (j = 0; j < 1; j++)` iterates only once and is redundant. 
+        It can be refactored into a direct condition check or structured to handle 
+        multiple entries cleanly if the array size expands.
+        */
         if (strcmp(code, D_800F3008[j]) == 0) {
+            /* TODO (Clean version):
+            The bitfield distribution between `unk14` and `unk18` handles more than 32 active flags.
+            This can be refactored into a unified bitset array or an explicit enum-based flags struct:
+            typedef struct {
+                u32 flags[2]; // Replaces unk14 and unk18
+            } CleanCheatFlags;
+            */
             bit = func_800B513C(D_800F300C[j]);
             if (bit < 32) {
                 cfg->unk14 |= 1 << bit;
@@ -73,6 +106,7 @@ static inline u8 func_find2(char *code, CheatCfg_ *cfg) {
     }
     return 0;
 }
+
 /* Trucos de botones del menú de opciones: cada código son 8 dígitos ASCII, uno por botón
  * ('1' C-arriba, '2' C-abajo, '3' Z, '4' R, '5' C-izquierda, '6' C-derecha). El código coincidente
  * pone su bit en cfg->unk3C. Las entradas con "77777777" no se pueden teclear (truco desactivado). */

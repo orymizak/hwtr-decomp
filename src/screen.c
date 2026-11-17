@@ -117,6 +117,11 @@ void func_80078140(u8 arg0, u8 arg1, u8 arg2) {
     D_800F2100 = arg2;
 }
 
+    /* TODO (Clean version):
+    The alpha scaling calculation `alpha / 255.0` uses a double-precision float literal by default. 
+    It should be explicitly typed as a single-precision float (`alpha / 255.0f`) to avoid 
+    unnecessary type-promotion overhead on MIPS hardware.
+    */
 void func_8007815C(u8 alpha) {
     u8 *current = &D_800F2102;
 
@@ -126,6 +131,12 @@ void func_8007815C(u8 alpha) {
     }
 }
 
+    /* TODO (Clean version):
+    Allocating a large fixed-size background buffer (`SCREEN_BG_BUFFER_SIZE` / ~300 KB) 
+    dynamically on demand can lead to heap fragmentation if done repeatedly. 
+    It should ideally be allocated once during system startup or managed via a dedicated 
+    static texture/framebuffer pool.
+    */
 s32 func_800781BC(void) {
     if (D_800F20F0 == NULL) {
         D_800F20F0 = Memory_Alloc(SCREEN_BG_BUFFER_SIZE);
@@ -165,6 +176,12 @@ void GfxPools_Swap(s32);
 s32 func_800784F0(void) {
     func_800804B4();
     func_80080500();
+
+    /* TODO (Clean version):
+    Manually injecting raw display list commands and bit-shifting macros (`0xE9`, `0xDF`) 
+    inline should be wrapped in clean SDK macro wrappers like `gDPNoOp` or `gSPEndDisplayList()` 
+    for readability and platform maintenance.
+    */
     if ((u32) (D_8014EC78 + (2)) >= (u32) D_8014C740[D_8014C540].f4) { D_8014C740[D_8014C540].f0 = D_8014EC78; GfxPool_Grow(&D_8014C740[D_8014C540], (2)); D_8014EC78 = D_8014C740[D_8014C540].f0; };
     { GfxT_ *_g = (GfxT_ *) (D_8014EC78++); _g->words.w0 = ((u32) (((u32) ( 0xE9) & ((0x01 << (8)) - 1)) << (24))); _g->words.w1 = 0; };
     { GfxT_ *_g = (GfxT_ *) (D_8014EC78++); _g->words.w0 = ((u32) (((u32) ( 0xDF) & ((0x01 << (8)) - 1)) << (24))); _g->words.w1 = 0; };
@@ -198,6 +215,11 @@ void func_8007863C(s16 x, s16 y, s16 width, s16 height) {
 typedef struct { f32 m[3][4]; } M34S_;
 extern M34S_ D_800F2138;
 s32 func_80070BA4(M34S_ *);
+    /* TODO (Clean version):
+    Passing model-view matrices through custom transformation pipelines (`func_80070BA4`) 
+    and manually writing low-level display list commands with hardware offsets (`0xDA380003`) 
+    should be encapsulated into a clean matrix stack helper (e.g., `Matrix_LoadModelView(...)`).
+    */
 void func_80078684(M34S_ *m) {
     M34S_ t;
     D_800F2138 = *m;
@@ -211,10 +233,20 @@ void func_80078684(M34S_ *m) {
     }
 }
 
+    /* TODO (Clean version):
+    Magic aspect ratio or viewport scaling multipliers (`1.04`) 
+    should be defined using descriptive configuration constants:
+    #define VIEWPORT_SCALE_X_FACTOR 1.04f
+    */
 void func_800787EC(f32 arg0, f32 arg1, f32 arg2, f32 arg3) {
     func_80078878(arg0, arg1, arg2 * 1.04, arg3);
 }
 
+    /* TODO (Clean version):
+    Magic aspect ratio or viewport scaling multipliers (`1.2`, `1.15`) 
+    should be defined using descriptive configuration constants:
+    #define VIEWPORT_SCALE_Y_FACTOR 1.2f
+    */
 void func_80078828(f32 arg0, f32 arg1, f32 arg2, f32 arg3) {
     func_80078878(arg0, arg1 * 1.2, arg2 * 1.15, arg3);
 }

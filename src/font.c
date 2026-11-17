@@ -80,6 +80,13 @@ s32 Font_Load(u8 id, char *name) {
         g = (GlyphFL_ *)(((u32)g + 7) & ~7);
     }
     return 1;
+    /* TODO (Clean version):
+    Duplicate struct definitions (`GlyphFL_` / `FontFL_` vs `Glyph` / `Font`) 
+    are used here because file-loading structures often contain flat layout 
+    differences compared to active runtime structures. Unifying them into a 
+    single robust asset loader struct with explicit alignment macros would 
+    improve maintainability.
+    */
 }
 
 s32 Font_Free(u8 id) {
@@ -130,6 +137,12 @@ s32 func_8006F528(u8 id, u8 c, f32 x, f32 y, f32 scale) {
         }
     }
     return 0;
+    /* TODO (Clean version):
+    Magic screen coordinate constants (like 500.0f, 1000.0, 0.9, 0.95) 
+    should be encapsulated into UI scaling configuration macros or viewport structs:
+    #define SCREEN_VIRTUAL_WIDTH 1000.0f
+    #define SCREEN_HALF_WIDTH (SCREEN_VIRTUAL_WIDTH / 2.0f)
+    */
 }
 
 u8 Font_DrawChar(u8 id, u8 c, s32 x, s32 y) {
@@ -158,4 +171,9 @@ u8 Font_DrawChar2(u8 id, u8 c, s32 x, s32 y) {
         return glyph->width;
     }
     return 0;
+    /* TODO (Clean version):
+    `Font_DrawChar2` duplicates the core logic of `Font_DrawChar` with an inverted 
+    conditional structure. They could share a single internal helper function 
+    to reduce code duplication while preserving the exported function symbols.
+    */
 }

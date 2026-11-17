@@ -50,10 +50,10 @@ void Debug_InitFont(u16 *buf) {
     }
 
     /* TODO (Clean version):
-    La lógica de desempaquetado de fuentes a nivel de bits (con aritmetica de shift y goto) 
-    es altamente dependiente de la estructura cruda de los assets en ROM. 
-    Una versión limpia requeriría extraer el font asset a un formato estándar 
-    o usar un parser de compresión dedicado, pero se mantiene así para el match.
+    Bit-level font unpacking logic (relying on bit-shifts and gotos) is highly 
+    dependent on the raw ROM asset structure. A clean version would extract 
+    font assets into a standard format or use a dedicated decompression parser, 
+    but this is kept as-is for matching purposes.
     */
 }
 
@@ -82,8 +82,8 @@ void Debug_FormatNumber(u16 n, u8 *out) {
     out[2] = n % 10 + 0x10;
 
     /* TODO (Clean version):
-    Se puede simplificar utilizando aritmética modular directa y un enfoque de 
-    escritura de cadenas más limpio (ej. sprintf personalizado o lógica de centenas/decenas/unidades):
+    Can be simplified using direct modular arithmetic and a cleaner string 
+    formatting approach (e.g., custom sprintf or hundreds/tens/units logic):
     
     void Clean_Debug_FormatNumber(u16 n, u8 *out) {
         if (n > 999) n = 999;
@@ -117,7 +117,7 @@ inline void Debug_DrawChar(s32 c, u16 color, u16 shadow) {
                 pixel++;
 
                 /* TODO (Clean version):
-                El offset mágico `0x281` debería definirse mediante una macro para mayor claridad:
+                The magic offset `0x281` should be defined via a macro for clarity:
                 #define SHADOW_OFFSET_PIXELS (SCREEN_WIDTH + 1)
                 pixel[SHADOW_OFFSET_PIXELS] = shadow;
                 */
@@ -139,7 +139,7 @@ void Debug_DrawString(u8 *s, s32 n, u16 color, u16 shadow) {
         Debug_DrawChar(*s++, color, shadow);
     }
     /* TODO (Clean version):
-    Un bucle hacia adelante estándar con un límite de tamaño es mucho más legible:
+    A standard forward loop with a size limit is much more readable:
     for (s32 i = 0; i < n && *s != '\0'; i++) {
         Debug_DrawChar(*s++, color, shadow);
     }
@@ -158,5 +158,9 @@ void func_80065314(u8 *s, s32 n, u16 color, u16 shadow) {
             Debug_DrawChar(CHAR_FIRST, color, shadow);
         }
     }
+    /* TODO (Clean version):
+    Similar to Debug_DrawString, this reverse countdown loop can be refactored 
+    into a cleaner forward loop with explicit bounds and string termination checks.
+    */
 }
 

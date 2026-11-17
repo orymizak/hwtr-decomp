@@ -112,6 +112,16 @@ s32 func_8007EBF0(void) {
     return 1;
 }
 
+    /* TODO (Clean version):
+    Populating a massive list of global `void*` variables with raw function addresses 
+    bypasses type safety. A clean implementation should use a properly typed 
+    plugin interface struct or a static dispatch table with explicit function signatures:
+    typedef struct {
+        void (*initAudio)(void);
+        void (*updateInput)(void);
+        // ...
+    } SystemInterface;
+    */
 s32 func_8007EBF8(void) {
     D_80140FBC = &func_8006681C;
     D_80140FC0 = &func_8006695C;
@@ -167,6 +177,11 @@ s32 func_8007EBF8(void) {
     return 1;
 }
 
+    /* TODO (Clean version):
+    Manually zeroing out dozens of individual global function pointers during teardown 
+    is error-prone and verbose. This should be handled by resetting a registered 
+    subsystem interface instance (e.g., `memset(&sysInterface, 0, sizeof(sysInterface))`).
+    */
 s32 func_8007EF30(void) {
     D_80140FB0 = 0;
     D_80140FB4 = 0;
@@ -219,6 +234,11 @@ s32 func_8007F038(void) {
     return 1;
 }
 
+    /* TODO (Clean version):
+    Comparing `D_80000300` against raw `0` should use the established TV type macro 
+    (`OS_TV_PAL`) for clarity and consistency across modules:
+    `return D_0000300 == OS_TV_PAL;`
+    */
 s32 func_8007F040(void) {
     return D_80000300 == 0;
 }

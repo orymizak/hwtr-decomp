@@ -84,6 +84,12 @@ void GfxPool_Grow(GfxPool *pool, u32 required) {
     if (chunk == NULL) {
         pool->ptr = pool->chunks[pool->chunkCount - 1];
     } else {
+        /* TODO (Clean version):
+        When allocation fails (`chunk == NULL`), the pool falls back by resetting 
+        the pointer to the last valid chunk. A clean implementation should handle 
+        out-of-memory errors gracefully using explicit error codes or panic handlers 
+        rather than silently failing back to a restricted buffer boundary.
+        */
         pool->chunks[pool->chunkCount] = chunk;
         pool->chunkCount++;
         pool->chunks[pool->chunkCount] = NULL;
@@ -135,6 +141,12 @@ inline void VtxPool_Reserve(VtxPool *pool, u32 required) {
             pool->ptr = chunk;
             pool->end = (Vtx *)((u8 *)chunk + bytes);
         }
+        /* TODO (Clean version):
+        Casting chunks to `u8*` for byte-level pointer arithmetic when setting `pool->end` 
+        can be simplified using direct pointer addition, since `Vtx` has a fixed size 
+        known at compile time:
+        `pool->end = chunk + size;` (matching the pattern used in `GfxPool_Grow`).
+        */
     }
 }
 
@@ -207,6 +219,11 @@ void GfxPools_Shutdown(void) {
     func_800784F0();
     func_80071924();
     GfxPool_Reset(&D_8014C740[0]);
+    /* TODO (Clean version):
+    The function `func_80071924()` is called twice consecutively around `func_800784F0()`. 
+    This redundancy is likely a legacy artifact of hardware state synchronization 
+    or pipeline flushing, but could be cleaned up into a single pre/post sequence if safe.
+    */
     VtxPool_Reset(&D_80140E48[0]);
     MtxPool_Reset(&D_8014EB58[0]);
     GfxPool_Reset(&D_8014C740[1]);

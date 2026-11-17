@@ -13,6 +13,9 @@ typedef struct { u32 w0; u32 w1; } GfxWAA_;
 typedef union { GfxWAA_ words; s64 force; } GfxAA_;
 typedef struct { GfxAA_ *f0; GfxAA_ *f4; u8 p8[0x318]; } PoolAA_;
 typedef struct { f32 x; f32 y; f32 z; f32 vx; f32 vy; u8 type; } EntAA_;
+/* TODO (Clean version):
+Estructura duplicada idéntica a KeySet_ y no referenciada; en C limpio debería eliminarse. Se mantiene para el match.
+*/
 typedef struct { s32 keys[6]; u8 pad[0x54 - 0x18]; } KeySet2_;
 typedef struct { s32 keys[21]; } KeySetB_;
 typedef struct { s32 mode; s32 k[15]; u8 pad[0x54 - 0x40]; } Bind6C_;
@@ -75,6 +78,9 @@ s32 func_800D7130();
 
 INCLUDE_ASM("asm/nonmatchings/unit_0B140", func_8006A540);
 
+/* TODO (Clean version):
+D_80102208 se accede como arreglo mediante (&D_80102208)[i], pero fue declarada como escalar s32. En C limpio debería declararse como s32 D_80102208[3] y accederse con D_80102208[i]. Se mantiene para el match.
+*/
 s32 func_8006AA34(void) {
     s32 i;
 
@@ -85,6 +91,9 @@ s32 func_8006AA34(void) {
     return 1;
 }
 
+/* TODO (Clean version):
+Comandos gráficos GBI (Fast3D) y verificación de crecimiento del pool de display lists expandidos manualmente con escrituras a GfxAA_ (w0/w1 en hexadecimal) y aritmética de punteros (&D_80102208)[i]. En C limpio deberían usarse las macros estándar de GBI (ej. gSPSetOtherMode, gDPSetEnvColor, etc.). Se mantiene para el match.
+*/
 s32 func_8006AA84(s32 cam, f32 *pos) {
     f32 m[3][4];
     f32 o[3][4];
@@ -188,6 +197,9 @@ s32 func_8006C34C(u8 *buf, u8 id);
 s32 func_8006C3D4(u8 *out, u8 ch);
 s32 func_8006C468(void);
 s32 func_8006C488(void);
+/* TODO (Clean version):
+Asignación de punteros a funciones a variables escalares mediante casts como (*(void * *)&D_80145568). En C limpio, las variables D_80145568..D_801455B0 deberían ser miembros de una estructura o arreglo de punteros a función. Se mantiene para el match.
+*/
 s32 func_8006B4F8(void) {
     (*(void * *)&D_80145568) = func_8006B894;
     D_801455A0 = func_8006B6B8;
@@ -211,6 +223,9 @@ s32 func_8006B4F8(void) {
     return 1;
 }
 
+/* TODO (Clean version):
+Se limpian variables individuales escalares en lugar de usar memset sobre una estructura de punteros. Además, D_80145584 y D_80145588 se asignan a 0 dos veces mientras que las variables void* no se limpian. Se mantiene para el match.
+*/
 s32 func_8006B630(void) {
     D_80145568 = 0;
     D_8014556C = 0;
@@ -401,6 +416,9 @@ s32 func_8006BDA8(u8 ch, s32 slot) {
     return D_800F0394[0];
 }
 
+/* TODO (Clean version):
+Cadena repetitiva de comprobaciones "if (mask == 0 && ...)" para emular selección de prioridad sin ramas else-if. En C limpio se escribiría con una cadena if / else if directa. Se mantiene para el match.
+*/
 s32 func_8006BE34(u8 ch, s32 slot) {
     Pad_ pad;
     s32 mask;
@@ -443,10 +461,16 @@ u8 func_8006C0A0(void) {
     return D_800F03EB;
 }
 
+/* TODO (Clean version):
+Aritmética manual de punteros con cast (*(s32 *)(&D_800F0390 + ((arg0 & 0xFF) * 4))) sobre una variable u8. En C limpio debería declararse extern s32 D_800F0390[] y accederse directamente como D_800F0390[(u8)arg0]. Se mantiene para el match.
+*/
 s32 func_8006C0AC(s32 arg0) {
     return *(s32 *)(&D_800F0390 + ((arg0 & 0xFF) * 4));
 }
 
+/* TODO (Clean version):
+Aritmética manual de punteros (*(u8 *)(&D_800F0403 + ((arg0 & 0xFF) * 0x54))) calculando el stride de 0x54 bytes manualmente sobre un u8. En C limpio debería accederse a través de un arreglo de estructuras (ej. D_800F0400[(u8)arg0].campo). Se mantiene para el match.
+*/
 u8 func_8006C0C4(s32 arg0) {
     return *(u8 *)(&D_800F0403 + ((arg0 & 0xFF) * 0x54));
 }
@@ -480,6 +504,9 @@ s32 func_8006C218(s32 arg0) {
     return 1;
 }
 
+/* TODO (Clean version):
+Arreglo local "unused[16]" no utilizado, forzado artificialmente para ajustar el tamaño del frame de pila y lograr el match binario. En C limpio debe eliminarse.
+*/
 s32 func_8006C23C(u8 i) {
     u8 unused[16];
 
@@ -496,6 +523,9 @@ s32 func_8006C33C(void) {
     return D_800F03F4 & 1;
 }
 
+/* TODO (Clean version):
+D_800F0404 fue declarado con KeySet_ donde keys tiene tamaño 6 (s32 keys[6]), pero el bucle itera hasta 13 escribiendo fuera de los límites del arreglo sobre el padding. En C limpio la estructura debería definir el arreglo con al menos 13 elementos (ej. s32 keys[13]). Se mantiene para el match.
+*/
 s32 func_8006C34C(u8 *buf, u8 id) {
     s32 sum;
     s32 i;
@@ -513,6 +543,9 @@ s32 func_8006C34C(u8 *buf, u8 id) {
     return 1;
 }
 
+/* TODO (Clean version):
+D_800F0404[ch].keys[j] accede hasta el índice 12 en un struct declarado con keys[6], indexando fuera de los límites sobre el padding. En C limpio la estructura debería tener el tamaño de arreglo adecuado. Se mantiene para el match.
+*/
 s32 func_8006C3D4(u8 *out, u8 ch) {
     s32 j;
     s32 n;
@@ -555,6 +588,9 @@ s32 func_8006C4BC(u8 i) {
     return 0;
 }
 
+/* TODO (Bug potential):
+Si func_800D6FA0 retorna un estado distinto de 0 y 11 (o si st == 11 pero st != 10 tras func_800D66D0), s.mode queda sin inicializar en la primera iteración o retiene el valor de una iteración previa, asignando datos no inicializados o desactualizados a D_800F03F8[i].state.
+*/
 s32 func_8006C520(void) {
     PakSt_ s;
     s32 i;

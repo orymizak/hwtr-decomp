@@ -1,5 +1,6 @@
 #include "common.h"
 #include "include_asm.h"
+#include "car.h"
 typedef struct { u8 b; u8 pad[3]; s32 w[6]; } E1C8_;
 extern E1C8_ D_800F316C[];
 extern u8 (*D_8014169C)(u8);
@@ -10,7 +11,6 @@ typedef struct Lnk89_ { s32 *obj; s32 x; struct Lnk89_ *next; } Lnk89_;
 typedef struct { u8 *def; s32 t; u8 pad8; u8 hold; } Tmr89_;
 typedef struct { s32 pad0; u8 id; u8 pad5[3]; s32 on; s32 t; u8 fired; u8 pad11[7]; } Evt18_;
 typedef struct { f32 x, y, z; } V3_8010;
-typedef struct { u8 id; u8 p1[0x3]; s32 flags; u8 p8[0x6C]; f32 scale; f32 inv; u8 p7C[0x28]; V3_8010 vel; u8 pB0[0x10]; f32 rot[9]; u8 pE4[0x31C]; f32 k400; f32 k404; u8 p408[0x24]; f32 k42C; u8 p430[0x98]; u8 col[4]; f32 k4CC; f32 k[0x18]; f32 k530; u8 p534[0x8]; f32 k53C; u8 p540[0x17C]; u8 b[5]; u8 p6C1[0xB]; u8 n6CC; u8 p6CD[0xB]; s32 state; } C_8010;
 typedef struct { u8 p0[0x34]; s32 flags; f32 f[0x18]; V3_8010 v; f32 fA4; u8 col[4]; } P_8010;
 extern u16 D_800F302A;
 extern u16 D_800F302C;
@@ -41,7 +41,7 @@ extern s32 (*D_80141768)(u8,s32);
 
 void func_80088010(u8 *arg0, u8 *arg1) {
     P_8010 *p = (P_8010 *)arg0;
-    C_8010 *c = (C_8010 *)arg1;
+    Car *c = (Car *)arg1;
     V3_8010 v;
     V3_8010 d;
     V3_8010 t;
@@ -52,13 +52,13 @@ void func_80088010(u8 *arg0, u8 *arg1) {
     v.x = p->v.x * c->scale;
     v.y = p->v.y * c->scale;
     v.z = p->v.z * c->scale;
-    t.x = c->rot[0] * v.x + c->rot[1] * v.y + c->rot[2] * v.z;
-    t.y = c->rot[3] * v.x + c->rot[4] * v.y + c->rot[5] * v.z;
-    t.z = c->rot[6] * v.x + c->rot[7] * v.y + c->rot[8] * v.z;
+    t.x = c->rot.m[0][0] * v.x + c->rot.m[0][1] * v.y + c->rot.m[0][2] * v.z;
+    t.y = c->rot.m[1][0] * v.x + c->rot.m[1][1] * v.y + c->rot.m[1][2] * v.z;
+    t.z = c->rot.m[2][0] * v.x + c->rot.m[2][1] * v.y + c->rot.m[2][2] * v.z;
     d = t;
-    c->vel.x = d.x + c->vel.x;
-    c->vel.y = d.y + c->vel.y;
-    c->vel.z = d.z + c->vel.z;
+    c->impulse.x = d.x + c->impulse.x;
+    c->impulse.y = d.y + c->impulse.y;
+    c->impulse.z = d.z + c->impulse.z;
     c->k4CC *= p->fA4;
     c->col[0] += p->col[0];
     c->col[1] += p->col[1];
@@ -85,24 +85,24 @@ void func_80088010(u8 *arg0, u8 *arg1) {
     c->k[22] *= p->f[11];
     c->k530 *= p->f[10];
     c->k[23] *= p->f[12];
-    c->k400 *= p->f[21];
-    c->k404 *= p->f[22];
+    c->r3EC.hi *= p->f[21];
+    c->r3EC.lo *= p->f[22];
     c->k42C *= p->f[23];
     if (p->flags & 8) {
-        c->b[1] = 1;
+        c->pickupFx[1] = 1;
     }
     if (p->flags & 0x10) {
-        c->b[2] = 1;
+        c->pickupFx[2] = 1;
         c->k53C *= 10.0f;
     }
     if (p->flags & 0x20) {
-        c->b[3] = 1;
+        c->pickupFx[3] = 1;
     }
     if (p->flags & 0x40) {
-        c->b[4] = 1;
+        c->pickupFx[4] = 1;
     }
     if (p->flags & 1) {
-        c->b[0] = 1;
+        c->pickupFx[0] = 1;
     }
     if (p->flags & 2) {
         D_80141768(c->id, 1);
@@ -147,10 +147,10 @@ void func_80088010(u8 *arg0, u8 *arg1) {
     }
     func_80095970(c);
     c->scale = c->k[0];
-    c->inv = 1.0f / c->k[0];
+    c->invScale = 1.0f / c->k[0];
 }
 
-void func_80088558(P_8010 *p, C_8010 *c) {
+void func_80088558(P_8010 *p, Car *c) {
     if (c->state == 2) {
         c->k4CC /= p->fA4;
         c->col[0] -= p->col[0];
@@ -178,31 +178,31 @@ void func_80088558(P_8010 *p, C_8010 *c) {
         c->k[22] /= p->f[11];
         c->k530 /= p->f[10];
         c->k[23] /= p->f[12];
-        c->k400 /= p->f[21];
-        c->k404 /= p->f[22];
+        c->r3EC.hi /= p->f[21];
+        c->r3EC.lo /= p->f[22];
         c->k42C /= p->f[23];
         if (p->flags & 8) {
-            c->b[1] = 0;
+            c->pickupFx[1] = 0;
         }
         if (p->flags & 0x10) {
-            c->b[2] = 0;
+            c->pickupFx[2] = 0;
             c->k53C /= 10.0f;
         }
         if (p->flags & 0x20) {
-            c->b[3] = 0;
+            c->pickupFx[3] = 0;
         }
         if (p->flags & 0x40) {
-            c->b[4] = 0;
+            c->pickupFx[4] = 0;
         }
         if (p->flags & 1) {
-            c->b[0] = 0;
+            c->pickupFx[0] = 0;
         }
         if (p->flags & 2) {
             D_80141768(c->id, 0);
         }
         func_80095970(c);
         c->scale = c->k[0];
-        c->inv = 1.0f / c->k[0];
+        c->invScale = 1.0f / c->k[0];
     }
 }
 

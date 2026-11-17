@@ -56,6 +56,13 @@ inline void Video_Init(void) {
     }
     osViGetCurrentFramebuffer();
     osViSwapBuffer(FRAMEBUFFER);
+    /* TODO (Clean version):
+    Manually looping through the raw framebuffer array using a macro pointer 
+    can be replaced with `memset(FRAMEBUFFER, 0, FRAMEBUFFER_WORDS * sizeof(s32))`.
+    Additionally, calling `osViGetCurrentFramebuffer()` and swapping buffers twice 
+    is a boilerplate N64 initialization sequence to flush the VI pipeline, which 
+    could be wrapped in a descriptive helper function like `Video_ClearAndFlushBuffers()`.
+    */
     osViSwapBuffer(FRAMEBUFFER);
     osViGetCurrentMode();
     osViSetMode(&D_800FB920[D_801380B0]);
@@ -75,6 +82,13 @@ void Game_Init(void) {
             D_801380B0 = 28;
             break;
     }
+    /* TODO (Clean version):
+    Magic offsets like `14` and `28` used to index VI modes based on TV type 
+    should be defined using an enum or offset constants:
+    #define VI_MODE_NTSC_OFFSET 0
+    #define VI_MODE_PAL_OFFSET  14
+    #define VI_MODE_MPAL_OFFSET 28
+    */
     Video_Init();
     func_8006B2A0();
     func_80077FB0();

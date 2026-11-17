@@ -23,6 +23,14 @@ s32 Heap_Free(HHeap_ *heap, void *ptr) {
     HBlk_ *prev;
     HBlk_ *b;
     u32 n;
+    /* TODO (Clean version):
+    Heap block headers and footers use custom tag bits (e.g., bit 0 for free/allocated status) 
+    and explicit 0x20 byte offsets. This raw footer inspection logic (`prev[1].size`) 
+    should be encapsulated into helper macros or inline functions for safety and clarity:
+    #define HEAP_BLOCK_HEADER_SIZE 0x20
+    #define HEAP_IS_BUSY(size) ((size) & 1)
+    #define HEAP_GET_SIZE(size) ((size) & ~1)
+    */
 
     if (heap->first == NULL) {
         return 0;
@@ -76,4 +84,13 @@ void Heap_AddRegion(Heap *heap, u32 base, u32 size) {
     b = (HeapBlock *)base;
     b->size = size - 0x40;
     ((HeapBlock *)((u8 *)b + b->size))[1].size = 0;
+    /* TODO (Clean version / Bug check):
+    1. The condition `if (size >= 0xFFFFFFC0 && size == 0)` contains a logical contradiction 
+    (a value cannot be both greater than or equal to a huge threshold and equal to 0). 
+    This is likely a flawed check for underflow or invalid region sizes and should be 
+    cleaned up (e.g., `if (size == 0)` or checking for negative/wrapped sizes).
+    2. Setting boundary sentinels via raw array offset indexing past the block payload 
+    (`((HeapBlock *)((u8 *)b + b->size))[1].size = 0`) should be encapsulated into an 
+    explicit helper function or macro like `Heap_SetBoundaryFooter(b, 0)`.
+    */
 }

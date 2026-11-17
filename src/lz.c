@@ -57,6 +57,11 @@ s32 LZ_Decompress(u8 *src, u8 *dst) {
             if (length == 0) {
                 while (1);
             }
+            /* TODO (Clean version):
+            The infinite loop `while (1);` used as a panic mechanism on decompression overflow 
+            should be replaced with a proper error handler, a `PANIC()` macro, or returning 
+            a negative error code instead of hanging execution.
+            */
             for (j = 0; j < length; j++) {
                 *out++ = *(out - (distance + 1));
             }
