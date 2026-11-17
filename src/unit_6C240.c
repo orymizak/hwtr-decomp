@@ -334,4 +334,16 @@ void func_800CD404(void) {
     D_8014C0AC(temp_s0_2 & 0xFF);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_6C240", func_800CD45C);
+void func_800CD45C(void) {
+    s32 t;
+    u8 r;
+
+    t = D_8014C0B0();
+    if ((t & 0xFF) == 0) {
+        r = 6;
+    } else {
+        r = t - 1;
+    }
+    D_8014C0B4();
+    D_8014C0AC(r & 0xFF);
+}

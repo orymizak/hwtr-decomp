@@ -5,8 +5,10 @@ s32 func_8007FD40(s32);
 s32 func_80080070(s32);
 extern s32 D_800F2690;
 
-extern s32 D_8010C410;
-extern s32 D_8010C414;
+typedef struct { u32 w0; s32 w4; s32 w8; void *wC; } Hp2C0_;
+typedef struct { Hp2C0_ *a; Hp2C0_ *b; } Hp2_;
+extern Hp2_ D_8010C410;
+extern u8 D_8010C420[];
 
 INCLUDE_ASM("asm/nonmatchings/unit_20830", func_8007FC30);
 
@@ -29,11 +31,23 @@ INCLUDE_ASM("asm/nonmatchings/unit_20830", func_8007FD40);
 
 INCLUDE_ASM("asm/nonmatchings/unit_20830", func_80080070);
 
-INCLUDE_ASM("asm/nonmatchings/unit_20830", func_800802C0);
+void func_800802C0(void) {
+    D_8010C410.a = (Hp2C0_ *)D_8010C420;
+    D_8010C410.b = (Hp2C0_ *)(D_8010C420 + 0x41F0);
+    D_8010C410.a->w8 = 0;
+    D_8010C410.b->w8 = 0;
+    D_8010C410.a->w4 = 0;
+    D_8010C410.b->w4 = 0;
+    D_8010C410.a->wC = (u8 *)D_8010C410.a + 0x1C30;
+    D_8010C410.b->wC = (u8 *)D_8010C410.b + 0x1C30;
+    D_8010C410.a->w0 = 0xA87BC3E8;
+    D_8010C410.b->w0 = 0xA87BC3E8;
+    D_800F2690 = 0;
+}
 
 void func_80080360(void) {
-    D_8010C410 = 0;
-    D_8010C414 = 0;
+    D_8010C410.a = 0;
+    D_8010C410.b = 0;
 }
 
 INCLUDE_ASM("asm/nonmatchings/unit_20830", func_80080374);

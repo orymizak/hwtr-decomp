@@ -391,7 +391,17 @@ void func_80067F40(u8 i, f32 v) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80067FA4);
+void func_80067FA4(u8 i, f32 v, u8 flag) {
+    s32 n;
+
+    if (v == 0.0f) {
+        v = 0.2f;
+    }
+    D_80138A90[i] = v * 100.0f;
+    if (!flag) {
+        D_80138A90[i - 6] = v * 100.0f;
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80068020);
 

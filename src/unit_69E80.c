@@ -3,6 +3,13 @@
 typedef struct { s32 *t; s16 a; s16 b; s32 c; s32 d; s32 e; s16 f; s16 g; } Seq9_;
 typedef struct { s32 a; s32 b; s32 c; } V12_;
 typedef struct { u16 flags; u16 a; u16 b; u16 c; u8 d8; u8 d9; u8 dA; u8 dB; } E0Cc_;
+typedef struct { u8 p0[0xC]; s16 *ids; u8 p10[3]; s8 n; } Tb9F_;
+typedef struct { u8 p0[8]; Tb9F_ *t; u8 pC[0xA]; s16 cur; } Ob9F_;
+extern char D_80101080[];
+extern s32 (*D_80140FE4)(char *);
+extern s32 (*D_80140FE0)(char *, void *);
+extern u8 D_80138D38[];
+s32 sprintf(char *, const char *, ...);
 void func_80087F7C(u16, u16, s32);
 void func_80087EA4(u16, V12_ *);
 u8 func_8008E38C(V12_, u8, u8, s32);
@@ -124,7 +131,15 @@ void func_800C9D00(s32 arg0) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_69E80", func_800C9DA0);
 
-INCLUDE_ASM("asm/nonmatchings/unit_69E80", func_800C9E70);
+s32 func_800C9E70(void) {
+    char buf[80];
+
+    sprintf(buf, D_80101080);
+    if (D_80140FE4(buf) == 0x100) {
+        return D_80140FE0(buf, D_80138D38) == 0x100;
+    }
+    return 0;
+}
 
 s32 func_800C9ED0(Seq9_ *s) {
     s->c = s->t[s->a];
@@ -136,6 +151,18 @@ s32 func_800C9ED0(Seq9_ *s) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_69E80", func_800C9F18);
+s32 func_800C9F18(Ob9F_ *o, s32 id) {
+    s32 i;
+
+    if (o->cur == -1) {
+        for (i = 0; i < o->t->n; i++) {
+            if (o->t->ids[i * 2] == id) {
+                o->cur = id;
+                break;
+            }
+        }
+    }
+    return 0;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_69E80", func_800C9F78);

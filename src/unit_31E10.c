@@ -14,6 +14,12 @@ extern void (*D_80145590)(u8, u8);
 extern void (*D_8014C11C)(u8, f32);
 extern void (*D_8014C114)(u8, s32, s32);
 extern u8 D_80138D6A;
+typedef struct { f32 x; f32 y; f32 z; } V3_954;
+extern u8 D_80138D6D;
+extern u8 D_80138D6E;
+extern u8 D_80138D6F;
+extern u8 D_80138D70;
+extern u8 D_80138D71;
 void func_800A5AB0(u8 *);
 void func_800911E0(u8);
 extern s32 D_8011B320;
@@ -74,7 +80,150 @@ void func_80091DC4(s32 arg0) {
   }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_80091E30);
+typedef struct { f32 x; f32 y; f32 z; } V3_E30;
+typedef struct { f32 m[3][3]; } M3_E30;
+extern u8 D_8011B31C;
+void func_8008AEC0(s32, s32, s32, s32, s32, s32, s32, u8 *, u16 *, u32 *);
+void func_8008E568(s32);
+void func_800ABF2C(u8, u32, u16, u8);
+static inline V3_E30 mul_E30(M3_E30 *m, V3_E30 *v) {
+    V3_E30 r;
+
+    r.x = m->m[0][0] * v->x + m->m[0][1] * v->y + m->m[0][2] * v->z;
+    r.y = m->m[1][0] * v->x + m->m[1][1] * v->y + m->m[1][2] * v->z;
+    r.z = m->m[2][0] * v->x + m->m[2][1] * v->y + m->m[2][2] * v->z;
+    return r;
+}
+void func_80091E30(u8 *p, f32 dt) {
+    s32 a[3];
+    s32 b[3];
+    V3_E30 v;
+    V3_E30 w;
+    M3_E30 t;
+    s32 ms;
+    u8 n;
+    u16 x;
+    u32 pts;
+    u8 c;
+    s32 z;
+    s32 k;
+    s32 q;
+    s32 el;
+
+    ms = dt * 1000.0f;
+    pts = 0;
+    x = 0;
+    n = 0;
+    if (p[0x4B4] == 0) {
+        if (p[0x3E7] == 0) {
+            p[0x4B4] = 1;
+            *(s32 *)(p + 0x4A0) = 0;
+            t.m[0][0] = *(f32 *)(p + 0xC0);
+            t.m[0][1] = *(f32 *)(p + 0xCC);
+            t.m[0][2] = *(f32 *)(p + 0xD8);
+            t.m[1][0] = *(f32 *)(p + 0xC4);
+            t.m[1][1] = *(f32 *)(p + 0xD0);
+            t.m[1][2] = *(f32 *)(p + 0xDC);
+            t.m[2][0] = *(f32 *)(p + 0xC8);
+            t.m[2][1] = *(f32 *)(p + 0xD4);
+            t.m[2][2] = *(f32 *)(p + 0xE0);
+            v = *(V3_E30 *)(p + 0x114);
+            w = mul_E30(&t, &v);
+            *(V3_E30 *)(p + 0x47C) = w;
+            *(f32 *)(p + 0x488) = 0.0f;
+            *(f32 *)(p + 0x48C) = 0.0f;
+            *(f32 *)(p + 0x490) = 0.0f;
+            *(f32 *)(p + 0x494) = 0.0f;
+            *(f32 *)(p + 0x498) = 0.0f;
+            *(f32 *)(p + 0x49C) = 0.0f;
+        }
+    } else {
+        if (p[0x3E8] == 0) {
+            if (p[0x3E7] != 0) {
+                p[0x4B4] = 0;
+            }
+            *(s32 *)(p + 0x4A0) += ms;
+            t.m[0][0] = *(f32 *)(p + 0xC0);
+            t.m[0][1] = *(f32 *)(p + 0xCC);
+            t.m[0][2] = *(f32 *)(p + 0xD8);
+            t.m[1][0] = *(f32 *)(p + 0xC4);
+            t.m[1][1] = *(f32 *)(p + 0xD0);
+            t.m[1][2] = *(f32 *)(p + 0xDC);
+            t.m[2][0] = *(f32 *)(p + 0xC8);
+            t.m[2][1] = *(f32 *)(p + 0xD4);
+            t.m[2][2] = *(f32 *)(p + 0xE0);
+            v = *(V3_E30 *)(p + 0x114);
+            v = mul_E30(&t, &v);
+            if (!(v.x * *(f32 *)(p + 0x47C) >= 0.0f)) {
+                if (((*(f32 *)(p + 0x494)) < 0.0f ? -(*(f32 *)(p + 0x494)) : (*(f32 *)(p + 0x494))) < ((*(f32 *)(p + 0x488)) < 0.0f ? -(*(f32 *)(p + 0x488)) : (*(f32 *)(p + 0x488)))) {
+                    *(f32 *)(p + 0x494) = *(f32 *)(p + 0x488);
+                }
+            }
+            if (!(v.y * *(f32 *)(p + 0x480) >= 0.0f)) {
+                if (((*(f32 *)(p + 0x498)) < 0.0f ? -(*(f32 *)(p + 0x498)) : (*(f32 *)(p + 0x498))) < ((*(f32 *)(p + 0x48C)) < 0.0f ? -(*(f32 *)(p + 0x48C)) : (*(f32 *)(p + 0x48C)))) {
+                    *(f32 *)(p + 0x498) = *(f32 *)(p + 0x48C);
+                }
+            }
+            if (!(v.z * *(f32 *)(p + 0x484) >= 0.0f)) {
+                if (((*(f32 *)(p + 0x49C)) < 0.0f ? -(*(f32 *)(p + 0x49C)) : (*(f32 *)(p + 0x49C))) < ((*(f32 *)(p + 0x490)) < 0.0f ? -(*(f32 *)(p + 0x490)) : (*(f32 *)(p + 0x490)))) {
+                    *(f32 *)(p + 0x49C) = *(f32 *)(p + 0x490);
+                }
+            }
+            w.x = v.x * dt;
+            w.y = v.y * dt;
+            w.z = v.z * dt;
+            *(f32 *)(p + 0x488) = w.x + *(f32 *)(p + 0x488);
+            *(f32 *)(p + 0x48C) = w.y + *(f32 *)(p + 0x48C);
+            *(f32 *)(p + 0x490) = w.z + *(f32 *)(p + 0x490);
+            *(V3_E30 *)(p + 0x47C) = v;
+        } else {
+            *(s32 *)(p + 0x4A0) += ms;
+            p[0x4B4] = 0;
+            el = *(s32 *)(p + 0x4A0);
+            a[0] = (s32)(*(f32 *)(p + 0x494) * 180.0f / 3.14159f);
+            b[0] = (s32)(*(f32 *)(p + 0x488) * 180.0f / 3.14159f) - a[0];
+            a[1] = (s32)(*(f32 *)(p + 0x498) * 180.0f / 3.14159f);
+            b[1] = (s32)(*(f32 *)(p + 0x48C) * 180.0f / 3.14159f) - a[1];
+            a[2] = (s32)(*(f32 *)(p + 0x49C) * 180.0f / 3.14159f);
+            b[2] = (s32)(*(f32 *)(p + 0x490) * 180.0f / 3.14159f) - a[2];
+            func_8008AEC0(a[0], b[0], a[1], b[1], a[2], b[2], el, &n, &x, &pts);
+            if (pts != 0) {
+                if ((*(u32 *)(p + 4) & 1) && (pts > 1000 || D_8014169C(8) == 0)) {
+                    if (D_8014169C(2) != 0) {
+                        func_8008E568(1);
+                    } else {
+                        func_8008E568(2);
+                    }
+                }
+                if (D_8011B31C == 0) {
+                    pts = 0;
+                }
+                func_800ABF2C(p[0xC], pts, x, n);
+                q = *(s32 *)(p + 0x4B0);
+                k = n;
+                *(s32 *)(p + 0x4B0) = q + pts;
+                c = k;
+                p[0x6CC] += k;
+                if (p[0x6CC] > 10) {
+                    c = k + 10 - p[0x6CC];
+                    p[0x6CC] = 10;
+                }
+                if ((*(u32 *)(p + 0x6CC) & 0xFFFF0000) == 0x0A000000) {
+                    func_8008E568(3);
+                    p[0x6CD] = 1;
+                }
+                z = c;
+                n = z;
+                if (n) {
+                    D_8014C0A8(0x3A, 1, 1.0f, 1.0f);
+                } else {
+                    D_8014C0A8(0x3B, 1, 1.0f, 1.0f);
+                }
+            }
+        }
+        *(s32 *)(p + 0x4A4) += ms;
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_80092534);
 
@@ -460,7 +609,108 @@ void func_800961B0(u8 *p, u8 id, u8 flip) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_80096954);
+static inline void push_954(u8 *c, V3_954 *at, V3_954 *f, V3_954 *a) {
+    V3_954 tq;
+
+    a->x = at->x - *(f32 *)(c + 0x98);
+    a->y = at->y - *(f32 *)(c + 0x9C);
+    a->z = at->z - *(f32 *)(c + 0xA0);
+    tq.x = a->y * f->z - f->y * a->z;
+    tq.y = f->x * a->z - a->x * f->z;
+    tq.z = a->x * f->y - f->x * a->y;
+    *(f32 *)(c + 0x130) = tq.x + *(f32 *)(c + 0x130);
+    *(f32 *)(c + 0x134) = tq.y + *(f32 *)(c + 0x134);
+    *(f32 *)(c + 0x138) = tq.z + *(f32 *)(c + 0x138);
+    *(f32 *)(c + 0x124) = *(f32 *)(c + 0x124) + f->x;
+    *(f32 *)(c + 0x128) = *(f32 *)(c + 0x128) + f->y;
+    *(f32 *)(c + 0x12C) = *(f32 *)(c + 0x12C) + f->z;
+}
+
+void func_80096954(u8 *c) {
+    V3_954 axis;
+    V3_954 pos;
+    V3_954 pt;
+    V3_954 fl;
+    V3_954 F;
+    V3_954 tmp;
+    f32 d;
+    f32 f;
+    s32 (**rnd)(s32);
+
+    c[0x6C3] = 0;
+    pos.x = *(f32 *)(c + 0x98) + *(f32 *)(c + 0x8C);
+    pos.y = *(f32 *)(c + 0x9C) + *(f32 *)(c + 0x90);
+    pos.z = *(f32 *)(c + 0xA0) + *(f32 *)(c + 0x94);
+    axis.x = *(f32 *)(c + 0xC0);
+    axis.y = *(f32 *)(c + 0xCC);
+    axis.z = *(f32 *)(c + 0xD8);
+    d = axis.x * *(f32 *)(c + 0x720) + axis.y * *(f32 *)(c + 0x724) + axis.z * *(f32 *)(c + 0x728);
+    if ((d < 0.0f ? -d : d) > 0.7071f) {
+        *(u32 *)(c + 0x75C) += 10;
+        if (*(u32 *)(c + 0x75C) > D_80138D6D) {
+            V3_954 tq;
+            f = *(f32 *)(c + 0x5E8) * *(f32 *)(c + 0x5E8) + *(f32 *)(c + 0x5F0) * *(f32 *)(c + 0x5F0);
+            if (d > 0.0f) {
+                f = -f;
+            }
+            fl.x = 0.0f;
+            fl.y = 0.0f;
+            fl.z = f;
+            tmp.x = *(f32 *)(c + 0xC0) * fl.x + *(f32 *)(c + 0xC4) * fl.y + *(f32 *)(c + 0xC8) * fl.z; tmp.y = *(f32 *)(c + 0xCC) * fl.x + *(f32 *)(c + 0xD0) * fl.y + *(f32 *)(c + 0xD4) * fl.z; tmp.z = *(f32 *)(c + 0xD8) * fl.x + *(f32 *)(c + 0xDC) * fl.y + *(f32 *)(c + 0xE0) * fl.z; F = tmp; axis.x *= *(f32 *)(c + 0x74); axis.y *= *(f32 *)(c + 0x74); axis.z *= *(f32 *)(c + 0x74); pt.x = pos.x + axis.x; pt.y = pos.y + axis.y; pt.z = pos.z + axis.z; tmp.x = pt.x - *(f32 *)(c + 0x98); tmp.y = pt.y - *(f32 *)(c + 0x9C); tmp.z = pt.z - *(f32 *)(c + 0xA0); tq.x = tmp.y * F.z - F.y * tmp.z; tq.y = F.x * tmp.z - tmp.x * F.z; tq.z = tmp.x * F.y - F.x * tmp.y; *(f32 *)(c + 0x130) = tq.x + *(f32 *)(c + 0x130); *(f32 *)(c + 0x134) = tq.y + *(f32 *)(c + 0x134); *(f32 *)(c + 0x138) = tq.z + *(f32 *)(c + 0x138); *(f32 *)(c + 0x124) = *(f32 *)(c + 0x124) + F.x; *(f32 *)(c + 0x128) = *(f32 *)(c + 0x128) + F.y; *(f32 *)(c + 0x12C) = *(f32 *)(c + 0x12C) + F.z; axis.x = -axis.x; axis.y = -axis.y; axis.z = -axis.z; pt.x = pos.x + axis.x; pt.y = pos.y + axis.y; pt.z = pos.z + axis.z; F.x = -F.x; F.y = -F.y; F.z = -F.z; push_954(c, &pt, &F, &tmp);
+        }
+    } else {
+        *(u32 *)(c + 0x75C) = 0;
+    }
+    axis.x = *(f32 *)(c + 0xC4);
+    axis.y = *(f32 *)(c + 0xD0);
+    axis.z = *(f32 *)(c + 0xDC);
+    d = axis.x * *(f32 *)(c + 0x720) + axis.y * *(f32 *)(c + 0x724) + axis.z * *(f32 *)(c + 0x728);
+    if ((d < 0.0f ? -d : d) > 0.7071f) {
+        *(u32 *)(c + 0x760) += 10;
+        if (*(u32 *)(c + 0x760) > D_80138D6E) {
+            f = *(f32 *)(c + 0x5EC) * *(f32 *)(c + 0x5EC) + *(f32 *)(c + 0x5F0) * *(f32 *)(c + 0x5F0);
+            if (d > 0.0f) {
+                f = -f;
+            }
+            fl.x = 0.0f;
+            fl.y = 0.0f;
+            fl.z = f;
+            tmp.x = *(f32 *)(c + 0xC0) * fl.x + *(f32 *)(c + 0xC4) * fl.y + *(f32 *)(c + 0xC8) * fl.z; tmp.y = *(f32 *)(c + 0xCC) * fl.x + *(f32 *)(c + 0xD0) * fl.y + *(f32 *)(c + 0xD4) * fl.z; tmp.z = *(f32 *)(c + 0xD8) * fl.x + *(f32 *)(c + 0xDC) * fl.y + *(f32 *)(c + 0xE0) * fl.z; F = tmp; axis.x *= *(f32 *)(c + 0x74); axis.y *= *(f32 *)(c + 0x74); axis.z *= *(f32 *)(c + 0x74); pt.x = pos.x + axis.x; pt.y = pos.y + axis.y; pt.z = pos.z + axis.z; push_954(c, &pt, &F, &tmp); axis.x = -axis.x; axis.y = -axis.y; axis.z = -axis.z; pt.x = pos.x + axis.x; pt.y = pos.y + axis.y; pt.z = pos.z + axis.z; F.x = -F.x; F.y = -F.y; F.z = -F.z; push_954(c, &pt, &F, &tmp);
+        }
+    } else {
+        *(u32 *)(c + 0x760) = 0;
+    }
+    axis.x = *(f32 *)(c + 0xC8);
+    axis.y = *(f32 *)(c + 0xD4);
+    axis.z = *(f32 *)(c + 0xE0);
+    d = axis.x * *(f32 *)(c + 0x720) + axis.y * *(f32 *)(c + 0x724) + axis.z * *(f32 *)(c + 0x728);
+    if (-d > 0.7071f) {
+        if (*(u32 *)(c + 0x764) == 0) {
+            rnd = &D_8014169C;
+            c[0x768] = (u32)(*rnd)(100) > D_80138D70;
+            if (c[0x768]) {
+                c[0x769] = (*rnd)(2);
+            }
+        }
+        *(u32 *)(c + 0x764) += 10;
+        if (c[0x768]) {
+            if (*(u32 *)(c + 0x764) > D_80138D6F) {
+                f = *(f32 *)(c + 0x5E8) * *(f32 *)(c + 0x5E8) + *(f32 *)(c + 0x5F0) * *(f32 *)(c + 0x5F0);
+                if (c[0x769]) {
+                    f = -f;
+                }
+                fl.x = f;
+                fl.y = 0.0f;
+                fl.z = 0.0f;
+                tmp.x = *(f32 *)(c + 0xC0) * fl.x + *(f32 *)(c + 0xC4) * fl.y + *(f32 *)(c + 0xC8) * fl.z; tmp.y = *(f32 *)(c + 0xCC) * fl.x + *(f32 *)(c + 0xD0) * fl.y + *(f32 *)(c + 0xD4) * fl.z; tmp.z = *(f32 *)(c + 0xD8) * fl.x + *(f32 *)(c + 0xDC) * fl.y + *(f32 *)(c + 0xE0) * fl.z; F = tmp; axis.x *= *(f32 *)(c + 0x74); axis.y *= *(f32 *)(c + 0x74); axis.z *= *(f32 *)(c + 0x74); pt.x = pos.x + axis.x; pt.y = pos.y + axis.y; pt.z = pos.z + axis.z; push_954(c, &pt, &F, &tmp); axis.x = -axis.x; axis.y = -axis.y; axis.z = -axis.z; pt.x = pos.x + axis.x; pt.y = pos.y + axis.y; pt.z = pos.z + axis.z; F.x = -F.x; F.y = -F.y; F.z = -F.z; push_954(c, &pt, &F, &tmp);
+            }
+        } else if (*(u32 *)(c + 0x764) > D_80138D71 * 10) {
+            func_800961B0(c, 0, 0);
+        }
+    } else {
+        *(u32 *)(c + 0x764) = 0;
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_8009751C);
 
@@ -468,7 +718,131 @@ INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_800977AC);
 
 INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_800979F4);
 
-INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_80097B00);
+typedef struct { f32 x; f32 y; f32 z; } V3_B00;
+typedef struct { V3_B00 n; f32 d; } P4_B00;
+typedef struct { f32 cur; u8 p4[0x10]; f32 hi; f32 lo; } R_B00;
+typedef struct { V3_B00 pos; f32 fC; u8 p10[4]; u8 flags; u8 p15[3]; V3_B00 dir; V3_B00 world; u8 contact; u8 c31; u8 p32[2]; V3_B00 n; V3_B00 pt; V3_B00 vel; u8 p58[8]; u8 b60; u8 p61[3]; f32 h64; f32 ang; f32 rate; } W_B00;
+typedef struct { void (*a)(u8, f32); void (*b)(u8, u8, P4_B00 *); void (*c)(u8, s32); } T_B00;
+extern u8 D_8011B31B;
+extern void (*D_80141748)(u8, V3_B00 *, void *);
+extern void (*D_8014174C)(u8, u8, f32, f32, f32, s32, s32, s32, V3_B00 *, V3_B00 *);
+extern T_B00 D_80141754;
+u32 func_800AEF70(void);
+void func_80090410(u8, V3_B00 *, V3_B00 *, V3_B00 *, V3_B00 *, s32 *, u8 *, u8 *);
+static inline f32 maxf_B00(f32 a, f32 b) { return a > b ? a : b; }
+void func_80097B00(u32 dt) {
+    V3_B00 d;
+    V3_B00 o;
+    V3_B00 v1;
+    V3_B00 v2;
+    V3_B00 v3;
+    u8 near[8];
+    P4_B00 pl;
+    s32 s90;
+    u8 s94;
+    u8 j;
+    u8 cnt;
+    u8 i;
+    u8 *c;
+    W_B00 *wh;
+    s32 hit;
+    f32 h;
+    f32 r;
+    f32 f;
+    R_B00 *rr;
+
+    cnt = D_8011B31B;
+    for (i = 0; i < cnt; i++) {
+        near[i] = 0;
+    }
+    for (i = 0; i < func_800AEF70(); i++) {
+        func_80090410(i, &o, &v1, &v2, &v3, &s90, &s94, &j);
+        for (j = 0; j < cnt; j++) {
+            if (near[j] == 0) {
+                c = &D_80118630 + j * 0x77C;
+                d.x = *(f32 *)(c + 0x98) + *(f32 *)(c + 0x8C);
+                d.y = *(f32 *)(c + 0x9C) + *(f32 *)(c + 0x90);
+                d.z = *(f32 *)(c + 0xA0) + *(f32 *)(c + 0x94);
+                d.x -= o.x;
+                d.y -= o.y;
+                d.z -= o.z;
+                f = ((((((d.x) < 0.0f ? -(d.x) : (d.x))) > ( ((d.y) < 0.0f ? -(d.y) : (d.y))) ? (((d.x) < 0.0f ? -(d.x) : (d.x))) : ( ((d.y) < 0.0f ? -(d.y) : (d.y))))) > ( ((d.z) < 0.0f ? -(d.z) : (d.z))) ? (((((d.x) < 0.0f ? -(d.x) : (d.x))) > ( ((d.y) < 0.0f ? -(d.y) : (d.y))) ? (((d.x) < 0.0f ? -(d.x) : (d.x))) : ( ((d.y) < 0.0f ? -(d.y) : (d.y))))) : ( ((d.z) < 0.0f ? -(d.z) : (d.z))));
+                near[j] = f < 2400.0f;
+            }
+        }
+    }
+    for (i = 0; i < cnt; i++) {
+        V3_B00 w;
+
+        c = &D_80118630 + i * 0x77C;
+        o.x = *(f32 *)(c + 0x98) + *(f32 *)(c + 0x8C);
+        o.y = *(f32 *)(c + 0x9C) + *(f32 *)(c + 0x90);
+        o.z = *(f32 *)(c + 0xA0) + *(f32 *)(c + 0x94);
+        w.x = *(f32 *)(c + 0xC0) * *(f32 *)(c + 0x5DC) + *(f32 *)(c + 0xC4) * *(f32 *)(c + 0x5E0) + *(f32 *)(c + 0xC8) * *(f32 *)(c + 0x5E4);
+        w.y = *(f32 *)(c + 0xCC) * *(f32 *)(c + 0x5DC) + *(f32 *)(c + 0xD0) * *(f32 *)(c + 0x5E0) + *(f32 *)(c + 0xD4) * *(f32 *)(c + 0x5E4);
+        w.z = *(f32 *)(c + 0xD8) * *(f32 *)(c + 0x5DC) + *(f32 *)(c + 0xDC) * *(f32 *)(c + 0x5E0) + *(f32 *)(c + 0xE0) * *(f32 *)(c + 0x5E4);
+        d = w;
+        d.x = o.x - d.x;
+        d.y = o.y - d.y;
+        d.z = o.z - d.z;
+        D_80141748(i, &d, c + 0xC0);
+        rr = (R_B00 *)(c + 0x3EC);
+        if (near[i]) {
+            for (j = 0, wh = (W_B00 *)(c + 0x144); j < c[0x3E4]; j++, wh++) {
+                d.x = wh->dir.y * wh->n.z - wh->n.y * wh->dir.z;
+                d.y = wh->n.x * wh->dir.z - wh->dir.x * wh->n.z;
+                d.z = wh->dir.x * wh->n.y - wh->n.x * wh->dir.y;
+                hit = 0;
+                if (wh->b60 && wh->contact && c[0x778] == 0) {
+                    d.x *= wh->fC;
+                    d.y *= wh->fC;
+                    d.z *= wh->fC;
+                    if (j == 0 || j == 2 || j == 4) {
+                        d.x = wh->pt.x + d.x;
+                        d.y = wh->pt.y + d.y;
+                        d.z = wh->pt.z + d.z;
+                    } else {
+                        d.x = wh->pt.x - d.x;
+                        d.y = wh->pt.y - d.y;
+                        d.z = wh->pt.z - d.z;
+                    }
+                    hit = 1;
+                }
+                h = 0.0f;
+                if (wh->flags & 2) {
+                    h = *(f32 *)(c + 0x10);
+                }
+                if (j >= 2) {
+                    h = -h;
+                }
+                r = wh->h64 - ((wh->flags & 1) ? *(f32 *)(c + 0x524) : *(f32 *)(c + 0x50C));
+                if (c[0x13C] == 0) {
+                    wh->ang += wh->rate * ((f32) dt / 1000.0f);
+                }
+                while (wh->ang < -314.159f) {
+                    wh->ang += 314.159f;
+                }
+                while (wh->ang > 314.159f) {
+                    wh->ang -= 314.159f;
+                }
+                D_8014174C(i, j, h, r, wh->ang, wh->contact, wh->c31, hit, &wh->pt, &d);
+            }
+        }
+        f = 2.0f * ((rr->cur - rr->lo) / (rr->hi - rr->lo)) - 1.0f;
+        f = maxf_B00(f, 0.0f);
+        if (c[0x4B8] != 0) {
+            f = 0.0f;
+        }
+        D_80141754.a(i, f);
+        if (c[0x710] != 0) {
+            pl.n = *(V3_B00 *)(c + 0x720);
+            pl.d = *(f32 *)(c + 0x72C) - (pl.n.x * *(f32 *)(c + 0x714) + pl.n.y * *(f32 *)(c + 0x718) + pl.n.z * *(f32 *)(c + 0x71C));
+        }
+        D_80141754.b(i, c[0x710], &pl);
+        D_80141754.c(i, *(s32 *)(c + 8));
+        c[0x778] = 0;
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_80098300);
 

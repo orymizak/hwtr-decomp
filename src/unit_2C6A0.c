@@ -19,6 +19,8 @@ typedef struct { f32 x; f32 y; f32 z; } V3E0_;
 typedef struct { s32 kind; u8 p4; u8 slot; u8 p6[14]; } E20_;
 typedef struct { u8 p0[0x30]; E20_ ent[6]; } Cfg8B_;
 typedef struct { u32 time; u32 best; u8 id; } Res8C_;
+typedef struct { u8 id; u8 b; u8 pad[2]; s32 c; } Ent8b_;
+void *memset(void *, s32, u32);
 extern void (*D_801416E4)(s32);
 extern void (*D_801416F0)(u32);
 extern u8 (*D_80145568)(s32);
@@ -756,7 +758,17 @@ void func_8008E2B0(void) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", func_8008E310);
+void func_8008E310(void) {
+    u32 i;
+    Ent8b_ *e;
+    void (**fp)(s32);
+
+    for (i = 0, fp = &D_8014C130, e = ((Ent8b_ *)&D_80118538); i < 2; i++, e++) {
+        fp[0](e->id);
+        fp[-2](e->id);
+    }
+    memset(((Ent8b_ *)&D_80118538), 0, 16);
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", func_8008E38C);
 

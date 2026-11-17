@@ -13,6 +13,19 @@ extern u8 D_80118620;
 typedef struct { s32 x; s32 y; s32 z; } Pos_;
 typedef struct { f32 x; f32 y; f32 z; } Vec3f_;
 typedef struct { u8 p0[0x44]; s32 mode; u8 pt; u8 car; u8 p4A[2]; u8 b4C; u8 p4D[3]; s32 timer; } Cam90_;
+typedef struct { u8 p0[4]; Vec3f_ pos; Vec3f_ vel; f32 m[3][3]; f32 fov; s32 mode; u8 pt; u8 car; u8 b4A; u8 b4B; u8 b4C; u8 p4D[7]; u32 shake; f32 f58; u8 b5C; u8 p5D[3]; u32 b60; } CamE_;
+typedef struct { u8 p0[4]; s32 flags; u8 p8[0x84]; Vec3f_ p8C; Vec3f_ pos; u8 pA4[0xC]; Vec3f_ vel; f32 fBC; f32 m[3][3]; u8 pE4[0x58]; u8 b13C; u8 p13D[0x2A7]; u8 b3E4; u8 p3E5[2]; u8 b3E7; u8 p3E8[0xD8]; u8 b4C0; u8 p4C1[3]; f32 f4C4; u8 p4C8[0x27C]; u8 b744; } CarE_;
+typedef struct { s32 mode; Vec3f_ ofs; f32 dist; } CamT_;
+f32 sinf(f32);
+extern u8 D_80118550;
+extern u8 D_80138D43;
+s32 func_8008D3AC(void);
+void func_8009099C(CamE_ *);
+void func_8009013C(Vec3f_, Vec3f_, Vec3f_, Vec3f_ *, f32, f32, f32, f32);
+void func_800A4198(u8, Vec3f_ *);
+u8 func_800A4EE8(u8, Vec3f_ *, Vec3f_ *);
+Vec3f_ func_800A9068(f32 t, Vec3f_ a, Vec3f_ b);
+s32 func_800A58A4(s32 arg0);
 extern u8 (*D_80141718)(void);
 extern void (*D_8014171C)(u8, Vec3f_ *, void *, s32 *, s32 *);
 extern u8 (*D_8014169C)(s32);
@@ -35,7 +48,298 @@ s32 func_8008EA64(void) {
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_2F4F0", func_8008EA6C);
+void func_80090578(Cam90_ *cam, u32 dt);
+void func_800908A0(void);
+s32 func_800908A8(void);
+void func_8008EA6C(u32 dt) {
+    Vec3f_ pos;
+    Vec3f_ vel;
+    Vec3f_ t;
+    Vec3f_ d;
+    Vec3f_ f;
+    Vec3f_ r;
+    Vec3f_ u;
+    Vec3f_ ofs;
+    Vec3f_ eye;
+    Vec3f_ c;
+    f32 m[3][3];
+    Vec3f_ tmp;
+    s32 flags;
+    u32 i;
+    CamE_ *cam;
+    f32 k;
+    CarE_ *car;
+    u8 vis;
+    u8 b3E7;
+    f32 f4C4;
+    f32 fBC;
+    u8 b4C0;
+    f32 s;
+    f32 far;
+    f32 near;
+    f32 damp;
+    f32 dist;
+    f32 olen;
+    f32 dp;
+    f32 sum;
+    f32 *sp;
+    s32 (**rnd)(s32);
+    s32 idx;
+
+    k = 1000.0f / (f32)dt;
+    cam = (CamE_ *)D_80118558;
+    for (i = 0; i < D_80118620; cam++, i++) {
+        if ((*cam).b5C != 0 && func_800908A8() != 0) {
+            func_8009099C(&(*cam));
+            continue;
+        }
+        vis = 1;
+        car = (CarE_ *)func_800960D8((*cam).car);
+        pos.x = car->pos.x + car->p8C.x;
+        pos.y = car->pos.y + car->p8C.y;
+        pos.z = car->pos.z + car->p8C.z;
+        m[0][0] = car->m[0][0];
+        m[0][1] = car->m[0][1];
+        m[0][2] = car->m[0][2];
+        m[1][0] = car->m[1][0];
+        m[1][1] = car->m[1][1];
+        m[1][2] = car->m[1][2];
+        m[2][0] = car->m[2][0];
+        m[2][1] = car->m[2][1];
+        m[2][2] = car->m[2][2];
+        vel = car->vel;
+        flags = car->flags;
+        if (func_8008D3AC() != 0) {
+            vis = car->b13C;
+        }
+        b3E7 = car->b3E7;
+        b4C0 = car->b4C0;
+        f4C4 = car->f4C4;
+        fBC = car->fBC;
+        switch ((*cam).mode) {
+        case 0:
+            tmp.x = m[0][0] * (((CamT_ *)D_80118624)[(*cam).pt]).ofs.x + m[0][1] * (((CamT_ *)D_80118624)[(*cam).pt]).ofs.y + m[0][2] * (((CamT_ *)D_80118624)[(*cam).pt]).ofs.z;
+            tmp.y = m[1][0] * (((CamT_ *)D_80118624)[(*cam).pt]).ofs.x + m[1][1] * (((CamT_ *)D_80118624)[(*cam).pt]).ofs.y + m[1][2] * (((CamT_ *)D_80118624)[(*cam).pt]).ofs.z;
+            tmp.z = m[2][0] * (((CamT_ *)D_80118624)[(*cam).pt]).ofs.x + m[2][1] * (((CamT_ *)D_80118624)[(*cam).pt]).ofs.y + m[2][2] * (((CamT_ *)D_80118624)[(*cam).pt]).ofs.z;
+            t = tmp;
+            { ((*cam).pos).x = ( pos).x + ( t).x; ((*cam).pos).y = ( pos).y + ( t).y; ((*cam).pos).z = ( pos).z + ( t).z; };
+            (*cam).vel = vel;
+            (*cam).m[0][0] = m[0][0];
+            (*cam).m[0][1] = m[0][1];
+            (*cam).m[0][2] = m[0][2];
+            (*cam).m[1][0] = m[1][0];
+            (*cam).m[1][1] = m[1][1];
+            (*cam).m[1][2] = m[1][2];
+            (*cam).m[2][0] = m[2][0];
+            (*cam).m[2][1] = m[2][1];
+            (*cam).m[2][2] = m[2][2];
+            (*cam).fov = 1.570795f;
+            func_800A4198((*cam).car, &(*cam).pos);
+            break;
+        case 1:
+            if (flags & 0x10) {
+                if (!func_800A4EE8((*cam).car, &t, &u)) {
+                    flags &= ~0x10;
+                }
+            }
+            if (flags & 0x10) {
+                far = 30000.0f;
+                near = 10000.0f;
+                damp = 0.1f;
+                s = ((vel).x * ( t).x + (vel).y * ( t).y + (vel).z * ( t).z);
+                { (vel).x = ( t).x * ( s); (vel).y = ( t).y * ( s); (vel).z = ( t).z * ( s); };
+                sum = ((((vel).x) < 0.0f ? -((vel).x) : ((vel).x)) + (((vel).y) < 0.0f ? -((vel).y) : ((vel).y)) + (((vel).z) < 0.0f ? -((vel).z) : ((vel).z)));
+                if (sum < 1.0f) {
+                    vel = t;
+                }
+                f = vel;
+                { f32 _l = sqrtf(((f).x * (f).x + (f).y * (f).y + (f).z * (f).z)); f32 _i = 1.0f / _l; (f).x = (f).x * _i; (f).y = (f).y * _i; (f).z = (f).z * _i; };
+                if (car->b744 == 0) {
+                    u.x = 0.0f;
+                    u.y = 0.0f;
+                    u.z = 1.0f;
+                }
+                { (r).x = ( f).y * ( u).z - ( u).y * ( f).z; (r).y = ( u).x * ( f).z - ( f).x * ( u).z; (r).z = ( f).x * ( u).y - ( u).x * ( f).y; };
+                { f32 _l = sqrtf(((r).x * (r).x + (r).y * (r).y + (r).z * (r).z)); f32 _i = 1.0f / _l; (r).x = (r).x * _i; (r).y = (r).y * _i; (r).z = (r).z * _i; };
+                { (u).x = ( r).y * ( f).z - ( f).y * ( r).z; (u).y = ( f).x * ( r).z - ( r).x * ( f).z; (u).z = ( r).x * ( f).y - ( f).x * ( r).y; };
+            } else {
+                far = 30000.0f;
+                near = 10000.0f;
+                damp = 0.1f;
+                if (!(flags & 4)) {
+                    vel.z = 0.0f;
+                }
+                if (sqrtf(((vel).x * ( vel).x + (vel).y * ( vel).y + (vel).z * ( vel).z)) < D_80138D43 * 17.6f) {
+                    if (b3E7 != 0 || (*cam).b60 != 0 || (*cam).b4C != 0) {
+                        t.x = m[0][1];
+                        t.y = m[1][1];
+                        t.z = m[2][1];
+                    } else {
+                        { (t).x = ( pos).x - ( (*cam).pos).x; (t).y = ( pos).y - ( (*cam).pos).y; (t).z = ( pos).z - ( (*cam).pos).z; };
+                    }
+                    t.z = 0.0f;
+                    if (((t.x) < 0.0f ? -(t.x) : (t.x)) + ((t.y) < 0.0f ? -(t.y) : (t.y)) > 0.0f) {
+                        f = t;
+                    } else {
+                        f.x = m[0][2];
+                        f.y = m[1][2];
+                        f.z = m[2][2];
+                    }
+                } else {
+                    f = vel;
+                }
+                { f32 _l = sqrtf(((f).x * (f).x + (f).y * (f).y + (f).z * (f).z)); f32 _i = 1.0f / _l; (f).x = (f).x * _i; (f).y = (f).y * _i; (f).z = (f).z * _i; };
+                if (flags & 4) {
+                    u.x = m[0][2];
+                    u.y = m[1][2];
+                    u.z = m[2][2];
+                    { (r).x = ( f).y * ( u).z - ( u).y * ( f).z; (r).y = ( u).x * ( f).z - ( f).x * ( u).z; (r).z = ( f).x * ( u).y - ( u).x * ( f).y; };
+                    if (!(((((r).x) < 0.0f ? -((r).x) : ((r).x)) + (((r).y) < 0.0f ? -((r).y) : ((r).y)) + (((r).z) < 0.0f ? -((r).z) : ((r).z))) > 0.0f)) {
+                        r.x = 1.0f;
+                        r.y = 0.0f;
+                        r.z = 0.0f;
+                    }
+                    { f32 _l = sqrtf(((r).x * (r).x + (r).y * (r).y + (r).z * (r).z)); f32 _i = 1.0f / _l; (r).x = (r).x * _i; (r).y = (r).y * _i; (r).z = (r).z * _i; };
+                    { (u).x = ( r).y * ( f).z - ( f).y * ( r).z; (u).y = ( f).x * ( r).z - ( r).x * ( f).z; (u).z = ( r).x * ( f).y - ( f).x * ( r).y; };
+                } else {
+                    r.x = f.y;
+                    r.y = -f.x;
+                    r.z = 0.0f;
+                    u.x = 0.0f;
+                    u.y = 0.0f;
+                    u.z = 1.0f;
+                }
+            }
+            { (t).x = ( u).x * ( (((CamT_ *)D_80118624)[(*cam).pt]).dist); (t).y = ( u).y * ( (((CamT_ *)D_80118624)[(*cam).pt]).dist); (t).z = ( u).z * ( (((CamT_ *)D_80118624)[(*cam).pt]).dist); };
+            { (pos).x = ( pos).x + ( t).x; (pos).y = ( pos).y + ( t).y; (pos).z = ( pos).z + ( t).z; };
+            ofs = (((CamT_ *)D_80118624)[(*cam).pt]).ofs;
+            if (b4C0 != 0) {
+                s = ((fBC - f4C4) + 528.0f) / 528.0f;
+            } else {
+                s = 0.0f;
+            }
+            (*cam).f58 += (s - (*cam).f58) / k;
+            s = (*cam).f58 * 0.5f + 1.0f;
+            ofs.x *= s;
+            ofs.y *= s;
+            eye = pos;
+            { (t).x = ( r).x * ( ofs.x); (t).y = ( r).y * ( ofs.x); (t).z = ( r).z * ( ofs.x); };
+            { (eye).x = ( eye).x + ( t).x; (eye).y = ( eye).y + ( t).y; (eye).z = ( eye).z + ( t).z; };
+            { (t).x = ( f).x * ( ofs.y); (t).y = ( f).y * ( ofs.y); (t).z = ( f).z * ( ofs.y); };
+            { (eye).x = ( eye).x + ( t).x; (eye).y = ( eye).y + ( t).y; (eye).z = ( eye).z + ( t).z; };
+            { (t).x = ( u).x * ( ofs.z); (t).y = ( u).y * ( ofs.z); (t).z = ( u).z * ( ofs.z); };
+            { (eye).x = ( eye).x + ( t).x; (eye).y = ( eye).y + ( t).y; (eye).z = ( eye).z + ( t).z; };
+            func_800A4198((*cam).car, &eye);
+            { (t).x = ( eye).x - ( pos).x; (t).y = ( eye).y - ( pos).y; (t).z = ( eye).z - ( pos).z; };
+            dist = sqrtf(((t).x * ( t).x + (t).y * ( t).y + (t).z * ( t).z));
+            olen = sqrtf(((ofs).x * ( ofs).x + (ofs).y * ( ofs).y + (ofs).z * ( ofs).z));
+            if (vis == 0 && (*cam).b4C == 0 && (*cam).b60 == 0) {
+                { (t).x = ( (*cam).pos).x - ( pos).x; (t).y = ( (*cam).pos).y - ( pos).y; (t).z = ( (*cam).pos).z - ( pos).z; };
+                { (d).x = ( eye).x - ( pos).x; (d).y = ( eye).y - ( pos).y; (d).z = ( eye).z - ( pos).z; };
+                if (((t).x * ( d).x + (t).y * ( d).y + (t).z * ( d).z) < 0.0f) {
+                    eye.z += 120.0f;
+                }
+                func_8009013C((*cam).pos, (*cam).vel, eye, &eye, k, far, near, damp);
+            }
+            if (dist < 1.0f) {
+                f.y = 1.0f;
+            }
+            { (f).x = ( pos).x - ( eye).x; (f).y = ( pos).y - ( eye).y; (f).z = ( pos).z - ( eye).z; };
+            { f32 _l = sqrtf(((f).x * (f).x + (f).y * (f).y + (f).z * (f).z)); f32 _i = 1.0f / _l; (f).x = (f).x * _i; (f).y = (f).y * _i; (f).z = (f).z * _i; };
+            if (flags & 0x10) {
+                u.x = 0.0f;
+                u.y = 0.0f;
+                u.z = 1.0f;
+            }
+            { (r).x = ( f).y * ( u).z - ( u).y * ( f).z; (r).y = ( u).x * ( f).z - ( f).x * ( u).z; (r).z = ( f).x * ( u).y - ( u).x * ( f).y; };
+            { f32 _l = sqrtf(((r).x * (r).x + (r).y * (r).y + (r).z * (r).z)); f32 _i = 1.0f / _l; (r).x = (r).x * _i; (r).y = (r).y * _i; (r).z = (r).z * _i; };
+            { (u).x = ( r).y * ( f).z - ( f).y * ( r).z; (u).y = ( f).x * ( r).z - ( r).x * ( f).z; (u).z = ( r).x * ( f).y - ( f).x * ( r).y; };
+            { (t).x = ( f).x * ( ((olen) < ( dist) ? (olen) : ( dist))); (t).y = ( f).y * ( ((olen) < ( dist) ? (olen) : ( dist))); (t).z = ( f).z * ( ((olen) < ( dist) ? (olen) : ( dist))); };
+            { (eye).x = ( pos).x - ( t).x; (eye).y = ( pos).y - ( t).y; (eye).z = ( pos).z - ( t).z; };
+            if ((*cam).b60 != 0) {
+                sp = (f32 *)func_800A58A4(func_800A5894() - 1);
+                s = (f32)(5000 - (*cam).b60) / 5000.0f;
+                s = (sinf((s - 0.5f) * 3.14159f) + 1.0f) * 0.5f;
+                tmp = func_800A9068(s, *(Vec3f_ *)&sp[0], eye);
+                (*cam).pos = tmp;
+                c = func_800A9068(s, *(Vec3f_ *)&sp[3], pos);
+                { (f).x = ( c).x - ( (*cam).pos).x; (f).y = ( c).y - ( (*cam).pos).y; (f).z = ( c).z - ( (*cam).pos).z; };
+                { f32 _l = sqrtf(((f).x * (f).x + (f).y * (f).y + (f).z * (f).z)); f32 _i = 1.0f / _l; (f).x = (f).x * _i; (f).y = (f).y * _i; (f).z = (f).z * _i; };
+                r.x = f.y;
+                r.y = -f.x;
+                r.z = 0.0f;
+                { f32 _l = sqrtf(((r).x * (r).x + (r).y * (r).y + (r).z * (r).z)); f32 _i = 1.0f / _l; (r).x = (r).x * _i; (r).y = (r).y * _i; (r).z = (r).z * _i; };
+                { (u).x = ( r).y * ( f).z - ( f).y * ( r).z; (u).y = ( f).x * ( r).z - ( r).x * ( f).z; (u).z = ( r).x * ( f).y - ( f).x * ( r).y; };
+                { (*cam).m[0][0] = (r).x; (*cam).m[1][0] = (r).y; (*cam).m[2][0] = (r).z; (*cam).m[0][1] = ( f).x; (*cam).m[1][1] = ( f).y; (*cam).m[2][1] = ( f).z; (*cam).m[0][2] = ( u).x; (*cam).m[1][2] = ( u).y; (*cam).m[2][2] = ( u).z; };
+                (*cam).b60 -= dt;
+            } else {
+                if ((*cam).b4C == 0) {
+                    { ((*cam).vel).x = ( eye).x - ( (*cam).pos).x; ((*cam).vel).y = ( eye).y - ( (*cam).pos).y; ((*cam).vel).z = ( eye).z - ( (*cam).pos).z; };
+                    { ((*cam).vel).x = ( (*cam).vel).x * ( k); ((*cam).vel).y = ( (*cam).vel).y * ( k); ((*cam).vel).z = ( (*cam).vel).z * ( k); };
+                } else {
+                    (*cam).vel = vel;
+                }
+                (*cam).pos = eye;
+                { (*cam).m[0][0] = (r).x; (*cam).m[1][0] = (r).y; (*cam).m[2][0] = (r).z; (*cam).m[0][1] = ( f).x; (*cam).m[1][1] = ( f).y; (*cam).m[2][1] = ( f).z; (*cam).m[0][2] = ( u).x; (*cam).m[1][2] = ( u).y; (*cam).m[2][2] = ( u).z; };
+                (*cam).fov = 1.570795f;
+            }
+            break;
+        case 2:
+            D_8014171C((*cam).pt, &(*cam).pos, (*cam).m, &flags, (s32 *)&(*cam).fov);
+            (*cam).vel.x = 0.0f;
+            (*cam).vel.y = 0.0f;
+            (*cam).vel.z = 0.0f;
+            break;
+        case 3:
+            D_8014171C((*cam).pt, &(*cam).pos, m, &flags, (s32 *)&(*cam).fov);
+            (*cam).vel.x = 0.0f;
+            (*cam).vel.y = 0.0f;
+            (*cam).vel.z = 0.0f;
+            { (f).x = ( pos).x - ( (*cam).pos).x; (f).y = ( pos).y - ( (*cam).pos).y; (f).z = ( pos).z - ( (*cam).pos).z; };
+            { f32 _l = sqrtf(((f).x * (f).x + (f).y * (f).y + (f).z * (f).z)); f32 _i = 1.0f / _l; (f).x = (f).x * _i; (f).y = (f).y * _i; (f).z = (f).z * _i; };
+            r.x = f.y;
+            r.y = -f.x;
+            r.z = 0.0f;
+            { f32 _l = sqrtf(((r).x * (r).x + (r).y * (r).y + (r).z * (r).z)); f32 _i = 1.0f / _l; (r).x = (r).x * _i; (r).y = (r).y * _i; (r).z = (r).z * _i; };
+            { (u).x = ( r).y * ( f).z - ( f).y * ( r).z; (u).y = ( f).x * ( r).z - ( r).x * ( f).z; (u).z = ( r).x * ( f).y - ( f).x * ( r).y; };
+            { f32 _l = sqrtf(((u).x * (u).x + (u).y * (u).y + (u).z * (u).z)); f32 _i = 1.0f / _l; (u).x = (u).x * _i; (u).y = (u).y * _i; (u).z = (u).z * _i; };
+            { (*cam).m[0][0] = (r).x; (*cam).m[1][0] = (r).y; (*cam).m[2][0] = (r).z; (*cam).m[0][1] = ( f).x; (*cam).m[1][1] = ( f).y; (*cam).m[2][1] = ( f).z; (*cam).m[0][2] = ( u).x; (*cam).m[1][2] = ( u).y; (*cam).m[2][2] = ( u).z; };
+            break;
+        case 4:
+            ((void (*)(CamE_ *, f32))func_800908A0)(&(*cam), k);
+            break;
+        }
+        if ((*cam).shake > dt) {
+            rnd = (s32 (**)(s32))&D_8014169C;
+            s = (*rnd)((*cam).shake) - 125;
+            (*cam).pos.x += s / 10.0f;
+            s = (*rnd)((*cam).shake) - 125;
+            (*cam).pos.y += s / 10.0f;
+            s = (*rnd)((*cam).shake) - 125;
+            (*cam).pos.z += s / 10.0f;
+            (*cam).shake -= dt;
+        } else {
+            (*cam).shake = 0;
+        }
+        (*cam).b4C = 0;
+        if (D_80118550 != 0) {
+            ((void (*)(void *cam, u32 dt))func_80090578)(&(*cam), dt);
+        } else if ((*cam).b4A != (*cam).b4B) {
+            if ((*cam).b4A != 0) {
+                idx = ((*cam).pt + 1) % D_80118621;
+                (*cam).pt = idx;
+                (*cam).mode = (((CamT_ *)D_80118624)[idx]).mode;
+                (*cam).b4C = 1;
+                if ((*cam).b60 != 0) {
+                    car->b3E7 = car->b3E4;
+                    (*cam).b60 = 0;
+                }
+            }
+            (*cam).b4B = (*cam).b4A;
+        }
+    }
+}
+
 
 INCLUDE_ASM("asm/nonmatchings/unit_2F4F0", func_8009013C);
 

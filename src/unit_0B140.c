@@ -13,6 +13,9 @@ typedef struct { u32 w0; u32 w1; } GfxWAA_;
 typedef union { GfxWAA_ words; s64 force; } GfxAA_;
 typedef struct { GfxAA_ *f0; GfxAA_ *f4; u8 p8[0x318]; } PoolAA_;
 typedef struct { f32 x; f32 y; f32 z; u8 pC[8]; u8 type; } EntAA_;
+typedef struct { s32 keys[6]; u8 pad[0x54 - 0x18]; } KeySet2_;
+typedef struct { s32 keys[21]; } KeySetB_;
+extern s32 D_800F0394[];
 extern PoolAA_ D_8014C740[];
 extern s32 D_8014C540;
 extern GfxAA_ *D_8014EC78;
@@ -336,7 +339,20 @@ u8 func_8006BD78(u8 a, s32 b) {
     return D_800F043C[a].c[b];
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_0B140", func_8006BDA8);
+s32 func_8006BDA8(u8 ch, s32 slot) {
+    s32 v;
+    s32 i;
+    s32 m;
+
+    v = D_800F0404[ch].keys[slot];
+    for (i = 1, m = 1; m != v && i < 21; i++) {
+        m <<= 1;
+    }
+    if (i < 21) {
+        return D_800F0394[i];
+    }
+    return D_800F0394[0];
+}
 
 s32 func_8006BE34(u8 ch, s32 slot) {
     Pad_ pad;
@@ -411,9 +427,43 @@ s32 func_8006C33C(void) {
     return D_800F03F4 & 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_0B140", func_8006C34C);
+s32 func_8006C34C(u8 *buf, u8 id) {
+    s32 sum;
+    s32 i;
 
-INCLUDE_ASM("asm/nonmatchings/unit_0B140", func_8006C3D4);
+    sum = 0;
+    for (i = 0; i < 13; i++) {
+        sum += buf[i];
+    }
+    if ((u8)sum != buf[13]) {
+        return 0;
+    }
+    for (i = 0; i < 13; i++) {
+        D_800F0404[id].keys[i] = 1 << buf[i];
+    }
+    return 1;
+}
+
+s32 func_8006C3D4(u8 *out, u8 ch) {
+    s32 j;
+    s32 n;
+    s32 m;
+    u8 sum;
+
+    sum = 0;
+    for (j = 0; j < 13; j++) {
+        n = 0;
+        m = 1;
+        while (m != D_800F0404[ch].keys[j]) {
+            m <<= 1;
+            n++;
+        }
+        out[j] = n;
+        sum += n;
+    }
+    out[13] = sum;
+    return 1;
+}
 
 s32 func_8006C468(void) {
     func_800D7130();
@@ -427,7 +477,14 @@ s32 func_8006C488(void) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_0B140", func_8006C4BC);
+s32 func_8006C4BC(u8 i) {
+    if (func_800D6FA0(i) == 0) {
+        D_800F03F8[i].state = 2;
+        func_800D7030(i, 2);
+        return 1;
+    }
+    return 0;
+}
 
 s32 func_8006C520(void) {
     PakSt_ s;

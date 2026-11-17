@@ -11,6 +11,7 @@ void func_80075640(s32 arg0, f32 arg1, f32 arg2, f32 arg3, f32 arg4);
 f32 sinf(f32);
 typedef struct { s16 x; s16 y; s16 z; u8 pad[10]; } Vtx6D_;
 typedef struct { Vtx6D_ v[32]; u8 p200[0x30]; f32 r; f32 a; u8 p238; u8 mode; } Ring6D_;
+typedef struct { s32 f0; s32 f4; u8 p8[0x548]; } S_D2_;
 f64 func_800E6E80(f64);
 f64 func_800E6F60(f64);
 void func_8006D6EC(Ring6D_ *s, u32 t);
@@ -161,7 +162,19 @@ void func_8006DB84(s32 a, f32 b, u8 c) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_0D1F0", func_8006DC28);
+void func_8006DC28(void) {
+    u32 i;
+    S_D2_ *p;
+
+    for (i = 0; i < 8; i++) {
+        p = &((S_D2_ *)&D_801455C0)[i];
+        if (p->f4 != -1) {
+            ((void (*)(s32))func_800757E8)(p->f4);
+        }
+        p->f0 = 0;
+        p->f4 = -1;
+    }
+}
 
 void func_8006DC90(void) {
     func_8006DD60(&D_8014D980, 0x140, 0xF0);

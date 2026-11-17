@@ -1,5 +1,7 @@
 #include "common.h"
 #include "include_asm.h"
+u8 func_800C8554(u16);
+u8 func_800C891C(u16);
 extern void (*D_8014556C)(s32);
 extern u8 D_800F64B0[][14];
 s32 func_800C9F18(void *,s32);
@@ -144,7 +146,15 @@ INCLUDE_ASM("asm/nonmatchings/unit_68D10", func_800C8554);
 
 INCLUDE_ASM("asm/nonmatchings/unit_68D10", func_800C891C);
 
-INCLUDE_ASM("asm/nonmatchings/unit_68D10", func_800C8CE4);
+s32 func_800C8CE4(u16 a, u16 b) {
+    s32 r;
+
+    r = 0;
+    if (func_800C8554(a) || func_800C891C(b)) {
+        r = 1;
+    }
+    return r;
+}
 
 void func_800C8D40(void) {
     void (**fp)(s32) = &D_8014556C;

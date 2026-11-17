@@ -7,7 +7,6 @@ extern s32 D_8011C828;
 extern u8 D_8011C7A0[];
 extern void (*D_801416F8)(void *);
 s32 func_8008182C(void);
-void func_800A3CD8(void);
 u8 func_80099090(u8 *);
 void func_800C9AF0(s32 n, s32 b);
 extern s32 D_8011B33C;
@@ -388,6 +387,38 @@ typedef struct {
 typedef struct { u8 pad0[4]; u32 flags; u8 pad8[0x54]; s32 type; u8 pad60[4]; PlAB_ *pl; u8 pad68[0xC]; s32 frame; V3AB_ pos; } ObjAB_;
 typedef struct { ObjAB_ *obj; u8 pad4[0xC]; V3AB_ pos; u8 idx; u8 pad1D[3]; } EntAB_;
 typedef struct { ObjAB_ *a; ObjAB_ *b; u8 pad8[0x18]; } PairAB_;
+typedef struct { f32 x; f32 y; f32 z; } V3C7_;
+typedef struct { V3C7_ pos; f32 ext[3]; f32 m[3][3]; u8 cnt; u8 p3D[7]; V3C7_ *verts; u8 p48[4]; f32 rad; } BoxC7_;
+typedef struct { u8 p0[0x60]; V3C7_ v60; V3C7_ v6C; u8 p78[0xC]; V3C7_ off; u8 p90[0x80]; u8 b110; } PrC7_;
+typedef struct { u8 p0[0x3E4]; u8 n; u8 p3E5[0x15B]; u32 w540; u8 p544[0x179]; u8 b6BD; } CarC7_;
+typedef struct { s32 id; u32 flags; u8 p8[4]; BoxC7_ b; s32 type; PrC7_ *p60; CarC7_ *car; u8 p68[0x1C]; u32 w84; } ObjC7_;
+typedef struct { ObjC7_ *a; ObjC7_ *b; V3C7_ p; V3C7_ n; } RecC7_;
+typedef struct { f32 x; f32 y; f32 z; u8 pC[0x40]; f32 rad; } B_56C;
+typedef struct { u8 p0[0x110]; u8 b110; } P60_56C;
+typedef struct Ln_56C { void *obj; s32 x; struct Ln_56C *next; } Ln_56C;
+typedef struct Ri_56C { s32 room; s32 x; struct Ri_56C *next; } Ri_56C;
+typedef struct { s32 id; u32 flags; u8 p8[4]; B_56C b; s32 type; P60_56C *p60; s32 w64; s32 w68; s32 frame; Ri_56C *ri; } O_56C;
+typedef struct { u8 p0[0x10]; Ln_56C *list; } Rm_56C;
+typedef struct { f32 x, y, z; } V3_67C;
+typedef struct { u8 p0[5]; s8 x; s8 y; s8 z; u8 p8[2]; u8 n; u8 pB; u16 first; u8 pE[2]; void *list; } Rm_67C;
+typedef struct { s16 nx; s16 ny; s16 nz; s16 d; u16 to; u8 flag; u8 pB; } Pt_67C;
+typedef struct { f32 a; f32 b; f32 c; f32 d; s16 e; u16 f; } Pl_67C;
+typedef struct { u8 p0[0xC0]; Rm_67C *rooms; u8 pC4[4]; Pt_67C *portals; } Lv_67C;
+typedef struct Ri_67C { s32 room; s32 x; struct Ri_67C *next; } Ri_67C;
+typedef struct { u8 p0[0x110]; u8 b110; } P60_67C;
+typedef struct { V3_67C pos; u8 pC[0x30]; u8 n; u8 p3D[7]; V3_67C *pts; u16 *rooms; } B_67C;
+typedef struct { u8 p0[4]; u32 flags; u8 p8[4]; B_67C b; f32 rad; s32 type; P60_67C *p60; u8 p64[0xC]; Ri_67C *ri; } O_67C;
+typedef struct Ln_67C { O_67C *obj; s32 x; struct Ln_67C *next; } Ln_67C;
+typedef struct NdCD8_ { s32 a; struct NdCD8_ *prev; struct NdCD8_ *next; s32 c; } NdCD8_;
+extern NdCD8_ D_8011C860[];
+void func_800A3CD8(void);
+extern u8 D_800F38B0[][7];
+void func_8008AA9C(s32, s32);
+void func_8009B56C(void);
+extern u8 D_8011B7A0[][128];
+extern f32 D_8011B760[];
+u8 func_8009BAF0(BoxC7_ *, BoxC7_ *);
+f32 sqrtf(f32);
 extern u16 D_8011B350;
 extern EntAB_ D_8011B358[];
 extern u16 D_8011B558;
@@ -395,7 +426,6 @@ extern PairAB_ D_8011B560[];
 extern u8 D_800F38E4[];
 extern void (*D_8014177C)(EntAB_ *, f32);
 void func_8009B0AC(void);
-void func_8009B56C(void);
 void func_8009D574(void);
 void func_8008DF18(EntAB_ *);
 void func_80091DC4(PlAB_ *);
@@ -529,15 +559,428 @@ void func_8009ABC8(void) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_8009B0AC);
 
-INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_8009B56C);
+void func_8009C758(ObjC7_ *a, ObjC7_ *b);
+#define ABS_56C(v) ((v) < 0.0f ? -(v) : (v))
+#define MAX_56C(a, b) ((a) > (b) ? (a) : (b))
+void func_8009B56C(void) {
+    f32 d[3];
+    f32 r;
+    f32 m;
+    Ln_56C *it;
+    Ln_56C *jt;
+    Ri_56C *ri;
+    O_56C *a;
+    O_56C *b;
+    B_56C *pa;
+    B_56C *pb;
+    s32 res;
+    u8 busy;
+
+    for (it = *(Ln_56C **)&D_8011B344; it != NULL; it = it->next) {
+        a = it->obj;
+        if (a->flags & 1) {
+            continue;
+        }
+        for (jt = it->next; jt != NULL; jt = jt->next) {
+            b = jt->obj;
+            if (b->flags & 1) {
+                continue;
+            }
+            d[0] = b->b.x - a->b.x;
+            d[1] = b->b.y - a->b.y;
+            d[2] = b->b.z - a->b.z;
+            pa = &a->b;
+            pb = &b->b;
+            m = MAX_56C(MAX_56C(ABS_56C(d[0]), ABS_56C(d[1])), ABS_56C(d[2]));
+            r = pa->rad + pb->rad;
+            if (m < r + r * 0.5f) {
+                res = ((u8 (*)(B_56C *, B_56C *))func_8009BAF0)(pa, pb);
+                if (res != 0) {
+                    D_8011B7A0[a->id][b->id] = res;
+                } else {
+                    ((void (*)(O_56C *, O_56C *))func_8009C758)(a, b);
+                }
+            }
+        }
+    }
+    for (it = *(Ln_56C **)&D_8011B33C; it != NULL; it = it->next) {
+        a = it->obj;
+        if ((a->p60 != NULL && a->p60->b110 != 0) || (a->flags & 1)) {
+            continue;
+        }
+        for (ri = a->ri; ri != NULL; ri = ri->next) {
+            Rm_56C *rm = &(*(Rm_56C **)((u8 *)D_8011B334 + 0xC0))[ri->room];
+            for (jt = rm->list; jt != NULL; jt = jt->next) {
+                b = jt->obj;
+                if (b == a || (b->flags & 1) || ((b->p60 == NULL || b->p60->b110 == 0) && b->frame == D_8011B330)) {
+                    continue;
+                }
+                if (!D_800F38B0[a->type][b->type]) {
+                    continue;
+                }
+                d[0] = b->b.x - a->b.x;
+                d[1] = b->b.y - a->b.y;
+                d[2] = b->b.z - a->b.z;
+                pa = &a->b;
+                pb = &b->b;
+                m = MAX_56C(MAX_56C(ABS_56C(d[0]), ABS_56C(d[1])), ABS_56C(d[2]));
+                r = pa->rad + pb->rad;
+                if (m < r + r * 0.5f) {
+                    res = ((u8 (*)(B_56C *, B_56C *))func_8009BAF0)(pa, pb);
+                    if (res != 0) {
+                        D_8011B7A0[a->id][b->id] = res;
+                    } else if (b->type == 5) {
+                        func_8008AA9C(a->w64, b->w68);
+                    } else {
+                        ((void (*)(O_56C *, O_56C *))func_8009C758)(a, b);
+                    }
+                }
+            }
+        }
+        a->frame = D_8011B330;
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_8009BAF0);
 
-INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_8009C758);
+void func_8009C758(ObjC7_ *a, ObjC7_ *b) {
+    V3C7_ t;
+    V3C7_ u;
+    V3C7_ v;
+    V3C7_ n;
+    BoxC7_ *pa;
+    V3C7_ *va;
+    V3C7_ *vb;
+    u8 flag;
+    BoxC7_ *pb;
+    BoxC7_ *x;
+    BoxC7_ *y;
+    PrC7_ *qa;
+    PrC7_ *qb;
+    u8 code;
+    V3C7_ *p;
+    f32 best;
+    f32 d;
+    f32 dd;
+    u8 i;
+    f32 inv;
+
+    flag = 0;
+    pb = &b->b;
+    va = a->b.verts;
+    pa = &a->b;
+    vb = b->b.verts;
+    x = pa;
+    qa = a->p60;
+    qb = b->p60;
+    y = pb;
+    if (a->type == 3) {
+        va += a->car->n;
+        if (a->car->b6BD != 0 || (a->car->w540 & 1)) {
+            flag = 1;
+        }
+    }
+    if (b->type == 3) {
+        vb += b->car->n;
+    }
+    code = D_8011B7A0[a->id][b->id];
+    if (code == 0 && a->p60 != NULL) {
+        t = a->b.pos;
+        a->b.pos.x = t.x - a->p60->off.x;
+        a->b.pos.y = t.y - a->p60->off.y;
+        a->b.pos.z = t.z - a->p60->off.z;
+        code = func_8009BAF0(&a->b, &b->b);
+        D_8011B7A0[a->id][b->id] = code;
+        a->b.pos = t;
+    }
+    if (code == 0) {
+        n.x = x->pos.x - y->pos.x;
+        n.y = x->pos.y - y->pos.y;
+        n.z = x->pos.z - y->pos.z;
+    } else {
+        switch (code) {
+            case 1: u.x = ( x)->m[0][ 1]; u.y = ( x)->m[1][ 1]; u.z = ( x)->m[2][ 1];; v.x = ( x)->m[0][ 2]; v.y = ( x)->m[1][ 2]; v.z = ( x)->m[2][ 2];; break;
+            case 2: u.x = ( y)->m[0][ 1]; u.y = ( y)->m[1][ 1]; u.z = ( y)->m[2][ 1];; v.x = ( y)->m[0][ 2]; v.y = ( y)->m[1][ 2]; v.z = ( y)->m[2][ 2];; break;
+            case 3: u.x = ( x)->m[0][ 2]; u.y = ( x)->m[1][ 2]; u.z = ( x)->m[2][ 2];; v.x = ( x)->m[0][ 0]; v.y = ( x)->m[1][ 0]; v.z = ( x)->m[2][ 0];; break;
+            case 4: u.x = ( y)->m[0][ 2]; u.y = ( y)->m[1][ 2]; u.z = ( y)->m[2][ 2];; v.x = ( y)->m[0][ 0]; v.y = ( y)->m[1][ 0]; v.z = ( y)->m[2][ 0];; break;
+            case 5: u.x = ( x)->m[0][ 0]; u.y = ( x)->m[1][ 0]; u.z = ( x)->m[2][ 0];; v.x = ( x)->m[0][ 1]; v.y = ( x)->m[1][ 1]; v.z = ( x)->m[2][ 1];; break;
+            case 6: u.x = ( y)->m[0][ 0]; u.y = ( y)->m[1][ 0]; u.z = ( y)->m[2][ 0];; v.x = ( y)->m[0][ 1]; v.y = ( y)->m[1][ 1]; v.z = ( y)->m[2][ 1];; break;
+            case 7: u.x = ( x)->m[0][ 0]; u.y = ( x)->m[1][ 0]; u.z = ( x)->m[2][ 0];; v.x = ( y)->m[0][ 0]; v.y = ( y)->m[1][ 0]; v.z = ( y)->m[2][ 0];; break;
+            case 8: u.x = ( x)->m[0][ 0]; u.y = ( x)->m[1][ 0]; u.z = ( x)->m[2][ 0];; v.x = ( y)->m[0][ 1]; v.y = ( y)->m[1][ 1]; v.z = ( y)->m[2][ 1];; break;
+            case 9: u.x = ( x)->m[0][ 0]; u.y = ( x)->m[1][ 0]; u.z = ( x)->m[2][ 0];; v.x = ( y)->m[0][ 2]; v.y = ( y)->m[1][ 2]; v.z = ( y)->m[2][ 2];; break;
+            case 10: u.x = ( x)->m[0][ 1]; u.y = ( x)->m[1][ 1]; u.z = ( x)->m[2][ 1];; v.x = ( y)->m[0][ 0]; v.y = ( y)->m[1][ 0]; v.z = ( y)->m[2][ 0];; break;
+            case 11: u.x = ( x)->m[0][ 1]; u.y = ( x)->m[1][ 1]; u.z = ( x)->m[2][ 1];; v.x = ( y)->m[0][ 1]; v.y = ( y)->m[1][ 1]; v.z = ( y)->m[2][ 1];; break;
+            case 12: u.x = ( x)->m[0][ 1]; u.y = ( x)->m[1][ 1]; u.z = ( x)->m[2][ 1];; v.x = ( y)->m[0][ 2]; v.y = ( y)->m[1][ 2]; v.z = ( y)->m[2][ 2];; break;
+            case 13: u.x = ( x)->m[0][ 2]; u.y = ( x)->m[1][ 2]; u.z = ( x)->m[2][ 2];; v.x = ( y)->m[0][ 0]; v.y = ( y)->m[1][ 0]; v.z = ( y)->m[2][ 0];; break;
+            case 14: u.x = ( x)->m[0][ 2]; u.y = ( x)->m[1][ 2]; u.z = ( x)->m[2][ 2];; v.x = ( y)->m[0][ 1]; v.y = ( y)->m[1][ 1]; v.z = ( y)->m[2][ 1];; break;
+            case 15: u.x = ( x)->m[0][ 2]; u.y = ( x)->m[1][ 2]; u.z = ( x)->m[2][ 2];; v.x = ( y)->m[0][ 2]; v.y = ( y)->m[1][ 2]; v.z = ( y)->m[2][ 2];; break;
+        }
+        n.x = u.y * v.z - v.y * u.z;
+        n.y = v.x * u.z - u.x * v.z;
+        n.z = u.x * v.y - v.x * u.y;
+    }
+    if (sqrtf(n.x * n.x + n.y * n.y + n.z * n.z) < 0.1f) {
+        return;
+    }
+    inv = 1.0f / sqrtf(n.x * n.x + n.y * n.y + n.z * n.z);
+    n.x *= inv;
+    n.y *= inv;
+    n.z *= inv;
+    t.x = y->pos.x - x->pos.x;
+    t.y = y->pos.y - x->pos.y;
+    t.z = y->pos.z - x->pos.z;
+    if (t.x * n.x + t.y * n.y + t.z * n.z < 0.0f) {
+        n.x = -n.x;
+        n.y = -n.y;
+        n.z = -n.z;
+    }
+    if ((code == 1) | (code == 3) || code == 5) {
+        if (code == 1) {
+            t.x = n.x * x->ext[0];
+            t.y = n.y * x->ext[0];
+            t.z = n.z * x->ext[0];
+        } else if (code == 3) {
+            t.x = n.x * x->ext[1];
+            t.y = n.y * x->ext[1];
+            t.z = n.z * x->ext[1];
+        } else {
+            t.x = n.x * x->ext[2];
+            t.y = n.y * x->ext[2];
+            t.z = n.z * x->ext[2];
+        }
+        t.x += x->pos.x;
+        t.y += x->pos.y;
+        t.z += x->pos.z;
+        dd = -(n.x * t.x + n.y * t.y + n.z * t.z);
+        p = vb;
+        best = 1000.0f;
+        for (i = 0; i < ((pb->cnt) < ( 8) ? (pb->cnt) : ( 8)); p++, i++) {
+            d = p->x * n.x + p->y * n.y + p->z * n.z + dd;
+            if (d < 0.0f) {
+                d = -d;
+            }
+            if (d < best) {
+                best = d;
+                t = *p;
+            }
+        }
+        if (D_8011B558 < 16) {
+            RecC7_ *r = &((RecC7_ *)&D_8011B560)[D_8011B558];
+            r->a = b;
+            r->b = a;
+            r->p = t;
+            r->n = n;
+            D_8011B558++;
+        }
+    } else if ((code == 2) | (code == 4) || code == 6) {
+        n.x = -n.x;
+        n.y = -n.y;
+        n.z = -n.z;
+        if (code == 2) {
+            t.x = n.x * y->ext[0];
+            t.y = n.y * y->ext[0];
+            t.z = n.z * y->ext[0];
+        } else if (code == 4) {
+            t.x = n.x * y->ext[1];
+            t.y = n.y * y->ext[1];
+            t.z = n.z * y->ext[1];
+        } else {
+            t.x = n.x * y->ext[2];
+            t.y = n.y * y->ext[2];
+            t.z = n.z * y->ext[2];
+        }
+        t.x += y->pos.x;
+        t.y += y->pos.y;
+        t.z += y->pos.z;
+        dd = -(n.x * t.x + n.y * t.y + n.z * t.z);
+        p = va;
+        best = 1000.0f;
+        for (i = 0; i < ((pa->cnt) < ( 8) ? (pa->cnt) : ( 8)); p++, i++) {
+            d = p->x * n.x + p->y * n.y + p->z * n.z + dd;
+            if (d < 0.0f) {
+                d = -d;
+            }
+            if (d < best) {
+                best = d;
+                t = *p;
+            }
+        }
+        if (D_8011B558 < 16) {
+            RecC7_ *r = &((RecC7_ *)&D_8011B560)[D_8011B558];
+            r->a = a;
+            r->b = b;
+            r->p = t;
+            r->n = n;
+            D_8011B558++;
+        }
+        n.x = -n.x;
+        n.y = -n.y;
+        n.z = -n.z;
+    } else {
+        t.x = y->pos.x - x->pos.x;
+        t.y = y->pos.y - x->pos.y;
+        t.z = y->pos.z - x->pos.z;
+        t.x *= 0.5f;
+        t.y *= 0.5f;
+        t.z *= 0.5f;
+        t.x = x->pos.x + t.x;
+        t.y = x->pos.y + t.y;
+        t.z = x->pos.z + t.z;
+        if (D_8011B558 < 16) {
+            RecC7_ *r = &((RecC7_ *)&D_8011B560)[D_8011B558];
+            r->a = b;
+            r->b = a;
+            r->p = t;
+            r->n = n;
+            D_8011B558++;
+        }
+    }
+    n.x *= D_8011B760[code];
+    n.y *= D_8011B760[code];
+    n.z *= D_8011B760[code];
+    if ((((a)->type != 0) & ((a)->type != 2))) {
+        if ((((b)->type != 0) & ((b)->type != 2))) {
+            n.x *= 0.5f;
+            n.y *= 0.5f;
+            n.z *= 0.5f;
+        }
+        if ((((a)->type != 0) & ((a)->type != 2))) {
+            if (!(b->flags & 4) && (!(b->flags & 2) || ((b->w84 >= 10000) & !flag))) {
+                t.x = qa->v6C.x + qa->v60.x;
+                t.y = qa->v6C.y + qa->v60.y;
+                t.z = qa->v6C.z + qa->v60.z;
+                t.x += n.x;
+                t.y += n.y;
+                t.z += n.z;
+                qa->v6C.x = t.x - qa->v60.x;
+                qa->v6C.y = t.y - qa->v60.y;
+                qa->v6C.z = t.z - qa->v60.z;
+                qa->b110 = 0;
+            }
+        }
+    }
+    n.x = -n.x;
+    n.y = -n.y;
+    n.z = -n.z;
+    if ((((b)->type != 0) & ((b)->type != 2))) {
+        t.x = qb->v6C.x + qb->v60.x;
+        t.y = qb->v6C.y + qb->v60.y;
+        t.z = qb->v6C.z + qb->v60.z;
+        t.x += n.x;
+        t.y += n.y;
+        t.z += n.z;
+        qb->v6C.x = t.x - qb->v60.x;
+        qb->v6C.y = t.y - qb->v60.y;
+        qb->v6C.z = t.z - qb->v60.z;
+        qb->b110 = 0;
+    }
+}
+
 
 INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_8009D574);
 
-INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_8009D67C);
+void func_800A3E30(void **arg0, s32 arg1);
+void func_8009D67C(void) {
+    Pl_67C pl;
+    V3_67C org;
+    V3_67C d;
+    V3_67C rel;
+    s32 old[14];
+    s32 new[14];
+    Ln_67C *it;
+    O_67C *o;
+    B_67C *b;
+    Ri_67C *ri;
+    Rm_67C *rm;
+    Pt_67C *p;
+    u32 n, i, k;
+    s32 room;
+    P60_67C *pp;
+    u8 busy;
+    f32 dot;
+
+    for (it = ((Ln_67C *)D_8011B33C); it != NULL; it = it->next) {
+        o = it->obj;
+        busy = 0;
+        if ((pp = o->p60) != NULL) {
+            busy = pp->b110;
+        }
+        if (busy) {
+            continue;
+        }
+        n = o->b.n;
+        b = &o->b;
+        for (i = 0; i < n; i++) {
+            new[i] = old[i] = b->rooms[i];
+        }
+        for (ri = o->ri; ri != NULL; ri = ri->next) {
+            room = ri->room;
+            rm = &((Lv_67C *)D_8011B334)->rooms[room];
+            org.x = rm->x << 8;
+            org.y = rm->y << 8;
+            org.z = rm->z << 8;
+            rel.x = o->b.pos.x - org.x;
+            rel.y = o->b.pos.y - org.y;
+            rel.z = o->b.pos.z - org.z;
+            p = &((Lv_67C *)D_8011B334)->portals[rm->first];
+            for (i = 0; i < rm->n; p++, i++) {
+                if (p->flag == 0) {
+                    pl.a = p->nx / 4096.0f;
+                    pl.b = p->ny / 4096.0f;
+                    pl.c = p->nz / 4096.0f;
+                    pl.d = p->d;
+                    pl.e = p->flag;
+                    pl.f = p->to;
+                    dot = rel.x * pl.a + rel.y * pl.b + rel.z * pl.c + pl.d;
+                    if (n == 1) {
+                        if (dot < 0.0f) {
+                            new[0] = pl.f;
+                        }
+                    } else if (dot < o->rad) {
+                        for (k = 0; k < n; k++) {
+                            if (old[k] == room) {
+                                d.x = b->pts[k].x - org.x;
+                                d.y = b->pts[k].y - org.y;
+                                d.z = b->pts[k].z - org.z;
+                                if ((dot = d.x * pl.a + d.y * pl.b + d.z * pl.c + pl.d) < 0.0f) {
+                                    new[k] = pl.f;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        for (i = 0; i < n; i++) {
+            if (new[i] != old[i]) {
+                ((void (*)(void *, s32))func_800A3E30)(&((Lv_67C *)D_8011B334)->rooms[old[i]].list, (s32)o);
+                ((void (*)(void *, s32))func_800A3E30)(&o->ri, old[i]);
+                b->rooms[i] = new[i];
+                ((void (*)(void *, s32))func_800A3DB8)(&((Lv_67C *)D_8011B334)->rooms[new[i]].list, (s32)o);
+                ((void (*)(void *, s32))func_800A3DB8)(&o->ri, new[i]);
+                if (i == 0 && (o->type == 3 || o->type == 4)) {
+                    o->flags |= 0x10;
+                    if (o->type == 4) {
+                        rm = &((Lv_67C *)D_8011B334)->rooms[old[0]];
+                        p = &((Lv_67C *)D_8011B334)->portals[rm->first];
+                        for (k = 0; k < rm->n; p++, k++) {
+                            if (p->flag == 0) {
+                                ((void (*)(void *, s32))func_800A3E30)(&((Lv_67C *)D_8011B334)->rooms[p->to].list, (s32)o);
+                            }
+                        }
+                        rm = &((Lv_67C *)D_8011B334)->rooms[new[0]];
+                        p = &((Lv_67C *)D_8011B334)->portals[rm->first];
+                        for (k = 0; k < rm->n; p++, k++) {
+                            if (p->flag == 0) {
+                                ((void (*)(void *, s32))func_800A3DB8)(&((Lv_67C *)D_8011B334)->rooms[p->to].list, (s32)o);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_8009DBF8);
 
@@ -656,7 +1099,15 @@ void func_800A3978(u8 *o, u16 idx, s32 arg2) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_800A3CD8);
+void func_800A3CD8(void) {
+    s32 i;
+
+    D_8011E860 = D_8011C860;
+    for (i = 0; i < 512; i++) {
+        D_8011C860[i].prev = (i != 0) ? &D_8011C860[i - 1] : NULL;
+        D_8011C860[i].next = (i != 511) ? &D_8011C860[i + 1] : NULL;
+    }
+}
 
 void func_800A3D64(Nd3_ **list) {
     Nd3_ *n = *list;

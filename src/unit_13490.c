@@ -9,7 +9,7 @@ void func_80073740(ItemListB_ *l);
 typedef struct { u32 pad0 : 30; u32 b1 : 1; u32 b0 : 1; u8 pad[0x14]; } Slot18_;
 typedef struct { u8 pad[0x30]; s32 flags; u8 pad2[0x20]; } Item54_;
 typedef struct { u16 count; u8 pad[0x2A]; Item54_ *items; } ItemList_;
-typedef struct { u32 flags; u8 pad[0x14]; } SlotM_;
+typedef struct { union { u32 flags; struct { u32 pad:30; u32 b1:1; u32 b0:1; } b; } u; u8 pad[0x14]; } SlotM_;
 s32 func_80070BA4(void *);
 s32 func_800717C8(s32, s32, s32);
 void func_80072EE0(u8 *, void *, s32, s32, s32);
@@ -46,7 +46,7 @@ extern u8 D_8014D194;
 extern u8 D_8014D195;
 extern u8 D_8014D196;
 extern s32 D_8014C64C;
-extern u8 D_8014D180;
+extern SlotM_ D_8014D180[];
 s32 func_80079140(void *, s32 *, s32,s32, s32);
 s32 func_80079BD4(void *, s32);
 s32 func_80079E48(void *);
@@ -379,12 +379,23 @@ void func_80075580(void) {
     D_80134798 = 0;
     D_8014C64C = 0;
     do {
-        *(s32 *)(&D_8014D180 + var_v0) = 0;
+        *(s32 *)((u8 *)D_8014D180 + var_v0) = 0;
         var_v0 -= 0x18;
     } while (var_v0 >= 0);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_13490", func_800755B4);
+void func_800755B4(void) {
+    s32 n;
+    s32 i;
+
+    n = 0;
+    for (i = 0; i < 16; i++) {
+        if (D_8014D180[i].u.b.b0 & D_8014D180[i].u.b.b1) {
+            n = i + 1;
+        }
+    }
+    D_8014C64C = n;
+}
 
 void func_80075600(s32 arg0, s8 arg1, s8 arg2, s8 arg3) {
     s32 temp_v0;
@@ -409,16 +420,44 @@ void func_80075640(s32 arg0, f32 arg1, f32 arg2, f32 arg3, f32 arg4) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_13490", func_800756A0);
+void func_800756A0(s32 id) {
+    s32 n;
+    s32 i;
 
-INCLUDE_ASM("asm/nonmatchings/unit_13490", func_80075720);
+    if (id != -1) {
+        n = 0;
+        D_8014D180[id].u.flags |= 1;
+        for (i = 0; i < 16; i++) {
+            if (D_8014D180[i].u.b.b0 & D_8014D180[i].u.b.b1) {
+                n = i + 1;
+            }
+        }
+        D_8014C64C = n;
+    }
+}
+
+void func_80075720(s32 id) {
+    s32 n;
+    s32 i;
+
+    if (id != -1) {
+        n = 0;
+        D_8014D180[id].u.flags &= ~1;
+        for (i = 0; i < 16; i++) {
+            if (D_8014D180[i].u.b.b0 & D_8014D180[i].u.b.b1) {
+                n = i + 1;
+            }
+        }
+        D_8014C64C = n;
+    }
+}
 
 s32 func_800757A4(void) {
     s32 i;
 
     for (i = 0; i < 16; i++) {
-        if (!(((SlotM_ *)&D_8014D180)[i].flags & 2)) {
-            ((SlotM_ *)&D_8014D180)[i].flags = 2;
+        if (!(D_8014D180[i].u.flags & 2)) {
+            D_8014D180[i].u.flags = 2;
             return i;
         }
     }
@@ -426,7 +465,21 @@ s32 func_800757A4(void) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_13490", func_800757E8);
+void func_800757E8(s32 id) {
+    s32 n;
+    s32 i;
+
+    if (id != -1) {
+        D_8014D180[id].u.flags = 0;
+        n = 0;
+        for (i = 0; i < 16; i++) {
+            if (D_8014D180[i].u.b.b0 & D_8014D180[i].u.b.b1) {
+                n = i + 1;
+            }
+        }
+        D_8014C64C = n;
+    }
+}
 
 
 void func_80075858(void) {
