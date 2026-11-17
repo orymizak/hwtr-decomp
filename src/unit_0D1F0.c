@@ -12,10 +12,12 @@ f32 sinf(f32);
 typedef struct { s16 x; s16 y; s16 z; u8 pad[10]; } Vtx6D_;
 typedef struct { Vtx6D_ v[32]; u8 p200[0x30]; f32 r; f32 a; u8 p238; u8 mode; } Ring6D_;
 typedef struct { s32 f0; s32 f4; u8 p8[0x548]; } S_D2_;
+typedef struct { f32 x; f32 y; f32 z; } V3D6_;
+typedef struct { u32 t; V3D6_ pos; V3D6_ vel; f32 m[9]; } MvD6_;
+void func_8006D608(MvD6_ *o, u32 dt);
 f64 func_800E6E80(f64);
 f64 func_800E6F60(f64);
 void func_8006D6EC(Ring6D_ *s, u32 t);
-void func_8006D608(s32 *, s32);
 void func_8006CF10(s32 *p, s32 dt);
 extern S_D_801455C0 D_801455C0[];
 void func_8006CA88(S_D_801455C0 *, s32, f32, u8);
@@ -66,7 +68,30 @@ void func_8006CF10(s32 *p, s32 dt) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_0D1F0", func_8006D15C);
 
-INCLUDE_ASM("asm/nonmatchings/unit_0D1F0", func_8006D608);
+void func_8006D608(MvD6_ *o, u32 dt) {
+    V3D6_ v;
+    f32 x;
+    f32 y;
+    f32 z;
+
+    if (dt >= o->t) {
+        o->t = 0;
+        return;
+    }
+    o->t -= dt;
+    o->pos.x += o->vel.x;
+    o->pos.y += o->vel.y;
+    o->pos.z += o->vel.z;
+    x = o->vel.x;
+    y = o->vel.y;
+    z = o->vel.z;
+    v.x = o->m[0] * x + o->m[1] * y + o->m[2] * z;
+    v.y = o->m[3] * x + o->m[4] * y + o->m[5] * z;
+    v.z = o->m[6] * x + o->m[7] * y + o->m[8] * z;
+    o->vel.x = v.x;
+    o->vel.y = v.y;
+    o->vel.z = v.z;
+}
 
 void func_8006D6EC(Ring6D_ *s, u32 t) {
     u32 i;

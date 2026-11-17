@@ -677,7 +677,18 @@ INCLUDE_ASM("asm/nonmatchings/unit_01050", func_800635AC);
 
 INCLUDE_ASM("asm/nonmatchings/unit_01050", func_8006365C);
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80063938);
+s32 func_80063938(u8 i) {
+    D_800EFF38[i].p46[2] = 0;
+    if (func_800CE428(D_800EFF38[i].h[0]) != 0) {
+        func_800CE374(D_800EFF38[i].h[0], 0);
+        D_800EFF38[i].h[0] = 0;
+    }
+    if (func_800CE428(D_800EFF38[i].h[1]) != 0) {
+        func_800CE374(D_800EFF38[i].h[1], 0);
+        D_800EFF38[i].h[1] = 0;
+    }
+    return 1;
+}
 
 s32 func_800639EC(s32 arg0, s32 arg1) {
     *(s32 *)(&D_800EFF50 + ((arg0 & 0xFF) * 0x4C)) = arg1;

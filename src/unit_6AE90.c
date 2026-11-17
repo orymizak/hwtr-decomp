@@ -3,6 +3,12 @@
 typedef struct { s32 a; s32 b; u8 pad[0x10]; } E18c_;
 typedef struct { u8 pad[8]; u8 n1; u8 p1[3]; E18c_ *a1; u8 n2; u8 p2[3]; E18c_ *a2; } TCB_;
 typedef struct { u8 a; u8 pad; u16 x; u16 y; u16 x2; u16 y2; } E0A5_;
+extern void (*D_801416F0)(s32);
+extern void (*D_801416A4)(void);
+extern void (*D_801416AC)(void);
+extern void (*D_801416C8)(f32, f32, f32, f32);
+extern void (*D_8014178C)(s32, s32, s32, s32);
+void func_800AEB28(s32);
 void func_800CA478(u8 *t);
 extern s32 (*D_801416D8)(s32, u8);
 s8 func_80086F80(u8 font, u8 a, u8 b);
@@ -130,7 +136,27 @@ void func_800CB0DC(TCB_ *t) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_6AE90", func_800CB168);
+void func_800CB168(void) {
+    u8 a;
+    u8 b;
+
+    D_801416F0(0);
+    D_801416A4();
+    D_801416AC();
+    func_800AEB28(0);
+    D_801416C8(48.0f, 5000.0f, 1.0471967f, 1.3333334f);
+    a = D_80124D71;
+    b = D_80124D70;
+    if (a > b) {
+        D_80124D71 = a - 1;
+    } else if (a < b) {
+        D_80124D71 = a + 15;
+        if (b < (u8)D_80124D71) {
+            D_80124D71 = b;
+        }
+    }
+    D_8014178C(0, 0, 0, (u8)D_80124D71);
+}
 
 void func_800CB268(void) {
   int new_var;

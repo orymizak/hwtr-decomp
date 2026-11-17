@@ -13,6 +13,19 @@ typedef struct { u32 w0; u32 w1; } Gfx2_;
 typedef struct Task6F_ { struct Task6F_ *next; s32 w4; s32 w8; s32 wC; s32 w10; s32 w14; s32 w18; s32 w1C; s32 w20; s32 w24; s32 w28; s32 w2C; s32 w30; s32 w34; s32 w38; s32 w3C; Gfx2_ *dl; s32 dlsize; s32 w48; s32 w4C; s32 w50; void *msg; } Task6F_;
 typedef struct { u32 w0; u32 w1; } G9_;
 typedef struct { u8 r; u8 g; u8 b; u8 pad3; u8 r2; u8 g2; u8 b2; u8 pad[9]; } L16_;
+typedef struct { u8 b[0x50]; } ViMode7_;
+typedef struct { u8 b[0x50]; } ViMode8_;
+void func_8006E00C(void *);
+extern u8 D_800FF7B0;
+extern ViMode7_ D_800FB6F0[];
+void func_800D6030(s32);
+extern u8 D_800F20F5;
+void func_8007863C(s32, s32, s32, s32);
+void func_800761D4(s32, s32, s32, s32, s32);
+void func_8006DFBC(void);
+void func_80066C9C(s32, s32);
+void func_800D61F0(void);
+s32 GfxPools_Shutdown();
 extern Task6F_ D_8014C1D0[];
 extern s16 D_8010A226;
 extern u8 D_8010A228[];
@@ -390,6 +403,45 @@ void func_80071924(void) {
     func_800D6010();
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_103B0", func_80071940);
+s32 func_80071940(void) {
+    osViSetMode(&D_800FB6F0[D_801380B0]);
+    func_800D61C0();
+    func_800D6030(2);
+    osViSetSpecialFeatures(0x5A);
+    ((u32 *)&D_800F1CC0)[0] = 0x803B5000;
+    ((u32 *)&D_800F1CC0)[1] = 0x803DA800;
+    D_800F20F5 = 1;
+    func_800D60B0(&D_800F1CC0, 2);
+    D_800F20FA = 320;
+    D_800F20FC = 240;
+    func_8007863C(0, 0, 320, 240);
+    func_800761D4(0, 0, 0, D_800F20FA, D_800F20FC);
+    func_8006DFBC();
+    func_80066C9C(1, 1);
+    func_800D61F0();
+    GfxPools_Shutdown();
+    return 1;
+}
 
-INCLUDE_ASM("asm/nonmatchings/unit_103B0", func_80071A40);
+s32 func_80071A40(void) {
+    u16 *p;
+
+    osViSetMode(&((ViMode8_ *)&D_800FB9C0)[D_801380B0]);
+    func_800D61C0();
+    func_800D6030(2);
+    osViSetSpecialFeatures(0x5A);
+    ((u32 *)&D_800F1CC0)[0] = 0x802D4000;
+    ((u32 *)&D_800F1CC0)[1] = 0x8036A000;
+    func_800D60B0(&D_800F1CC0, 2);
+    p = &D_800F20FA;
+    *p = 640;
+    D_800F20FC = 480;
+    func_8007863C(0, 0, 640, 480);
+    func_800761D4(0, 0, 0, *p, D_800F20FC);
+    D_800F20F5 = 0;
+    func_80066C9C(0, 0);
+    func_8006E00C(&D_800FF7B0);
+    GfxPools_Shutdown();
+    func_800D61F0();
+    return 1;
+}

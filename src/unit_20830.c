@@ -7,10 +7,25 @@ extern s32 D_800F2690;
 
 typedef struct { u32 w0; s32 w4; s32 w8; void *wC; } Hp2C0_;
 typedef struct { Hp2C0_ *a; Hp2C0_ *b; } Hp2_;
+typedef struct { u16 n; u8 p2[6]; s16 *v; u8 pC[4]; u8 *p10; } MeshFC_;
 extern Hp2_ D_8010C410;
 extern u8 D_8010C420[];
 
-INCLUDE_ASM("asm/nonmatchings/unit_20830", func_8007FC30);
+void func_8007FC30(void *arg0, MeshFC_ *m, s32 v, f32 *mtx) {
+    s32 j;
+    s32 i;
+    s16 *s;
+
+    if ((u32)(m->n + *(s32 *)((u8 *)arg0 + 8)) < 0x257U) {
+        j = *(s32 *)((u8 *)arg0 + 8);
+        for (i = 0; i < m->n; j++, i++) {
+            *(u8 **)((u8 *)arg0 + j * 4 + 0x10) = m->p10 + i * 12;
+            *(s32 *)((u8 *)arg0 + j * 4 + 0x970) = v;
+            *(f32 *)((u8 *)arg0 + j * 4 + 0x12D0) = mtx[8] * m->v[i * 3] + mtx[9] * m->v[i * 3 + 1] + mtx[10] * m->v[i * 3 + 2] + mtx[11];
+        }
+        *(s32 *)((u8 *)arg0 + 8) = j;
+    }
+}
 
 void func_8007FD04(void *arg0, s32 arg1, s32 arg2, f32 arg3) {
   s32 new_var;

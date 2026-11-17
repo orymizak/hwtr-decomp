@@ -781,7 +781,8 @@ void func_8008E510(u8 i) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", func_8008E558);
+void func_8008E558(s32 a, V3E0_ b) {
+}
 
 void func_8008E568(s32 arg0) {
     if ((arg0 == 3) || ((D_80118530 != 0) && ((u32) D_80118534 >= 0x3E9U))) {

@@ -23,6 +23,7 @@ typedef struct { s32 pad0; s16 a; s16 b; s16 c; u8 kind; u8 padB; u16 d; u16 pad
 typedef struct { f32 p[3]; f32 q[3]; f32 v[3]; f32 w[3]; u16 e; u16 f; } Dst34_;
 typedef struct { s32 d[0x88C / 4]; } Big88C_;
 typedef struct { s32 d[0x140 / 4]; } Blk140_;
+u8 func_800B2C94(P16b_, P16b_);
 f32 func_800B12C4(s32 ms);
 void *Memory_Alloc(s32);
 void Memory_Free(void *);
@@ -54,8 +55,8 @@ extern s32 (*D_8014104C)(s32);
 s32 func_800B073C();
 s32 func_800B0A5C();
 extern s32 (*D_80141040)(s32);
-s32 func_800B1F00();
-s32 func_800B1FE4();
+void func_800B1F00();
+void func_800B1FE4();
 s32 func_800B2330(s32);
 s32 func_800C9130();
 
@@ -142,7 +143,35 @@ s32 func_800AFB7C(u32 i) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800AFC40);
+void func_800B0624(void);
+
+s32 func_800AFC40(u32 i) {
+    u8 *buf;
+    u32 sum;
+    u16 j;
+    u8 ok;
+    u8 *p;
+    u32 n;
+
+    if (i >= 4) {
+        return 0;
+    }
+    buf = Memory_Alloc(0xDA0);
+    memset(buf, 0, 0xDA0);
+    *(s32 *)buf = ((s32 (*)(void))func_800B0624)();
+    sum = 0;
+    p = buf;
+    for (j = 0, n = 0xD90; j < n; j++) {
+        sum += *p++;
+    }
+    *(u32 *)(buf + 0xD90) = sum;
+    ok = ((u8 (*)(u32, u8 *))D_80140FE8[3])(i, buf);
+    Memory_Free(buf);
+    if (ok) {
+        D_80123D10[i] &= ~4;
+    }
+    return ok;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800AFD1C);
 
@@ -216,7 +245,25 @@ E140_ *func_800B0310(u32 i, u32 j) {
     return &D_80122900[i][j];
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B0364);
+extern s32 D_80122904[][4][0x50];
+extern Big88C_ D_80120F54[];
+
+E140_ *func_800B0364(u32 i) {
+    u32 k;
+    u32 m;
+
+    if (i >= 2) {
+        return NULL;
+    }
+    for (k = 0; k < 4; k++) {
+        for (m = 0; m < 4; m++) {
+            if (D_80123D28[k] && m < (u32)D_80123D00[k] && D_80122904[k][m][0] == D_80120F54[k].d[i]) {
+                return &D_80122900[k][m];
+            }
+        }
+    }
+    return NULL;
+}
 
 s32 func_800B042C(u32 i) {
     s32 r;
@@ -231,7 +278,18 @@ s32 func_800B042C(u32 i) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B0454);
 
-INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B0548);
+s32 func_800B0548(u32 i, u32 j) {
+    u32 k;
+
+    if (i >= 4 || j >= (u32)D_80123D00[i]) {
+        return 0;
+    }
+    for (k = j; k < 3; k++) {
+        *(Blk140_ *)&D_80122900[i][k] = *(Blk140_ *)&D_80122900[i][k + 1];
+    }
+    D_80123D00[i]--;
+    return 1;
+}
 
 void func_800B0614(void) {
 
@@ -519,9 +577,46 @@ void func_800B1E40(T0A2_ *t) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B1F00);
+void func_800B1694(u8 *t);
 
-INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B1FE4);
+void func_800B1F00(t)
+    u8 *t;
+{
+    u32 i;
+
+    for (i = 0; i < t[0]; i++) {
+        func_800B133C(*(u8 **)(t + 4) + i * 0x2C);
+        func_800B192C(*(u8 **)(t + 4) + i * 0x2C);
+    }
+    for (i = 0; i < t[8]; i++) {
+        func_800B14F8(*(u8 **)(t + 0xC) + i * 0x18);
+        func_800B1B60(*(u8 **)(t + 0xC) + i * 0x18);
+    }
+    for (i = 0; i < t[0x10]; i++) {
+        func_800B1694(*(u8 **)(t + 0x14) + i * 0x18);
+        func_800B1D30(*(u8 **)(t + 0x14) + i * 0x18);
+    }
+}
+
+typedef struct { u8 d[0x18]; } E18c_;
+typedef struct { u8 d[0x2C]; } E2Cc_;
+void func_800B1A3C(E2Cc_ *);
+
+void func_800B1FE4(t)
+    u8 *t;
+{
+    u32 i;
+
+    for (i = 0; i < t[0]; i++) {
+        func_800B1A3C(&(*(E2Cc_ **)(t + 4))[i]);
+    }
+    for (i = 0; i < t[8]; i++) {
+        func_800B1C70((T0A2_ *)&(*(E18c_ **)(t + 0xC))[i]);
+    }
+    for (i = 0; i < t[0x10]; i++) {
+        func_800B1E40((T0A2_ *)&(*(E18c_ **)(t + 0x14))[i]);
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B20A4);
 
@@ -682,11 +777,38 @@ void func_800B2C78(void) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B2C94);
 
-INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B2CE0);
+s32 func_800B2CE0(u8 *t) {
+    u8 i;
 
-INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B2DA0);
+    for (i = 0; i < t[0x18]; i++) {
+        if (!func_800B2C94(*(P16b_ *)&(*(E0A5_ **)(t + 0x1C))[i].x, *(P16b_ *)&(*(E0A5_ **)(t + 0x1C))[i].x2)) {
+            return 0;
+        }
+    }
+    return 1;
+}
 
-INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B2E60);
+s32 func_800B2DA0(u8 *t) {
+    u8 i;
+
+    for (i = 0; i < t[2]; i++) {
+        if (!func_800B2C94(*(P16b_ *)&(*(E0A5_ **)(t + 4))[i].x, *(P16b_ *)&(*(E0A5_ **)(t + 4))[i].x2)) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+s32 func_800B2E60(u8 *t) {
+    u8 i;
+
+    for (i = 0; i < t[2]; i++) {
+        if (!func_800B2C94(*(P16b_ *)&(*(E0A5_ **)(t + 4))[i].x, *(P16b_ *)&(*(E0A5_ **)(t + 4))[i].x2)) {
+            return 0;
+        }
+    }
+    return 1;
+}
 
 void func_800B2F20(s32 a) {
     s32 x[4];

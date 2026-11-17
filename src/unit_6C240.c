@@ -9,6 +9,8 @@ void func_800CB268(void);
 void func_800CB0DC(s32);
 typedef struct { s16 id; s16 x; } Id4_;
 typedef struct { u8 pad[0xC]; Id4_ *ids; u8 pad2[3]; s8 n; } IdTab_;
+extern u8 (*D_801455A0)(s32, s32);
+extern u32 D_800FA260;
 extern IdTab_ *D_800FAB90;
 extern u8 (*D_801455A4)(void);
 s32 func_800CB168();
@@ -54,7 +56,24 @@ s32 func_800CB640(s16 id) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_6C240", func_800CB694);
 
-INCLUDE_ASM("asm/nonmatchings/unit_6C240", func_800CC1FC);
+u32 func_800CC1FC(void) {
+    u8 (**fp)(s32, s32);
+    s32 pad;
+    u32 r;
+    u32 old;
+
+    pad = (u8)D_80125590 != 1;
+    fp = &D_801455A0;
+    r = (*fp)(pad, 0x10) != 0;
+    if ((*fp)(pad, 0x11)) {
+        r |= 8;
+    }
+    old = D_800FA260;
+    r = ((r & 1) != (old & 1)) ? r | 2 : r;
+    r = ((r & 8) != (old & 8)) ? r | 0x10 : r;
+    D_800FA260 = r;
+    return r;
+}
 
 void func_800CC2B4(s8 arg0) {
     D_80125590 = arg0;

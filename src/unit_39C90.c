@@ -410,6 +410,15 @@ typedef struct { V3_67C pos; u8 pC[0x30]; u8 n; u8 p3D[7]; V3_67C *pts; u16 *roo
 typedef struct { u8 p0[4]; u32 flags; u8 p8[4]; B_67C b; f32 rad; s32 type; P60_67C *p60; u8 p64[0xC]; Ri_67C *ri; } O_67C;
 typedef struct Ln_67C { O_67C *obj; s32 x; struct Ln_67C *next; } Ln_67C;
 typedef struct NdCD8_ { s32 a; struct NdCD8_ *prev; struct NdCD8_ *next; s32 c; } NdCD8_;
+typedef struct { u8 p0[4]; u32 flags; } CrD57_;
+typedef struct { u8 p0[4]; u32 flags; u8 p8[0x4C]; u16 *p54; u8 p58[0xC]; CrD57_ *car; } ObD57_;
+typedef struct LnD57_ { ObD57_ *obj; s32 x; struct LnD57_ *next; } LnD57_;
+void func_800961B0(u8 *p, u8 id, u8 flip);
+void func_8009DBF8(void);
+void func_8009EC8C(void);
+void func_8009F7D4(void);
+void func_800A0C44(void);
+void func_8009D574(void);
 extern NdCD8_ D_8011C860[];
 void func_800A3CD8(void);
 extern u8 D_800F38B0[][7];
@@ -426,7 +435,6 @@ extern PairAB_ D_8011B560[];
 extern u8 D_800F38E4[];
 extern void (*D_8014177C)(EntAB_ *, f32);
 void func_8009B0AC(void);
-void func_8009D574(void);
 void func_8008DF18(EntAB_ *);
 void func_80091DC4(PlAB_ *);
 void func_80098D84(EntAB_ *);
@@ -877,7 +885,38 @@ void func_8009C758(ObjC7_ *a, ObjC7_ *b) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_8009D574);
+void func_8009D67C(void);
+void func_800A258C(void);
+void func_8009D574(void) {
+    LnD57_ *it;
+    ObD57_ *o;
+    CrD57_ *c;
+
+    func_8009D67C();
+    func_8009DBF8();
+    func_8009EC8C();
+    func_8009F7D4();
+    func_800A0C44();
+    func_800A258C();
+    for (it = *(LnD57_ **)&D_8011B344; it != NULL; it = it->next) {
+        o = it->obj;
+        if (o->flags & 0x10) {
+            ((void (*)(u8 *o, u16 idx, s32 arg2))func_800A3978)((u8 *)o, *o->p54, 0);
+            o->flags &= ~0x10;
+        }
+    }
+    for (it = *(LnD57_ **)&D_8011B344; it != NULL; it = it->next) {
+        o = it->obj;
+        c = o->car;
+        if (c->flags & 0x800) {
+            func_800961B0((u8 *)c, 0, 1);
+        } else if (c->flags & 0x1000) {
+            func_800961B0((u8 *)c, 0, 0);
+        } else if (c->flags & 0x2000) {
+            func_800961B0((u8 *)c, 0, 0);
+        }
+    }
+}
 
 void func_800A3E30(void **arg0, s32 arg1);
 void func_8009D67C(void) {

@@ -12,6 +12,7 @@ typedef struct { f32 x; f32 y; f32 z; } V3f_;
 typedef struct { u8 pad0[0x4C]; f32 im; u8 pad50[0x1C]; V3f_ pos; V3f_ mom; V3f_ vel; u8 pad90[0x28]; V3f_ am; f32 m[9]; V3f_ w; } BodyF_;
 typedef struct { u8 pad0[4]; s32 flags; u8 pad8[0x54]; s32 kind; BodyF_ *b; u8 pad64[0x20]; u32 u84; } OwnF_;
 typedef struct { OwnF_ *o0; OwnF_ *o1; V3f_ p; V3f_ n; } CtF_;
+typedef struct { f32 i[9]; f32 ib[9]; f32 m; } BodyI_;
 extern u8 D_80138D38[];
 
 
@@ -454,7 +455,29 @@ f32 func_800ADE1C(CtF_ *c) {
     return f;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_4D480", func_800AE8F4);
+void func_800AE8F4(BodyI_ *o, f32 x, f32 y, f32 z) {
+    f32 yy;
+    f32 zz;
+    f32 xx;
+    f32 a;
+    f32 b;
+    f32 c;
+
+    yy = y * y;
+    zz = z * z;
+    a = o->m * (yy + zz);
+    xx = x * x;
+    b = o->m * (xx + zz);
+    c = o->m * (xx + yy);
+    o->i[1] = o->i[2] = o->i[3] = o->i[4] = o->i[5] = o->i[6] = o->i[7] = o->i[8] = 0.0f;
+    o->ib[1] = o->ib[2] = o->ib[3] = o->ib[4] = o->ib[5] = o->ib[6] = o->ib[7] = o->ib[8] = 0.0f;
+    o->i[0] = a / 12.0f;
+    o->ib[0] = 12.0f / a;
+    o->i[4] = b / 12.0f;
+    o->i[8] = c / 12.0f;
+    o->ib[4] = 12.0f / b;
+    o->ib[8] = 12.0f / c;
+}
 
 void func_800AE9C4(u8 *t, u8 i) {
     f32 v[3];

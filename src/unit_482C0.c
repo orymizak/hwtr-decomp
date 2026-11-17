@@ -1,5 +1,9 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { u8 p0[0x440]; s32 w440; u8 b444[0xC]; s32 w450[8]; s32 w470; u8 p474[4]; u8 b478; u8 b479; } CrA76_;
+extern void (*D_801416E4)(s32);
+s32 func_8008182C(void);
+extern s32 D_800F3914;
 s32 func_8009610C(s32);
 extern void (*D_8014C0A8)(s32, s32, f32, f32);
 void func_800ABEC8(u8, u32, u8);
@@ -30,7 +34,35 @@ void func_800A76F0(void) {
     D_800F3900 = 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_482C0", func_800A76FC);
+void func_800A76FC(void) {
+    u8 i;
+    u8 j;
+    s32 z;
+    CrA76_ *c;
+
+    D_800F3914 = func_8008182C();
+    D_8014C0A8(9, 1, 1.0f, 1.0f);
+    D_801416E4(0);
+    z = 0;
+    D_800F3904 = D_800F3900;
+    D_800F3900 = 0;
+    for (i = 0; i < 6; i++) {
+        c = func_800960D8(i);
+        c->w440 = z;
+        c->b478 = 0;
+        c->w470 = 0;
+        c->b479 = 0;
+        for (j = 0; j < 10; j++) {
+            c->b444[j] = 0;
+        }
+        for (j = 0; j < 8; j++) {
+            c->w450[j] = 0;
+        }
+        if (D_800F3918) {
+            c->w450[0] = z;
+        }
+    }
+}
 
 s32 func_800A780C(u8 ch, u8 cp) {
     u8 *c;

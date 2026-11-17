@@ -5,6 +5,9 @@ typedef struct { s32 a; s32 b; s32 c; } V12_;
 typedef struct { u16 flags; u16 a; u16 b; u16 c; u8 d8; u8 d9; u8 dA; u8 dB; } E0Cc_;
 typedef struct { u8 p0[0xC]; s16 *ids; u8 p10[3]; s8 n; } Tb9F_;
 typedef struct { u8 p0[8]; Tb9F_ *t; u8 pC[0xA]; s16 cur; } Ob9F_;
+typedef struct { s32 a; u8 p4[0x10]; } SbA00_;
+typedef struct { u8 p0[0x18]; u8 n; u8 p19[3]; SbA00_ *sub; u8 b20; u8 p21[7]; s32 w28; } TrA00_;
+s32 func_800C9590();
 extern char D_80101080[];
 extern s32 (*D_80140FE4)(char *);
 extern s32 (*D_80140FE0)(char *, void *);
@@ -53,7 +56,26 @@ void func_800C9978(void) {
     func_800C96DC();
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_69E80", func_800C9A00);
+void func_800C9A00(void) {
+    s32 i;
+    s32 j;
+
+    func_800C9590();
+    for (i = 0; i < 33; i++) {
+        if (((TrA00_ **)&D_800F5F08)[i]->b20) {
+            Memory_Free(((TrA00_ **)&D_800F5F08)[i]->w28);
+            ((TrA00_ **)&D_800F5F08)[i]->w28 = 0;
+        }
+    }
+    for (i = 0; i < 33; i++) {
+        for (j = 0; j < ((TrA00_ **)&D_800F5F08)[i]->n; j++) {
+            if (((TrA00_ **)&D_800F5F08)[i]->sub[j].a != 0) {
+                Memory_Free(((TrA00_ **)&D_800F5F08)[i]->sub[j].a);
+                ((TrA00_ **)&D_800F5F08)[i]->sub[j].a = 0;
+            }
+        }
+    }
+}
 
 void func_800C9AF0(s32 n, s32 b) {
     D_800F9F90 = n;

@@ -12,7 +12,7 @@ typedef struct { u8 c[0x54]; } Row6B_;
 typedef struct { u32 w0; u32 w1; } GfxWAA_;
 typedef union { GfxWAA_ words; s64 force; } GfxAA_;
 typedef struct { GfxAA_ *f0; GfxAA_ *f4; u8 p8[0x318]; } PoolAA_;
-typedef struct { f32 x; f32 y; f32 z; u8 pC[8]; u8 type; } EntAA_;
+typedef struct { f32 x; f32 y; f32 z; f32 vx; f32 vy; u8 type; } EntAA_;
 typedef struct { s32 keys[6]; u8 pad[0x54 - 0x18]; } KeySet2_;
 typedef struct { s32 keys[21]; } KeySetB_;
 extern s32 D_800F0394[];
@@ -143,7 +143,27 @@ s32 func_8006AA84(s32 cam, f32 *pos) {
     return n;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_0B140", func_8006B1AC);
+extern f32 D_80101E98[2];
+extern f32 D_80101EA0[2];
+void func_8006B1AC(void) {
+    s32 i;
+    EntAA_ *p;
+
+    for (i = 0, p = D_80101EA8; i < D_80101E90; p++, i++) {
+        p->x += p->vx;
+        p->y += p->vy;
+        if (p->x > D_80101E98[0]) {
+            p->x = D_80101EA0[0];
+        } else if (p->x < D_80101EA0[0]) {
+            p->x = D_80101E98[0];
+        }
+        if (p->y > D_80101E98[1]) {
+            p->y = D_80101EA0[1];
+        } else if (p->y < D_80101EA0[1]) {
+            p->y = D_80101E98[1];
+        }
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_0B140", func_8006B2A0);
 
