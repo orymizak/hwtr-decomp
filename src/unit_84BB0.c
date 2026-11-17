@@ -12,3 +12,11 @@ s32 __osAiDeviceBusy(void) {
         return 0;
     }
 }
+
+/* TODO: validar si este código es equivalente
+s32 __osAiDeviceBusy(void) {
+    int zero = 0;
+    // Nota: Se compara contra 'zero' para forzar la instrucción MIPS de signo original (matching)
+    return (*((volatile s32 *)AI_STATUS_REG)) < zero;
+}
+*/

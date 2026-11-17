@@ -31,41 +31,37 @@ s32 *func_800C8168(void) {
 }
 
 void func_800C8174(void) {
-    u32 var_v1;
+    u32 i;
 
-    var_v1 = 0;
-    do {
-        *(u8 *)(&(*(u8 *)&D_80124D48) + var_v1) = 0x20;
-        var_v1 += 1;
-    } while (var_v1 < 8U);
+    for (i = 0; i < 8; i++) {
+        ((u8 *)&D_80124D48)[i] = ' ';
+    }
 }
 
 void func_800C81A0(void) {
-    u32 var_v1;
+    u32 i;
 
-    var_v1 = 0;
-    do {
-        *(u8 *)(&(*(u8 *)&D_80124D51) + var_v1) = 0x20;
-        var_v1 += 1;
-    } while (var_v1 < 8U);
+    for (i = 0; i < 8; i++) {
+        ((u8 *)&D_80124D51)[i] = ' ';
+    }
 }
 
-void func_800C81CC(s32 arg0, s8 arg1) {
-    void *var_a2;
-    void *var_v1;
+void func_800C81CC(u8 player, s8 c) {
+    u8 *buf;
+    u8 *p;
 
-    var_a2 = &(*(u8 *)&D_80124D51);
-    var_v1 = &(*(u8 *)&D_80124D51);
-    if (!(arg0 & 0xFF)) {
-        var_a2 = &(*(u8 *)&D_80124D48);
-        var_v1 = &(*(u8 *)&D_80124D48);
+    buf = (u8 *)&D_80124D51;
+    p = (u8 *)&D_80124D51;
+    if (!player) {
+        buf = (u8 *)&D_80124D48;
+        p = (u8 *)&D_80124D48;
     }
     do {
-        (*(u8 *)((u8 *)(var_v1) + 0x0)) = (u8) (*(u8 *)((u8 *)(var_v1) + 0x1));
-        var_v1 += 1;
-    } while ((u32) var_v1 < (u32) (var_a2 + 7));
-    (*(u8 *)((u8 *)(var_a2) + 0x7)) = arg1;
-    (*(u8 *)((u8 *)(var_a2) + 0x8)) = 0;
+        p[0] = p[1];
+        p++;
+    } while (p < buf + 7);
+    buf[7] = c;
+    buf[8] = 0;
 }
 
 u8 func_800C8214(u8 i, s32 k) {

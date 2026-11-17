@@ -847,30 +847,20 @@ void func_800B2844(u8 *t, u8 i) {
     }
 }
 
-void func_800B2A20(void *arg0) {
-    s32 temp_a0;
-    s32 var_s0;
+void func_800B2A20(u8 *menu) {
+    u8 i;
 
-    var_s0 = 0;
-    if ((*(u8 *)((u8 *)(arg0) + 0x20)) != 0) {
-        do {
-            temp_a0 = *(s32 *)(((var_s0 & 0xFF) * 0x10) + (*(s32 *)((u8 *)(arg0) + 0x24)));
-            var_s0 += 1;
-            func_800B1250(temp_a0);
-        } while ((u32) (var_s0 & 0xFF) < (u8) (*(u8 *)((u8 *)(arg0) + 0x20)));
+    for (i = 0; i < menu[0x20]; i++) {
+        func_800B1250(*(s32 *)(*(u8 **)(menu + 0x24) + i * 0x10));
     }
 }
 
 void func_800B2A84(void) {
-    s32 temp_a0;
-    s32 var_s0;
+    u8 i;
 
-    var_s0 = 0;
-    do {
-        temp_a0 = var_s0 & 0xFF;
-        var_s0 += 1;
-        D_80141040(temp_a0);
-    } while ((u32) (var_s0 & 0xFF) < 0x20U);
+    for (i = 0; i < 32; i++) {
+        D_80141040(i);
+    }
     func_800B11FC();
 }
 
@@ -894,18 +884,11 @@ void func_800B2B28(T2C5_ *t) {
 }
 
 
-void func_800B2BAC(void *arg0) {
-    u16 var_v0;
-    s32 var_s0;
+void func_800B2BAC(u8 *t) {
+    u8 i;
 
-    var_s0 = 0;
-    if ((*(u8 *)((u8 *)(arg0) + 0x0)) != 0) {
-        var_v0 = 0 & 0xFF;
-        do {
-            var_v0 = var_s0 & 0xFF;
-            func_800B133C((*(s32 *)((u8 *)(arg0) + 0x4)) + (var_v0 * 0x2C));
-            var_s0 += 1;
-        } while ((u32) (var_s0 & 0xFF) < (*(u8 *)((u8 *)(arg0) + 0x0)));
+    for (i = 0; i < t[0]; i++) {
+        func_800B133C(*(u8 **)(t + 4) + i * 0x2C);
     }
 }
 

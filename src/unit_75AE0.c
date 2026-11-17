@@ -113,18 +113,16 @@ AcmdL_ *func_800D5150(AcmdL_ *cmdList, s32 *cmdLen, s16 *outBuf, s32 outLen) {
     return cmdlEnd;
 }
 
-s32 *func_800D52B8(void) {
-    s32 *temp_v0;
-    s32 *var_v1;
+ParamM_ *func_800D52B8(void) {
+    ParamM_ *update = NULL;
+    SynthM_ *drvr = (SynthM_ *)D_800FB174;
 
-    temp_v0 = (*(s32 *)((u8 *)(D_800FB174) + 0x2C));
-    var_v1 = NULL;
-    if (temp_v0 != NULL) {
-        var_v1 = temp_v0;
-        (*(s32 *)((u8 *)(D_800FB174) + 0x2C)) = (s32 *) *var_v1;
-        *var_v1 = NULL;
+    if (drvr->paramList != NULL) {
+        update = drvr->paramList;
+        drvr->paramList = drvr->paramList->next;
+        update->next = NULL;
     }
-    return var_v1;
+    return update;
 }
 
 void func_800D52E4(ALParamB_ *param) {
@@ -134,15 +132,11 @@ void func_800D52E4(ALParamB_ *param) {
 }
 
 void func_800D52FC(void) {
-    s32 var_s0;
+    LinkM_ *dl;
 
-    var_s0 = (*(s32 *)((u8 *)(D_800FB174) + 0x14));
-    if (var_s0 != 0) {
-        do {
-            alUnlink(var_s0);
-            alLink(var_s0, D_800FB174 + 4);
-            var_s0 = (*(s32 *)((u8 *)(D_800FB174) + 0x14));
-        } while (var_s0 != 0);
+    while ((dl = ((SynthM_ *)D_800FB174)->pLameList.next) != NULL) {
+        alUnlink((s32)dl);
+        alLink((s32)dl, &((SynthM_ *)D_800FB174)->pFreeList);
     }
 }
 
@@ -151,10 +145,14 @@ void func_800D535C(s32 arg0) {
     ((s32 (*)(s32, s32))alLink)(arg0, (*(s32 *)&D_800FB174) + 0x14);
 }
 
-s32 func_800D5394(s32 arg0) {
-    return (s32) (f32) (((f64) ((f32) arg0 * (f32) *(s32 *)((u8 *)D_800FB174 + 0x40)) / D_801017B0) + D_801017B8);
+s32 func_800D5394(s32 micros) {
+    f32 tmp = (f32)micros * ((SynthM_ *)D_800FB174)->outputRate / D_801017B0 + D_801017B8;
+
+    return (s32)tmp;
 }
 
-s32 func_800D53E4(s32 arg0) {
-    return (s32) (f32) (((f64) ((f32) arg0 * (f32) *(s32 *)((u8 *)D_800FB174 + 0x40)) / D_801017C0) + D_801017C8) & ~0xF;
+s32 func_800D53E4(s32 micros) {
+    f32 tmp = (f32)micros * ((SynthM_ *)D_800FB174)->outputRate / D_801017C0 + D_801017C8;
+
+    return (s32)tmp & ~0xF;
 }

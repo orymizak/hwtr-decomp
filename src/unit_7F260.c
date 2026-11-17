@@ -29,11 +29,11 @@ s32 osSpTaskYielded(void *task);
 void __scMain(void *arg);
 void __scHandleRetrace(OSSched_ *sc);
 void __scHandleRSP(OSSched_ *sc);
-void __scHandleRDP(s32 arg0);
+void __scHandleRDP(OSSched_ *sc);
 s32 __scTaskComplete(void *sc, OSScTask_ *t);
 void __scAppendList(OSSchedT_ *sc, OSScTask_ *t);
 void __scExec(OSSchedT_ *sc, OSScTask_ *sp, OSScTask_ *dp);
-void __scYield(void *arg0);
+void __scYield(OSSched_ *sc);
 u32 osVirtualToPhysical(void *);
 void osWritebackDCache(void *, s32);
 void osInvalDCache(void *, s32);
@@ -68,13 +68,13 @@ void osCreateScheduler(OSSched_ *sc, void *stack, s32 priority, u8 mode, u8 numF
     osStartThread(&sc->thread);
 }
 
-void osScAddClient(void *arg0, void *arg1, s32 arg2) {
+void osScAddClient(OSSched_ *sc, OSScClient_ *c, void *msgQ) {
     s32 mask;
 
     mask = osSetIntMask(1);
-    *(s32 *)((u8 *)arg1 + 0x4) = arg2;
-    *(s32 *)((u8 *)arg1 + 0x0) = (void *) *(s32 *)((u8 *)arg0 + 0x260);
-    *(s32 *)((u8 *)arg0 + 0x260) = arg1;
+    c->msgQ = msgQ;
+    c->next = sc->clientList;
+    sc->clientList = c;
     osSetIntMask(mask);
 }
 
@@ -182,35 +182,36 @@ void __scHandleRSP(OSSched_ *sc) {
         __scExec(sc, sp, dp);
 }
 
-void __scHandleRDP(s32 arg0) {
-    s32 sp10;
-    s32 sp14;
-    u32 var_s0;
-    void *temp_a1;
+void __scHandleRDP(OSSched_ *sc) {
+    OSScTask_ *t;
+    OSScTask_ *sp = NULL;
+    OSScTask_ *dp = NULL;
+    u32 state;
 
-    temp_a1 = (*(s32 *)((u8 *)(arg0) + 0x278));
-    sp10 = 0;
-    sp14 = 0;
-    (*(s32 *)((u8 *)(arg0) + 0x278)) = NULL;
-    (*(s32 *)((u8 *)(temp_a1) + 0x4)) = (s32) ((*(s32 *)((u8 *)(temp_a1) + 0x4)) & ~1);
-    __scTaskComplete(arg0, (s32) temp_a1);
-    var_s0 = ((*(s32 *)((u8 *)(arg0) + 0x274)) == 0) * 2;
-    if ((*(s32 *)((u8 *)(arg0) + 0x278)) == NULL) {
-        var_s0 |= 1;
+    t = sc->curRDPTask;
+    sc->curRDPTask = NULL;
+    t->state &= ~1;
+    __scTaskComplete(sc, t);
+    state = (sc->curRSPTask == NULL) << 1;
+    if (sc->curRDPTask == NULL) {
+        state |= 1;
     }
-    if (__scSchedule(arg0, &sp10, &sp14, var_s0) != var_s0) {
-        __scExec(arg0, sp10, sp14);
+    if (__scSchedule(sc, &sp, &dp, state) != state) {
+        __scExec(sc, sp, dp);
     }
 }
 
-s32 __scTaskReady(s32 arg0) {
-    s32 temp_s0;
+OSScTask_ *__scTaskReady(OSScTask_ *t) {
+    void *a;
+    void *b;
 
-    if (arg0 != 0) {
-        temp_s0 = osViGetCurrentFramebuffer();
-        return arg0 & -(temp_s0 == osViGetNextFramebuffer());
+    if (t != NULL) {
+        if ((a = (void *)osViGetCurrentFramebuffer()) != (b = (void *)osViGetNextFramebuffer())) {
+            return NULL;
+        }
+        return t;
     }
-    return 0;
+    return NULL;
 }
 
 s32 __scTaskComplete(void *sc, OSScTask_ *t) {
@@ -277,13 +278,12 @@ void __scExec(OSSchedT_ *sc, OSScTask_ *sp, OSScTask_ *dp) {
     }
 }
 
-void __scYield(void *arg0) {
-    void *temp_a0;
+void __scYield(OSSched_ *sc) {
+    OSScTask_ *t = sc->curRSPTask;
 
-    temp_a0 = *(s32 *)((u8 *)arg0 + 0x274);
-    if (*(s32 *)((u8 *)temp_a0 + 0x10) == 1) {
-        *(s32 *)((u8 *)temp_a0 + 0x4) = (s32) (*(s32 *)((u8 *)temp_a0 + 0x4) | 0x10);
-        osSpTaskYield(temp_a0);
+    if (t->type == 1) {
+        t->state |= 0x10;
+        osSpTaskYield(t);
     }
 }
 

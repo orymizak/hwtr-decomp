@@ -6,7 +6,7 @@ typedef struct { void *next; s32 delta; s16 type; s16 unity; void *wave; } Start
 typedef struct { u8 pad[0xD8]; s32 offset; } PVoice8_;
 typedef struct { void *next; s32 delta; s16 type; PVoice8_ *pvoice; } FreeParam8_;
 typedef struct { u32 w0; u32 w1; } Acmd8_;
-typedef struct ALFilt8_ { struct ALFilt8_ *source; Acmd8_ *(*handler)(void *, s16 *, s32, s32, Acmd8_ *); s32 (*setParam)(void *, s32, void *); u8 pad[8]; } ALFilt8_;
+typedef struct ALFilt8_ { struct ALFilt8_ *source; Acmd8_ *(*handler)(void *, s16 *, s32, s32, Acmd8_ *); s32 (*setParam)(void *, s32, void *); s16 inp; s16 outp; s32 type; } ALFilt8_;
 typedef struct { ALFilt8_ filter; void *state; s16 pan; s16 volume; s16 cvolL; s16 cvolR; s16 dryamt; s16 wetamt; u16 lratl; s16 lratm; s16 ltgt; u16 rratl; s16 rratm; s16 rtgt; s32 delta; s32 segEnd; s32 first; struct ALParam8_ *ctrlList; struct ALParam8_ *ctrlTail; void **sources; s32 motion; } EnvMix8_;
 typedef struct ALFilt3_ { struct ALFilt3_ *source; void *handler; s32 (*setParam)(void *, s32, void *); } ALFilt3_;
 typedef struct ALParam3_ { struct ALParam3_ *next; } ALParam3_;
@@ -17,7 +17,7 @@ typedef struct { ALFilt3_ filter; u8 padC[8]; s32 state; s16 pan; s16 volume; u8
 extern s16 D_800FB490[];
 extern void *D_800FB5B0;
 Acmd8_ *_pullSubFrame(void *filter, s16 *inp, s16 *outp, s32 outCount, s32 sampleOffset, Acmd8_ *p);
-f32 _getVol(f32 arg0, s32 arg1, s32 arg2, s32 arg3);
+f32 _getVol(f32 ivol, s32 samples, s16 ratem, u16 ratel);
 void _freePVoice(s32 arg0, s32 arg1);
 void __freeParam(void *param);
 Acmd8_ *alEnvmixerPull(void *filter, s16 *outp, s32 outCount, s32 sampleOffset, Acmd8_ *p) {
@@ -232,14 +232,14 @@ f64 _frexpf(f64 value, s32 *eptr) {
     return (value > 0.0 ? absvalue : -absvalue);
 }
 
-f64 _ldexpf(f64 arg0, s32 arg2) {
-    f64 var_fa0;
+f64 _ldexpf(f64 in, s32 ex) {
+    s32 exp;
 
-    var_fa0 = arg0;
-    if (arg2 != 0) {
-        var_fa0 *= (f64) (1 << arg2);
+    if (ex) {
+        exp = 1 << ex;
+        in *= (f64)exp;
     }
-    return var_fa0;
+    return in;
 }
 
 s16 _getRate(f64 vol, f64 tgt, s32 count, u16 *ratel) {
@@ -283,41 +283,37 @@ s16 _getRate(f64 vol, f64 tgt, s32 count, u16 *ratel) {
     return (s16)a;
 }
 
-f32 _getVol(f32 arg0, s32 arg1, s32 arg2, s32 arg3) {
-    f32 var_ft0;
-    f32 var_fv1;
-    s32 var_a1;
-    s32 var_v1;
+f32 _getVol(f32 ivol, s32 samples, s16 ratem, u16 ratel) {
+    f32 r;
+    f32 a;
+    s32 i;
 
-    var_a1 = arg1 >> 3;
-    if (var_a1 == 0) {
-        return arg0;
+    /* Rate values are actually rate^8. */
+    samples >>= 3;
+    if (samples == 0) {
+        return ivol;
     }
-    var_ft0 = 1.0f;
-    var_v1 = 0;
-    var_fv1 = ((f32) (arg2 << 0x10) + (f32) (arg3 & 0xFFFF)) / 65536.0f;
-loop_3:
-    if (var_a1 & 1) {
-        var_ft0 *= var_fv1;
-    }
-    var_a1 = var_a1 >> 1;
-    if (var_a1 != 0) {
-        var_v1 += 1;
-        var_fv1 *= var_fv1;
-        if (var_v1 >= 0x20) {
-
-        } else {
-            goto loop_3;
+    r = ((f32)(ratem << 16) + (f32)ratel) / 65536;
+    a = 1.0;
+    for (i = 0; i < 32; i++) {
+        if (samples & 1) {
+            a *= r;
         }
+        samples >>= 1;
+        if (samples == 0) {
+            break;
+        }
+        r *= r;
     }
-    return arg0 * var_ft0;
+    ivol *= a;
+    return ivol;
 }
 
-void alFilterNew(void *arg0, s32 arg1, s32 arg2, s32 arg3) {
-    *(s32 *)((u8 *)arg0 + 0x0) = 0;
-    *(s32 *)((u8 *)arg0 + 0x4) = arg1;
-    *(s32 *)((u8 *)arg0 + 0x8) = arg2;
-    *(s16 *)((u8 *)arg0 + 0xC) = 0;
-    *(s16 *)((u8 *)arg0 + 0xE) = 0;
-    *(s32 *)((u8 *)arg0 + 0x10) = arg3;
+void alFilterNew(ALFilt8_ *f, void *h, void *s, s32 type) {
+    f->source = 0;
+    f->handler = h;
+    f->setParam = s;
+    f->inp = 0;
+    f->outp = 0;
+    f->type = type;
 }

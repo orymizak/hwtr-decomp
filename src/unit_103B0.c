@@ -333,19 +333,21 @@ void func_800702C4(s32 a, s32 b, s32 c) {
 INCLUDE_ASM("asm/nonmatchings/unit_103B0", func_800704DC);
 
 void func_80070780(void) {
-    s32 temp_v1;
-    u8 temp_s0;
+    u8 n = D_800F20F7;
 
-    temp_s0 = D_800F20F7;
-    if ((u32) (D_8014EC78 + 8) >= (u32) D_8014C740[D_8014C540].f4) {
+    if ((u32)(D_8014EC78 + 8) >= (u32)D_8014C740[D_8014C540].f4) {
         D_8014C740[D_8014C540].f0 = D_8014EC78;
-        GfxPool_Grow(&D_8014C740[D_8014C540], 1U);
+        GfxPool_Grow(&D_8014C740[D_8014C540], 1);
         D_8014EC78 = D_8014C740[D_8014C540].f0;
     }
-    temp_v1 = D_8014EC78;
-    D_8014EC78 = temp_v1 + 8;
-    (*(s32 *)((u8 *)(temp_v1) + 0x0)) = 0xDB020000;
-    (*(s32 *)((u8 *)(temp_v1) + 0x4)) = (s32) (temp_s0 * 0x18);
+    {
+        /* gSPNumLights(n) */
+        Gfx2_ *g = (Gfx2_ *)D_8014EC78;
+
+        D_8014EC78 += 8;
+        g->w0 = 0xDB020000;
+        g->w1 = n * 0x18;
+    }
 }
 
 void func_80070860(s32 arg0) {
@@ -394,36 +396,36 @@ void func_800709CC(void) {
     D_8014108C = l + 0x40;
 }
 
-void func_80070BA4(s32 arg0) {
-    s32 temp_a1;
+void func_80070BA4(s32 src) {
+    s32 mtx;
 
-    if ((u32) (D_8014108C + 0x40) >= (u32) D_8014EB58[D_8014C540].f4) {
+    if ((u32)(D_8014108C + 0x40) >= (u32)D_8014EB58[D_8014C540].f4) {
         D_8014EB58[D_8014C540].f0 = D_8014108C;
-        MtxPool_Grow(&D_8014EB58[D_8014C540], 1U);
+        MtxPool_Grow(&D_8014EB58[D_8014C540], 1);
         D_8014108C = D_8014EB58[D_8014C540].f0;
     }
-    temp_a1 = D_8014108C;
-    D_8014108C = temp_a1 + 0x40;
-    func_80070C5C((void *) arg0, (void *) temp_a1);
+    mtx = D_8014108C;
+    D_8014108C = mtx + 0x40;
+    func_80070C5C((void *)src, (void *)mtx);
 }
 
 INCLUDE_ASM("asm/nonmatchings/unit_103B0", func_80070C5C);
 
 void func_80070E58(void) {
-    register f32 temp_fs1_2;
-    register f32 temp_fs0_3;
-    register f32 temp_fv0;
-    register f32 temp_fs1;
+    register f32 vh;
+    register f32 hh;
+    register f32 t;
+    register f32 half;
 
-    temp_fs1 = D_800F2120 * 0.5f;
-    D_800F2128 = 1.0f / cosf(temp_fs1);
-    D_800F212C = -((sinf(temp_fs1)) / cosf(temp_fs1));
-    temp_fs1_2 = temp_fs1 / D_800F2124;
-    temp_fs0_3 = (sinf(temp_fs1_2)) / cosf(temp_fs1_2);
-    temp_fv0 = D_800F211C * D_800F2118;
-    D_800F2130 = -temp_fs0_3;
-    D_800F2114 = temp_fv0;
-    D_800F2134 = D_800F212C * temp_fv0;
+    half = D_800F2120 * 0.5f;
+    D_800F2128 = 1.0f / cosf(half);
+    D_800F212C = -(sinf(half) / cosf(half));
+    vh = half / D_800F2124;
+    hh = sinf(vh) / cosf(vh);
+    t = D_800F211C * D_800F2118;
+    D_800F2130 = -hh;
+    D_800F2114 = t;
+    D_800F2134 = D_800F212C * t;
 }
 
 INCLUDE_ASM("asm/nonmatchings/unit_103B0", func_80070F38);
