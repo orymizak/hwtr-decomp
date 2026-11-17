@@ -1,18 +1,18 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { u8 *base; u8 *cur; s32 len; s32 count; } ALHeap_;
 
 
 
-void alHeapInit(void *arg0, s32 arg1, s32 arg2) {
-    s32 temp_v1;
+void alHeapInit(ALHeap_ *hp, u8 *base, s32 len) {
+    s32 extraAlign = 16 - ((s32)base & 15);
 
-    temp_v1 = 0x10 - (arg1 & 0xF);
-    if (temp_v1 != 0x10) {
-        *(s32 *)((u8 *)arg0 + 0x0) = (s32) (arg1 + temp_v1);
+    if (extraAlign != 16) {
+        hp->base = base + extraAlign;
     } else {
-        *(s32 *)((u8 *)arg0 + 0x0) = arg1;
+        hp->base = base;
     }
-    *(s32 *)((u8 *)arg0 + 0x8) = arg2;
-    *(s32 *)((u8 *)arg0 + 0xC) = 0;
-    *(s32 *)((u8 *)arg0 + 0x4) = (s32) *(s32 *)((u8 *)arg0 + 0x0);
+    hp->len = len;
+    hp->count = 0;
+    hp->cur = hp->base;
 }

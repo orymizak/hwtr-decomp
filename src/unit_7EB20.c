@@ -1,13 +1,14 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { void *mtqueue; void *fullqueue; s32 validCount; s32 first; s32 msgCount; void *msg; } OSMesgQueue_;
 
 extern s32 __osThreadTail;
 
-void osCreateMesgQueue(void *arg0, s32 arg1, s32 arg2) {
-    *(s32 *)((u8 *)arg0 + 0x0) = &__osThreadTail;
-    *(s32 *)((u8 *)arg0 + 0x4) = &__osThreadTail;
-    *(s32 *)((u8 *)arg0 + 0x8) = 0;
-    *(s32 *)((u8 *)arg0 + 0xC) = 0;
-    *(s32 *)((u8 *)arg0 + 0x10) = arg2;
-    *(s32 *)((u8 *)arg0 + 0x14) = arg1;
+void osCreateMesgQueue(OSMesgQueue_ *mq, void *msg, s32 msgCount) {
+    mq->mtqueue = &__osThreadTail;
+    mq->fullqueue = &__osThreadTail;
+    mq->validCount = 0;
+    mq->first = 0;
+    mq->msgCount = msgCount;
+    mq->msg = msg;
 }

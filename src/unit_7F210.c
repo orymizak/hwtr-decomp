@@ -1,17 +1,19 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { u32 type; u32 flags; } OSTaskHdr_;
 s32 __osSpGetStatus(void);
 
 
 
-u32 osSpTaskYielded(s32 arg0) {
-  u32 temp_v0;
-  u32 temp_a0;
-  temp_v0 = __osSpGetStatus();
-  temp_a0 = (temp_v0 >> 3) >> 5;
-  temp_a0 = temp_a0 & 1;
-  if (temp_v0 & 0x80) {
-    *((s32 *) (((u8 *) arg0) + 0x4)) = (s32) (((*((s32 *) (((u8 *) arg0) + 0x4))) | temp_a0) & (~2));
-  }
-  return temp_a0;
+u32 osSpTaskYielded(OSTaskHdr_ *tp) {
+    u32 status;
+    u32 result;
+
+    status = __osSpGetStatus();
+    result = (status & 0x100) ? 1 : 0;
+    if (status & 0x80) {
+        tp->flags |= result;
+        tp->flags &= ~2;
+    }
+    return result;
 }

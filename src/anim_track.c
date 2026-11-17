@@ -7,6 +7,31 @@ typedef struct {
     s32 z;
 } Vec3;
 
+/* TODO (Clean version):
+En lugar de AnimTrack y AnimTrk_ separadas, se debería usar una sola struct con una union:
+typedef struct {
+    u32 duration;
+    u32 keyCount;
+    u8 unk08[4];
+    s32 id;
+    u32 time;
+    u8 active;
+    u32 seekTime;
+    s32 seekMode;
+    union {
+        u8 raw[0x3C];
+        struct {
+            s32 key;
+            Vec3_ pos0;
+            Quat_ rot0;
+            Vec3_ pos1;
+            Quat_ rot1;
+        } anim;
+    } data;
+    Vec3 result;
+} UnifiedAnimTrack;
+*/
+
 typedef struct {
     /* 0x00 */ u32 duration;
     /* 0x04 */ u32 keyCount;
@@ -155,6 +180,12 @@ void func_80087C28(s32 index) {
     t->result = v;
     q = func_800A8EBC(f, t->rot0, t->rot1);
     func_800A8BA4(q, &m);
+    
+    /* TODO (Clean version):
+    Se puede hacer mediante un bucle de transposición o una función auxiliar:
+    Matrix_Transpose(&m, &m2);
+    */
+
     m2.m[0][0] = m.m[0][0];
     m2.m[0][1] = m.m[1][0];
     m2.m[0][2] = m.m[2][0];
@@ -181,6 +212,11 @@ s32 func_80087EE0(s32 id) {
             return i;
         }
     }
+    /* TODO (Bug potential): 
+    Devolver 0 si no se encuentra es ambiguo si el índice 0 es un elemento válido.
+    Idealmente debería retornar -1 (s32) o un código de error, pero se mantiene 
+    para respetar el contrato original de la función.
+    */
     return 0;
 }
 
@@ -195,6 +231,12 @@ s32 func_80087F2C(u32 index) {
 void func_80087F7C(s32 index, u32 t, s32 mode) {
     u32 base = (u32)D_800F3014;
     AnimTrack *track = (AnimTrack *)(index * sizeof(AnimTrack) + base);
+    
+    /* TODO (Clean version):
+    AnimTrack *track = &D_800F3014[index];
+    El uso manual de 'base' se mantiene para forzar el match del compilador SGI.
+    */
+    
     u32 last;
 
     if (track->seekTime == 0) {

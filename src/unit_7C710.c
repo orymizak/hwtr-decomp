@@ -65,16 +65,11 @@ void alLink(ALLink_ *ln, ALLink_ *to) {
     to->next = ln;
 }
 
-void alUnlink(void *arg0) {
-    void **temp_v1_2;
-    void *temp_v1;
-
-    temp_v1 = *(s32 *)((u8 *)arg0 + 0x0);
-    if (temp_v1 != NULL) {
-        *(s32 *)((u8 *)temp_v1 + 0x4) = (void **) *(s32 *)((u8 *)arg0 + 0x4);
+void alUnlink(ALLink_ *ln) {
+    if (ln->next != NULL) {
+        ln->next->prev = ln->prev;
     }
-    temp_v1_2 = *(s32 *)((u8 *)arg0 + 0x4);
-    if (temp_v1_2 != NULL) {
-        *temp_v1_2 = *(s32 *)((u8 *)arg0 + 0x0);
+    if (ln->prev != NULL) {
+        ln->prev->next = ln->next;
     }
 }

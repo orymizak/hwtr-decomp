@@ -14,19 +14,19 @@ extern u8 D_80145498;
 
 s32 __osContGetInitData(s32 *, s32);
 
-s32 osContStartQuery(s32 arg0) {
-    s32 temp_v0;
+s32 osContStartQuery(s32 mq) {
+    s32 ret;
 
     __osSiGetAccess();
     if (D_80145498 != 0) {
         __osPackRequestData(0);
         __osSiRawStartDma(1, &D_80137FE0);
-        osRecvMesg(arg0, 0, 1);
+        osRecvMesg(mq, 0, 1);
     }
-    temp_v0 = __osSiRawStartDma(0, &D_80137FE0);
+    ret = __osSiRawStartDma(0, &D_80137FE0);
     D_80145498 = 0;
     __osSiRelAccess();
-    return temp_v0;
+    return ret;
 }
 
 void osContGetQuery(s32 arg0) {
@@ -35,19 +35,19 @@ void osContGetQuery(s32 arg0) {
     __osContGetInitData(&sp10, arg0);
 }
 
-s32 osContStartReadData(s32 arg0) {
-    s32 temp_v0;
+s32 osContStartReadData(s32 mq) {
+    s32 ret;
 
     __osSiGetAccess();
     if (D_80145498 != 1) {
         __osPackReadData();
         __osSiRawStartDma(1, &D_80137FE0);
-        osRecvMesg(arg0, 0, 1);
+        osRecvMesg(mq, 0, 1);
     }
-    temp_v0 = __osSiRawStartDma(0, &D_80137FE0);
+    ret = __osSiRawStartDma(0, &D_80137FE0);
     D_80145498 = 1;
     __osSiRelAccess();
-    return temp_v0;
+    return ret;
 }
 
 void osContGetReadData(OSContPad_ *data) {

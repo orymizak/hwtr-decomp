@@ -1,5 +1,6 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { u8 p0[8]; s16 count; } RetraceCfg_;
 typedef struct { u8 b[0x10]; } ClientW_;
 typedef struct { u8 b[0x10]; } ClientR_;
 typedef struct { u8 p0[0xC]; void *fb; } FrameR_;
@@ -142,11 +143,11 @@ void func_800D5910(ClientS_ *c, void *mq, u16 flags) {
     osSetIntMask(mask);
 }
 
-void func_800D59A0(void *arg0, s16 arg1) {
+void func_800D59A0(RetraceCfg_ *cfg, s16 count) {
     s32 mask;
 
     mask = osSetIntMask(1);
-    *(s16 *)((u8 *)arg0 + 0x8) = arg1;
+    cfg->count = count;
     osSetIntMask(mask);
 }
 

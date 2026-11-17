@@ -17,35 +17,24 @@ const char *strchr(const char *s, s32 c) {
 }
 
 
-s32 strlen(s8 *arg0) {
-    s8 *var_v1;
+s32 strlen(const char *s) {
+    const char *sc = s;
 
-    var_v1 = arg0;
-    if (*arg0 != 0) {
-        do {
-            var_v1 += 1;
-        } while (*var_v1 != 0);
+    while (*sc != 0) {
+        sc++;
     }
-    return var_v1 - arg0;
+    return sc - s;
 }
 
-u8 *memcpy(u8 *arg0, u8 *arg1, s32 arg2) {
-    s32 var_a2;
-    u8 *var_a1;
-    u8 *var_v1;
-    u8 temp_v0;
+void *memcpy(void *s1, const void *s2, u32 n) {
+    char *su1 = (char *)s1;
+    const char *su2 = (const char *)s2;
 
-    var_a1 = arg1;
-    var_a2 = arg2;
-    var_v1 = arg0;
-    if (var_a2 != 0) {
-        do {
-            temp_v0 = *var_a1;
-            var_a1 += 1;
-            var_a2 -= 1;
-            *var_v1 = temp_v0;
-            var_v1 += 1;
-        } while (var_a2 != 0);
+    while (n > 0) {
+        *su1 = *su2;
+        su1++;
+        su2++;
+        n--;
     }
-    return arg0;
+    return s1;
 }

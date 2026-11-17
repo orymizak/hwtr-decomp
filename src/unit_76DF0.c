@@ -55,11 +55,11 @@ void func_800D6240(u32 rom, void *buf, u32 size) {
 }
 
 s32 func_800D6300(void) {
-    s32 temp_s0;
+    s32 ok;
 
-    temp_s0 = func_800D7170();
+    ok = func_800D7170();
     func_800D7570();
     func_800D6460();
     func_800D69E0();
-    return temp_s0 & 0xFF;
+    return ok & 0xFF;
 }

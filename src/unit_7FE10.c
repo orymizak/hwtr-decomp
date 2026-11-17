@@ -31,12 +31,9 @@ void osCreateThread(Thread_ *t, s32 id, void *entry, void *arg, void *sp, s32 p)
     __osRestoreInt(saveMask);
 }
 
-s32 osGetThreadPri(void *arg0) {
-    void *var_a0;
-
-    var_a0 = arg0;
-    if (var_a0 == NULL) {
-        var_a0 = __osRunningThread;
+s32 osGetThreadPri(Thread_ *thread) {
+    if (thread == NULL) {
+        thread = __osRunningThread;
     }
-    return *(s32 *)((u8 *)var_a0 + 0x4);
+    return thread->priority;
 }

@@ -48,6 +48,13 @@ void Debug_InitFont(u16 *buf) {
             bit += 2;
         }
     }
+
+    /* TODO (Clean version):
+    La lógica de desempaquetado de fuentes a nivel de bits (con aritmetica de shift y goto) 
+    es altamente dependiente de la estructura cruda de los assets en ROM. 
+    Una versión limpia requeriría extraer el font asset a un formato estándar 
+    o usar un parser de compresión dedicado, pero se mantiene así para el match.
+    */
 }
 
 void Debug_FormatNumber(u16 n, u8 *out) {
@@ -73,6 +80,18 @@ void Debug_FormatNumber(u16 n, u8 *out) {
         out[1] = c2;
     }
     out[2] = n % 10 + 0x10;
+
+    /* TODO (Clean version):
+    Se puede simplificar utilizando aritmética modular directa y un enfoque de 
+    escritura de cadenas más limpio (ej. sprintf personalizado o lógica de centenas/decenas/unidades):
+    
+    void Clean_Debug_FormatNumber(u16 n, u8 *out) {
+        if (n > 999) n = 999;
+        out[0] = (n >= 100) ? ((n / 100) + 0x10) : ((n / 100) + 0xF);
+        out[1] = (n >= 10)  ? (((n / 10) % 10) + 0x10) : (((n / 10) % 10) + 0xF);
+        out[2] = (n % 10) + 0x10;
+    }
+    */
 }
 
 inline void Debug_DrawChar(s32 c, u16 color, u16 shadow) {
@@ -96,6 +115,12 @@ inline void Debug_DrawChar(s32 c, u16 color, u16 shadow) {
                     pixel[0x281] = shadow;
                 }
                 pixel++;
+
+                /* TODO (Clean version):
+                El offset mágico `0x281` debería definirse mediante una macro para mayor claridad:
+                #define SHADOW_OFFSET_PIXELS (SCREEN_WIDTH + 1)
+                pixel[SHADOW_OFFSET_PIXELS] = shadow;
+                */
             }
             pixel += SCREEN_WIDTH - GLYPH_WIDTH;
             glyph++;
@@ -113,6 +138,12 @@ void Debug_DrawString(u8 *s, s32 n, u16 color, u16 shadow) {
         }
         Debug_DrawChar(*s++, color, shadow);
     }
+    /* TODO (Clean version):
+    Un bucle hacia adelante estándar con un límite de tamaño es mucho más legible:
+    for (s32 i = 0; i < n && *s != '\0'; i++) {
+        Debug_DrawChar(*s++, color, shadow);
+    }
+    */
 }
 
 

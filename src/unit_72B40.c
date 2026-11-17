@@ -1,5 +1,7 @@
 #include "common.h"
 #include "include_asm.h"
+/* Scheduler client used by the audio thread: client node plus two message queues. */
+typedef struct { u8 client[8]; u8 q[0x18]; void *qbuf[4]; u8 q2[0x18]; void *q2buf[4]; } AudClient_;
 typedef struct { u32 type; u32 flags; void *ucode_boot; u32 ucode_boot_size; void *ucode; u32 ucode_size; void *ucode_data; u32 ucode_data_size; void *dram_stack; u32 dram_stack_size; void *output_buff; void *output_buff_size; void *data_ptr; u32 data_size; void *yield_data_ptr; u32 yield_data_size; } OSTaskT_;
 typedef struct OSScTaskT_ { struct OSScTaskT_ *next; u32 state; u32 flags; void *framebuffer; OSTaskT_ list; void *msgQ; void *msg; u64 startTime; u64 totalTime; } OSScTaskT_;
 typedef struct { void *data; u32 size; void *ucode; void *ucode_data; } AudInfoT_;
@@ -16,13 +18,13 @@ void func_800D1F40(s32 arg0) {
 }
 
 void func_800D1F4C(void) {
-    s32 temp_v0;
+    AudClient_ *c;
 
-    temp_v0 = func_800D23FC(0x58);
-    D_801279D4 = temp_v0;
-    osCreateMesgQueue(temp_v0 + 8, temp_v0 + 0x20, 4);
-    osCreateMesgQueue(D_801279D4 + 0x30, D_801279D4 + 0x48, 4);
-    osScAddClient(D_801279D0, D_801279D4, D_801279D4 + 8);
+    c = (AudClient_ *)func_800D23FC(sizeof(AudClient_));
+    D_801279D4 = (s32)c;
+    osCreateMesgQueue((s32)c->q, (s32)c->qbuf, 4);
+    osCreateMesgQueue((s32)((AudClient_ *)D_801279D4)->q2, (s32)((AudClient_ *)D_801279D4)->q2buf, 4);
+    osScAddClient(D_801279D0, D_801279D4, (s32)((AudClient_ *)D_801279D4)->q);
 }
 
 void func_800D1FB0(void) {

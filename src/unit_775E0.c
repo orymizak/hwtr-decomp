@@ -143,16 +143,11 @@ s32 func_800D6E14(void) {
 }
 
 s32 func_800D6E5C(void) {
-    u32 var_a0;
-    u8 *var_v1;
+    u32 i;
 
-    var_a0 = 0;
-    var_v1 = &D_80140F6F;
-    do {
-        var_a0 += 1;
-        *var_v1 &= 0x7F;
-        var_v1 += 0xA;
-    } while (var_a0 < 4U);
+    for (i = 0; i < 4; i++) {
+        D_80140F6C[i].flags &= 0x7F;
+    }
     return 0;
 }
 

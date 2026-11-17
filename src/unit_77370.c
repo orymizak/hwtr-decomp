@@ -1,5 +1,6 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { void *pfs; s32 file_no; s32 error; s32 type; } PakFile73_;
 void bzero(void *, s32);
 void func_800D7930(u8 *, void *, s32);
 void func_800D7BF0(u8 *, void *, void *, s32, s32);
@@ -7,8 +8,8 @@ s32 func_800D7208(s32, void *);
 
 
 
-void func_800D6770(void *arg0) {
-    (*(s32 *)((u8 *)(arg0) + 0x8)) = func_800D7208(0x208, arg0);
+void func_800D6770(PakFile73_ *file) {
+    file->error = func_800D7208(0x208, file);
 }
 
 void func_800D67A0(u8 *a0, u8 *a1, u8 *a2, s32 a3, s32 a4) {

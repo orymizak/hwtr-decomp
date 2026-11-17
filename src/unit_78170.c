@@ -93,8 +93,8 @@ s32 func_800D778C(s16 *arg0) {
     return 0;
 }
 
-void func_800D7818(void *arg0) {
-    func_800D76B4((*(s32 *)((u8 *)(arg0) + 0xC)), 0);
+void func_800D7818(u8 *mesg) {
+    func_800D76B4(*(void **)(mesg + 0xC), 0);
 }
 
 s32 func_800D7838(s16 *p) {
