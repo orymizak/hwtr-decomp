@@ -82,16 +82,12 @@ s32 Font_Load(u8 id, char *name) {
     return 1;
 }
 
-s32 Font_Free(u32 arg0) {
-  s32 *temp_s0;
-  s32 temp_a0;
-  ;
-  temp_a0 = *temp_s0;
-  if ((*(&D_801415E0[arg0 & 0xFF])) != 0) {
-    Memory_Free((u32) (*(&D_801415E0[arg0 & 0xFF])));
-    *(&D_801415E0[arg0 & 0xFF]) = 0;
-  }
-  return 1;
+s32 Font_Free(u8 id) {
+    if (D_801415E0[id] != 0) {
+        Memory_Free(D_801415E0[id]);
+        D_801415E0[id] = 0;
+    }
+    return 1;
 }
 
 inline f32 Font_GetCharWidthF(u8 id, u8 c) {

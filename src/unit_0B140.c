@@ -76,17 +76,12 @@ s32 func_800D7130();
 INCLUDE_ASM("asm/nonmatchings/unit_0B140", func_8006A540);
 
 s32 func_8006AA34(void) {
-    s32 *var_s0;
-    s32 var_s1;
+    s32 i;
 
-    var_s1 = 0;
-    var_s0 = &D_80102208;
-    do {
-        var_s1 += 1;
-        Memory_Free(*var_s0);
-        *var_s0 = 0;
-        var_s0 += 1;
-    } while (var_s1 < 3);
+    for (i = 0; i < 3; i++) {
+        Memory_Free((&D_80102208)[i]);
+        (&D_80102208)[i] = 0;
+    }
     return 1;
 }
 
@@ -303,32 +298,17 @@ s32 func_8006B6B8(u8 ch, s32 key) {
 }
 
 void func_8006B838(void) {
-    s32 *var_a0;
-    s32 *var_a1;
-    s32 *var_a2;
-    s32 *var_a3;
-    s32 temp_v1;
-    s32 temp_v1_2;
-    s32 var_t0;
+    s32 i;
+    s32 t;
 
-    var_t0 = 0;
-    var_a0 = &D_800F0414;
-    var_a3 = (u8 *)&D_800F0414 + 4;
-    var_a2 = (u8 *)&D_800F0414 - 0xC;
-    var_a1 = (u8 *)&D_800F0414 - 0x10;
-    do {
-        temp_v1 = *var_a1;
-        var_t0 += 1;
-        *var_a1 = *var_a2;
-        *var_a2 = temp_v1;
-        temp_v1_2 = *var_a3;
-        var_a2 += 21;
-        var_a1 += 21;
-        *var_a3 = *var_a0;
-        *var_a0 = temp_v1_2;
-        var_a0 += 21;
-        var_a3 += 21;
-    } while (var_t0 < 4);
+    for (i = 0; i < 4; i++) {
+        t = D_800F0400[i].k[0];
+        D_800F0400[i].k[0] = D_800F0400[i].k[1];
+        D_800F0400[i].k[1] = t;
+        t = D_800F0400[i].k[5];
+        D_800F0400[i].k[5] = D_800F0400[i].k[4];
+        D_800F0400[i].k[4] = t;
+    }
 }
 
 s32 func_8006B894(s32 key) {

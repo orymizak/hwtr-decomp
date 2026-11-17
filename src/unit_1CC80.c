@@ -1,5 +1,12 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { u8 kind; u8 frames; } PDef_;
+typedef struct {
+    u8 pad0[0x60];
+    PDef_ *def;
+    s16 life; u8 flags; u8 r; u8 g; u8 b; u8 kind; u8 frames; s16 h6C; s16 h6E;
+} Prt70_;
+typedef struct { u32 cap; s32 tail; s32 head; Prt70_ *buf; } PPool_;
 
 s32 Memory_Free(s32);
 extern s32 D_800F2630;
@@ -28,38 +35,29 @@ void func_8007C224(void) {
     D_800F2630 = 0;
 }
 
-void func_8007C2B4(void *arg0, s32 arg1, s32 arg2) {
-    *(s32 *)((u8 *)arg0 + 0x4) = 0;
-    *(s32 *)((u8 *)arg0 + 0x8) = 0;
-    *(s32 *)((u8 *)arg0 + 0xC) = arg1;
-    *(s32 *)((u8 *)arg0 + 0x0) = arg2;
+void func_8007C2B4(PPool_ *pool, Prt70_ *buf, u32 cap) {
+    pool->tail = 0;
+    pool->head = 0;
+    pool->buf = buf;
+    pool->cap = cap;
 }
 
-void func_8007C2C8(void *arg0) {
-    u32 temp_v1;
-    u32 var_a1;
-    void *temp_v1_2;
+void func_8007C2C8(PPool_ *pool) {
+    u32 i;
+    Prt70_ *p;
 
-    if (arg0 != NULL) {
-        temp_v1 = *(s32 *)((u8 *)arg0 + 0x0);
-        var_a1 = *(s32 *)((u8 *)arg0 + 0x8) + 0xF;
-        if (var_a1 >= temp_v1) {
-            var_a1 -= temp_v1;
+    if (pool != NULL) {
+        i = pool->head + 15;
+        if (i >= pool->cap) {
+            i -= pool->cap;
         }
-        temp_v1_2 = *(s32 *)((u8 *)arg0 + 0xC) + (var_a1 * 0x70);
-        if (*(u8 *)((u8 *)temp_v1_2 + 0x66) & 4) {
-            *(s16 *)((u8 *)temp_v1_2 + 0x6E) = -0xE00;
+        p = &pool->buf[i];
+        if (p->flags & 4) {
+            p->h6E = -0xE00;
         }
     }
 }
 
-typedef struct { u8 kind; u8 frames; } PDef_;
-typedef struct {
-    u8 pad0[0x60];
-    PDef_ *def;
-    s16 life; u8 flags; u8 r; u8 g; u8 b; u8 kind; u8 frames; s16 h6C; s16 h6E;
-} Prt70_;
-typedef struct { u32 cap; s32 tail; s32 head; Prt70_ *buf; } PPool_;
 typedef struct { u32 w0; u32 w1; } GfxWC4_;
 typedef union { GfxWC4_ words; s64 force; } GfxC4_;
 typedef struct { GfxC4_ *f0; GfxC4_ *f4; u8 p8[0x318]; } PoolC4_;

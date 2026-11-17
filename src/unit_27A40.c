@@ -173,8 +173,8 @@ s32 func_8008711C(u8 font, u8 a, u8 pct) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_27A40", func_80087260);
 
-void func_8008744C(void *arg0) {
-    (*(f32 *)((u8 *)(arg0) + 0x18)) = (f32) (*(s32 *)((u8 *)(arg0) + 0x14));
+void func_8008744C(Scr74_ *s) {
+    s->pos = s->start;
 }
 
 void func_8008745C(Scr74_ *s, u8 fast) {
@@ -224,21 +224,21 @@ s32 func_800875A0(void) {
 
 
 s32 func_80087660(void) {
-    s8 var_s0;
-    register s32 temp_s1;
+    register s32 failed;
+    s8 n;
 
-    temp_s1 = (func_80060840() & 0xFF) == 0;
-    var_s0 = temp_s1;
-    if (!(func_80061334() & 0xFF)) {
-        var_s0 = temp_s1 + 1;
+    failed = (u8)func_80060840() == 0;
+    n = failed;
+    if (!(u8)func_80061334()) {
+        n = failed + 1;
     }
-    if (!(func_8006B630() & 0xFF)) {
-        var_s0 += 1;
+    if (!(u8)func_8006B630()) {
+        n++;
     }
-    if (!(func_8007EF30() & 0xFF)) {
-        var_s0 += 1;
+    if (!(u8)func_8007EF30()) {
+        n++;
     }
-    return (var_s0 & 0xFF) == 0;
+    return (u8)n == 0;
 }
 
 s32 func_8008770C(void);

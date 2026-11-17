@@ -466,18 +466,12 @@ void func_800908A0(void) {
 }
 
 s32 func_800908A8(void) {
-  s32 temp_v0;
-  temp_v0 = func_800A5894();
-  if (temp_v0 != 0) {
-    if (temp_v0) {
-      return (temp_v0 - 1) * 0xC8;
+    s32 n = func_800A5894();
+
+    if (n == 0) {
+        return 0;
     }
-    else
-    {
-      return (temp_v0 - 1) * 0xC8;
-    }
-  }
-  return 0;
+    return (n - 1) * 200;
 }
 
 void func_800908E8(void) {

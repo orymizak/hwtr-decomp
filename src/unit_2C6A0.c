@@ -146,7 +146,7 @@ extern s32 D_8011852C;
 extern u8 D_80118530;
 extern u32 D_80118534;
 
-void func_8008D3B8(void *arg0);
+void func_8008D3B8(u8 *arg0);
 void func_8008D3D4(void);
 s32 func_8008D4E4(u8 *t);
 s32 func_8008BAA0(u8 *cfg) {
@@ -635,8 +635,8 @@ s32 func_8008D3AC(void) {
     return D_800F36F4;
 }
 
-void func_8008D3B8(void *arg0) {
-    D_801184B4 = (*(u8 *)((u8 *)(arg0) + 0x18)) + 6;
+void func_8008D3B8(u8 *arg0) {
+    D_801184B4 = arg0[0x18] + 6;
     D_801184B8 = 0;
 }
 

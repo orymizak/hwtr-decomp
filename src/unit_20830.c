@@ -65,19 +65,16 @@ void func_80080360(void) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_20830", func_80080374);
 
-void func_80080460(s32 arg0, s32 arg1, f32 arg2) {
-  s32 temp_a2;
-  void *temp_v0;
-  void *temp_v1;
-  temp_v1 = *((s32 *) (((u8 *) (&(*(u8 *)&D_8010C410))) + (D_800F2690 * 4)));
-  temp_a2 = *((s32 *) (((u8 *) temp_v1) + 0x8));
-  if (((u32) (temp_a2 + 1)) < 0x257U) {
-    ;
-    *((s32 *) (((u8 *) ((temp_a2 * 4) + temp_v1)) + 0x10)) = arg0;
-    *((s32 *) (((u8 *) ((temp_a2 * 4) + temp_v1)) + 0x970)) = arg1;
-    *((f32 *) (((u8 *) ((temp_a2 * 4) + temp_v1)) + 0x12D0)) = arg2;
-    *((s32 *) (((u8 *) temp_v1) + 0x8)) = (s32) ((*((s32 *) (((u8 *) temp_v1) + 0x8))) + 1);
-  }
+void func_80080460(s32 a, s32 b, f32 c) {
+    Queue7F_ *q = ((Queue7F_ **)&D_8010C410)[D_800F2690];
+    s32 n = q->n;
+
+    if ((u32)(n + 1) < 599) {
+        q->a[n] = a;
+        q->b[n] = b;
+        q->c[n] = c;
+        q->n++;
+    }
 }
 
 void func_800804B4(void) {
