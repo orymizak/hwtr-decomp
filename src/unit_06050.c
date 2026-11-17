@@ -4,10 +4,10 @@ typedef struct { f32 x; f32 y; f32 z; } V3f6_;
 typedef struct { s32 a; s32 b; s32 c; } V12_;
 typedef struct { s32 a; s32 b; s32 c; s32 d; } V16_;
 typedef struct { V16_ q; V12_ v; } E1C_;
-typedef struct { u8 pad[0x10]; E1C_ *p; } E14_;
+typedef struct { s32 a; u16 node; u16 h6; s32 b; s32 c; E1C_ *p; } E14_;
 typedef struct { s32 idx; s32 a; s32 b; s32 c; } Rec16_;
 typedef struct { f32 x; f32 y; f32 z; } Vec3f_;
-typedef struct { Vec3f_ v; f32 s; u8 pad[2]; char name[0xE]; } Ent20_;
+typedef struct { Vec3f_ v; f32 s; u16 node; char name[0xE]; } Ent20_;
 extern void *D_80138170;
 void func_800734F4(void *);
 void func_8006AA34(void);
@@ -19,15 +19,56 @@ s32 File_Load(char *, s32);
 extern void *D_80101E84;
 void Memory_Free(void *);
 typedef struct { s32 a; s32 b; s32 c; s32 d; } Vec4L_;
-typedef struct { u8 p0[0x13C]; Vec4L_ v; u8 unk14C; } ObjL_;
 u8 func_80066A2C(u8 a, s32 b, s32 c);
 typedef struct { u16 unk0; s16 x; s16 y; s16 z; s32 unk8; s32 unkC; s32 unk10; s32 unk14; } Node_;
 typedef struct { f32 x; f32 y; f32 z; } Vec3_;
 typedef struct { s32 x; s32 y; s32 z; } Pos_;
 typedef struct { Pos_ p; f32 m[9]; s32 d; f32 e; } Cam_;
+typedef struct { f32 m[21]; } Node54_;
+typedef struct {
+    /* 0x00 */ u8 p0[6];
+    /* 0x06 */ u16 n6;
+    /* 0x08 */ u8 p8[3];
+    /* 0x0B */ u8 bB;
+    /* 0x0C */ u16 nC;
+    /* 0x0E */ u16 nE;
+    /* 0x10 */ u16 n10;
+    /* 0x12 */ u8 p12[0x1A];
+    /* 0x2C */ Node54_ *nodes;
+    /* 0x30 */ u8 p30[8];
+    /* 0x38 */ Node_ *links;
+    /* 0x3C */ u8 p3C[4];
+    /* 0x40 */ Cam_ *cams;
+    /* 0x44 */ E14_ *paths;
+    /* 0x48 */ Ent20_ *ents;
+    /* 0x4C */ Rec16_ *recs;
+} World_;
 typedef struct { s32 d[0x114 / 4]; } Big114_;
 typedef struct { s32 d[0x40 / 4]; } Big40_;
-typedef struct { u8 p0[0xFE]; s8 id; u8 pFF; u8 cur; u8 tgt; u8 r; u8 g; u8 b; u8 b105; u8 p106[7]; u8 b10D; u8 b10E; } Lt65_;
+typedef struct { u8 p0[9]; u8 b9; } MdlMat_;
+typedef struct { u8 p0[0x30]; s32 flags; u8 p34[8]; MdlMat_ *mat; } MdlInst_;
+typedef struct {
+    /* 0x000 */ u8 p0[0x2C];
+    /* 0x02C */ MdlInst_ *inst;
+    /* 0x030 */ u8 p30[0xCC];
+    /* 0x0FC */ u8 nParts;
+    /* 0x0FD */ u8 pFD;
+    /* 0x0FE */ s8 id;
+    /* 0x0FF */ u8 pFF;
+    /* 0x100 */ u8 cur;
+    /* 0x101 */ u8 tgt;
+    /* 0x102 */ u8 r;
+    /* 0x103 */ u8 g;
+    /* 0x104 */ u8 b;
+    /* 0x105 */ u8 b105;
+    /* 0x106 */ u8 p106[7];
+    /* 0x10D */ u8 b10D;
+    /* 0x10E */ u8 b10E;
+    /* 0x10F */ u8 p10F[0x2D];
+    /* 0x13C */ Vec4L_ v;
+    /* 0x14C */ u8 b14C;
+    /* 0x14D */ u8 c[3];
+} Model_;
 typedef struct { s32 cur[6]; s32 tgt[6]; s32 dt; } Fade65_;
 typedef struct { f32 x; f32 y; f32 z; } V3f69_;
 typedef struct { f32 f0; s32 i4; f32 f8; f32 fC; u8 p10[0x30]; V3f69_ pos; V3f69_ vel; f32 f58; f32 f5C; u8 p60[4]; s16 h64; u8 b66; u8 c[3]; u8 b6A; u8 p6B; u16 s6C; s16 s6E; } Pt94_;
@@ -72,11 +113,11 @@ void func_80067A00(u8, u8, f32, f32, f32);
 s32 Memory_Alloc();
 extern u8 D_80101E80;
 
-extern void *D_8013816C;
+extern World_ *D_8013816C;
 extern s32 D_8013818C;
 s32 GfxPools_Shutdown();
 s32 func_800741D8(s32);
-extern s32 D_80138174;
+extern Model_ *D_80138174[6];
 s32 func_80066D80(s32);
 s32 func_800709CC(s32 *);
 extern s32 D_800F2138;
@@ -92,7 +133,7 @@ void func_80066C9C(s32 a, s32 b);
 void func_80075580(void);
 void func_80075858(void);
 s32 func_80065450(void) {
-    void **p = &D_8013816C;
+    void **p = (void **)&D_8013816C;
     void **q = p + 2;
     s32 i;
 
@@ -141,7 +182,7 @@ INCLUDE_ASM("asm/nonmatchings/unit_06050", func_800655CC);
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_8006572C);
 
 s32 func_8006586C(void) {
-    void **p = &D_8013816C;
+    void **p = (void **)&D_8013816C;
 
     func_800734F4(*p);
     func_800734F4(D_80138170);
@@ -153,12 +194,12 @@ s32 func_8006586C(void) {
 }
 
 u16 func_800658C4(void) {
-    return *(u16 *)((u8 *)D_8013816C + 0x10);
+    return D_8013816C->n10;
 }
 
 void func_800658D4(s32 i, Vec3f_ *pos, s32 *a, s32 *b, s32 *c) {
-    Rec16_ *r = *(Rec16_ **)((*(u8 **)&D_8013816C) + 0x4C) + i;
-    f32 *m = (f32 *)(*(u8 **)((*(u8 **)&D_8013816C) + 0x2C) + r->idx * 0x54);
+    Rec16_ *r = &D_8013816C->recs[i];
+    f32 *m = D_8013816C->nodes[r->idx].m;
 
     pos->x = m[3];
     pos->y = m[7];
@@ -172,7 +213,7 @@ void func_800658D4(s32 i, Vec3f_ *pos, s32 *a, s32 *b, s32 *c) {
 void func_80065940(s32 dt) {
     u32 i;
     u32 k;
-    Lt65_ *o;
+    Model_ *o;
     f32 c;
     f32 t;
 
@@ -184,7 +225,7 @@ void func_80065940(s32 dt) {
         func_8006DAC4(dt);
         func_800738C0(D_8013816C, dt);
         for (i = 0; i < 6; i++) {
-            o = ((Lt65_ **)&D_80138174)[i];
+            o = D_80138174[i];
             if (o == NULL) {
                 continue;
             }
@@ -250,21 +291,14 @@ void func_800664A4(s32 arg0) {
 }
 
 void func_800664B0(void) {
-    s32 *var_s0;
-    s32 temp_a0;
-    u32 var_s1;
+    u32 i;
 
     GfxPools_Shutdown();
-    var_s1 = 0;
-    var_s0 = &D_80138174;
-    do {
-        temp_a0 = *var_s0;
-        var_s1 += 1;
-        if (temp_a0 != 0) {
-            func_800741D8(temp_a0);
+    for (i = 0; i < 6; i++) {
+        if (D_80138174[i] != NULL) {
+            func_800741D8((s32)D_80138174[i]);
         }
-        var_s0 += 1;
-    } while (var_s1 < 6U);
+    }
 }
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80066504);
@@ -284,37 +318,31 @@ void func_800665D0(u32 color, void *r, void *g, void *b) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_800665F8);
 
-void func_8006673C(s32 arg0) {
-    (*(u8 *)((u8 *)((*(s32 *)(&(*(u8 *)&D_80138174) + ((arg0 & 0xFF) * 4)))) + 0x105)) = 0;
+void func_8006673C(u8 i) {
+    D_80138174[i]->b105 = 0;
 }
 
-void func_80066758(s32 arg0) {
-    (*(u8 *)((u8 *)((*(s32 *)(&(*(u8 *)&D_80138174) + ((arg0 & 0xFF) * 4)))) + 0x105)) = 0xFF;
+void func_80066758(u8 i) {
+    D_80138174[i]->b105 = 0xFF;
 }
 
-void func_80066778(s32 arg0, s8 arg1) {
-    void *temp_v0;
+void func_80066778(u8 i, s8 val) {
+    Model_ *m = D_80138174[i];
 
-    temp_v0 = *(s32 *)(&(*(u8 *)&D_80138174) + ((arg0 & 0xFF) * 4));
-    if (temp_v0 != NULL) {
-        (*(u8 *)((u8 *)((*(s32 *)((u8 *)((*(s32 *)((u8 *)(temp_v0) + 0x2C))) + 0x3C))) + 0x9)) = arg1;
+    if (m != NULL) {
+        m->inst->mat->b9 = val;
     }
 }
 
-void func_800667A8(s32 arg0, s32 arg1) {
-    void *temp_v0;
-    void *temp_v1;
-    void *temp_v1_2;
+void func_800667A8(u8 i, u8 on) {
+    Model_ *m = D_80138174[i];
 
-    temp_v1 = *(s32 *)(&(*(u8 *)&D_80138174) + ((arg0 & 0xFF) * 4));
-    if (temp_v1 != NULL) {
-        if (arg1 & 0xFF) {
-            temp_v1_2 = (*(s32 *)((u8 *)(temp_v1) + 0x2C));
-            (*(s32 *)((u8 *)(temp_v1_2) + 0x30)) = (s32) ((*(s32 *)((u8 *)(temp_v1_2) + 0x30)) | 0x40);
+    if (m != NULL) {
+        if (on) {
+            m->inst->flags |= 0x40;
             return;
         }
-        temp_v0 = (*(s32 *)((u8 *)(temp_v1) + 0x2C));
-        (*(s32 *)((u8 *)(temp_v0) + 0x30)) = (s32) ((*(s32 *)((u8 *)(temp_v0) + 0x30)) & ~0x40);
+        m->inst->flags &= ~0x40;
     }
 }
 
@@ -331,8 +359,8 @@ s32 func_8006695C(u8 i) {
         return 0;
     }
     D_800F0218[i] = 0;
-    (&D_80138174)[i] = func_80073AC8(((s32 *)&D_80101E80)[i]);
-    for (j = 0; j < ((u8 *)(&D_80138174)[i])[0xFC]; j++) {
+    D_80138174[i] = (Model_ *)func_80073AC8(((s32 *)&D_80101E80)[i]);
+    for (j = 0; j < D_80138174[i]->nParts; j++) {
         func_80067A00(i, j, 0.0f, 0.0f, 0.0f);
     }
     return 1;
@@ -341,12 +369,10 @@ s32 func_8006695C(u8 i) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80066A2C);
 
-s32 func_80066B94(u32 arg0) {
-  s32 *temp_s0;
-  ;
-  func_800741D8((void *) (*(&((s32 *)&D_80138174)[arg0 & 0xFF])));
-  *(&((s32 *)&D_80138174)[arg0 & 0xFF]) = 0;
-  return 1;
+s32 func_80066B94(u8 i) {
+    func_800741D8((s32)D_80138174[i]);
+    D_80138174[i] = NULL;
+    return 1;
 }
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80066BD4);
@@ -387,13 +413,12 @@ void func_80066C9C(s32 a, s32 b) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80066D80);
 
-void func_80066ECC(s32 arg0, u8 *arg1, u8 *arg2, u8 *arg3) {
-    void *temp_v1;
+void func_80066ECC(u8 i, u8 *r, u8 *g, u8 *b) {
+    Model_ *m = D_80138174[i];
 
-    temp_v1 = *(s32 *)(&(*(u8 *)&D_80138174) + ((arg0 & 0xFF) * 4));
-    *arg1 = (*(u8 *)((u8 *)(temp_v1) + 0x14D));
-    *arg2 = (*(u8 *)((u8 *)(temp_v1) + 0x14E));
-    *arg3 = (*(u8 *)((u8 *)(temp_v1) + 0x14F));
+    *r = m->c[0];
+    *g = m->c[1];
+    *b = m->c[2];
 }
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80066EFC);
@@ -407,7 +432,7 @@ INCLUDE_ASM("asm/nonmatchings/unit_06050", func_800674DC);
 void func_80067950(u8 i, f32 v) {
     u32 j;
 
-    for (j = 0; j < ((u8 *)(&D_80138174)[i])[0xFC]; j++) {
+    for (j = 0; j < D_80138174[i]->nParts; j++) {
         func_80067A00(i, j, 0.0f, 0.0f, v);
     }
 }
@@ -415,13 +440,13 @@ void func_80067950(u8 i, f32 v) {
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80067A00);
 
 void func_80067EFC(u8 i, u8 val, Vec4L_ *src) {
-    ((ObjL_ * *)&D_80138174)[i]->unk14C = val;
-    ((ObjL_ * *)&D_80138174)[i]->v = *src;
+    D_80138174[i]->b14C = val;
+    D_80138174[i]->v = *src;
 }
 
 
 void func_80067F40(u8 i, f32 v) {
-    ((u8 **)&D_80138174)[i][0x10E] = v * 240.0f;
+    D_80138174[i]->b10E = v * 240.0f;
 }
 
 
@@ -473,12 +498,12 @@ INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80068504);
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_800685E0);
 
 u16 func_800687D8(void) {
-    return *(u16 *)((u8 *)D_8013816C + 0x6);
+    return D_8013816C->n6;
 }
 
 void func_800687E8(s32 i, f32 *pos, f32 *rot, f32 *a3, s32 *a4, s32 *a5, s32 *a6, s32 *a7) {
-    Node_ *n = (Node_ *)*(u8 **)((*(u8 * *)&D_8013816C) + 0x38) + i;
-    f32 *m = (f32 *)(*(u8 **)((*(u8 * *)&D_8013816C) + 0x2C) + n->unk0 * 0x54);
+    Node_ *n = &D_8013816C->links[i];
+    f32 *m = D_8013816C->nodes[n->unk0].m;
 
     rot[0] = m[0];
     rot[1] = m[1];
@@ -502,7 +527,7 @@ void func_800687E8(s32 i, f32 *pos, f32 *rot, f32 *a3, s32 *a4, s32 *a5, s32 *a6
 }
 
 void func_800688F4(s32 idx, Vec3_ pos, f32 *m) {
-    f32 *q = (f32 *)(*(u8 **)((*(u8 * *)&D_8013816C) + 0x2C) + *(u16 *)(*(u8 **)((*(u8 * *)&D_8013816C) + 0x38) + idx * 0x18) * 0x54);
+    f32 *q = D_8013816C->nodes[D_8013816C->links[idx].unk0].m;
 
     q[0] = m[0];
     q[1] = m[1];
@@ -639,13 +664,13 @@ void func_8006936C(V3f69_ pos, V3f69_ vel) {
 
 void func_80069494(u8 **car, f32 speed, V3f69_ pos, V3f69_ vel) {
     Pt94_ pt;
-    u8 *o;
+    Model_ *o;
     f32 r;
 
     if (car == NULL || *car == NULL || *(s32 *)(*car + 0x5C) != 3) {
         return;
     }
-    o = ((u8 **)&D_80138174)[**(u8 **)(*car + 0x64)];
+    o = D_80138174[**(u8 **)(*car + 0x64)];
     if (o == NULL) {
         return;
     }
@@ -671,9 +696,9 @@ void func_80069494(u8 **car, f32 speed, V3f69_ pos, V3f69_ vel) {
     pt.s6C = 0xFF00;
     pt.s6E = 0;
     r = (rand() % 21) / 100.0;
-    pt.c[2] = (u8)((0.8 - r) * o[0x14F]) >> D_800F20F6;
-    pt.c[1] = (u8)((0.8 - r) * o[0x14E]) >> D_800F20F6;
-    pt.c[0] = (u8)((0.8 - r) * o[0x14D]) >> D_800F20F6;
+    pt.c[2] = (u8)((0.8 - r) * o->c[2]) >> D_800F20F6;
+    pt.c[1] = (u8)((0.8 - r) * o->c[1]) >> D_800F20F6;
+    pt.c[0] = (u8)((0.8 - r) * o->c[0]) >> D_800F20F6;
     if (D_80138A6C[**(u8 **)(*car + 0x64)] == 1) {
         pt.c[0] >>= 4;
         pt.c[2] >>= 4;
@@ -837,27 +862,25 @@ void func_800698C0(Hits9_ *h, f32 speed) {
 }
 
 u16 func_8006A1E0(void) {
-    return *(u16 *)((u8 *)D_8013816C + 0xC);
+    return D_8013816C->nC;
 }
 
-void func_8006A1F0(s32 arg0, s32 *arg1, s32 *arg2, s32 *arg3, s32 *arg4) {
-    void *temp_v1;
+void func_8006A1F0(s32 i, s32 *a, s32 *h, s32 *b, s32 *c) {
+    E14_ *e = &D_8013816C->paths[i];
 
-    temp_v1 = *(s32 *)((u8 *)D_8013816C + 0x44) + (arg0 * 0x14);
-    *arg1 = *(s32 *)((u8 *)temp_v1 + 0x0);
-    *arg2 = (s32) *(u16 *)((u8 *)temp_v1 + 0x6);
-    *arg3 = *(s32 *)((u8 *)temp_v1 + 0x8);
-    *arg4 = *(s32 *)((u8 *)temp_v1 + 0xC);
+    *a = e->a;
+    *h = e->h6;
+    *b = e->b;
+    *c = e->c;
 }
 
 void func_8006A234(s32 a, s32 b, V12_ *v, V16_ *q) {
-    *v = (*(E14_ **)((u8 *)D_8013816C + 0x44))[a].p[b].v;
-    *q = (*(E14_ **)((u8 *)D_8013816C + 0x44))[a].p[b].q;
+    *v = D_8013816C->paths[a].p[b].v;
+    *q = D_8013816C->paths[a].p[b].q;
 }
 
 void func_8006A2B8(s32 i, V3f6_ *t, f32 *m) {
-    f32 *d = (f32 *)(*(u8 **)((u8 *)D_8013816C + 0x2C) +
-                     *(u16 *)(*(u8 **)((u8 *)D_8013816C + 0x44) + i * 0x14 + 4) * 0x54);
+    f32 *d = D_8013816C->nodes[D_8013816C->paths[i].node].m;
 
     d[0] = m[0];
     d[1] = m[1];
@@ -874,11 +897,11 @@ void func_8006A2B8(s32 i, V3f6_ *t, f32 *m) {
 }
 
 u8 func_8006A358(void) {
-    return *(u8 *)((u8 *)D_8013816C + 0xB);
+    return D_8013816C->bB;
 }
 
 void func_8006A368(u8 i, Pos_ *a1, f32 *a2, s32 *a3, f32 *a4) {
-    Cam_ *c = (Cam_ *)*(u8 **)((*(u8 * *)&D_8013816C) + 0x40) + i;
+    Cam_ *c = &D_8013816C->cams[i];
 
     *a1 = c->p;
     *a3 = c->d;
@@ -904,22 +927,21 @@ s32 func_8006A400(char *name, s32 dst) {
 }
 
 u16 func_8006A450(void) {
-    return *(u16 *)((u8 *)D_8013816C + 0xE);
+    return D_8013816C->nE;
 }
 
 void func_8006A460(s32 i, Vec3f_ *v, f32 *s, char *name) {
-    *v = (*(Ent20_ **)((u8 *)D_8013816C + 0x48))[i].v;
-    *s = (*(Ent20_ **)((u8 *)D_8013816C + 0x48))[i].s;
-    strcpy(name, (*(Ent20_ **)((u8 *)D_8013816C + 0x48))[i].name);
+    *v = D_8013816C->ents[i].v;
+    *s = D_8013816C->ents[i].s;
+    strcpy(name, D_8013816C->ents[i].name);
 }
 
-void func_8006A4D4(s32 arg0, s8 arg1) {
-    s32 temp_a0;
+void func_8006A4D4(s32 i, s8 on) {
+    s32 node = (s32)&D_8013816C->nodes[D_8013816C->ents[i].node];
 
-    temp_a0 = (*(s32 *)((u8 *)(D_8013816C) + 0x2C)) + ((*(u16 *)((u8 *)(((arg0 << 5) + (*(s32 *)((u8 *)(D_8013816C) + 0x48)))) + 0x10)) * 0x54);
-    if (!(arg1 & 0xFF)) {
-        func_80072D48(temp_a0);
+    if (!(on & 0xFF)) {
+        func_80072D48(node);
         return;
     }
-    func_80072D5C(temp_a0);
+    func_80072D5C(node);
 }

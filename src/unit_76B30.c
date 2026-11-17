@@ -6,10 +6,10 @@ s32 osSetIntMask(s32);
 extern s32 D_800FB190;
 
 void func_800D5F30(s32 arg0) {
-    s32 temp_v0;
+    s32 mask;
 
     func_800D6010();
-    temp_v0 = osSetIntMask(1);
+    mask = osSetIntMask(1);
     D_800FB190 = arg0;
-    osSetIntMask(temp_v0);
+    osSetIntMask(mask);
 }

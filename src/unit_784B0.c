@@ -5,17 +5,17 @@ s32 osSetIntMask(s32);
 extern s32 D_801380AC;
 
 void func_800D78B0(void) {
-    s32 temp_v0;
+    s32 mask;
 
-    temp_v0 = osSetIntMask(1);
+    mask = osSetIntMask(1);
     D_801380AC = 1;
-    osSetIntMask(temp_v0);
+    osSetIntMask(mask);
 }
 
 void func_800D78E0(void) {
-    s32 temp_v0;
+    s32 mask;
 
-    temp_v0 = osSetIntMask(1);
+    mask = osSetIntMask(1);
     D_801380AC = 0;
-    osSetIntMask(temp_v0);
+    osSetIntMask(mask);
 }

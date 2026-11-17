@@ -69,13 +69,13 @@ void osCreateScheduler(OSSched_ *sc, void *stack, s32 priority, u8 mode, u8 numF
 }
 
 void osScAddClient(void *arg0, void *arg1, s32 arg2) {
-    s32 temp_v0;
+    s32 mask;
 
-    temp_v0 = osSetIntMask(1);
+    mask = osSetIntMask(1);
     *(s32 *)((u8 *)arg1 + 0x4) = arg2;
     *(s32 *)((u8 *)arg1 + 0x0) = (void *) *(s32 *)((u8 *)arg0 + 0x260);
     *(s32 *)((u8 *)arg0 + 0x260) = arg1;
-    osSetIntMask(temp_v0);
+    osSetIntMask(mask);
 }
 
 void osScRemoveClient(OSSchedC_ *sc, OSScClient_ *c) {

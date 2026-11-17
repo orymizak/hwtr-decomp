@@ -143,11 +143,11 @@ void func_800D5910(ClientS_ *c, void *mq, u16 flags) {
 }
 
 void func_800D59A0(void *arg0, s16 arg1) {
-    s32 temp_a0;
+    s32 mask;
 
-    temp_a0 = osSetIntMask(1);
+    mask = osSetIntMask(1);
     *(s16 *)((u8 *)arg0 + 0x8) = arg1;
-    osSetIntMask(temp_a0);
+    osSetIntMask(mask);
 }
 
 void func_800D59E0(ClientS_ *c) {

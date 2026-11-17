@@ -1,15 +1,12 @@
 #include "common.h"
 #include "include_asm.h"
+#include "os_vi.h"
 
-s32 __osDisableInt();
-s32 __osRestoreInt(s32);
-extern void *__osViNext;
+void osViSwapBuffer(void *frameBufPtr) {
+    u32 saveMask;
 
-void osViSwapBuffer(s32 arg0) {
-    s32 temp_v0;
-
-    temp_v0 = __osDisableInt();
-    *(s32 *)((u8 *)__osViNext + 0x4) = arg0;
-    *(u16 *)((u8 *)__osViNext + 0x0) = (u16) (*(u16 *)((u8 *)__osViNext + 0x0) | 0x10);
-    __osRestoreInt(temp_v0);
+    saveMask = __osDisableInt();
+    __osViNext->framep = frameBufPtr;
+    __osViNext->state |= VI_STATE_BUFFER_UPDATED;
+    __osRestoreInt(saveMask);
 }
