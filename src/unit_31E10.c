@@ -62,22 +62,21 @@ INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_80091B20);
 
 INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_80091BA0);
 
-void func_80091DC4(s32 arg0) {
-  s32 temp_v0;
-  u32 temp_v1;
-  temp_v0 = D_80141698();
-  temp_v1 = temp_v0 - (*((s32 *) (((u8 *) arg0) + 0x4A8)));
-  if (!(temp_v1 >= 0x65U)) {
-    *((s32 *) (((u8 *) arg0) + 0x4AC)) = (u32) ((*((s32 *) (((u8 *) arg0) + 0x4AC))) + temp_v1);
-  }
-  else
-  {
-    *((s32 *) (((u8 *) arg0) + 0x4AC)) = 0U;
-  }
-  *((s32 *) (((u8 *) arg0) + 0x4A8)) = temp_v0;
-  if (((*((u8 *) (((u8 *) arg0) + 0x4B4))) != 0) && (((u32) (*((s32 *) (((u8 *) arg0) + 0x4AC)))) >= 0x1F5U)) {
-    *((u8 *) (((u8 *) arg0) + 0x4B4)) = 0U;
-  }
+void func_80091DC4(u8 *car) {
+    s32 now;
+    u32 dt;
+
+    now = D_80141698();
+    dt = now - *(s32 *)(car + 0x4A8);
+    if (dt <= 100) {
+        *(u32 *)(car + 0x4AC) += dt;
+    } else {
+        *(u32 *)(car + 0x4AC) = 0;
+    }
+    *(s32 *)(car + 0x4A8) = now;
+    if (car[0x4B4] != 0 && *(u32 *)(car + 0x4AC) > 500) {
+        car[0x4B4] = 0;
+    }
 }
 
 typedef struct { f32 x; f32 y; f32 z; } V3_E30;
@@ -505,16 +504,15 @@ s32 func_8009610C(s32 arg0) {
     return *(s32 *)(&D_80118634 + ((arg0 & 0xFF) * 0x77C)) & 1;
 }
 
-void func_80096138(s32 arg0, s32 arg1) {
-    void *temp_s0;
+void func_80096138(u8 i, s32 state) {
+    u8 *car = &D_80118630 + i * 0x77C;
 
-    temp_s0 = ((arg0 & 0xFF) * 0x77C) + &D_80118630;
-    if ((*(s32 *)((u8 *)(temp_s0) + 0x6D8)) == 2) {
-        func_8009951C(temp_s0);
+    if (*(s32 *)(car + 0x6D8) == 2) {
+        func_8009951C(car);
     }
-    (*(s32 *)((u8 *)(temp_s0) + 0x6D8)) = arg1;
-    if (arg1 == 2) {
-        func_80099434(temp_s0);
+    *(s32 *)(car + 0x6D8) = state;
+    if (state == 2) {
+        func_80099434(car);
     }
 }
 

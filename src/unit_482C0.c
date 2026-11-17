@@ -178,25 +178,19 @@ s32 func_800A7C2C(void) {
     return 1;
 }
 
-s32 func_800A7C34(u8 arg0) {
-  void *temp_v0;
-  temp_v0 = func_800960D8(arg0 & 0xFF);
-  if ((*((u8 *) (((u8 *) temp_v0) + 0x47B))) == 0) {
-    if (temp_v0 || arg0) {
-      return 0;
+s32 func_800A7C34(u8 i) {
+    u8 *p = func_800960D8(i);
+
+    if (p[0x47B] != 0) {
+        *(s32 *)(p + 0x14) = 0;
+        *(s32 *)(p + 0x18) = 0;
+        p[0x24] = 1;
+        p[0x25] = 0;
+        p[0x27] = 0;
+        *(f32 *)(p + 0x10) = 1.0f;
+        return 1;
     }
-    else
-    {
-      return 0;
-    }
-  }
-  *((s32 *) (((u8 *) temp_v0) + 0x14)) = 0;
-  *((s32 *) (((u8 *) temp_v0) + 0x18)) = 0;
-  *((u8 *) (((u8 *) temp_v0) + 0x24)) = 1;
-  *((u8 *) (((u8 *) temp_v0) + 0x25)) = 0;
-  *((u8 *) (((u8 *) temp_v0) + 0x27)) = 0;
-  *((f32 *) (((u8 *) temp_v0) + 0x10)) = 1.0f;
-  return 1;
+    return 0;
 }
 
 INCLUDE_ASM("asm/nonmatchings/unit_482C0", func_800A7C8C);

@@ -8,7 +8,7 @@ typedef struct { E32_ e[7]; u8 pad[16]; } E240_;
 typedef struct { s32 t; u8 a; u8 b; u8 c; u8 d; s32 pad; } E0Cb_;
 typedef struct { u8 p0[8]; s16 h8; u8 pA[2]; u8 bC; u8 bD; u8 pE[2]; } El10_;
 typedef struct { u8 on; u8 p1[0x27]; } Blk28_;
-typedef struct { s32 t; u8 p4[0xC]; El10_ el[6]; Blk28_ blk[3]; u8 pE8; u8 flag; u8 pEA[6]; } HudF0_;
+typedef struct { s32 t; s32 w4; s32 w8; u8 pC[4]; El10_ el[6]; Blk28_ blk[3]; u8 pE8; u8 flag; u8 bEA; u8 bEB; u8 pEC[4]; } HudF0_;
 extern HudF0_ D_800F3934[];
 void func_800AAA20(Blk28_ *, El10_ *, s32, s32);
 void func_800AABE4(Blk28_ *, El10_ *, s32, s32);
@@ -219,12 +219,9 @@ void func_800AB8AC(u8 p) {
     }
 }
 
-void func_800ABC80(s32 arg0, s32 arg1, s8 arg2) {
-    s32 temp_a0;
-
-    temp_a0 = arg0 & 0xFF;
-    *(s32 *)(&D_800F3B10 + (temp_a0 * 4)) = arg1;
-    *(u8 *)(&D_800F3B40 + temp_a0) = arg2;
+void func_800ABC80(u8 i, s32 v, s8 id) {
+    ((s32 *)&D_800F3B10)[i] = v;
+    (&D_800F3B40)[i] = id;
 }
 
 INCLUDE_ASM("asm/nonmatchings/unit_49CF0", func_800ABCA4);
@@ -237,16 +234,11 @@ void func_800ABEBC(s8 arg0) {
     D_800F3B45 = arg0;
 }
 
-void func_800ABEC8(s32 arg0, s32 arg1, s8 arg2) {
-    s32 temp_a0;
-    s32 temp_s0;
-
-    temp_a0 = arg0 & 0xFF;
-    temp_s0 = temp_a0 * 0xF0;
-    *(u8 *)(&D_800F3A1F + temp_s0) = arg2;
-    *(u8 *)(&D_800F3A1E + temp_s0) = 1;
-    *(s32 *)(&D_800F3938 + temp_s0) = arg1;
-    *(s32 *)(&D_800F393C + temp_s0) = func_800A76D8(temp_a0);
+void func_800ABEC8(u8 i, s32 v, s8 b) {
+    D_800F3934[i].bEB = b;
+    D_800F3934[i].bEA = 1;
+    D_800F3934[i].w4 = v;
+    D_800F3934[i].w8 = func_800A76D8(i);
 }
 
 INCLUDE_ASM("asm/nonmatchings/unit_49CF0", func_800ABF2C);

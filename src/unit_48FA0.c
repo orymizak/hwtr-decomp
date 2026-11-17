@@ -28,22 +28,17 @@ INCLUDE_ASM("asm/nonmatchings/unit_48FA0", func_800A8BA4);
 
 INCLUDE_ASM("asm/nonmatchings/unit_48FA0", func_800A8C94);
 
-void func_800A8E14(void *arg0) {
-    f32 temp_ft0;
-    f32 temp_ft1;
-    f32 temp_fv0;
-    f32 temp_fv1;
-    f32 temp_fv1_2;
+void func_800A8E14(Quat_ *q) {
+    f32 w = q->w;
+    f32 x = q->x;
+    f32 y = q->y;
+    f32 z = q->z;
+    f32 inv = 1.0f / sqrtf(w * w + x * x + (y * y + z * z));
 
-    temp_ft1 = *(f32 *)((u8 *)arg0 + 0xC);
-    temp_ft0 = *(f32 *)((u8 *)arg0 + 0x0);
-    temp_fv1 = *(f32 *)((u8 *)arg0 + 0x4);
-    temp_fv0 = *(f32 *)((u8 *)arg0 + 0x8);
-    temp_fv1_2 = 1.0f / sqrtf((temp_ft1 * temp_ft1) + (temp_ft0 * temp_ft0) + ((temp_fv1 * temp_fv1) + (temp_fv0 * temp_fv0)));
-    *(f32 *)((u8 *)arg0 + 0xC) = (f32) (*(f32 *)((u8 *)arg0 + 0xC) * temp_fv1_2);
-    *(f32 *)((u8 *)arg0 + 0x0) = (f32) (*(f32 *)((u8 *)arg0 + 0x0) * temp_fv1_2);
-    *(f32 *)((u8 *)arg0 + 0x4) = (f32) (*(f32 *)((u8 *)arg0 + 0x4) * temp_fv1_2);
-    *(f32 *)((u8 *)arg0 + 0x8) = (f32) (*(f32 *)((u8 *)arg0 + 0x8) * temp_fv1_2);
+    q->w *= inv;
+    q->x *= inv;
+    q->y *= inv;
+    q->z *= inv;
 }
 
 Quat_ func_800A8EBC(f32 t, Quat_ a, Quat_ b) {
