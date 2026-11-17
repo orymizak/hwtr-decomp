@@ -182,7 +182,7 @@ s32 func_8008BAA0(u8 *cfg) {
     if (!D_801417A8(cfg)) {
         return 0;
     }
-    ((void (*)(u8 *))func_8008D3B8)(cfg);
+    func_8008D3B8(cfg);
     func_8008D3D4();
     if (!func_800A90F0(cfg)) {
         return 0;

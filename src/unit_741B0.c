@@ -59,7 +59,7 @@ AcmdA_ *func_800D35B0(void *filter, s16 *outp, s32 outCount, AcmdA_ *p) {
     nbytes = nframes * 9;
 
     if (looped) {
-        ptr = ((AcmdA_ * (*)(AcmdA_ *ptr, LoadA_ *f, s32 tsam, s32 nbytes, s16 outp, s16 inp, u32 flags))func_800D3B84)(ptr, f, tsam, nbytes, *outp, inp, f->first);
+        ptr = func_800D3B84(ptr, f, tsam, nbytes, *outp, inp, f->first);
 
         if (f->lastsam)
             *outp += (f->lastsam << 1);
@@ -82,7 +82,7 @@ AcmdA_ *func_800D35B0(void *filter, s16 *outp, s32 outCount, AcmdA_ *p) {
             if (tsam < 0) tsam = 0;
             nframes = (tsam + 16 - 1) >> 4;
             nbytes = nframes * 9;
-            ptr = ((AcmdA_ * (*)(AcmdA_ *ptr, LoadA_ *f, s32 tsam, s32 nbytes, s16 outp, s16 inp, u32 flags))func_800D3B84)(ptr, f, tsam, nbytes, op, inp, f->first | 2);
+            ptr = func_800D3B84(ptr, f, tsam, nbytes, op, inp, f->first | 2);
             {
                 AcmdA_ *_a = ptr++;
                 _a->w0 = 0x0A000000 | ((op + (f->lastsam << 1)) & 0xFFFFFF);
@@ -108,7 +108,7 @@ AcmdA_ *func_800D35B0(void *filter, s16 *outp, s32 outCount, AcmdA_ *p) {
 
     if ((nOver - (nOver & 0xf)) < outCount) {
         decoded = 1;
-        ptr = ((AcmdA_ * (*)(AcmdA_ *ptr, LoadA_ *f, s32 tsam, s32 nbytes, s16 outp, s16 inp, u32 flags))func_800D3B84)(ptr, f, nSam - nOver, nbytes, *outp, inp, f->first);
+        ptr = func_800D3B84(ptr, f, nSam - nOver, nbytes, *outp, inp, f->first);
 
         if (f->lastsam)
             *outp += (f->lastsam << 1);

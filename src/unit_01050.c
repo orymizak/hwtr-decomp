@@ -720,7 +720,7 @@ s32 func_80062950(void) {
     }
     while (n != NULL) {
         if (n->h != 0) {
-            ((void (*)(s32, s32))func_800CE374)(n->h, 1);
+            func_800CE374(n->h, 1);
             n->h = 0;
         }
         n = n->next;

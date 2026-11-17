@@ -664,11 +664,11 @@ void func_8009B56C(void) {
             m = MAX_56C(MAX_56C(ABS_56C(d[0]), ABS_56C(d[1])), ABS_56C(d[2]));
             r = pa->rad + pb->rad;
             if (m < r + r * 0.5f) {
-                res = ((u8 (*)(B_56C *, B_56C *))func_8009BAF0)(pa, pb);
+                res = func_8009BAF0(pa, pb);
                 if (res != 0) {
                     D_8011B7A0[a->id][b->id] = res;
                 } else {
-                    ((void (*)(O_56C *, O_56C *))func_8009C758)(a, b);
+                    func_8009C758(a, b);
                 }
             }
         }
@@ -696,13 +696,13 @@ void func_8009B56C(void) {
                 m = MAX_56C(MAX_56C(ABS_56C(d[0]), ABS_56C(d[1])), ABS_56C(d[2]));
                 r = pa->rad + pb->rad;
                 if (m < r + r * 0.5f) {
-                    res = ((u8 (*)(B_56C *, B_56C *))func_8009BAF0)(pa, pb);
+                    res = func_8009BAF0(pa, pb);
                     if (res != 0) {
                         D_8011B7A0[a->id][b->id] = res;
                     } else if (b->type == 5) {
                         func_8008AA9C(a->w64, b->w68);
                     } else {
-                        ((void (*)(O_56C *, O_56C *))func_8009C758)(a, b);
+                        func_8009C758(a, b);
                     }
                 }
             }
@@ -963,7 +963,7 @@ void func_8009D574(void) {
     for (it = *(LnD57_ **)&D_8011B344; it != NULL; it = it->next) {
         o = it->obj;
         if (o->flags & 0x10) {
-            ((void (*)(u8 *o, u16 idx, s32 arg2))func_800A3978)((u8 *)o, *o->p54, 0);
+            func_800A3978((u8 *)o, *o->p54, 0);
             o->flags &= ~0x10;
         }
     }

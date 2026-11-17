@@ -94,7 +94,7 @@ s32 func_800D778C(s16 *arg0) {
 }
 
 void func_800D7818(void *arg0) {
-    ((s32 (*)(s32,s32))func_800D76B4)((*(s32 *)((u8 *)(arg0) + 0xC)), 0);
+    func_800D76B4((*(s32 *)((u8 *)(arg0) + 0xC)), 0);
 }
 
 s32 func_800D7838(s16 *p) {

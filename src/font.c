@@ -70,7 +70,7 @@ s32 Font_Load(u8 id, char *name) {
         n += f->glyphIndex[i] != 0xFF;
     }
     for (i = 0; i < n; i++) {
-        ((void (*)(GlyphFL_ *glyph))func_8007F570)(g);
+        func_8007F570(g);
         f->glyphs[i] = g;
         if (g->format == 0) {
             g = (GlyphFL_ *)(g->data + g->width * g->height * 2);

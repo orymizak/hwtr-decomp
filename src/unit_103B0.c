@@ -203,7 +203,7 @@ s32 func_8006FBF0(void) {
     osWritebackDCacheAll();
     osSendMesg(&D_8014D33C, D_8010A220, 1);
     D_8010A220 = D_8010A220->next;
-    ((void (*)(void))func_800D6010)();
+    func_800D6010();
     return 1;
 }
 
@@ -251,7 +251,7 @@ void func_8006FF90(s32 arg0, s32 arg1, s32 arg2, s32 arg3) {
         D_800F1DE8[arg0].r2 = arg1;
         D_800F1DE8[arg0].g2 = arg2;
         D_800F1DE8[arg0].b2 = arg3;
-        ((void (*)(s32 arg0))func_80070860)(arg0);
+        func_80070860(arg0);
     }
     if (D_800F1DE8[arg0].r != (u8) arg1) {
         D_800F1DE8[arg0].r = arg1;

@@ -875,7 +875,7 @@ s32 func_80098BF4(void) {
         }
     }
     for (i = 0; i < 2; i++) {
-        e = ((void * (*)(s32 arg0))func_800960D8)(i);
+        e = func_800960D8(i);
         if (e != NULL && (((s32 *) e)[1] & 1)) {
             if (func_8008D3AC() == 1) {
                 func_80095FE4(i, &a, &b);

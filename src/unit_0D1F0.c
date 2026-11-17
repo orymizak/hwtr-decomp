@@ -147,7 +147,7 @@ void func_8006DAC4(s32 arg0) {
     var_s1 = 0;
     var_s0 = &(*(u8 *)&D_801455C0);
     do {
-        ((s32 (*)(void *, s32))func_8006CF10)(var_s0, arg0);
+        func_8006CF10(var_s0, arg0);
         var_s1 += 1;
         var_s0 += 0x550;
     } while (var_s1 < 8U);
@@ -160,7 +160,7 @@ void func_8006DB1C(s32 arg0, s32 arg1) {
     var_s1 = 0;
     var_s0 = &(*(u8 *)&D_801455C0);
     do {
-        ((s32 (*)(void *, s32, s32))func_8006D15C)(var_s0, arg0, arg1 & 0xFF);
+        func_8006D15C(var_s0, arg0, arg1 & 0xFF);
         var_s1 += 1;
         var_s0 += 0x550;
     } while (var_s1 < 8U);
@@ -194,7 +194,7 @@ void func_8006DC28(void) {
     for (i = 0; i < 8; i++) {
         p = &((S_D2_ *)&D_801455C0)[i];
         if (p->f4 != -1) {
-            ((void (*)(s32))func_800757E8)(p->f4);
+            func_800757E8(p->f4);
         }
         p->f0 = 0;
         p->f4 = -1;

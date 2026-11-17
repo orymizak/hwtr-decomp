@@ -261,7 +261,7 @@ void func_80073740(ItemListB_ *l) {
         if (l->items[i].p40 != 0) {
             Memory_Free(l->items[i].p40);
             l->items[i].p40 = 0;
-            ((void (*)(Item54b_ *))func_800759F0)(&l->items[i]);
+            func_800759F0(&l->items[i]);
         }
     }
 }
@@ -315,7 +315,7 @@ void func_800740DC(List74_ *l, u8 v) {
             o = l->items[i].p3C;
             o->b8 = v;
             if (o->w30 != 0) {
-                ((s32 (*)(void *, s32 *, s32, s32, s32))func_80079140)(o, &D_3000000, o->w30, l->w34, l->items->flags & 0x4000);
+                func_80079140(o, &D_3000000, o->w30, l->w34, l->items->flags & 0x4000);
             }
             if (o->p14 != NULL && o->p14[4] != 0) {
                 func_8007A004(o->p14, l->w34, o->b8);

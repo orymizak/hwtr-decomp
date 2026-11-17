@@ -178,7 +178,7 @@ AcmdM_ *func_800D2BE0(void *filter, s32 sampleOffset, AcmdM_ *p) {
             if (param->unity) {
                 e->upitch = 1;
             }
-            ((void (*)(void *e, s32 id, void *param))func_800D39F8)(e, 5, param->wave);
+            func_800D39F8(e, 5, param->wave);
             e->motion = 1;
             e->first = 1;
             e->delta = 0;
@@ -201,7 +201,7 @@ AcmdM_ *func_800D2BE0(void *filter, s32 sampleOffset, AcmdM_ *p) {
         case 16:
         case 12:
         case 11:
-            ptr = ((AcmdM_ * (*)(void *filter, s16 *inp, s16 *outp, s32 outCount, AcmdM_ *p))func_800D31FC)(e, &inp, &loutp, samples, ptr);
+            ptr = func_800D31FC(e, &inp, &loutp, samples, ptr);
             if (e->delta >= e->segEnd) {
                 e->ltgt = (e->volume * D_800FB060[e->pan]) >> 15;
                 e->rtgt = (e->volume * D_800FB060[128 - e->pan - 1]) >> 15;
@@ -209,8 +209,8 @@ AcmdM_ *func_800D2BE0(void *filter, s32 sampleOffset, AcmdM_ *p) {
                 e->cvolL = e->ltgt;
                 e->cvolR = e->rtgt;
             } else {
-                e->cvolL = ((s32 (*)(s32 arg0, s32 arg1, s16 arg2, s32 arg3))func_800D355C)(e->cvolL, e->delta, e->lratm, e->lratl);
-                e->cvolR = ((s32 (*)(s32 arg0, s32 arg1, s16 arg2, s32 arg3))func_800D355C)(e->cvolR, e->delta, e->rratm, e->rratl);
+                e->cvolL = func_800D355C(e->cvolL, e->delta, e->lratm, e->lratl);
+                e->cvolR = func_800D355C(e->cvolR, e->delta, e->rratm, e->rratl);
             }
             if (e->cvolL == 0) e->cvolL = 1;
             if (e->cvolR == 0) e->cvolR = 1;
@@ -235,13 +235,13 @@ AcmdM_ *func_800D2BE0(void *filter, s32 sampleOffset, AcmdM_ *p) {
             if (sp->unity) {
                 e->upitch = 1;
             }
-            ((void (*)(void *e, s32 id, void *param))func_800D39F8)(e, 5, sp->wave);
+            func_800D39F8(e, 5, sp->wave);
             e->motion = 1;
         } break;
 
         case 15:
-            ptr = ((AcmdM_ * (*)(void *filter, s16 *inp, s16 *outp, s32 outCount, AcmdM_ *p))func_800D31FC)(e, &inp, &loutp, samples, ptr);
-            ((s32 (*)(void *e, s32 id, void *param))func_800D3158)(e, 4, 0);
+            ptr = func_800D31FC(e, &inp, &loutp, samples, ptr);
+            func_800D3158(e, 4, 0);
             break;
 
         case 0: {
@@ -251,23 +251,23 @@ AcmdM_ *func_800D2BE0(void *filter, s32 sampleOffset, AcmdM_ *p) {
         } break;
 
         case 7:
-            ptr = ((AcmdM_ * (*)(void *filter, s16 *inp, s16 *outp, s32 outCount, AcmdM_ *p))func_800D31FC)(e, &inp, &loutp, samples, ptr);
+            ptr = func_800D31FC(e, &inp, &loutp, samples, ptr);
             e->ratio = e->ctrlList->data.f;
             break;
 
         case 8:
-            ptr = ((AcmdM_ * (*)(void *filter, s16 *inp, s16 *outp, s32 outCount, AcmdM_ *p))func_800D31FC)(e, &inp, &loutp, samples, ptr);
+            ptr = func_800D31FC(e, &inp, &loutp, samples, ptr);
             e->upitch = 1;
             break;
 
         case 5:
-            ptr = ((AcmdM_ * (*)(void *filter, s16 *inp, s16 *outp, s32 outCount, AcmdM_ *p))func_800D31FC)(e, &inp, &loutp, samples, ptr);
-            ((void (*)(void *e, s32 id, void *param))func_800D39F8)(e, 5, e->ctrlList->data.p);
+            ptr = func_800D31FC(e, &inp, &loutp, samples, ptr);
+            func_800D39F8(e, 5, e->ctrlList->data.p);
             break;
 
         default:
-            ptr = ((AcmdM_ * (*)(void *filter, s16 *inp, s16 *outp, s32 outCount, AcmdM_ *p))func_800D31FC)(e, &inp, &loutp, samples, ptr);
-            ((s32 (*)(void *e, s32 id, void *param))func_800D3158)(e, e->ctrlList->type, e->ctrlList->data.p);
+            ptr = func_800D31FC(e, &inp, &loutp, samples, ptr);
+            func_800D3158(e, e->ctrlList->type, e->ctrlList->data.p);
             break;
         }
         loutp += (samples << 1);
@@ -280,7 +280,7 @@ AcmdM_ *func_800D2BE0(void *filter, s32 sampleOffset, AcmdM_ *p) {
         func_800D52E4(thisParam);
     }
 
-    ptr = ((AcmdM_ * (*)(void *filter, s16 *inp, s16 *outp, s32 outCount, AcmdM_ *p))func_800D31FC)(e, &inp, &loutp, outCount, ptr);
+    ptr = func_800D31FC(e, &inp, &loutp, outCount, ptr);
     if (e->delta > e->segEnd)
         e->delta = e->segEnd;
     return ptr;

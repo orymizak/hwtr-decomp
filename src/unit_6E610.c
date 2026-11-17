@@ -1,5 +1,9 @@
 #include "common.h"
 #include "include_asm.h"
+/* Sequence player handle (fields still unidentified). */
+typedef struct { u8 p0[4]; s32 unk4; u8 p8[8]; s32 unk10; } SeqPl6_;
+/* Sequence channel as seen by the command handlers (fields still unidentified). */
+typedef struct { u8 p0[0x8]; s32 unk8; u8 pC[0x14]; f32 unk20; f32 unk24; u8 p28[0xC]; s32 unk34; s32 unk38; u8 p3C[0x4]; s32 unk40; s32 unk44; u8 p48[0x20]; f32 unk68; f32 unk6C; f32 unk70; s32 unk74; s32 unk78; u8 p7C[0x8]; s32 unk84; u8 p88[0xC]; s32 unk94; u8 p98[0x12]; u16 unkAA; s16 unkAC; u8 pAE[0x4]; s16 unkB2; s16 unkB4; u8 unkB6; u8 unkB7; u8 unkB8; u8 unkB9; u8 unkBA; u8 pBB[0x1]; u8 unkBC; u8 unkBD; u8 pBE[0xB]; u8 unkC9; u8 unkCA; u8 pCB[0x3]; u8 unkCE; u8 unkCF; u8 unkD0; s8 unkD1; u8 unkD2; u8 unkD3; u8 unkD4; u8 unkD5; u8 unkD6; u8 unkD7; u8 unkD8; u8 unkD9; u8 unkDA; u8 pDB[0x1]; f32 unkDC; } SeqChan6_;
 typedef struct { u32 unk0; s32 unk4; u8 p8[8]; s32 unk10; u8 p14[8]; s32 unk1C; u8 p20[0x58]; s32 unk78; u8 p7C[0xC0]; } VoiceW_;
 typedef struct { u32 unk0; u8 p4[0xC]; s32 unk10; u8 p14[8]; s32 unk1C; u8 p20[0x24]; s32 unk44; u8 p48[0xF4]; } VoiceX_;
 typedef struct { s32 unk0; u8 p4[0x40]; s32 unk44; u8 p48[0x34]; s32 unk7C; u8 p80[0xBC]; } VoiceY_;
@@ -66,7 +70,7 @@ typedef struct { u8 p0[8]; s32 unk8; u8 pC[0x80]; } SynPV_;
 typedef struct { u8 p0[0x14]; s32 unk14; s32 unk18; SynPV_ **unk1C; s32 unk20; s32 unk24[8]; } SynMB_;
 typedef struct { u8 p0[4]; void *unk4; } SynFX_;
 typedef struct { s32 unk0; s32 unk4; s32 unk8; s32 unkC; s32 unk10; s32 unk14; s32 unk18; s32 unk1C; s32 unk20; s32 unk24; void *unk28; SynQ_ *unk2C; SynFX_ *unk30; SynMB_ *unk34; s32 unk38; u8 p3C[4]; s32 unk40; s32 unk44; s32 unk48; s32 unk4C; } SynD_;
-typedef struct { u8 p0[4]; s32 unk4; s32 unk8; u8 pC[4]; s32 unk10; void *unk14; s32 unk18; u8 unk1C; } SynC_;
+typedef struct { u8 p0[4]; s32 unk4; s32 unk8; u8 pC[4]; s32 unk10; void *unk14; s32 unk18; u8 unk1C; u8 p1D[3]; void *unk20; } SynC_;
 void func_800D12F8(SynC_ *c);
 extern s32 D_8014C6D0;
 extern s32 D_80127960;
@@ -133,7 +137,7 @@ void func_800CDB5C(AudCfgB_ *c) {
     func_800D1F40(c->unk8);
     D_80127938 = func_800D23FC((D_80127934 - 4) * 0x1C);
     D_8012793C = (void *)func_800D23FC(D_80127934 * 0x13C);
-    D_80127940 = (VoiceG_ *)((u8 *)D_8012793C + 0x4F0);
+    D_80127940 = (VoiceG_ *)&((VoiceIB_ *)D_8012793C)[4];
     func_800CEA50(c->unk24);
     D_80127958 = 0;
     D_8012795C = 0;
@@ -179,36 +183,35 @@ void func_800CDDE4(s32 arg0, s16 arg1) {
 }
 
 s32 func_800CDE10(void) {
-    s32 temp_v0;
+    s32 h;
 
-    temp_v0 = func_800D05EC();
-    func_800CE7E8(temp_v0);
-    return temp_v0;
+    h = func_800D05EC();
+    func_800CE7E8(h);
+    return h;
 }
 
 INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CDE40);
 
-s32 func_800CE090(s32 arg0) {
-    s32 temp_v0;
-    s32 var_a0;
+s32 func_800CE090(s32 id) {
+    s32 bank;
+    s32 h;
 
-    var_a0 = D_8012796C;
-    if (var_a0 == 0) {
-        var_a0 = D_80127968;
-        if (var_a0 == 0) {
+    bank = D_8012796C;
+    if (bank == 0) {
+        bank = D_80127968;
+        if (bank == 0) {
             D_80127958 = 0;
             return 0;
         }
-        goto block_4;
+    } else {
+        D_8012796C = 0;
     }
-    D_8012796C = 0;
-block_4:
     if (D_80127958 == 0) {
-        D_80127958 = (void *)(*(s32 *)((u8 *)(var_a0) + 0x10));
+        D_80127958 = (void *)((SeqPl6_ *)bank)->unk10;
     }
-    temp_v0 = func_800D0444((BankG_ *)var_a0, arg0, 0x80, 0x80, -1);
+    h = func_800D0444((BankG_ *)bank, id, 0x80, 0x80, -1);
     D_80127958 = 0;
-    return temp_v0;
+    return h;
 }
 
 INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CE110);
@@ -428,16 +431,16 @@ void func_800CE6D4(s32 arg0) {
     }
 }
 
-void *func_800CE710(void *arg0) {
-    if ((arg0 != NULL) && (*(s32 *)((u8 *)arg0 + 0x10) < 0)) {
-        D_80127958 = arg0;
+void *func_800CE710(SeqPl6_ *pl) {
+    if (pl != NULL && pl->unk10 < 0) {
+        D_80127958 = pl;
     }
     return D_80127958;
 }
 
-void func_800CE738(s32 arg0) {
-    if ((arg0 != 0) && ((*(s32 *)((u8 *)(arg0) + 0x10)) < 0)) {
-        D_8012795C = arg0;
+void func_800CE738(SeqPl6_ *pl) {
+    if (pl != NULL && pl->unk10 < 0) {
+        D_8012795C = (s32)pl;
     }
 }
 
@@ -524,8 +527,8 @@ void func_800CE89C(u8 *base) {
 }
 
 
-s32 func_800CE920(void *arg0) {
-    return *(s32 *)((u8 *)arg0 + 0x4);
+s32 func_800CE920(SeqPl6_ *pl) {
+    return pl->unk4;
 }
 
 void func_800CE928(s32 arg0) {
@@ -540,12 +543,12 @@ s32 func_800CE940(void) {
     return D_80127968;
 }
 
-void func_800CE94C(void *arg0, s32 arg1) {
-    *(s32 *)((u8 *)arg0 + 0x10) = arg1;
+void func_800CE94C(SeqPl6_ *pl, s32 v) {
+    pl->unk10 = v;
 }
 
-s32 func_800CE954(void *arg0) {
-    return *(s32 *)((u8 *)arg0 + 0x10);
+s32 func_800CE954(SeqPl6_ *pl) {
+    return pl->unk10;
 }
 
 void func_800CE95C(s32 arg0) {
@@ -578,34 +581,28 @@ void func_800CEA44(s32 arg0) {
     D_80127970 = arg0;
 }
 
-void func_800CEA50(s32 arg0) {
-    s32 var_s0;
-
-    var_s0 = arg0;
-    if (var_s0 < 0x40) {
-        var_s0 = 0x40;
-    } else if (var_s0 >= 0x401) {
-        var_s0 = 0x400;
+void func_800CEA50(s32 n) {
+    if (n < 0x40) {
+        n = 0x40;
+    } else if (n > 0x400) {
+        n = 0x400;
     }
-    D_80127980 = func_800D23FC(var_s0 * 8);
-    D_8012797C = var_s0;
+    D_80127980 = func_800D23FC(n * 8);
+    D_8012797C = n;
     D_80127978 = 0;
     D_80127974 = 0;
 }
 
-void func_800CEAB4(void *arg0) {
-    u8 temp_v1;
-
-    temp_v1 = (*(u8 *)((u8 *)(arg0) + 0x0));
-    switch (temp_v1) {
+void func_800CEAB4(AudMsg_ *msg) {
+    switch (msg->type) {
     case 0:
-        func_800D0858((u32) (*(s32 *)((u8 *)(arg0) + 0x4)), -2U, 1U);
+        func_800D0858(msg->arg, -2, 1);
         return;
     case 1:
-        func_800D0858((u32) (*(s32 *)((u8 *)(arg0) + 0x4)), -2U, 0U);
+        func_800D0858(msg->arg, -2, 0);
         return;
     case 2:
-        func_800D1A80((*(s32 *)((u8 *)(arg0) + 0x4)));
+        func_800D1A80(msg->arg);
         return;
     }
 }
@@ -627,8 +624,8 @@ void func_800CEEBC(void *arg0, s32 arg1);
 void func_800CFB84(void *arg0);
 void func_800CF754(SeqEnvR_ *s);
 void func_800CF94C(SeqO_ *s);
-f32 func_800CFA5C(s32 arg0);
-f32 func_800CFA04(s32 arg0);
+f32 func_800CFA5C(SeqChan6_ *c);
+f32 func_800CFA04(SeqChan6_ *c);
 void func_800CFAC0(SeqP_ *s);
 void func_800CF5D8(void *arg0, s32 arg1, f32 arg2);
 void func_800CF484(void *arg0, s32 arg1);
@@ -694,10 +691,10 @@ s32 func_800CEBCC(void) {
             }
             f = v->unk30;
             if (v->unkD5 != 0) {
-                f += func_800CFA5C((s32)v);
+                f += func_800CFA5C((SeqChan6_ *)v);
             }
             if (v->unkCE != 0) {
-                f += func_800CFA04((s32)v);
+                f += func_800CFA04((SeqChan6_ *)v);
             }
             if (v->unk8 == 0) {
                 func_800CF5D8(v, i, f);
@@ -712,13 +709,13 @@ s32 func_800CEBCC(void) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CEEBC);
 
-void func_800CF408(void *arg0, s32 arg1) {
-    if (*(u8 *)((u8 *)arg0 + 0xC9) != 0) {
-        func_800D4E60(D_80127938 + (arg1 * 0x1C));
+void func_800CF408(SeqChan6_ *c, s32 i) {
+    if (c->unkC9 != 0) {
+        func_800D4E60(D_80127938 + i * 0x1C);
     }
-    *(u8 *)((u8 *)arg0 + 0xC9) = 1U;
-    func_800D4DD0(D_80127938 + (arg1 * 0x1C), *(s32 *)((u8 *)arg0 + 0x8));
-    *(s32 *)((u8 *)arg0 + 0x8) = 0;
+    c->unkC9 = 1;
+    func_800D4DD0(D_80127938 + i * 0x1C, c->unk8);
+    c->unk8 = 0;
 }
 
 INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CF484);
@@ -783,10 +780,10 @@ void func_800CF754(SeqEnvR_ *s) {
     }
 }
 
-void func_800CF930(void *arg0) {
-    *(u8 *)((u8 *)arg0 + 0xD9) = 0;
-    *(s32 *)((u8 *)arg0 + 0x94) = (s32) *(s32 *)((u8 *)arg0 + 0x40);
-    *(u8 *)((u8 *)arg0 + 0xDA) = (s8) (*(u8 *)((u8 *)arg0 + 0xBD) & 0x40);
+void func_800CF930(SeqChan6_ *c) {
+    c->unkD9 = 0;
+    c->unk94 = c->unk40;
+    c->unkDA = c->unkBD & 0x40;
 }
 
 void func_800CF94C(SeqO_ *s) {
@@ -818,33 +815,27 @@ void func_800CF94C(SeqO_ *s) {
 }
 
 
-f32 func_800CFA04(s32 arg0) {
-    u8 temp_v0;
-
-    temp_v0 = (*(u8 *)((u8 *)(arg0) + 0xD0)) - 1;
-    (*(u8 *)((u8 *)(arg0) + 0xD0)) = temp_v0;
-    if (!(temp_v0 & 0xFF)) {
-        if ((*(s8 *)((u8 *)(arg0) + 0xD1)) == 0) {
-            (*(s8 *)((u8 *)(arg0) + 0xD1)) = (s8) (*(u8 *)((u8 *)(arg0) + 0xD8));
-            (*(u8 *)((u8 *)(arg0) + 0xD0)) = (u8) (*(u8 *)((u8 *)(arg0) + 0xCE));
+f32 func_800CFA04(SeqChan6_ *c) {
+    if (--c->unkD0 == 0) {
+        if (c->unkD1 == 0) {
+            c->unkD1 = c->unkD8;
+            c->unkD0 = c->unkCE;
         } else {
-            (*(s8 *)((u8 *)(arg0) + 0xD1)) = 0;
-            (*(u8 *)((u8 *)(arg0) + 0xD0)) = (u8) (*(u8 *)((u8 *)(arg0) + 0xCF));
+            c->unkD1 = 0;
+            c->unkD0 = c->unkCF;
         }
     }
-    return (f32) (*(s8 *)((u8 *)(arg0) + 0xD1));
+    return c->unkD1;
 }
 
-f32 func_800CFA5C(s32 arg0) {
-  f32 temp_fv0;
-  s32 temp_v1;
-  temp_v1 = (*((u16 *) (((u8 *) arg0) + 0xAA))) - (*((u8 *) (((u8 *) arg0) + 0xB6)));
-  if (temp_v1 <= 0) {
-    return 0.0f;
-    return temp_fv0;
-  }
-  temp_fv0 = sinf(((f32) temp_v1) * (*((f32 *) (((u8 *) arg0) + 0xDC)))) * (*((f32 *) (((u8 *) arg0) + 0x20)));
-  *((f32 *) (((u8 *) arg0) + 0x68)) = temp_fv0;
+f32 func_800CFA5C(SeqChan6_ *c) {
+    s32 t = c->unkAA - c->unkB6;
+
+    if (t <= 0) {
+        return 0.0f;
+    }
+    /* Original bug: no return here; the value is left in $f0 by the store below. */
+    c->unk68 = sinf(t * c->unkDC) * c->unk20;
 }
 
 void func_800CFAC0(SeqP_ *s) {
@@ -901,24 +892,24 @@ f32 func_800CFC98(f32 x) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CFE2C);
 
-s32 func_800CFFC4(s32 arg0) {
-    s32 temp_a1;
-    s32 temp_v0;
-    s32 temp_v1;
-    s32 var_a2;
+s32 func_800CFFC4(s32 range) {
+    s32 next;
+    s32 tap;
+    s32 feedback;
+    s32 i;
 
-    var_a2 = 0;
+    i = 0;
     do {
-        temp_a1 = D_80127954 * 2;
-        temp_v0 = D_80127954 & 0x48000000;
-        temp_v1 = (temp_v0 == 0x48000000) | (temp_v0 == 0x08000000);
-        D_80127954 = temp_a1;
-        var_a2 += 1;
-        if (temp_v1 != 0) {
-            D_80127954 = temp_a1 | 1;
+        next = D_80127954 * 2;
+        tap = D_80127954 & 0x48000000;
+        feedback = (tap == 0x48000000) | (tap == 0x08000000);
+        D_80127954 = next;
+        i++;
+        if (feedback) {
+            D_80127954 = next | 1;
         }
-    } while (var_a2 < 8);
-    return (s32) ((f32) arg0 * (((f32) D_80127954 / 65536.0f) / 65536.0f));
+    } while (i < 8);
+    return (f32)range * ((f32)D_80127954 / 65536.0f / 65536.0f);
 }
 
 INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800D0058);
@@ -991,13 +982,13 @@ void func_800D0858(s32 id, s32 mask, s32 bits) {
 }
 
 
-s32 func_800D08AC(void *arg0) {
-    *(s32 *)((u8 *)arg0 + 0x38) = 0;
-    *(s32 *)((u8 *)arg0 + 0x34) = 0;
-    *(s32 *)((u8 *)arg0 + 0x74) = 0;
-    *(s32 *)((u8 *)arg0 + 0x78) = 0;
-    *(s32 *)((u8 *)arg0 + 0x44) = 0;
-    *(s32 *)((u8 *)arg0 + 0x8) = 0;
+s32 func_800D08AC(SeqChan6_ *c) {
+    c->unk38 = 0;
+    c->unk34 = 0;
+    c->unk74 = 0;
+    c->unk78 = 0;
+    c->unk44 = 0;
+    c->unk8 = 0;
     return 0;
 }
 
@@ -1021,9 +1012,9 @@ u8 *func_800D08FC(SeqChan_ *s, u8 *p) {
 }
 
 
-s32 func_800D091C(void *arg0, s32 arg1) {
-    *(u8 *)((u8 *)arg0 + 0xB8) = 0;
-    return arg1;
+s32 func_800D091C(SeqChan6_ *c, s32 ptr) {
+    c->unkB8 = 0;
+    return ptr;
 }
 
 u8 *func_800D0928(SeqE9_ *s, u8 *p) {
@@ -1075,13 +1066,12 @@ u8 *func_800D0A50(SeqZ_ *s, u8 *p) {
     return p;
 }
 
-void *func_800D0B34(s32 arg0, void *arg1) {
-    u8 *p = arg1;
-    s16 v = *p;
+u8 *func_800D0B34(SeqChan6_ *c, u8 *ptr) {
+    s16 v = *ptr;
 
-    *(s16 *)((u8 *)arg0 + 0xB2) = 0;
-    *(s16 *)((u8 *)arg0 + 0xB4) = v;
-    return p + 1;
+    c->unkB2 = 0;
+    c->unkB4 = v;
+    return ptr + 1;
 }
 
 u8 *func_800D0B48(SeqChan2_ *s, u8 *p) {
@@ -1114,10 +1104,10 @@ u8 *func_800D0BDC(SeqJ_ *s, u8 *p) {
     return p;
 }
 
-s32 func_800D0C50(void *arg0, s32 arg1) {
-    *(u8 *)((u8 *)arg0 + 0xD5) = 0;
-    *(s32 *)((u8 *)arg0 + 0x68) = 0;
-    return arg1;
+s32 func_800D0C50(SeqChan6_ *c, s32 ptr) {
+    c->unkD5 = 0;
+    c->unk68 = 0;
+    return ptr;
 }
 
 u8 *func_800D0C60(SeqB_ *s, u8 *p) {
@@ -1132,19 +1122,19 @@ u8 *func_800D0C60(SeqB_ *s, u8 *p) {
 }
 
 
-s32 func_800D0C90(void *arg0, s32 arg1) {
-    *(u8 *)((u8 *)arg0 + 0xB7) = 1;
-    return arg1;
+s32 func_800D0C90(SeqChan6_ *c, s32 ptr) {
+    c->unkB7 = 1;
+    return ptr;
 }
 
-void *func_800D0CA0(void *arg0, u8 *arg1) {
-    *(u8 *)((u8 *)arg0 + 0xB9) = (u8) *arg1;
-    return arg1 + 1;
+u8 *func_800D0CA0(SeqChan6_ *c, u8 *ptr) {
+    c->unkB9 = *ptr;
+    return ptr + 1;
 }
 
-s32 func_800D0CB0(void *arg0, s32 arg1) {
-    *(u8 *)((u8 *)arg0 + 0xBA) = 1;
-    return arg1;
+s32 func_800D0CB0(SeqChan6_ *c, s32 ptr) {
+    c->unkBA = 1;
+    return ptr;
 }
 
 u8 *func_800D0CC0(SeqG_ *s, u8 *p) {
@@ -1160,24 +1150,24 @@ u8 *func_800D0CC0(SeqG_ *s, u8 *p) {
     return p;
 }
 
-s32 func_800D0D18(void *arg0, s32 arg1) {
-    *(u8 *)((u8 *)arg0 + 0xD6) = 1;
-    return arg1;
+s32 func_800D0D18(SeqChan6_ *c, s32 ptr) {
+    c->unkD6 = 1;
+    return ptr;
 }
 
-s32 func_800D0D28(void *arg0, s32 arg1) {
-    *(u8 *)((u8 *)arg0 + 0xD6) = 0;
-    return arg1;
+s32 func_800D0D28(SeqChan6_ *c, s32 ptr) {
+    c->unkD6 = 0;
+    return ptr;
 }
 
-s32 func_800D0D34(void *arg0, s32 arg1) {
-    *(u8 *)((u8 *)arg0 + 0xD7) = 1;
-    return arg1;
+s32 func_800D0D34(SeqChan6_ *c, s32 ptr) {
+    c->unkD7 = 1;
+    return ptr;
 }
 
-s32 func_800D0D44(void *arg0, s32 arg1) {
-    *(u8 *)((u8 *)arg0 + 0xD7) = 0;
-    return arg1;
+s32 func_800D0D44(SeqChan6_ *c, s32 ptr) {
+    c->unkD7 = 0;
+    return ptr;
 }
 
 u8 *func_800D0D50(SeqH_ *s, u8 *p) {
@@ -1224,33 +1214,32 @@ u8 *func_800D0E58(SeqChan3_ *s, u8 *p) {
     return p + 1;
 }
 
-s32 func_800D0E80(void *arg0, s32 arg1) {
-    *(u8 *)((u8 *)arg0 + 0xCE) = 0;
-    return arg1;
+s32 func_800D0E80(SeqChan6_ *c, s32 ptr) {
+    c->unkCE = 0;
+    return ptr;
 }
 
-s32 func_800D0E8C(void *arg0, s32 arg1) {
-    *(u8 *)((u8 *)arg0 + 0xD2) = 1;
-    return arg1;
+s32 func_800D0E8C(SeqChan6_ *c, s32 ptr) {
+    c->unkD2 = 1;
+    return ptr;
 }
 
-s32 func_800D0E9C(void *arg0, s32 arg1) {
-    *(u8 *)((u8 *)arg0 + 0xD2) = 0;
-    return arg1;
+s32 func_800D0E9C(SeqChan6_ *c, s32 ptr) {
+    c->unkD2 = 0;
+    return ptr;
 }
 
-void *func_800D0EA8(s32 arg0, void *arg1) {
-    u8 *p = arg1;
-    u8 v = *p;
+u8 *func_800D0EA8(SeqChan6_ *c, u8 *ptr) {
+    u8 v = *ptr;
 
-    *((u8 *)arg0 + 0xD2) = 0;
-    *((u8 *)arg0 + 0xD3) = v;
-    return p + 1;
+    c->unkD2 = 0;
+    c->unkD3 = v;
+    return ptr + 1;
 }
 
-void *func_800D0EBC(void *arg0, u8 *arg1) {
-    *(u8 *)((u8 *)arg0 + 0xBD) = (s8) ((u8) *arg1 >> 1);
-    return arg1 + 1;
+u8 *func_800D0EBC(SeqChan6_ *c, u8 *ptr) {
+    c->unkBD = *ptr >> 1;
+    return ptr + 1;
 }
 
 s32 func_800D0ED0(s32 arg0, s32 arg1) {
@@ -1269,9 +1258,9 @@ u8 *func_800D0ED8(SeqC_ *s, u8 *p) {
 }
 
 
-s32 func_800D0F20(void *arg0, s32 arg1) {
-    *(s32 *)((u8 *)arg0 + 0x84) = 0;
-    return arg1;
+s32 func_800D0F20(SeqChan6_ *c, s32 ptr) {
+    c->unk84 = 0;
+    return ptr;
 }
 
 s32 func_800D0F2C(s32 arg0, s32 arg1) {
@@ -1280,34 +1269,34 @@ s32 func_800D0F2C(s32 arg0, s32 arg1) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800D0F34);
 
-void *func_800D0FA4(void *arg0, u8 *arg1) {
-    *(u8 *)((u8 *)arg0 + 0xCA) = (u8) *arg1;
-    return arg1 + 1;
+u8 *func_800D0FA4(SeqChan6_ *c, u8 *ptr) {
+    c->unkCA = *ptr;
+    return ptr + 1;
 }
 
 u8 *func_800D0FB4(SeqD_ *s, u8 *p) {
-    s->unkB9 = ((u8 (*)(u8))func_800CFFC4)(*p++);
+    s->unkB9 = func_800CFFC4(*p++);
     s->unkB9 += *p++;
     return p;
 }
 
 u8 *func_800D1004(SeqE_ *s, u8 *p) {
-    s->unkBC = ((u8 (*)(u8))func_800CFFC4)(*p++);
+    s->unkBC = func_800CFFC4(*p++);
     s->unkBC += *p++;
     return p;
 }
 
 
 u8 *func_800D1054(SeqF_ *s, u8 *p) {
-    s->unkBD = ((u8 (*)(u8))func_800CFFC4)(*p++);
+    s->unkBD = func_800CFFC4(*p++);
     s->unkBD += *p++;
     return p;
 }
 
 
-void *func_800D10A4(void *arg0, u8 *arg1) {
-    *(u8 *)((u8 *)arg0 + 0xBC) = (u8) *arg1;
-    return arg1 + 1;
+u8 *func_800D10A4(SeqChan6_ *c, u8 *ptr) {
+    c->unkBC = *ptr;
+    return ptr + 1;
 }
 
 u8 *func_800D10B4(SeqY_ *s, u8 *p) {
@@ -1320,7 +1309,7 @@ u8 *func_800D10B4(SeqY_ *s, u8 *p) {
         v = ((v & 0x7F) << 8) + *p++;
     }
     s->unk48++;
-    id = ((s32 (*)(void *bank, s32 idx, s32 a, s32 b, s32 c))func_800D0444)(s->unk78, v, s->unk9E, s->unkB0, s->unk48);
+    id = func_800D0444(s->unk78, v, s->unk9E, s->unkB0, s->unk48);
     s->unk48--;
     if (id != 0) {
         vc = (*(VoiceY_ * *)&D_8012793C);
@@ -1334,38 +1323,34 @@ u8 *func_800D10B4(SeqY_ *s, u8 *p) {
     return p;
 }
 
-void *func_800D1184(void *arg0, u8 *arg1) {
-    f32 temp_fv0;
+u8 *func_800D1184(SeqChan6_ *c, u8 *ptr) {
+    f32 v;
 
-    temp_fv0 = (f32) ((f64) (f32) *arg1 * D_801016A0);
-    *(f32 *)((u8 *)arg0 + 0x6C) = temp_fv0;
-    *(f32 *)((u8 *)arg0 + 0x24) = (f32) (*(f32 *)((u8 *)arg0 + 0x70) * temp_fv0);
-    return arg1 + 1;
+    v = (f32)*ptr * D_801016A0;
+    c->unk6C = v;
+    c->unk24 = c->unk70 * v;
+    return ptr + 1;
 }
 
-void *func_800D11C0(void *arg0, u8 *arg1) {
-    *(u8 *)((u8 *)arg0 + 0xD4) = (u8) *arg1;
-    return arg1 + 1;
+u8 *func_800D11C0(SeqChan6_ *c, u8 *ptr) {
+    c->unkD4 = *ptr;
+    return ptr + 1;
 }
 
-void *func_800D11D0(s32 arg0, void *arg1) {
-    u8 temp_a0;
-    void *var_s0;
+u8 *func_800D11D0(s32 arg0, u8 *ptr) {
+    u8 v = *ptr++;
 
-    var_s0 = arg1;
-    temp_a0 = (*(u8 *)var_s0);
-    var_s0 += 1;
     if (D_80127960 == 1) {
-        func_800D1A80((s32) temp_a0);
+        func_800D1A80(v);
     }
-    return var_s0;
+    return ptr;
 }
 
 INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800D1214);
 
-s32 func_800D1284(void *arg0, s32 arg1) {
-    *(s16 *)((u8 *)arg0 + 0xAC) = 0;
-    return arg1;
+s32 func_800D1284(SeqChan6_ *c, s32 ptr) {
+    c->unkAC = 0;
+    return ptr;
 }
 
 void func_800D1290(s32 arg0, s32 arg1) {
@@ -1469,9 +1454,9 @@ void func_800D15B8(s32 *rp, u8 *c, void *hp) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800D1700);
 
-void func_800D19E0(s32 arg0) {
-    (*(u8 *)((u8 *)(arg0) + 0x1C)) = 6;
-    (*(s32 *)((u8 *)(arg0) + 0x20)) = &D_800FACF8;
+void func_800D19E0(SynC_ *c) {
+    c->unk1C = 6;
+    c->unk20 = &D_800FACF8;
 }
 
 s32 func_800D19F8(void) {

@@ -323,7 +323,7 @@ void func_8008EA6C(u32 dt) {
         }
         (*cam).b4C = 0;
         if (D_80118550 != 0) {
-            ((void (*)(void *cam, u32 dt))func_80090578)(&(*cam), dt);
+            func_80090578(&(*cam), dt);
         } else if ((*cam).b4A != (*cam).b4B) {
             if ((*cam).b4A != 0) {
                 idx = ((*cam).pt + 1) % D_80118621;
