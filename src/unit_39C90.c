@@ -32,25 +32,72 @@ typedef struct { u8 pad[0x40]; void *a; void *b; void *c; } Res40_;
 void Memory_Free(void *);
 typedef struct Nd3_ { s32 a; struct Nd3_ *prev; struct Nd3_ *next; } Nd3_;
 typedef struct { f32 x; f32 y; f32 z; } Vec3f_;
-typedef struct { u8 pad0[0xA]; u8 n; u8 padB; u16 first; u8 padE[2]; u8 list[4]; } Wp14_;
-typedef struct { u8 pad[8]; u16 to; u8 flag; u8 padB; } Lk0C_;
-typedef struct { u16 flags; u8 pad2[3]; s8 x; s8 y; s8 z; u8 pad8[2]; u8 n; u8 padB; u16 first; u8 padE[6]; } WpP_;
-typedef struct { s16 nx; s16 ny; s16 nz; s16 d; u16 to; u8 flag; u8 padB; } PlP_;
+/* Room (0x14), portal (0xC) and level header shared by the room/collision code. */
+typedef struct {
+    /* 0x00 */ u16 flags;
+    /* 0x02 */ union { u16 val; u8 b[2]; } param;
+    /* 0x04 */ u8 b4;
+    /* 0x05 */ s8 x;
+    /* 0x06 */ s8 y;
+    /* 0x07 */ s8 z;
+    /* 0x08 */ u16 time;
+    /* 0x0A */ u8 nPortals;
+    /* 0x0B */ u8 pB;
+    /* 0x0C */ u16 firstPortal;
+    /* 0x0E */ u8 pE[2];
+    /* 0x10 */ Nd4_ *list;
+} Room_;
+typedef struct {
+    /* 0x00 */ s16 nx;
+    /* 0x02 */ s16 ny;
+    /* 0x04 */ s16 nz;
+    /* 0x06 */ s16 d;
+    /* 0x08 */ u16 to;
+    /* 0x0A */ u8 flag;
+    /* 0x0B */ u8 pB;
+} Portal_;
+typedef struct {
+    /* 0x00 */ u32 nRooms;
+    /* 0x04 */ u8 p4[0xC];
+    /* 0x10 */ s32 x10;
+    /* 0x14 */ s32 nSpawns;
+    /* 0x18 */ u8 p18[0xA8];
+    /* 0xC0 */ Room_ *rooms;
+    /* 0xC4 */ u8 pC4[4];
+    /* 0xC8 */ Portal_ *portals;
+    /* 0xCC */ u8 pCC[4];
+    /* 0xD0 */ s32 xD0;
+    /* 0xD4 */ u8 *spawns;
+} Level_;
+/* Object tracked by the room system. */
+typedef struct {
+    /* 0x00 */ s32 id;
+    /* 0x04 */ u8 p4[0x44];
+    /* 0x48 */ u8 nRooms;
+    /* 0x49 */ u8 p49[0xB];
+    /* 0x54 */ u16 *rooms;
+    /* 0x58 */ u8 p58[4];
+    /* 0x5C */ s32 type;
+    /* 0x60 */ void *p60;
+    /* 0x64 */ u8 *car;
+    /* 0x68 */ u8 p68[8];
+    /* 0x70 */ Nd4_ *list;
+} RObj_;
 typedef struct { f32 a; f32 b; f32 c; f32 d; s16 e; u16 f; } PlF_;
 extern u32 D_8011C830[];
 void func_800A780C(u8, u8, s32);
 void func_800979F4(u8 *);
 void func_8009751C(u8 *, u16, u8);
 void func_800C9B84(u16);
-void func_800A3978(u8 *o, u16 idx, s32 arg2);
+void func_800A3978(RObj_ *o, u16 idx, s32 arg2);
 u16 func_8009A9A0(Vec3f_ pos);
-void func_8009A4E4(u8 *o);
+void func_8009A4E4(RObj_ *o);
 void func_80099C94(u8 *n, u8 *o);
 void *Memory_Alloc(s32 size);
 void func_800996B8(u8 *, u8 *);
 
 extern void *D_8011E860;
-extern void *D_8011B334;
+extern Level_ *D_8011B334;
 
 INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_80099090);
 
@@ -66,7 +113,7 @@ s32 func_8009930C(u8 *o) {
         return 0;
     }
     D_801416F8(D_8011B334);
-    func_800C9AF0(*(s32 *)((u8 *)D_8011B334 + 0x10), *(s32 *)((u8 *)D_8011B334 + 0xD0));
+    func_800C9AF0(D_8011B334->x10, D_8011B334->xD0);
     memset(D_8011C7A0, 0, 0x80);
     return 1;
 }
@@ -130,24 +177,24 @@ void func_8009951C(s32 id) {
 
 
 void func_800A3DB8(Nd4_ **list, s32 key);
-void func_800A3E30(void **arg0, s32 arg1);
+void func_800A3E30(Nd4_ **list, s32 key);
 void func_80099594(u8 *obj, s32 room) {
-    u8 *o;
+    RObj_ *o;
     u8 i;
     u16 k;
 
-    o = *(u8 **)(obj + 0x758);
-    for (i = 0; i < o[0x48]; i++) {
-        k = (*(u16 **)(o + 0x54))[i];
-        ((void (*)(void **arg0, s32 arg1))func_800A3E30)((void **)((u8 *)&(*(Wp14_ **)((u8 *)D_8011B334 + 0xC0))[k] + 0x10), (s32)o);
-        ((void (*)(void **arg0, s32 arg1))func_800A3E30)((void **)(o + 0x70), k);
+    o = *(RObj_ **)(obj + 0x758);
+    for (i = 0; i < o->nRooms; i++) {
+        k = o->rooms[i];
+        func_800A3E30(&D_8011B334->rooms[k].list, (s32)o);
+        func_800A3E30(&o->list, k);
     }
-    for (i = 0; i < o[0x48]; i++) {
-        (*(u16 **)(o + 0x54))[i] = room;
-        func_800A3DB8((Nd4_ **)((u8 *)&(*(Wp14_ **)((u8 *)D_8011B334 + 0xC0))[room] + 0x10), (s32)o);
-        func_800A3DB8((Nd4_ **)(o + 0x70), room);
+    for (i = 0; i < o->nRooms; i++) {
+        o->rooms[i] = room;
+        func_800A3DB8(&D_8011B334->rooms[room].list, (s32)o);
+        func_800A3DB8(&o->list, room);
     }
-    ((void (*)(u8 *o, u16 idx, s32 arg2))func_800A3978)(o, room, 1);
+    func_800A3978(o, room, 1);
 }
 
 INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_800996B8);
@@ -292,45 +339,45 @@ void func_8009A488(Res40_ *r) {
 
 
 void func_800A3DB8(Nd4_ **list, s32 key);
-void func_8009A4E4(u8 *o) {
+void func_8009A4E4(RObj_ *o) {
     u32 i;
     u16 k;
-    Wp14_ *w;
-    Lk0C_ *l;
+    Room_ *r;
+    Portal_ *pt;
     u32 lo;
     u32 hi;
 
-    for (i = 0; i < o[0x48]; i++) {
-        k = (*(u16 **) (o + 0x54))[i];
-        func_800A3DB8((Nd4_ **) ((u8 *) &(*(Wp14_ **) ((u8 *) D_8011B334 + 0xC0))[k] + 0x10), (s32) o);
-        func_800A3DB8((Nd4_ **) (o + 0x70), k);
+    for (i = 0; i < o->nRooms; i++) {
+        k = o->rooms[i];
+        func_800A3DB8(&D_8011B334->rooms[k].list, (s32)o);
+        func_800A3DB8(&o->list, k);
     }
-    if (*(s32 *) (o + 0x5C) == 4) {
-        w = &(*(Wp14_ **) ((u8 *) D_8011B334 + 0xC0))[**(u16 **) (o + 0x54)];
-        l = &(*(Lk0C_ **) ((u8 *) D_8011B334 + 0xC8))[w->first];
-        for (i = 0; i < w->n; i++, l++) {
-            if (l->flag == 0) {
-                ((void (*)(void *, void *, u16)) func_800A3DB8)((u8 *) &(*(Wp14_ **) ((u8 *) D_8011B334 + 0xC0))[l->to] + 0x10, o, l->to);
+    if (o->type == 4) {
+        r = &D_8011B334->rooms[o->rooms[0]];
+        pt = &D_8011B334->portals[r->firstPortal];
+        for (i = 0; i < r->nPortals; i++, pt++) {
+            if (pt->flag == 0) {
+                ((void (*)(void *, void *, u16))func_800A3DB8)(&D_8011B334->rooms[pt->to].list, o, pt->to);
             }
         }
     }
-    func_800A3DB8((Nd4_ **) &D_8011B338, (s32) o);
-    if ((*(s32 *) (o + 0x5C) != 0) & (*(s32 *) (o + 0x5C) != 5)) {
-        func_800A3DB8((Nd4_ **) &D_8011B33C, (s32) o);
+    func_800A3DB8((Nd4_ **)&D_8011B338, (s32)o);
+    if ((o->type != 0) & (o->type != 5)) {
+        func_800A3DB8((Nd4_ **)&D_8011B33C, (s32)o);
     }
-    if (*(s32 *) (o + 0x5C) == 3) {
-        func_800A3DB8((Nd4_ **) &D_8011B340, (s32) o);
+    if (o->type == 3) {
+        func_800A3DB8((Nd4_ **)&D_8011B340, (s32)o);
     }
-    if (*(s32 *) (o + 0x5C) == 3 || *(s32 *) (o + 0x5C) == 4) {
-        func_800A3DB8((Nd4_ **) &D_8011B344, (s32) o);
+    if (o->type == 3 || o->type == 4) {
+        func_800A3DB8((Nd4_ **)&D_8011B344, (s32)o);
     }
-    if (((*(s32 *) (o + 0x5C) == 1) | (*(s32 *) (o + 0x5C) == 3)) || *(s32 *) (o + 0x5C) == 6) {
-        func_800A3DB8((Nd4_ **) &D_8011B348, (s32) o);
+    if (((o->type == 1) | (o->type == 3)) || o->type == 6) {
+        func_800A3DB8((Nd4_ **)&D_8011B348, (s32)o);
     }
-    if (*(s32 *) (o + 0x5C) == 4) {
-        func_800A3DB8((Nd4_ **) &D_8011B34C, (s32) o);
+    if (o->type == 4) {
+        func_800A3DB8((Nd4_ **)&D_8011B34C, (s32)o);
     }
-    if ((*(s32 *) (o + 0x5C) == 0) | (*(s32 *) (o + 0x5C) == 5)) {
+    if ((o->type == 0) | (o->type == 5)) {
         lo = 0x20;
         hi = 0x80;
     } else {
@@ -339,7 +386,7 @@ void func_8009A4E4(u8 *o) {
     }
     for (i = lo; i < hi; i++) {
         if (D_8011C7A0[i] == 0) {
-            *(s32 *) o = i;
+            o->id = i;
             D_8011C7A0[i] = 1;
             break;
         }
@@ -355,8 +402,8 @@ u16 func_8009A9A0(Vec3f_ pos) {
     f32 best;
     f32 m;
     f32 dist;
-    WpP_ *w;
-    PlP_ *l;
+    Room_ *w;
+    Portal_ *l;
     u16 i;
     u16 j;
     u16 bi;
@@ -364,8 +411,8 @@ u16 func_8009A9A0(Vec3f_ pos) {
     best = -60000.0f;
     bi = 0;
     m = 0.0f;
-    w = *(WpP_ **)((u8 *)D_8011B334 + 0xC0);
-    for (i = 0; i < *(u32 *)D_8011B334; w++, i++) {
+    w = D_8011B334->rooms;
+    for (i = 0; i < D_8011B334->nRooms; w++, i++) {
         if (!(w->flags & 0x800)) {
             p.x = w->x << 8;
             p.y = w->y << 8;
@@ -373,8 +420,8 @@ u16 func_8009A9A0(Vec3f_ pos) {
             d.x = pos.x - p.x;
             d.y = pos.y - p.y;
             d.z = pos.z - p.z;
-            l = &(*(PlP_ **)((u8 *)D_8011B334 + 0xC8))[w->first];
-            for (j = 0; j < w->n; l++, j++) {
+            l = &D_8011B334->portals[w->firstPortal];
+            for (j = 0; j < w->nPortals; l++, j++) {
                 pl.a = l->nx / 4096.0f;
                 pl.b = l->ny / 4096.0f;
                 pl.c = l->nz / 4096.0f;
@@ -417,12 +464,8 @@ typedef struct { u8 p0[0x110]; u8 b110; } P60_56C;
 typedef struct Ln_56C { void *obj; s32 x; struct Ln_56C *next; } Ln_56C;
 typedef struct Ri_56C { s32 room; s32 x; struct Ri_56C *next; } Ri_56C;
 typedef struct { s32 id; u32 flags; u8 p8[4]; B_56C b; s32 type; P60_56C *p60; s32 w64; s32 w68; s32 frame; Ri_56C *ri; } O_56C;
-typedef struct { u8 p0[0x10]; Ln_56C *list; } Rm_56C;
 typedef struct { f32 x, y, z; } V3_67C;
-typedef struct { u8 p0[5]; s8 x; s8 y; s8 z; u8 p8[2]; u8 n; u8 pB; u16 first; u8 pE[2]; void *list; } Rm_67C;
-typedef struct { s16 nx; s16 ny; s16 nz; s16 d; u16 to; u8 flag; u8 pB; } Pt_67C;
 typedef struct { f32 a; f32 b; f32 c; f32 d; s16 e; u16 f; } Pl_67C;
-typedef struct { u8 p0[0xC0]; Rm_67C *rooms; u8 pC4[4]; Pt_67C *portals; } Lv_67C;
 typedef struct Ri_67C { s32 room; s32 x; struct Ri_67C *next; } Ri_67C;
 typedef struct { u8 p0[0x110]; u8 b110; } P60_67C;
 typedef struct { V3_67C pos; u8 pC[0x30]; u8 n; u8 p3D[7]; V3_67C *pts; u16 *rooms; } B_67C;
@@ -636,7 +679,7 @@ void func_8009B56C(void) {
             continue;
         }
         for (ri = a->ri; ri != NULL; ri = ri->next) {
-            Rm_56C *rm = &(*(Rm_56C **)((u8 *)D_8011B334 + 0xC0))[ri->room];
+            Room_ *rm = &D_8011B334->rooms[ri->room];
             for (jt = rm->list; jt != NULL; jt = jt->next) {
                 b = jt->obj;
                 if (b == a || (b->flags & 1) || ((b->p60 == NULL || b->p60->b110 == 0) && b->frame == D_8011B330)) {
@@ -937,7 +980,7 @@ void func_8009D574(void) {
     }
 }
 
-void func_800A3E30(void **arg0, s32 arg1);
+void func_800A3E30(Nd4_ **list, s32 key);
 void func_8009D67C(void) {
     Pl_67C pl;
     V3_67C org;
@@ -949,8 +992,8 @@ void func_8009D67C(void) {
     O_67C *o;
     B_67C *b;
     Ri_67C *ri;
-    Rm_67C *rm;
-    Pt_67C *p;
+    Room_ *rm;
+    Portal_ *p;
     u32 n, i, k;
     s32 room;
     P60_67C *pp;
@@ -973,15 +1016,15 @@ void func_8009D67C(void) {
         }
         for (ri = o->ri; ri != NULL; ri = ri->next) {
             room = ri->room;
-            rm = &((Lv_67C *)D_8011B334)->rooms[room];
+            rm = &D_8011B334->rooms[room];
             org.x = rm->x << 8;
             org.y = rm->y << 8;
             org.z = rm->z << 8;
             rel.x = o->b.pos.x - org.x;
             rel.y = o->b.pos.y - org.y;
             rel.z = o->b.pos.z - org.z;
-            p = &((Lv_67C *)D_8011B334)->portals[rm->first];
-            for (i = 0; i < rm->n; p++, i++) {
+            p = &D_8011B334->portals[rm->firstPortal];
+            for (i = 0; i < rm->nPortals; p++, i++) {
                 if (p->flag == 0) {
                     pl.a = p->nx / 4096.0f;
                     pl.b = p->ny / 4096.0f;
@@ -1011,26 +1054,26 @@ void func_8009D67C(void) {
         }
         for (i = 0; i < n; i++) {
             if (new[i] != old[i]) {
-                ((void (*)(void *, s32))func_800A3E30)(&((Lv_67C *)D_8011B334)->rooms[old[i]].list, (s32)o);
-                ((void (*)(void *, s32))func_800A3E30)(&o->ri, old[i]);
+                func_800A3E30(&D_8011B334->rooms[old[i]].list, (s32)o);
+                func_800A3E30(&o->ri, old[i]);
                 b->rooms[i] = new[i];
-                ((void (*)(void *, s32))func_800A3DB8)(&((Lv_67C *)D_8011B334)->rooms[new[i]].list, (s32)o);
-                ((void (*)(void *, s32))func_800A3DB8)(&o->ri, new[i]);
+                func_800A3DB8(&D_8011B334->rooms[new[i]].list, (s32)o);
+                func_800A3DB8(&o->ri, new[i]);
                 if (i == 0 && (o->type == 3 || o->type == 4)) {
                     o->flags |= 0x10;
                     if (o->type == 4) {
-                        rm = &((Lv_67C *)D_8011B334)->rooms[old[0]];
-                        p = &((Lv_67C *)D_8011B334)->portals[rm->first];
-                        for (k = 0; k < rm->n; p++, k++) {
+                        rm = &D_8011B334->rooms[old[0]];
+                        p = &D_8011B334->portals[rm->firstPortal];
+                        for (k = 0; k < rm->nPortals; p++, k++) {
                             if (p->flag == 0) {
-                                ((void (*)(void *, s32))func_800A3E30)(&((Lv_67C *)D_8011B334)->rooms[p->to].list, (s32)o);
+                                func_800A3E30(&D_8011B334->rooms[p->to].list, (s32)o);
                             }
                         }
-                        rm = &((Lv_67C *)D_8011B334)->rooms[new[0]];
-                        p = &((Lv_67C *)D_8011B334)->portals[rm->first];
-                        for (k = 0; k < rm->n; p++, k++) {
+                        rm = &D_8011B334->rooms[new[0]];
+                        p = &D_8011B334->portals[rm->firstPortal];
+                        for (k = 0; k < rm->nPortals; p++, k++) {
                             if (p->flag == 0) {
-                                ((void (*)(void *, s32))func_800A3DB8)(&((Lv_67C *)D_8011B334)->rooms[p->to].list, (s32)o);
+                                func_800A3DB8(&D_8011B334->rooms[p->to].list, (s32)o);
                             }
                         }
                     }
@@ -1065,93 +1108,93 @@ INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_800A25EC);
 
 INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_800A34B4);
 
-void func_800A3978(u8 *o, u16 idx, s32 arg2) {
-    u8 *w;
+void func_800A3978(RObj_ *o, u16 idx, s32 arg2) {
+    Room_ *r;
     u8 *c;
     u32 m;
 
-    w = *(u8 **)((u8 *)D_8011B334 + 0xC0) + idx * 0x14;
-    if (*(s32 *)(o + 0x5C) == 3 || *(s32 *)(o + 0x5C) == 4) {
-        c = *(u8 **)(o + 0x64);
+    r = &D_8011B334->rooms[idx];
+    if (o->type == 3 || o->type == 4) {
+        c = o->car;
         if (c[0x4B8] == 0) {
-            if (((*(u16 *)(w + 0)) & 1) && (u8)arg2 == 0) {
-                func_800A780C(c[0], w[3], 1);
+            if ((r->flags & 1) && (u8)arg2 == 0) {
+                func_800A780C(c[0], r->param.b[1], 1);
             }
-            if ((*(u16 *)(w + 0)) & 0x10) {
-                (*(s32 *)(c + 8)) |= 1;
+            if (r->flags & 0x10) {
+                *(s32 *)(c + 8) |= 1;
             } else {
-                (*(s32 *)(c + 8)) &= ~1;
+                *(s32 *)(c + 8) &= ~1;
             }
-            if (((*(u16 *)(w + 0)) & 8) || (D_8011C820 & 0x80)) {
-                (*(s32 *)(c + 8)) |= 2;
+            if ((r->flags & 8) || (D_8011C820 & 0x80)) {
+                *(s32 *)(c + 8) |= 2;
             } else {
-                (*(s32 *)(c + 8)) &= ~2;
+                *(s32 *)(c + 8) &= ~2;
             }
-            (*(s32 *)(c + 4)) &= ~0x1C;
-            m = (*(u16 *)(w + 0)) & 0x9000;
+            *(s32 *)(c + 4) &= ~0x1C;
+            m = r->flags & 0x9000;
             if (m == 0x9000) {
-                (*(s32 *)(c + 4)) |= 0x10;
+                *(s32 *)(c + 4) |= 0x10;
             } else if (m == 0x8000) {
-                (*(s32 *)(c + 4)) |= 8;
+                *(s32 *)(c + 4) |= 8;
             } else if (m == 0x1000) {
-                (*(s32 *)(c + 4)) |= 4;
+                *(s32 *)(c + 4) |= 4;
             }
-            if ((*(u16 *)(w + 0)) & 0x40) {
-                (*(s32 *)(c + 4)) |= 0x20;
+            if (r->flags & 0x40) {
+                *(s32 *)(c + 4) |= 0x20;
             } else {
-                (*(s32 *)(c + 4)) &= ~0x20;
+                *(s32 *)(c + 4) &= ~0x20;
             }
-            if ((*(u16 *)(w + 0)) & 0x80) {
-                (*(s32 *)(c + 4)) |= 0x40;
+            if (r->flags & 0x80) {
+                *(s32 *)(c + 4) |= 0x40;
             } else {
-                (*(s32 *)(c + 4)) &= ~0x40;
+                *(s32 *)(c + 4) &= ~0x40;
             }
-            if ((*(u16 *)(w + 0)) & 4) {
-                (*(s32 *)(c + 4)) |= 0x80;
+            if (r->flags & 4) {
+                *(s32 *)(c + 4) |= 0x80;
             } else {
-                (*(s32 *)(c + 4)) &= ~0x80;
+                *(s32 *)(c + 4) &= ~0x80;
             }
-            if ((*(u16 *)(w + 0)) & 0x100) {
-                (*(s32 *)(c + 4)) |= 0x100;
+            if (r->flags & 0x100) {
+                *(s32 *)(c + 4) |= 0x100;
             } else {
-                (*(s32 *)(c + 4)) &= ~0x100;
+                *(s32 *)(c + 4) &= ~0x100;
             }
-            if ((*(u16 *)(w + 0)) & 0x200) {
-                (*(s32 *)(c + 4)) |= 0x200;
+            if (r->flags & 0x200) {
+                *(s32 *)(c + 4) |= 0x200;
             } else {
-                (*(s32 *)(c + 4)) &= ~0x200;
+                *(s32 *)(c + 4) &= ~0x200;
             }
-            if ((*(u16 *)(w + 0)) & 0x400) {
-                (*(s32 *)(c + 4)) |= 0x4000;
+            if (r->flags & 0x400) {
+                *(s32 *)(c + 4) |= 0x4000;
             } else {
-                (*(s32 *)(c + 4)) &= ~0x4000;
-                (*(s32 *)(c + 0x474)) = (*(u16 *)(w + 8)) * 10;
-                if ((u32) (*(s32 *)(c + 0x474)) < D_8011C830[c[0x479]]) {
-                    (*(s32 *)(c + 0x474)) += D_8011C824;
+                *(s32 *)(c + 4) &= ~0x4000;
+                *(s32 *)(c + 0x474) = r->time * 10;
+                if ((u32)*(s32 *)(c + 0x474) < D_8011C830[c[0x479]]) {
+                    *(s32 *)(c + 0x474) += D_8011C824;
                 }
             }
-            if ((*(u16 *)(w + 0)) & 0x2000) {
-                (*(s32 *)(c + 4)) |= 0x400;
+            if (r->flags & 0x2000) {
+                *(s32 *)(c + 4) |= 0x400;
             } else {
-                (*(f32 *)(c + 0x80)) = 0.0f;
-                (*(f32 *)(c + 0x84)) = 0.0f;
-                (*(s32 *)(c + 4)) &= ~0x400;
-                (*(f32 *)(c + 0x88)) = -1.0f;
+                *(f32 *)(c + 0x80) = 0.0f;
+                *(f32 *)(c + 0x84) = 0.0f;
+                *(s32 *)(c + 4) &= ~0x400;
+                *(f32 *)(c + 0x88) = -1.0f;
             }
-            if ((*(u16 *)(w + 0)) & 0x20) {
-                (*(f32 *)(c + 0x7C)) = (*(u16 *)(w + 2)) / 256.0f * 386.0f;
+            if (r->flags & 0x20) {
+                *(f32 *)(c + 0x7C) = r->param.val / 256.0f * 386.0f;
             } else {
-                (*(f32 *)(c + 0x7C)) = 386.0f;
+                *(f32 *)(c + 0x7C) = 386.0f;
             }
-            if (((*(u16 *)(w + 0)) & 0x4000) && (*(s32 *)(c + 0x6D8)) == 2) {
-                if ((*(u16 *)(w + 0)) & 0x800) {
+            if ((r->flags & 0x4000) && *(s32 *)(c + 0x6D8) == 2) {
+                if (r->flags & 0x800) {
                     func_800979F4(c);
                 } else {
-                    func_8009751C(c, (*(u16 *)(w + 2)), w[4]);
+                    func_8009751C(c, r->param.val, r->b4);
                 }
             }
-            if ((*(u16 *)(w + 0)) & 2) {
-                func_800C9B84((*(u16 *)(w + 2)));
+            if (r->flags & 2) {
+                func_800C9B84(r->param.val);
             }
         }
     }
@@ -1212,43 +1255,31 @@ void func_800A3DB8(Nd4_ **list, s32 key) {
 }
 
 
-void func_800A3E30(void **arg0, s32 arg1) {
-    u16 temp_v0;
-    void *temp_a1;
-    void *temp_a1_2;
-    void *temp_v0_2;
-    void *var_v1;
+void func_800A3E30(Nd4_ **list, s32 key) {
+    Nd4_ *n;
+    Nd4_ *free;
 
-    var_v1 = *arg0;
-    if (var_v1 != NULL) {
-loop_1:
-        if (*(s32 *)((u8 *)var_v1 + 0x0) != arg1) {
-            var_v1 = *(s32 *)((u8 *)var_v1 + 0x8);
-            if (var_v1 != NULL) {
-                goto loop_1;
-            }
+    for (n = *list; n != NULL; n = n->next) {
+        if (n->a == key) {
+            break;
         }
-        if (var_v1 != NULL) {
-            temp_v0 = *(u16 *)((u8 *)var_v1 + 0xC) - 1;
-            *(u16 *)((u8 *)var_v1 + 0xC) = temp_v0;
-            if (!(temp_v0 & 0xFFFF)) {
-                temp_a1 = *(s32 *)((u8 *)var_v1 + 0x8);
-                if (temp_a1 != NULL) {
-                    *(s32 *)((u8 *)temp_a1 + 0x4) = (void *) *(s32 *)((u8 *)var_v1 + 0x4);
-                }
-                temp_a1_2 = *(s32 *)((u8 *)var_v1 + 0x4);
-                if (temp_a1_2 != NULL) {
-                    *(s32 *)((u8 *)temp_a1_2 + 0x8) = (void *) *(s32 *)((u8 *)var_v1 + 0x8);
-                }
-                if (var_v1 == *arg0) {
-                    *arg0 = *(s32 *)((u8 *)var_v1 + 0x8);
-                }
-                temp_v0_2 = D_8011E860;
-                *(s32 *)((u8 *)var_v1 + 0x4) = NULL;
-                D_8011E860 = var_v1;
-                *(s32 *)((u8 *)var_v1 + 0x8) = temp_v0_2;
-                *(s32 *)((u8 *)temp_v0_2 + 0x4) = var_v1;
+    }
+    if (n != NULL) {
+        if (--n->cnt == 0) {
+            if (n->next != NULL) {
+                n->next->prev = n->prev;
             }
+            if (n->prev != NULL) {
+                n->prev->next = n->next;
+            }
+            if (n == *list) {
+                *list = n->next;
+            }
+            free = (Nd4_ *)D_8011E860;
+            n->prev = NULL;
+            D_8011E860 = n;
+            n->next = free;
+            free->prev = n;
         }
     }
 }
@@ -1268,9 +1299,9 @@ INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_800A4198);
 INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_800A4EE8);
 
 s32 func_800A5894(void) {
-    return *(s32 *)((u8 *)D_8011B334 + 0x14);
+    return D_8011B334->nSpawns;
 }
 
-s32 func_800A58A4(s32 arg0) {
-    return *(s32 *)((u8 *)D_8011B334 + 0xD4) + (arg0 * 0x18);
+s32 func_800A58A4(s32 i) {
+    return (s32)(D_8011B334->spawns + i * 0x18);
 }
