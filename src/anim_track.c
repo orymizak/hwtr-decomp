@@ -25,7 +25,27 @@ extern AnimTrack *D_800F3014;
 
 void Memory_Free(void *ptr);
 
-INCLUDE_ASM("asm/nonmatchings/anim_track", func_80087990);
+typedef s32 (*AnimFn_)();
+typedef struct { AnimFn_ count; AnimFn_ info; AnimFn_ keys; } AnimIf_;
+extern AnimIf_ D_80141720;
+void *Memory_Alloc(s32 size);
+void *memset(void *dst, s32 value, u32 size);
+s32 func_80087990(void) {
+    u32 i;
+
+    if ((D_800F3010 = D_80141720.count()) != 0) {
+        if ((D_800F3014 = Memory_Alloc(D_800F3010 * sizeof(AnimTrack))) == NULL) {
+            return 0;
+        }
+        memset(D_800F3014, 0, D_800F3010 * sizeof(AnimTrack));
+        for (i = 0; i < D_800F3010; i++) {
+            D_80141720.info(i, &D_800F3014[i].duration, &D_800F3014[i].keyCount, D_800F3014[i].unk08, &D_800F3014[i].id);
+            D_80141720.keys(i, 0, &D_800F3014[i].unk20[4], &D_800F3014[i].unk20[0x10]);
+            D_80141720.keys(i, 1, &D_800F3014[i].unk20[0x20], &D_800F3014[i].unk20[0x2C]);
+        }
+    }
+    return 1;
+}
 
 s32 func_80087AD4(void) {
     if (D_800F3014 != NULL) {
@@ -35,7 +55,53 @@ s32 func_80087AD4(void) {
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/anim_track", func_80087B08);
+extern u32 D_800F3018;
+u32 func_800A76D8(void);
+u32 func_800A76E4(void);
+void func_80087C28(s32 index);
+void func_800C9D00(s32);
+void func_800C9DA0(s32);
+void func_80087B08(void) {
+    u32 now;
+    u32 prev;
+    u32 dt;
+    u32 step;
+    u32 i;
+    AnimTrack *t;
+
+    if (D_800F3014 != NULL) {
+        now = func_800A76D8();
+        now += func_800A76E4();
+        prev = D_800F3018;
+        D_800F3018 = now;
+        dt = now - prev;
+        if (dt != 0) {
+            for (i = 0, t = D_800F3014; i < D_800F3010; i++, t++) {
+                if (t->active) {
+                    if (t->seekTime != 0) {
+                        step = dt;
+                        if (t->seekTime < dt) {
+                            step = t->seekTime;
+                        }
+                        if (step != 0) {
+                            t->time += step;
+                            t->seekTime -= step;
+                            func_80087C28(i);
+                        }
+                        if (t->seekTime == 0) {
+                            func_800C9D00(t->seekMode);
+                        } else {
+                            func_800C9DA0(t->seekMode);
+                        }
+                    }
+                } else {
+                    t->time += dt;
+                    func_80087C28(i);
+                }
+            }
+        }
+    }
+}
 
 typedef struct { f32 x; f32 y; f32 z; f32 w; } Quat_;
 typedef struct { f32 x; f32 y; f32 z; } Vec3_;

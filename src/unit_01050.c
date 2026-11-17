@@ -28,6 +28,20 @@ typedef struct { s32 f0; } S_D_800EFC78;
 typedef struct { u8 kind; u8 mode; u8 pad[2]; u8 flag; u8 pad2[0x47]; } Slot_;
 typedef struct { s32 h[6]; f32 rpm; f32 f1C; f32 f20; f32 f24; f32 f28; u8 p2C[0x18]; u8 b44; u8 b45; u8 p46[6]; } Snd29_;
 typedef struct Nd29_ { u8 p0[0x10]; s32 h; struct Nd29_ *next; } Nd29_;
+typedef struct { f32 x; f32 y; f32 z; } V3c_;
+typedef struct N64c_ { f32 x; f32 y; f32 z; f32 v; s32 f10; struct N64c_ *next; u8 b18; u8 b19; u8 id; u8 b1B; } N64c_;
+extern s32 D_800F0108[];
+extern s32 D_800F0120;
+extern s32 D_800F0124[];
+extern s32 D_800F013C;
+extern s32 D_800F0140[];
+extern s32 D_800F0158;
+s32 func_8007F498(s32);
+extern s32 D_800EFC64;
+extern V3c_ D_800FE7B8;
+extern u8 D_800F01B0;
+extern f64 D_800FE848;
+void func_800CE810(s32);
 extern Snd29_ D_800EFF38[];
 void func_800CE4E0(s32, s32);
 extern Slot_ D_800EFF7C[];
@@ -455,7 +469,25 @@ u8 func_80061B88(void) {
     return D_800F0105;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80061B94);
+s32 func_80061B94(s32 kind) {
+    s32 vol = D_800EFC74 * 255.0f;
+    s32 snd = 0;
+
+    switch ((u32)kind) {
+    case 0:
+        snd = D_800F0108[func_8007F498(D_800F0120)];
+        break;
+    case 1:
+        snd = D_800F0140[func_8007F498(D_800F0158)];
+        break;
+    case 2:
+        snd = D_800F0124[func_8007F498(D_800F013C)];
+        break;
+    }
+    if (snd != 0) {
+        return func_800CD8CC(snd, vol, 0x80, 0, 0x70);
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80061C70);
 
@@ -673,7 +705,18 @@ s32 func_80063550(u8 i, Vec3_ v) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", func_800635AC);
+s32 func_800635AC(s32 a, f32 v) {
+    u8 f = D_800F01B0;
+    s16 ok = 1;
+
+    if ((v == D_800FE848) != f) {
+        func_800CE810(v == 1.0f ? 5 : 2);
+        if ((u8)ok) {
+            D_800F01B0 = D_800F01B0 == 0;
+        }
+    }
+    return ok;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_01050", func_8006365C);
 
@@ -778,7 +821,37 @@ s32 func_80064204(s32 arg0, s32 arg1) {
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80064230);
+u8 func_80064230(void) {
+    V3c_ v = D_800FE7B8;
+    N64c_ *n = Memory_Alloc(0x1C);
+    N64c_ *p;
+    N64c_ **head;
+    s32 *cnt;
+
+    n->x = v.x;
+    n->y = v.y;
+    n->z = v.z;
+    n->v = 1.0f;
+    n->f10 = 0;
+    n->next = NULL;
+    n->b19 = 0;
+    n->b1B = 0;
+    head = &(*(N64c_ * *)&D_800F0100);
+    if (*head == NULL) {
+        *head = n;
+        n->id = 1;
+    } else {
+        p = *head;
+        while (p->next != NULL) {
+            p = p->next;
+        }
+        p->next = n;
+        n->id = p->id + 1;
+    }
+    cnt = &D_800EFC64;
+    (*cnt)++;
+    return n->id;
+}
 
 s32 func_80064308(u8 id, Vec3_ v) {
     Node64_ *p = D_800F0100;

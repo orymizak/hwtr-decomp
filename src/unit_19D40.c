@@ -7,6 +7,9 @@ void Debug_DrawString(char *, s32, s32, s32);
 typedef struct { u8 pad[0xC]; u8 r; u8 g; u8 b; s8 on; } Col16_;
 typedef struct { u8 pad[0xC]; u8 r; u8 g; u8 b; u8 flags; } Col16b_;
 typedef struct { u16 n; u8 pad[2]; Col16b_ *c; u32 p8; u32 pC; s32 w10; } Hdr7E_;
+extern s32 D_801454A0;
+void GfxPools_Shutdown(void);
+void func_800734F4(s32);
 extern u8 D_800F20F6;
 void func_80079EF4(Hdr7E_ *h);
 f32 sqrtf(f32);
@@ -200,6 +203,19 @@ s32 func_8007BE30(void) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_8007BE54);
 
-INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_8007BEBC);
+s32 func_8007BEBC(u8 i) {
+    s32 *p;
+
+    if (i < 32) {
+        if (((s32 *)&D_801454A0)[i] == 0) {
+            return 1;
+        }
+        GfxPools_Shutdown();
+        func_800734F4(((s32 *)&D_801454A0)[i]);
+        ((s32 *)&D_801454A0)[i] = 0;
+        return 1;
+    }
+    return 1;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_8007BF20);

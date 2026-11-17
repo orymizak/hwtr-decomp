@@ -13,7 +13,30 @@ extern u16 *D_80138E38;
 
 INCLUDE_ASM("asm/nonmatchings/debug_text", Debug_InitFont);
 
-INCLUDE_ASM("asm/nonmatchings/debug_text", Debug_FormatNumber);
+void Debug_FormatNumber(u16 n, u8 *out) {
+    s32 d;
+    u8 c;
+    u8 c2;
+
+    if (n >= 1000) {
+        n = 999;
+    }
+    d = (u16)(n / 100);
+    c = d + 0xF;
+    if (n >= 100) {
+        out[0] = d + 0x10;
+    } else {
+        out[0] = c;
+    }
+    d = (u16)(n % 100) / 10;
+    c2 = d + 0xF;
+    if (n >= 10) {
+        out[1] = d + 0x10;
+    } else {
+        out[1] = c2;
+    }
+    out[2] = n % 10 + 0x10;
+}
 
 inline void Debug_DrawChar(s32 c, u16 color, u16 shadow) {
     u16 *pixel;

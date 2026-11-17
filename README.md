@@ -20,8 +20,8 @@ The ROM rebuilds identically; the remaining code is still generated assembly.
 <!-- progress -->
 | Area | Functions | Code bytes | Progress |
 |---|---|---|---|
-| total | 1498/1917 | 283808/554576 | 51.18% |
-| game | 1038/1373 | 195104/446896 | 43.66% |
+| total | 1534/1917 | 293352/554576 | 52.90% |
+| game | 1074/1373 | 204648/446896 | 45.79% |
 | audio | 167/188 | 23744/32608 | 72.82% |
 | system | 82/87 | 9344/10064 | 92.85% |
 | libultra | 211/244 | 55616/60640 | 91.72% |

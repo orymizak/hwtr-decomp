@@ -1,5 +1,8 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { u8 width; u8 height; u8 format; u8 unk03; u32 data; } GlyphFL_;
+typedef struct { u8 glyphIndex[0x100]; GlyphFL_ *glyphs[0x100]; u8 glyphData[1]; } FontFL_;
+extern char D_800FF790[];
 extern s32 D_801415E0[];
 
 #define FONT_NO_GLYPH 0xFF
@@ -49,7 +52,35 @@ s32 Font_Init(void) {
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/font", Font_Load);
+s32 Font_Load(u8 id, char *name) {
+    char buf[0x40];
+    FontFL_ *f;
+    GlyphFL_ *g;
+    u32 n;
+    u32 i;
+
+    strcpy(buf, name);
+    strcat(buf, D_800FF790);
+    f = Memory_Alloc(File_GetSize(buf));
+    File_Load(buf, f);
+    D_801415E0[id] = (s32)f;
+    g = (GlyphFL_ *)f->glyphData;
+    n = 0;
+    for (i = 0; i < 0x100; i++) {
+        n += f->glyphIndex[i] != 0xFF;
+    }
+    for (i = 0; i < n; i++) {
+        ((void (*)(GlyphFL_ *glyph))func_8007F570)(g);
+        f->glyphs[i] = g;
+        if (g->format == 0) {
+            g = (GlyphFL_ *)(g->data + g->width * g->height * 2);
+        } else {
+            g = (GlyphFL_ *)(g->data + g->width * g->height);
+        }
+        g = (GlyphFL_ *)(((u32)g + 7) & ~7);
+    }
+    return 1;
+}
 
 s32 Font_Free(u32 arg0) {
   s32 *temp_s0;

@@ -3,6 +3,12 @@
 typedef struct { s32 x; s32 y; s32 z; } V3i_;
 typedef struct { u8 pad0[8]; u8 state; u8 pad9[3]; V3i_ pos; u8 pad18[0xC]; f32 m[9]; u8 pad48[0x14]; s32 kind; u8 *obj; u8 pad64[0x24]; } E88_;
 typedef struct { f32 x; f32 y; f32 z; } Vec3f_;
+typedef struct { s32 x; s32 y; s32 z; } P3b_;
+typedef struct { f32 x; f32 y; f32 z; } F3b_;
+typedef struct { u8 pad0[4]; u32 flags; u8 pad8[4]; P3b_ pos; u8 pad18[0x70]; } E88b_;
+typedef struct { u32 flags; u8 pad4[3]; u8 b7; u8 pad8[3]; u8 bB; } Inf12b_;
+extern void (*D_80141708[])(s32, F3b_);
+u8 func_8008E38C(P3b_, u8, u8, s32);
 extern u32 (*D_801416FC)(void);
 extern Vec3f_ D_80100B00;
 void *Memory_Alloc(s32 size);
@@ -154,7 +160,16 @@ void func_800AF67C(void) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_4FE30", func_800AF820);
+void func_800AF820(E88b_ *e, F3b_ v) {
+    s32 idx = e - (E88b_ *)D_800F3B90;
+    Inf12b_ *inf = &((Inf12b_ *)D_800F3B94)[idx];
+
+    e->flags |= 1;
+    D_80141708[0](idx, v);
+    if (inf->flags & 4) {
+        func_8008E38C(e->pos, inf->b7, inf->bB, 0);
+    }
+}
 
 s32 func_800AF8EC(s32 arg0, u32 arg1) {
     return (arg1 >= 4U) * 4;

@@ -15,6 +15,13 @@ typedef struct { u32 w0; u32 w1; } G9_;
 typedef struct { u8 r; u8 g; u8 b; u8 pad3; u8 r2; u8 g2; u8 b2; u8 pad[9]; } L16_;
 typedef struct { u8 b[0x50]; } ViMode7_;
 typedef struct { u8 b[0x50]; } ViMode8_;
+typedef struct { u8 p[0x54]; s16 *type; } Msg6F_;
+extern void (*D_800F1CB4)(Msg6F_ *);
+extern void (*D_800F1CB8)(Msg6F_ *);
+extern s32 D_80140E44;
+void osCreateMesgQueue(void *, void *, s32);
+s32 osRecvMesg(void *, void *, s32);
+void func_8006F7B0(void *arg);
 void func_8006E00C(void *);
 extern u8 D_800FF7B0;
 extern ViMode7_ D_800FB6F0[];
@@ -38,7 +45,6 @@ extern u8 D_80138E40[];
 extern u8 D_80140E40[];
 extern u8 D_80143850[];
 void func_800D61C0(void);
-void func_8006F7B0(void *);
 void osCreateThread(void *, s32, void (*)(void *), void *, void *, s32);
 void osStartThread(void *);
 void func_8006F8C4(void);
@@ -89,7 +95,36 @@ extern f32 D_800F2134;
 
 s32 func_800D6010();
 
-INCLUDE_ASM("asm/nonmatchings/unit_103B0", func_8006F7B0);
+void func_8006F7B0(void *arg) {
+    Msg6F_ *msg;
+    u32 mask;
+
+    osCreateMesgQueue(D_8014EC80, D_8010C3E0, 8);
+    while (1) {
+        osRecvMesg(D_8014EC80, &msg, 1);
+        switch (*msg->type) {
+        case 4:
+            if (D_800F1CB4 != NULL) {
+                D_800F1CB4(msg);
+            }
+            if (D_80140E44 & 0x80) {
+                osViBlack(0);
+                D_80140E44 = 1;
+            }
+            break;
+        case 8:
+            if (D_800F1CB8 != NULL) {
+                D_800F1CB8(msg);
+            }
+            break;
+        default:
+            continue;
+        }
+        mask = osSetIntMask(1);
+        D_80145484--;
+        osSetIntMask(mask);
+    }
+}
 
 void func_8006F8C4(void) {
     u32 i;

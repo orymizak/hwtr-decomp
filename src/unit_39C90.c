@@ -129,7 +129,26 @@ void func_8009951C(s32 id) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_80099594);
+void func_800A3DB8(Nd4_ **list, s32 key);
+void func_800A3E30(void **arg0, s32 arg1);
+void func_80099594(u8 *obj, s32 room) {
+    u8 *o;
+    u8 i;
+    u16 k;
+
+    o = *(u8 **)(obj + 0x758);
+    for (i = 0; i < o[0x48]; i++) {
+        k = (*(u16 **)(o + 0x54))[i];
+        ((void (*)(void **arg0, s32 arg1))func_800A3E30)((void **)((u8 *)&(*(Wp14_ **)((u8 *)D_8011B334 + 0xC0))[k] + 0x10), (s32)o);
+        ((void (*)(void **arg0, s32 arg1))func_800A3E30)((void **)(o + 0x70), k);
+    }
+    for (i = 0; i < o[0x48]; i++) {
+        (*(u16 **)(o + 0x54))[i] = room;
+        func_800A3DB8((Nd4_ **)((u8 *)&(*(Wp14_ **)((u8 *)D_8011B334 + 0xC0))[room] + 0x10), (s32)o);
+        func_800A3DB8((Nd4_ **)(o + 0x70), room);
+    }
+    ((void (*)(u8 *o, u16 idx, s32 arg2))func_800A3978)(o, room, 1);
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_800996B8);
 

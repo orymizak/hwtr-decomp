@@ -3,6 +3,15 @@
 typedef struct { s32 a; s32 b; u8 pad[0x10]; } E18c_;
 typedef struct { u8 pad[8]; u8 n1; u8 p1[3]; E18c_ *a1; u8 n2; u8 p2[3]; E18c_ *a2; } TCB_;
 typedef struct { u8 a; u8 pad; u16 x; u16 y; u16 x2; u16 y2; } E0A5_;
+typedef struct { u16 x; u16 y; } P2A6_;
+typedef struct { u8 a; u8 pad; P2A6_ p; P2A6_ p2; } EA6_;
+typedef struct { u8 p0[2]; u8 n; u8 p3; EA6_ *items; u8 p8[0xB]; u8 mode; } TA6_;
+typedef struct { u16 x; u16 y; } P2A7_;
+typedef struct { u8 a; u8 pad; P2A7_ p; P2A7_ p2; } EA7_;
+typedef struct { u8 p0[2]; u8 n; u8 p3; EA7_ *items; u8 p8[0xB]; u8 mode; } TA7_;
+void func_800CA7A8(TA7_ *t);
+extern s32 (*D_8014169C)(s32);
+void func_800CA660(TA6_ *t);
 extern void (*D_801416F0)(s32);
 extern void (*D_801416A4)(void);
 extern void (*D_801416AC)(void);
@@ -13,8 +22,6 @@ void func_800CA478(u8 *t);
 extern s32 (*D_801416D8)(s32, u8);
 s8 func_80086F80(u8 font, u8 a, u8 b);
 void func_800CA290(u8 *t);
-void func_800CA660(E18c_ *);
-void func_800CA7A8(E18c_ *);
 void func_800CAE1C(E18c_ *);
 void func_800CAF28(E18c_ *);
 
@@ -80,9 +87,45 @@ void func_800CA478(u8 *t) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_6AE90", func_800CA660);
+void func_800CA660(TA6_ *t) {
+    u8 i;
 
-INCLUDE_ASM("asm/nonmatchings/unit_6AE90", func_800CA7A8);
+    for (i = 0; i < t->n; i++) {
+        switch (t->mode) {
+        case 0:
+            t->items[i].p = t->items[i].p2;
+            break;
+        case 1:
+            t->items[i].p.x = t->items[i].p2.x + 320;
+            t->items[i].p.y = t->items[i].p2.y;
+            break;
+        case 2:
+            ((u16 *)&t->items[i].p)[0] = D_8014169C(320);
+            ((u16 *)&t->items[i].p)[1] = D_8014169C(240);
+            break;
+        }
+    }
+}
+
+void func_800CA7A8(TA7_ *t) {
+    u8 i;
+
+    for (i = 0; i < t->n; i++) {
+        switch (t->mode) {
+        case 0:
+            t->items[i].p = t->items[i].p2;
+            break;
+        case 1:
+            t->items[i].p.x = t->items[i].p2.x + 320;
+            t->items[i].p.y = t->items[i].p2.y;
+            break;
+        case 2:
+            ((u16 *)&t->items[i].p)[0] = D_8014169C(320);
+            ((u16 *)&t->items[i].p)[1] = D_8014169C(240);
+            break;
+        }
+    }
+}
 
 void func_800CA8F0(TCB_ *t) {
     u8 i;

@@ -3,6 +3,16 @@
 typedef struct { u8 ch; s8 k; } Kern2_;
 typedef struct { Kern2_ *list; u8 n; u8 ch; u8 has; u8 pad; } Kern1_;
 typedef struct { Kern1_ *tbl; u16 n; u8 pad[2]; } KernFont_;
+typedef struct { u8 flag; u8 p1[3]; char *str; } Ln74_;
+typedef struct { Ln74_ *lines; s32 a4; s32 a8; s32 top; s32 bottom; s32 start; f32 pos; s32 count; } Scr74_;
+void func_80087260(char *, s32, s32, s32, s32);
+f32 func_800B3024(u8);
+extern u8 D_80116C70[];
+extern s32 (*D_80140FE0)(char *, void *);
+extern u32 (*D_80140FE4)(char *);
+extern u8 *D_801410E0[];
+extern char D_800FFAC0[];
+s32 sprintf(char *, const char *, ...);
 extern KernFont_ D_800F2800[];
 extern s32 D_800F2808;
 extern u8 D_80140F90;
@@ -20,7 +30,49 @@ s32 func_8007EF30();
 
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_27A40", func_80086E40);
+u8 func_80086E40(char *name) {
+    char path[0x100];
+    u32 size;
+    u32 n;
+    u8 *buf;
+    u8 *p;
+    u32 i;
+
+    sprintf(path, D_800FFAC0, name);
+    size = D_80140FE4(path);
+    if (size == 0) {
+        return 0;
+    }
+    if (size > 0x1800) {
+        return 0;
+    }
+    buf = D_80116C70;
+    if (buf == NULL) {
+        return 0;
+    }
+    n = D_80140FE0(path, buf);
+    if (n != size) {
+        return 0;
+    }
+    for (i = 0; i < n; i++) {
+        if (buf[i] == '\n' || buf[i] == '\r') {
+            buf[i] = 0;
+        }
+    }
+    p = D_80116C70;
+    for (i = 0; i < 300; i++) {
+        D_801410E0[i] = p;
+        while (*p != 0) {
+            p++;
+        }
+        if (i < 299) {
+            while (*p == 0) {
+                p++;
+            }
+        }
+    }
+    return 1;
+}
 
 void func_80086F78(void) {
 
@@ -81,7 +133,43 @@ s8 func_80086F80(u8 font, u8 a, u8 b) {
     return r;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_27A40", func_8008711C);
+s32 func_8008711C(u8 font, u8 a, u8 pct) {
+    s16 lo;
+    s16 hi;
+    s16 mid;
+    s16 f1;
+    Kern1_ *t;
+    Kern2_ *k;
+    u16 i;
+
+    lo = 0;
+    f1 = 0xFF;
+    if (D_800F2808 < font) {
+        return 0;
+    }
+    hi = D_800F2800[font].n;
+    t = D_800F2800[font].tbl;
+    while (lo <= hi) {
+        mid = (lo + hi) / 2;
+        if (a == t[mid].ch) {
+            f1 = mid;
+            break;
+        }
+        if (t[mid].ch < a) {
+            lo = mid + 1;
+        } else {
+            hi = mid - 1;
+        }
+    }
+    if (f1 != 0xFF) {
+        t[f1].has = 1;
+        k = t[f1].list;
+        for (i = 0; i < t[f1].n; i++, k++) {
+            k->k = k->k * pct / 100;
+        }
+    }
+    return 1;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_27A40", func_80087260);
 
@@ -89,7 +177,28 @@ void func_8008744C(void *arg0) {
     (*(f32 *)((u8 *)(arg0) + 0x18)) = (f32) (*(s32 *)((u8 *)(arg0) + 0x14));
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_27A40", func_8008745C);
+void func_8008745C(Scr74_ *s, u8 fast) {
+    s32 i;
+    s32 y;
+    s32 drawn;
+
+    drawn = 0;
+    y = 0;
+    for (i = 0; i < s->count; i++) {
+        y = (s32)s->pos + i * 20;
+        if (s->top < y && y < s->bottom) {
+            func_80087260(s->lines[i].str, s->a4, s->a8, y, s->lines[i].flag == 0);
+            drawn++;
+        }
+    }
+    if (drawn == 0 && y < 0) {
+        s->pos = s->start;
+    } else if (fast) {
+        s->pos -= func_800B3024(5) * 120.0f;
+    } else {
+        s->pos -= func_800B3024(5) * 30.0f;
+    }
+}
 
 void func_800876D4(void **tbl, u32 size);
 s32 func_800875A0(void) {
