@@ -96,9 +96,9 @@ void alSynNew(ALSynth5_ *drvr, SynConfig5_ *c) {
     drvr->heap = hp;
 }
 
-void _collectPVoices(void *arg0);
-s32 _timeToSamplesNoRound(void *arg0, s32 arg1);
-s32 __nextSampleTime(void *arg0, void **arg1);
+void _collectPVoices(ALSynth5_ *drvr);
+s32 _timeToSamplesNoRound(ALSynth5_ *synth, s32 micros);
+s32 __nextSampleTime(ALSynth5_ *drvr, Player5_ **client);
 Acmd5_ *alAudioFrame(Acmd5_ *cmdList, s32 *cmdLen, s16 *outBuf, s32 outLen) {
     Player5_ *client;
     Filter5_ *output;
@@ -136,18 +136,16 @@ Acmd5_ *alAudioFrame(Acmd5_ *cmdList, s32 *cmdLen, s16 *outBuf, s32 outLen) {
     return cmdlEnd;
 }
 
-s32 *__allocParam(void) {
-    s32 *temp_v0;
-    s32 *var_v1;
+ALParam5_ *__allocParam(void) {
+    ALParam5_ *update = NULL;
+    ALSynth5_ *drvr = (ALSynth5_ *)D_800FB5B0;
 
-    temp_v0 = *(s32 *)((u8 *)D_800FB5B0 + 0x2C);
-    var_v1 = NULL;
-    if (temp_v0 != NULL) {
-        var_v1 = temp_v0;
-        *(s32 *)((u8 *)D_800FB5B0 + 0x2C) = (s32 *) *var_v1;
-        *var_v1 = NULL;
+    if (drvr->paramList != NULL) {
+        update = drvr->paramList;
+        drvr->paramList = drvr->paramList->next;
+        update->next = NULL;
     }
-    return var_v1;
+    return update;
 }
 
 void __freeParam(ALParam_ *param) {
@@ -157,18 +155,12 @@ void __freeParam(ALParam_ *param) {
 }
 
 
-void _collectPVoices(void *arg0) {
-    s32 var_s0;
-    void *var_s1;
+void _collectPVoices(ALSynth5_ *drvr) {
+    ALLink5_ *dl;
 
-    var_s1 = arg0;
-    var_s0 = (*(s32 *)((u8 *)(var_s1) + 0x14));
-    if (var_s0 != 0) {
-        do {
-            alUnlink(var_s0);
-            alLink(var_s0, var_s1 + 4);
-            var_s0 = (*(s32 *)((u8 *)(var_s1) + 0x14));
-        } while (var_s0 != 0);
+    while ((dl = drvr->pLameList.next) != NULL) {
+        alUnlink(dl);
+        alLink(dl, &drvr->pFreeList);
     }
 }
 
@@ -177,29 +169,29 @@ void _freePVoice(s32 arg0, s32 arg1) {
     ((s32 (*)(s32, s32))alLink)(arg1, arg0 + 0x14);
 }
 
-s32 _timeToSamplesNoRound(void *arg0, s32 arg1) {
-    return (s32) (f32) (((f64) ((f32) arg1 * (f32) *(s32 *)((u8 *)arg0 + 0x44)) / D_80101A30) + D_80101A38);
+s32 _timeToSamplesNoRound(ALSynth5_ *synth, s32 micros) {
+    f32 tmp = (f32)micros * synth->outputRate / D_80101A30 + D_80101A38;
+
+    return (s32)tmp;
 }
 
-s32 _timeToSamples(void *arg0, s32 arg1) {
-    return (s32) (f32) (((f64) ((f32) arg1 * (f32) *(s32 *)((u8 *)arg0 + 0x44)) / D_80101A40) + D_80101A48) & ~0xF;
+s32 _timeToSamples(ALSynth5_ *synth, s32 micros) {
+    /* _timeToSamplesNoRound inlined, with its own copies of the constants. */
+    f32 tmp = (f32)micros * synth->outputRate / D_80101A40 + D_80101A48;
+
+    return (s32)tmp & ~0xF;
 }
 
-s32 __nextSampleTime(void *arg0, void **arg1) {
-    s32 var_a3;
-    void *var_a2;
+s32 __nextSampleTime(ALSynth5_ *drvr, Player5_ **client) {
+    s32 delta = 0x7FFFFFFF;
+    Player5_ *cl;
 
-    *arg1 = NULL;
-    var_a2 = *(s32 *)((u8 *)arg0 + 0x0);
-    var_a3 = 0x7FFFFFFF;
-    if (var_a2 != NULL) {
-        do {
-            if ((*(s32 *)((u8 *)var_a2 + 0x10) - *(s32 *)((u8 *)arg0 + 0x20)) < var_a3) {
-                *arg1 = var_a2;
-                var_a3 = *(s32 *)((u8 *)var_a2 + 0x10) - *(s32 *)((u8 *)arg0 + 0x20);
-            }
-            var_a2 = *(s32 *)((u8 *)var_a2 + 0x0);
-        } while (var_a2 != NULL);
+    *client = NULL;
+    for (cl = drvr->head; cl != NULL; cl = cl->next) {
+        if (cl->samplesLeft - drvr->curSamples < delta) {
+            *client = cl;
+            delta = cl->samplesLeft - drvr->curSamples;
+        }
     }
-    return *(s32 *)((u8 *)(*arg1) + 0x10);
+    return (*client)->samplesLeft;
 }

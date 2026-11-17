@@ -40,20 +40,19 @@ void func_80079DBC(Hdr79_ *h) {
 }
 
 
-void func_80079E48(void *arg0) {
-    Memory_Alloc(*(u16 *)((u8 *)arg0 + 0x4) * 8);
+s32 func_80079E48(u8 *m) {
+    return Memory_Alloc(*(u16 *)(m + 4) * 8);
 }
 
-s32 func_80079E68(void *arg0) {
-    s32 var_v0;
-    u16 temp_a0;
+s32 func_80079E68(u8 *m) {
+    s32 buf;
+    u16 n = *(u16 *)(m + 6);
 
-    temp_a0 = *(u16 *)((u8 *)arg0 + 0x6);
-    var_v0 = 0;
-    if (temp_a0 != 0) {
-        var_v0 = Memory_Alloc(temp_a0 * 0x10);
+    buf = 0;
+    if (n != 0) {
+        buf = Memory_Alloc(n * 0x10);
     }
-    return var_v0;
+    return buf;
 }
 
 void func_80079E90(Col16_ *src, Col16_ *dst, u32 n) {
@@ -100,22 +99,22 @@ INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_8007A858);
 
 INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_8007A9E0);
 
-f32 func_8007AC64(f32 arg0) {
-    f32 temp_fv0;
-    f32 var_fv0;
+f32 func_8007AC64(f32 x) {
+    f32 c;
+    f32 r;
 
-    if (fabsf(arg0) > 1.0f) {
+    if (fabsf(x) > 1.0f) {
         return 0.0f;
     }
-    temp_fv0 = sqrtf(1.0f - (arg0 * arg0));
-    if (temp_fv0 != 0.0f) {
-        return func_8007ADF0(arg0, temp_fv0);
+    c = sqrtf(1.0f - x * x);
+    if (c != 0.0f) {
+        return func_8007ADF0(x, c);
     }
-    var_fv0 = 1.5707964f;
-    if (!(arg0 > 0.0f)) {
-        var_fv0 = -1.5707964f;
+    r = 1.5707964f;
+    if (!(x > 0.0f)) {
+        r = -1.5707964f;
     }
-    return var_fv0;
+    return r;
 }
 
 f32 func_8007AD24(f32 x) {
@@ -144,19 +143,19 @@ f32 func_8007AFAC(f32 x) {
 }
 
 
-void func_8007AFD4(void *arg0, void *arg1, void *arg2) {
-    *(f32 *)((u8 *)arg2 + 0x0) = (f32) ((*(f32 *)((u8 *)arg0 + 0x0) * *(f32 *)((u8 *)arg1 + 0x0)) + (*(f32 *)((u8 *)arg0 + 0x4) * *(f32 *)((u8 *)arg1 + 0x10)) + (*(f32 *)((u8 *)arg0 + 0x8) * *(f32 *)((u8 *)arg1 + 0x20)));
-    *(f32 *)((u8 *)arg2 + 0x4) = (f32) ((*(f32 *)((u8 *)arg0 + 0x0) * *(f32 *)((u8 *)arg1 + 0x4)) + (*(f32 *)((u8 *)arg0 + 0x4) * *(f32 *)((u8 *)arg1 + 0x14)) + (*(f32 *)((u8 *)arg0 + 0x8) * *(f32 *)((u8 *)arg1 + 0x24)));
-    *(f32 *)((u8 *)arg2 + 0x8) = (f32) ((*(f32 *)((u8 *)arg0 + 0x0) * *(f32 *)((u8 *)arg1 + 0x8)) + (*(f32 *)((u8 *)arg0 + 0x4) * *(f32 *)((u8 *)arg1 + 0x18)) + (*(f32 *)((u8 *)arg0 + 0x8) * *(f32 *)((u8 *)arg1 + 0x28)));
-    *(f32 *)((u8 *)arg2 + 0xC) = (f32) ((*(f32 *)((u8 *)arg0 + 0x0) * *(f32 *)((u8 *)arg1 + 0xC)) + (*(f32 *)((u8 *)arg0 + 0x4) * *(f32 *)((u8 *)arg1 + 0x1C)) + (*(f32 *)((u8 *)arg0 + 0x8) * *(f32 *)((u8 *)arg1 + 0x2C)) + *(f32 *)((u8 *)arg0 + 0xC));
-    *(f32 *)((u8 *)arg2 + 0x10) = (f32) ((*(f32 *)((u8 *)arg0 + 0x10) * *(f32 *)((u8 *)arg1 + 0x0)) + (*(f32 *)((u8 *)arg0 + 0x14) * *(f32 *)((u8 *)arg1 + 0x10)) + (*(f32 *)((u8 *)arg0 + 0x18) * *(f32 *)((u8 *)arg1 + 0x20)));
-    *(f32 *)((u8 *)arg2 + 0x14) = (f32) ((*(f32 *)((u8 *)arg0 + 0x10) * *(f32 *)((u8 *)arg1 + 0x4)) + (*(f32 *)((u8 *)arg0 + 0x14) * *(f32 *)((u8 *)arg1 + 0x14)) + (*(f32 *)((u8 *)arg0 + 0x18) * *(f32 *)((u8 *)arg1 + 0x24)));
-    *(f32 *)((u8 *)arg2 + 0x18) = (f32) ((*(f32 *)((u8 *)arg0 + 0x10) * *(f32 *)((u8 *)arg1 + 0x8)) + (*(f32 *)((u8 *)arg0 + 0x14) * *(f32 *)((u8 *)arg1 + 0x18)) + (*(f32 *)((u8 *)arg0 + 0x18) * *(f32 *)((u8 *)arg1 + 0x28)));
-    *(f32 *)((u8 *)arg2 + 0x1C) = (f32) ((*(f32 *)((u8 *)arg0 + 0x10) * *(f32 *)((u8 *)arg1 + 0xC)) + (*(f32 *)((u8 *)arg0 + 0x14) * *(f32 *)((u8 *)arg1 + 0x1C)) + (*(f32 *)((u8 *)arg0 + 0x18) * *(f32 *)((u8 *)arg1 + 0x2C)) + *(f32 *)((u8 *)arg0 + 0x1C));
-    *(f32 *)((u8 *)arg2 + 0x20) = (f32) ((*(f32 *)((u8 *)arg0 + 0x20) * *(f32 *)((u8 *)arg1 + 0x0)) + (*(f32 *)((u8 *)arg0 + 0x24) * *(f32 *)((u8 *)arg1 + 0x10)) + (*(f32 *)((u8 *)arg0 + 0x28) * *(f32 *)((u8 *)arg1 + 0x20)));
-    *(f32 *)((u8 *)arg2 + 0x24) = (f32) ((*(f32 *)((u8 *)arg0 + 0x20) * *(f32 *)((u8 *)arg1 + 0x4)) + (*(f32 *)((u8 *)arg0 + 0x24) * *(f32 *)((u8 *)arg1 + 0x14)) + (*(f32 *)((u8 *)arg0 + 0x28) * *(f32 *)((u8 *)arg1 + 0x24)));
-    *(f32 *)((u8 *)arg2 + 0x28) = (f32) ((*(f32 *)((u8 *)arg0 + 0x20) * *(f32 *)((u8 *)arg1 + 0x8)) + (*(f32 *)((u8 *)arg0 + 0x24) * *(f32 *)((u8 *)arg1 + 0x18)) + (*(f32 *)((u8 *)arg0 + 0x28) * *(f32 *)((u8 *)arg1 + 0x28)));
-    *(f32 *)((u8 *)arg2 + 0x2C) = (f32) ((*(f32 *)((u8 *)arg0 + 0x20) * *(f32 *)((u8 *)arg1 + 0xC)) + (*(f32 *)((u8 *)arg0 + 0x24) * *(f32 *)((u8 *)arg1 + 0x1C)) + (*(f32 *)((u8 *)arg0 + 0x28) * *(f32 *)((u8 *)arg1 + 0x2C)) + *(f32 *)((u8 *)arg0 + 0x2C));
+void func_8007AFD4(f32 a[3][4], f32 b[3][4], f32 out[3][4]) {
+    out[0][0] = a[0][0] * b[0][0] + a[0][1] * b[1][0] + a[0][2] * b[2][0];
+    out[0][1] = a[0][0] * b[0][1] + a[0][1] * b[1][1] + a[0][2] * b[2][1];
+    out[0][2] = a[0][0] * b[0][2] + a[0][1] * b[1][2] + a[0][2] * b[2][2];
+    out[0][3] = a[0][0] * b[0][3] + a[0][1] * b[1][3] + a[0][2] * b[2][3] + a[0][3];
+    out[1][0] = a[1][0] * b[0][0] + a[1][1] * b[1][0] + a[1][2] * b[2][0];
+    out[1][1] = a[1][0] * b[0][1] + a[1][1] * b[1][1] + a[1][2] * b[2][1];
+    out[1][2] = a[1][0] * b[0][2] + a[1][1] * b[1][2] + a[1][2] * b[2][2];
+    out[1][3] = a[1][0] * b[0][3] + a[1][1] * b[1][3] + a[1][2] * b[2][3] + a[1][3];
+    out[2][0] = a[2][0] * b[0][0] + a[2][1] * b[1][0] + a[2][2] * b[2][0];
+    out[2][1] = a[2][0] * b[0][1] + a[2][1] * b[1][1] + a[2][2] * b[2][1];
+    out[2][2] = a[2][0] * b[0][2] + a[2][1] * b[1][2] + a[2][2] * b[2][2];
+    out[2][3] = a[2][0] * b[0][3] + a[2][1] * b[1][3] + a[2][2] * b[2][3] + a[2][3];
 }
 
 INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_8007B230);
@@ -180,16 +179,11 @@ void func_8007B510(u16 n) {
 INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_8007B598);
 
 s32 func_8007BE30(void) {
-    s32 *var_v0;
-    s32 var_v1;
+    s32 i;
 
-    var_v1 = 0x1F;
-    var_v0 = &D_8014551C;
-    do {
-        *var_v0 = 0;
-        var_v1 -= 1;
-        var_v0 -= 1;
-    } while (var_v1 >= 0);
+    for (i = 0; i < 32; i++) {
+        (&D_801454A0)[i] = 0;
+    }
     return 1;
 }
 

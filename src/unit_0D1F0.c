@@ -118,52 +118,37 @@ void func_8006D6EC(Ring6D_ *s, u32 t) {
     s->a = s->a + (f32) t * 0.001;
 }
 
-void func_8006DA40(void *arg0) {
-    s32 temp_a0;
-
-    temp_a0 = *(s32 *)((u8 *)arg0 + 0x4);
-    if (temp_a0 != -1) {
-        func_800757E8(temp_a0);
+void func_8006DA40(S_D_801455C0 *e) {
+    if (e->f4 != -1) {
+        func_800757E8(e->f4);
     }
-    *(s32 *)((u8 *)arg0 + 0x0) = 0;
-    *(s32 *)((u8 *)arg0 + 0x4) = -1;
+    e->f0 = 0;
+    e->f4 = -1;
 }
 
 void func_8006DA88(void) {
-    u32 var_a0;
+    u32 i;
 
-    var_a0 = 0;
-    do {
-        D_801455C0[var_a0].f0 = 0;
-        D_801455C0[var_a0].f4 = -1;
-        var_a0 += 1;
-    } while (var_a0 < 8U);
+    for (i = 0; i < 8; i++) {
+        D_801455C0[i].f0 = 0;
+        D_801455C0[i].f4 = -1;
+    }
 }
 
-void func_8006DAC4(s32 arg0) {
-    void *var_s0;
-    u32 var_s1;
+void func_8006DAC4(s32 dt) {
+    u32 i;
 
-    var_s1 = 0;
-    var_s0 = &(*(u8 *)&D_801455C0);
-    do {
-        func_8006CF10(var_s0, arg0);
-        var_s1 += 1;
-        var_s0 += 0x550;
-    } while (var_s1 < 8U);
+    for (i = 0; i < 8; i++) {
+        func_8006CF10((s32 *)&D_801455C0[i], dt);
+    }
 }
 
-void func_8006DB1C(s32 arg0, s32 arg1) {
-    void *var_s0;
-    u32 var_s1;
+void func_8006DB1C(s32 a, s32 b) {
+    u32 i;
 
-    var_s1 = 0;
-    var_s0 = &(*(u8 *)&D_801455C0);
-    do {
-        func_8006D15C(var_s0, arg0, arg1 & 0xFF);
-        var_s1 += 1;
-        var_s0 += 0x550;
-    } while (var_s1 < 8U);
+    for (i = 0; i < 8; i++) {
+        func_8006D15C((s32 *)&D_801455C0[i], a, b & 0xFF);
+    }
 }
 
 void func_8006DB84(s32 a, f32 b, u8 c) {
@@ -238,23 +223,23 @@ void func_8006DEF4(u16 *pal, s32 *idx) {
     }
 }
 
-void func_8006DF34(s32 arg0) {
-    register s32 var_a1;
-    register s32 *var_v1;
-    register u16 *var_a2;
-    register s16 temp_v0;
+void func_8006DF34(s16 *samples) {
+    register s32 i;
+    register s32 *idx;
+    register u16 *dst;
+    register s16 v;
 
-    if ((NULL != (*(void * *)&D_800F05E0)) && (D_800F05E4 != 0) && ((1 != D_8014C1A8) & (D_80138AA8 != 0))) {
-        var_a2 = (*(u32 *)((u8 *)((*(void * *)&D_800F05E0)) + 0x4));
-        var_a1 = 0;
-        var_v1 = &D_8014D980;
+    if (*(void **)&D_800F05E0 != NULL && D_800F05E4 != 0 && ((1 != D_8014C1A8) & (D_80138AA8 != 0))) {
+        dst = ((BufD_ *)*(void **)&D_800F05E0)->unk4;
+        i = 0;
+        idx = &D_8014D980;
         do {
-            temp_v0 = *(s16 *)((2 * *var_v1) + arg0);
-            var_v1 += 1;
-            *var_a2 = temp_v0;
-            var_a2 += 1;
-            var_a1 += 1;
-        } while (var_a1 < 0x400);
+            v = samples[*idx];
+            idx++;
+            *dst = v;
+            dst++;
+            i++;
+        } while (i < 0x400);
     }
 }
 

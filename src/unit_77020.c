@@ -1,5 +1,9 @@
 #include "common.h"
 #include "include_asm.h"
+/* nusys Controller Pak manager types (NUSiCommonMesg / NUContPakFile). */
+typedef struct { s32 status; void *queue; s32 channel; } Pfs7_;
+typedef struct { Pfs7_ *pfs; s32 file_no; s32 error; s32 type; } NuPakFile_;
+typedef struct { u8 p0[0xC]; void *data; } NuSiMesg_;
 typedef struct { void *pfs; s32 file_no; } PakFileS_;
 typedef struct { PakFileS_ *file; u8 *name; u8 *ext; s32 size; s32 create; } ArgsS_;
 typedef struct { u8 p0[0xC]; ArgsS_ *args; } ReqS_;
@@ -41,25 +45,20 @@ void func_800D6480(void) {
     func_800D74F0(&D_800FB1E0);
 }
 
-s32 func_800D64A0(void *arg0) {
-    s32 temp_v0;
-    void *temp_a1;
-    void *temp_s0;
+s32 func_800D64A0(NuSiMesg_ *mesg) {
+    NuPakFile_ *file = mesg->data;
+    s32 ret;
 
-    temp_s0 = *(s32 *)((u8 *)arg0 + 0xC);
-    temp_a1 = *(s32 *)((u8 *)temp_s0 + 0x0);
-    *(s32 *)((u8 *)temp_s0 + 0xC) = 0;
-    temp_v0 = osPfsInitPak(&D_8014EB40, temp_a1, *(s32 *)((u8 *)temp_a1 + 0x8));
-    if (temp_v0 == 0) {
-        *(s32 *)((u8 *)temp_s0 + 0xC) = 1;
+    file->type = 0;
+    ret = osPfsInitPak(&D_8014EB40, file->pfs, file->pfs->channel);
+    if (ret == 0) {
+        file->type = 1;
     }
-    return temp_v0;
+    return ret;
 }
 
-void func_800D64F0(s32 arg0) {
-  void ***temp_a1;
-  temp_a1 = *((s32 *) (((u8 *) arg0) + 0xC));
-  osPfsFreeBlocks(*(*temp_a1), (*((s32 *) (((u8 *) arg0) + 0xC))) + 4);
+void func_800D64F0(NuSiMesg_ *mesg) {
+    osPfsFreeBlocks(*(s32 *)((NuPakFile_ *)mesg->data)->pfs, &((NuPakFile_ *)mesg->data)->file_no);
 }
 
 s32 func_800D6518(ReqB_ *r) {
@@ -80,29 +79,24 @@ s32 func_800D6558(ReqS_ *r) {
     return ret;
 }
 
-void func_800D6610(void *arg0) {
-    void *temp_v0;
+void func_800D6610(NuSiMesg_ *mesg) {
+    ArgsS_ *a = mesg->data;
 
-    temp_v0 = (*(s32 *)((u8 *)(arg0) + 0xC));
-    osPfsDeleteFile(*(s32 *)(*(s32 *)((u8 *)(temp_v0) + 0x0)), D_800FB1B0, D_800FB1B4, (*(s32 *)((u8 *)(temp_v0) + 0x4)), (*(s32 *)((u8 *)(temp_v0) + 0x8)));
+    osPfsDeleteFile(a->file->pfs, D_800FB1B0, D_800FB1B4, a->name, a->ext);
 }
 
-void func_800D6650(void *arg0) {
-    void *temp_v0;
-    void *temp_v1;
+void func_800D6650(NuSiMesg_ *mesg) {
+    ArgsS_ *a = mesg->data;
 
-    temp_v1 = *(s32 *)((u8 *)arg0 + 0xC);
-    temp_v0 = *(s32 *)((u8 *)temp_v1 + 0x0);
-    osPfsFileState(*(s32 *)((u8 *)temp_v0 + 0x0), *(s32 *)((u8 *)temp_v0 + 0x4), *(s32 *)((u8 *)temp_v1 + 0x4));
+    osPfsFileState((s32)a->file->pfs, a->file->file_no, (s32)a->name);
 }
 
-void func_800D667C(void *arg0) {
-    void *temp_v0;
+void func_800D667C(NuSiMesg_ *mesg) {
+    ArgsS_ *a = mesg->data;
 
-    temp_v0 = (*(s32 *)((u8 *)(arg0) + 0xC));
-    osPfsNumFiles(*(s32 *)(*(s32 *)((u8 *)(temp_v0) + 0x0)), (*(s32 *)((u8 *)(temp_v0) + 0x4)), (*(s32 *)((u8 *)(temp_v0) + 0x8)));
+    osPfsNumFiles(a->file->pfs, a->name, a->ext);
 }
 
-void func_800D66A8(void *arg0) {
-    osPfsRepairId(*(s32 *)(*(s32 *)((u8 *)(arg0) + 0xC)));
+void func_800D66A8(NuSiMesg_ *mesg) {
+    osPfsRepairId(((NuPakFile_ *)mesg->data)->pfs);
 }
