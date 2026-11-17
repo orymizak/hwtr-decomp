@@ -333,7 +333,7 @@ void func_8008AD04(void) {
             l = next;
         }
         if (n == 0) {
-            *(s32 *) ((u8 *)p + 0x6DC) = 0;
+            p->unk6DC = 0;
         }
     }
     for (i = 0; i < D_800F3024; i++) {

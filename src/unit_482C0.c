@@ -76,7 +76,7 @@ s32 func_800A780C(u8 ch, u8 cp) {
 
     c = func_800960D8(ch);
     best = 0;
-    if (c->unk47B != 0) {
+    if (c->finished != 0) {
         return 1;
     }
     k = cp - 1;
@@ -89,8 +89,8 @@ s32 func_800A780C(u8 ch, u8 cp) {
     }
     if ((D_800F391A == 0) & (ok == 0)) {
         if ((u8)func_8009610C(ch) != 0) {
-            if (c->unk479 != 0 || k != D_800F3910 - 1) {
-                if (k != c->unk479 - 1) {
+            if (c->checkpoint != 0 || k != D_800F3910 - 1) {
+                if (k != c->checkpoint - 1) {
                     D_8014C0A8(11, 0, 1.0f, 1.0f);
                 }
             }
@@ -106,7 +106,7 @@ s32 func_800A780C(u8 ch, u8 cp) {
             }
         }
         c->checkpoints[k] = 1;
-        c->unk479++;
+        c->checkpoint++;
         goto done;
     }
     if (k != D_800F3910 - 1) {
@@ -138,11 +138,11 @@ s32 func_800A780C(u8 ch, u8 cp) {
             c->lapStart[c->lap] = t;
             c->lap++;
             if (D_800F3919 == 0 && c->lap == D_800F390C) {
-                c->unk47B = 1;
+                c->finished = 1;
             }
         }
     }
-    c->unk479 = 0;
+    c->checkpoint = 0;
     for (i = 0; i < 10; i++) {
         c->checkpoints[i] = 0;
     }
@@ -182,7 +182,7 @@ s32 func_800A7C2C(void) {
 s32 func_800A7C34(u8 i) {
     Car *p = func_800960D8(i);
 
-    if (p->unk47B != 0) {
+    if (p->finished != 0) {
         p->unk014 = 0.0f;
         p->unk018 = 0.0f;
         p->unk024 = 1;

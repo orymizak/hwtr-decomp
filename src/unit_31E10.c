@@ -359,7 +359,7 @@ void func_800937E8(Car *p, f32 dt) {
         p->savedRoom = p->roomObj->list->key;
         *(B88_ *)p->savedState = *func_8008637C(p);
     }
-    if (p->b4B8 != 0 || p->unk47B != 0) {
+    if (p->b4B8 != 0 || p->finished != 0) {
         func_800ACDC8((u8 *)&p->m2C, dt);
         func_8007A9E0((u8 *)&p->rot);
     }

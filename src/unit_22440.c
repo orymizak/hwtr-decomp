@@ -46,14 +46,14 @@ void func_80084FDC(void) {
     for (i = 0; i < 6; i++) {
         c1 = func_800960D8(i);
         if (c1->state != 1) {
-            D_80114830[i].f24 = *(u32 *)((u8 *)c1 + 0x474) / 1000.0f;
+            D_80114830[i].f24 = c1->unk474 / 1000.0f;
         }
         n = D_80115824 - 1;
         D_80114830[i].f218 = (u32)(n - c1->lap) * D_80115820 + D_80114830[i].f24;
     }
     for (i = 0; i < 6; i++) {
         car = func_800960D8(D_80114830[i].id);
-        if (car->state != 1 || car->b4B8 != 0 || car->unk47B != 0) {
+        if (car->state != 1 || car->b4B8 != 0 || car->finished != 0) {
             continue;
         }
         if ((car->impulse.x) < 0.0f || 0.0f < (car->impulse.x) || (car->impulse.y) < 0.0f || 0.0f < (car->impulse.y) || (car->impulse.z) < 0.0f || 0.0f < (car->impulse.z)) {

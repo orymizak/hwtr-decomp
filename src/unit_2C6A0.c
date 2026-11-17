@@ -494,8 +494,8 @@ void func_8008C548(void) {
                     c = func_800960D8(i);
                     if (c->flags & 3) {
                         c->yaw = 1.0f;
-                        *(s32 *)((u8 *)c + 0x14) = 0;
-                        *(s32 *)((u8 *)c + 0x18) = 0;
+                        c->unk014 = 0.0f;
+                        c->unk018 = 0.0f;
                         c->unk024 = 1;
                         c->unk025 = 0;
                         c->unk027 = 0;
@@ -514,8 +514,8 @@ void func_8008C548(void) {
             c = func_800960D8(i);
             if (c->flags & 3) {
                 c->yaw = 1.0f;
-                *(s32 *)((u8 *)c + 0x14) = 0;
-                *(s32 *)((u8 *)c + 0x18) = 0;
+                c->unk014 = 0.0f;
+                c->unk018 = 0.0f;
                 c->unk024 = 1;
                 c->unk025 = 0;
                 c->unk027 = 0;

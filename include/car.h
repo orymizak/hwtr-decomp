@@ -107,11 +107,11 @@ typedef struct Car {
     /* 0x444 */ u8 checkpoints[12]; /* passed flags per checkpoint */
     /* 0x450 */ u32 lapStart[8]; /* race time at the start of each lap */
     /* 0x470 */ u32 bestLap;
-    /* 0x474 */ s32 unk474;
+    /* 0x474 */ u32 unk474;
     /* 0x478 */ u8 lap;
-    /* 0x479 */ u8 unk479;
+    /* 0x479 */ u8 checkpoint; /* next checkpoint index */
     /* 0x47A */ u8 pad47A[0x1];
-    /* 0x47B */ u8 unk47B;
+    /* 0x47B */ u8 finished; /* set when the last lap is completed */
     /* 0x47C */ Vec3f v47C;
     /* 0x488 */ Vec3f v488;
     /* 0x494 */ Vec3f v494;
@@ -155,7 +155,8 @@ typedef struct Car {
     /* 0x6CD */ u8 unk6CD;
     /* 0x6CE */ u8 pad6CE[0xA];
     /* 0x6D8 */ s32 state;
-    /* 0x6DC */ u8 pad6DC[0x34];
+    /* 0x6DC */ s32 unk6DC;
+    /* 0x6E0 */ u8 pad6E0[0x30];
     /* 0x710 */ u8 unk710;
     /* 0x711 */ u8 pad711[0x3];
     /* 0x714 */ Vec3f planePt;

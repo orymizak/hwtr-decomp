@@ -1169,7 +1169,7 @@ void func_800A3978(RObj_ *o, u16 idx, s32 arg2) {
             } else {
                 c->flags &= ~0x4000;
                 c->unk474 = r->time * 10;
-                if ((u32)c->unk474 < D_8011C830[c->unk479]) {
+                if (c->unk474 < D_8011C830[c->checkpoint]) {
                     c->unk474 += D_8011C824;
                 }
             }
