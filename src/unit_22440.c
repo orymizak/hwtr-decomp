@@ -71,13 +71,13 @@ void func_80084FDC(void) {
             (car->impulse.y) = 0.0f;
             (car->impulse.z) = 0.0f;
         }
-        if ((car->unk0E4) < 0.0f || 0.0f < (car->unk0E4) || (car->unk0E8) < 0.0f || 0.0f < (car->unk0E8) || (car->unk0EC) < 0.0f || 0.0f < (car->unk0EC)) {
-            D_80114830[i].v240.x = (car->unk0E4) + D_80114830[i].v240.x;
-            D_80114830[i].v240.y = (car->unk0E8) + D_80114830[i].v240.y;
-            D_80114830[i].v240.z = (car->unk0EC) + D_80114830[i].v240.z;
-            (car->unk0E4) = 0.0f;
-            (car->unk0E8) = 0.0f;
-            (car->unk0EC) = 0.0f;
+        if ((car->vE4.x) < 0.0f || 0.0f < (car->vE4.x) || (car->vE4.y) < 0.0f || 0.0f < (car->vE4.y) || (car->vE4.z) < 0.0f || 0.0f < (car->vE4.z)) {
+            D_80114830[i].v240.x = (car->vE4.x) + D_80114830[i].v240.x;
+            D_80114830[i].v240.y = (car->vE4.y) + D_80114830[i].v240.y;
+            D_80114830[i].v240.z = (car->vE4.z) + D_80114830[i].v240.z;
+            (car->vE4.x) = 0.0f;
+            (car->vE4.y) = 0.0f;
+            (car->vE4.z) = 0.0f;
         }
     }
 }

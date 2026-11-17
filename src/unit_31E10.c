@@ -5,8 +5,8 @@ typedef struct { s32 x; s32 y; s32 z; } V3i9_;
 typedef struct { s32 d[0x22]; } B88_;
 typedef struct { f32 m[3][4]; } M_D34;
 typedef struct { f32 x; f32 y; f32 z; } V3_164;
-typedef struct { f32 x; f32 y; f32 z; } V3_1B0;
-typedef struct { f32 m[3][3]; } M3_1B0;
+typedef Vec3f V3_1B0;
+typedef Mtx3f M3_1B0;
 extern void (*D_80141760)(u8, u8, V3_1B0);
 extern void (*D_80145590)(u8, u8);
 extern void (*D_8014C11C)(u8, f32);
@@ -253,22 +253,22 @@ void func_80093164(Car *p, f32 dt) {
         p->unk028 = p->unk026;
         p->unk029 = p->unk027;
         f = 0;
-        if (p->cnt3E7 == p->nPoints && p->rot.m[2][2] > 0.9848f && (*(s32 **)(*(u8 **)((u8 *)p + 0x758) + 0x70))[2] == 0 && p->b4B8 == 0 && (p->flags & 0x20) && p->fBC > 88.0f) {
+        if (p->cnt3E7 == p->nPoints && p->rot.m[2][2] > 0.9848f && p->roomObj->list->next == NULL && p->b4B8 == 0 && (p->flags & 0x20) && p->fBC > 88.0f) {
             f = 1;
         }
-        f = f || p->unk630 == -1;
+        f = f || p->savedRoom == -1;
         if (f) {
-            *(V3i9_ *)((u8 *)p + 0x600) = *(V3i9_ *)((u8 *)p + 0x98);
-            p->unk60C = p->rot.m[0][0];
-            p->unk610 = p->rot.m[0][1];
-            p->unk614 = p->rot.m[0][2];
-            p->unk618 = p->rot.m[1][0];
-            p->unk61C = p->rot.m[1][1];
-            p->unk620 = p->rot.m[1][2];
-            p->unk624 = p->rot.m[2][0];
-            p->unk628 = p->rot.m[2][1];
-            p->unk62C = p->rot.m[2][2];
-            p->unk630 = **(s32 **)(*(u8 **)((u8 *)p + 0x758) + 0x70);
+            p->savedPos = p->pos;
+            p->savedRot.m[0][0] = p->rot.m[0][0];
+            p->savedRot.m[0][1] = p->rot.m[0][1];
+            p->savedRot.m[0][2] = p->rot.m[0][2];
+            p->savedRot.m[1][0] = p->rot.m[1][0];
+            p->savedRot.m[1][1] = p->rot.m[1][1];
+            p->savedRot.m[1][2] = p->rot.m[1][2];
+            p->savedRot.m[2][0] = p->rot.m[2][0];
+            p->savedRot.m[2][1] = p->rot.m[2][1];
+            p->savedRot.m[2][2] = p->rot.m[2][2];
+            p->savedRoom = p->roomObj->list->key;
         }
         if (p->pickupFx[0] != 0 && (p->unk024 != 0 || p->unk018 > 0.2f) && p->cnt3E7 == p->nPoints) {
             col.x = p->rot.m[0][1];
@@ -290,18 +290,18 @@ void func_80093164(Car *p, f32 dt) {
         }
     }
     f = 0;
-    if ((p->flags & 1) && p->timerFlag != 0 && *(u32 *)((u8 *)p + 0x4A0) > 500 && p->vel.z > 0.0f) {
+    if ((p->flags & 1) && p->timerFlag != 0 && p->unk4A0 > 500 && p->vel.z > 0.0f) {
         f = func_800A76D8() - p->unk770 > 500;
     }
-    func_800ACDC8((u8 *)p + 0x2C, dt);
+    func_800ACDC8((u8 *)&p->m2C, dt);
     if (f && p->vel.z < 0.0f && D_8014169C(2) == 0) {
         func_800AEFF8();
     }
-    if ((p->flags & 1) && p->b4B8 != 0 && *(s32 *)((u8 *)p + 0x4BC) == 500 && D_8014169C(2) == 0) {
+    if ((p->flags & 1) && p->b4B8 != 0 && p->unk4BC == 500 && D_8014169C(2) == 0) {
         func_800AEFF8();
     }
     if (p->b13C == 0) {
-        func_8007A9E0((u8 *)p + 0xC0);
+        func_8007A9E0((u8 *)&p->rot);
         func_80095804(p);
     }
     if (p->b4B8 == 0) {
@@ -312,7 +312,7 @@ void func_80093164(Car *p, f32 dt) {
             p->b13C = 0;
         }
     }
-    if (((u8 *)p)[0x3F4] != 0) {
+    if (p->r3EC.b8 != 0) {
         v = p->unk014;
     } else {
         v = p->unk018;
@@ -327,7 +327,7 @@ void func_80093164(Car *p, f32 dt) {
     } else {
         p->unk76C = 0;
     }
-    if (*(u32 *)((u8 *)p + 0x76C) > 500) {
+    if (p->unk76C > 500) {
         func_8009887C(p);
     }
 }
@@ -337,31 +337,31 @@ void func_800937E8(Car *p, f32 dt) {
 
     if (p->unk6C1 != 0) {
         func_80094234();
-        func_800863A4(p, (u8 *)p + 0x634);
+        func_800863A4(p, p->savedState);
         p->unk6C1 = 0;
     }
     f = 0;
-    if (p->cnt3E7 == p->nPoints && *(f32 *) ((u8 *)p + 0xE0) > 0.9848f && p->b4B8 == 0) {
-        f = (*(u32 *) ((u8 *)p + 4) >> 5) & 1;
+    if (p->cnt3E7 == p->nPoints && p->rot.m[2][2] > 0.9848f && p->b4B8 == 0) {
+        f = (p->flags >> 5) & 1;
     }
-    f = f | (*(s32 *) ((u8 *)p + 0x630) == -1);
+    f = f | (p->savedRoom == -1);
     if (f != 0) {
-        *(V3i9_ *) ((u8 *)p + 0x600) = *(V3i9_ *) ((u8 *)p + 0x98);
-        *(f32 *) ((u8 *)p + 0x60C) = *(f32 *) ((u8 *)p + 0xC0);
-        *(f32 *) ((u8 *)p + 0x610) = *(f32 *) ((u8 *)p + 0xC4);
-        *(f32 *) ((u8 *)p + 0x614) = *(f32 *) ((u8 *)p + 0xC8);
-        *(f32 *) ((u8 *)p + 0x618) = *(f32 *) ((u8 *)p + 0xCC);
-        *(f32 *) ((u8 *)p + 0x61C) = *(f32 *) ((u8 *)p + 0xD0);
-        *(f32 *) ((u8 *)p + 0x620) = *(f32 *) ((u8 *)p + 0xD4);
-        *(f32 *) ((u8 *)p + 0x624) = *(f32 *) ((u8 *)p + 0xD8);
-        *(f32 *) ((u8 *)p + 0x628) = *(f32 *) ((u8 *)p + 0xDC);
-        *(f32 *) ((u8 *)p + 0x62C) = *(f32 *) ((u8 *)p + 0xE0);
-        *(s32 *) ((u8 *)p + 0x630) = **(s32 **) (*(u8 **) ((u8 *)p + 0x758) + 0x70);
-        *(B88_ *) ((u8 *)p + 0x634) = *func_8008637C(p);
+        p->savedPos = p->pos;
+        p->savedRot.m[0][0] = p->rot.m[0][0];
+        p->savedRot.m[0][1] = p->rot.m[0][1];
+        p->savedRot.m[0][2] = p->rot.m[0][2];
+        p->savedRot.m[1][0] = p->rot.m[1][0];
+        p->savedRot.m[1][1] = p->rot.m[1][1];
+        p->savedRot.m[1][2] = p->rot.m[1][2];
+        p->savedRot.m[2][0] = p->rot.m[2][0];
+        p->savedRot.m[2][1] = p->rot.m[2][1];
+        p->savedRot.m[2][2] = p->rot.m[2][2];
+        p->savedRoom = p->roomObj->list->key;
+        *(B88_ *)p->savedState = *func_8008637C(p);
     }
     if (p->b4B8 != 0 || p->unk47B != 0) {
-        func_800ACDC8((u8 *)p + 0x2C, dt);
-        func_8007A9E0((u8 *)p + 0xC0);
+        func_800ACDC8((u8 *)&p->m2C, dt);
+        func_8007A9E0((u8 *)&p->rot);
     }
 }
 
@@ -540,7 +540,7 @@ void func_800961B0(Car *p, u8 id, u8 flip) {
         p->vel.x *= 0.5f;
         p->vel.y *= 0.5f;
         p->vel.z *= 0.5f;
-        v = *(V3_1B0 *)((u8 *)p + 0xB0);
+        v = p->vel;
         if (p->flags & 1) {
             func_800A5AB0(p);
         }
@@ -555,8 +555,8 @@ void func_800961B0(Car *p, u8 id, u8 flip) {
         p->angVel.x += dx;
         p->angVel.y += dy;
         p->angVel.z += dz;
-        r = (M3_1B0 *)((u8 *)p + 0xC0);
-        in = (M3_1B0 *)((u8 *)p + 0x2C);
+        r = &p->rot;
+        in = &p->m2C;
         t.m[0][0] = r->m[0][0];
         t.m[0][1] = r->m[1][0];
         t.m[0][2] = r->m[2][0];
@@ -587,7 +587,7 @@ void func_800961B0(Car *p, u8 id, u8 flip) {
         w.x = b.m[0][0] * p->angVel.x + b.m[0][1] * p->angVel.y + b.m[0][2] * p->angVel.z;
         w.y = b.m[1][0] * p->angVel.x + b.m[1][1] * p->angVel.y + b.m[1][2] * p->angVel.z;
         w.z = b.m[2][0] * p->angVel.x + b.m[2][1] * p->angVel.y + b.m[2][2] * p->angVel.z;
-        *(V3_1B0 *)((u8 *)p + 0xE4) = w;
+        p->vE4 = w;
         p->flags2 &= ~2;
         D_80141760(p->id, id, v);
         if (p->flags & 1) {

@@ -183,7 +183,7 @@ void func_800A5AB0(Car *c) {
         p->v148 = t;
         p->w64 = 6;
         dst = p->p5C;
-        src = ((P758a5_ *)c->roomObj)->p54;
+        src = c->roomObj->rooms;
         if (c->state != 1) {
             src += i;
         }

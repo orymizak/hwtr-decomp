@@ -31,10 +31,26 @@ typedef struct {
     /* 0x6C */ f32 rate;
 } CarPoint; /* size = 0x70 */
 
+/* Room-system node and the object that links the car into rooms (see unit_39C90). */
+typedef struct CarRoomNode {
+    /* 0x0 */ s32 key;
+    /* 0x4 */ struct CarRoomNode *prev;
+    /* 0x8 */ struct CarRoomNode *next;
+    /* 0xC */ u16 cnt;
+} CarRoomNode;
+typedef struct {
+    /* 0x00 */ u8 pad0[0x54];
+    /* 0x54 */ u16 *rooms;
+    /* 0x58 */ u8 pad58[0x18];
+    /* 0x70 */ CarRoomNode *list;
+} CarRoomObj;
+
 /* Value with limits (0x1C). */
 typedef struct {
     /* 0x00 */ f32 cur;
-    /* 0x04 */ u8 pad4[0x10];
+    /* 0x04 */ u8 pad4[4];
+    /* 0x08 */ u8 b8;
+    /* 0x09 */ u8 pad9[0xB];
     /* 0x14 */ f32 hi;
     /* 0x18 */ f32 lo;
 } CarRange;
@@ -56,7 +72,9 @@ typedef struct Car {
     /* 0x027 */ u8 unk027;
     /* 0x028 */ u8 unk028;
     /* 0x029 */ u8 unk029;
-    /* 0x02A */ u8 pad02A[0x4A];
+    /* 0x02A */ u8 pad02A[0x2];
+    /* 0x02C */ Mtx3f m2C;
+    /* 0x050 */ u8 pad050[0x24];
     /* 0x074 */ f32 scale;
     /* 0x078 */ f32 invScale;
     /* 0x07C */ f32 topSpeed;
@@ -67,9 +85,7 @@ typedef struct Car {
     /* 0x0B0 */ Vec3f vel;
     /* 0x0BC */ f32 fBC;
     /* 0x0C0 */ Mtx3f rot;
-    /* 0x0E4 */ f32 unk0E4;
-    /* 0x0E8 */ f32 unk0E8;
-    /* 0x0EC */ f32 unk0EC;
+    /* 0x0E4 */ Vec3f vE4;
     /* 0x0F0 */ u8 pad0F0[0x24];
     /* 0x114 */ Vec3f angVel;
     /* 0x120 */ u8 pad120[0x4];
@@ -99,7 +115,7 @@ typedef struct Car {
     /* 0x47C */ Vec3f v47C;
     /* 0x488 */ Vec3f v488;
     /* 0x494 */ Vec3f v494;
-    /* 0x4A0 */ s32 unk4A0;
+    /* 0x4A0 */ u32 unk4A0;
     /* 0x4A4 */ s32 unk4A4;
     /* 0x4A8 */ s32 timerLast;
     /* 0x4AC */ u32 timerAcc;
@@ -125,18 +141,11 @@ typedef struct Car {
     /* 0x5E8 */ f32 unk5E8;
     /* 0x5EC */ f32 unk5EC;
     /* 0x5F0 */ f32 unk5F0;
-    /* 0x5F4 */ u8 pad5F4[0x18];
-    /* 0x60C */ f32 unk60C;
-    /* 0x610 */ f32 unk610;
-    /* 0x614 */ f32 unk614;
-    /* 0x618 */ f32 unk618;
-    /* 0x61C */ f32 unk61C;
-    /* 0x620 */ f32 unk620;
-    /* 0x624 */ f32 unk624;
-    /* 0x628 */ f32 unk628;
-    /* 0x62C */ f32 unk62C;
-    /* 0x630 */ s32 unk630;
-    /* 0x634 */ u8 pad634[0x88];
+    /* 0x5F4 */ u8 pad5F4[0xC];
+    /* 0x600 */ Vec3f savedPos; /* respawn snapshot */
+    /* 0x60C */ Mtx3f savedRot;
+    /* 0x630 */ s32 savedRoom;
+    /* 0x634 */ u8 savedState[0x88];
     /* 0x6BC */ u8 pickupFx[5];
     /* 0x6C1 */ u8 unk6C1;
     /* 0x6C2 */ u8 pad6C2[0x1];
@@ -159,14 +168,14 @@ typedef struct Car {
     /* 0x74C */ f32 unk74C;
     /* 0x750 */ f32 unk750;
     /* 0x754 */ u8 pad754[0x4];
-    /* 0x758 */ void *roomObj;
+    /* 0x758 */ CarRoomObj *roomObj;
     /* 0x75C */ u32 unk75C;
     /* 0x760 */ u32 unk760;
     /* 0x764 */ u32 unk764;
     /* 0x768 */ u8 unk768;
     /* 0x769 */ u8 unk769;
     /* 0x76A */ u8 pad76A[0x2];
-    /* 0x76C */ s32 unk76C;
+    /* 0x76C */ u32 unk76C;
     /* 0x770 */ s32 unk770;
     /* 0x774 */ s32 unk774;
     /* 0x778 */ u8 b778;
