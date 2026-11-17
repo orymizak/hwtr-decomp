@@ -210,25 +210,15 @@ void func_800A5AB0(Cara5_ *c) {
 }
 
 void func_800A6630(void *arg0) {
-  s32 *var_s0;
-  unsigned int new_var;
-  s32 *var_s1;
-  u32 var_s2;
-  var_s1 = &D_8011E870;
-  var_s2 = 0;
-  new_var = 1;
-  var_s0 = ((u8 *) (&D_8011E870)) + 8;
-  do
-  {
-    if (((*var_s1) == new_var) && ((*((u8 *) (((u8 *) var_s0) - 0x4))) == (*((u8 *) arg0)))) {
-      func_8009A770(var_s0);
-      *var_s1 = 0;
+    Ent1C4_ *e = (Ent1C4_ *)&D_8011E870;
+    u32 i;
+
+    for (i = 0; i < 8; e++, i++) {
+        if (e->w0 == 1 && ((u8 *)e)[4] == *(u8 *)arg0) {
+            func_8009A770((s32 *)((u8 *)e + 8));
+            e->w0 = 0;
+        }
     }
-    var_s0 += 113;
-    var_s2 += 1;
-    var_s1 += 113;
-  }
-  while (var_s2 < 8U);
 }
 
 INCLUDE_ASM("asm/nonmatchings/unit_464D0", func_800A66C0);

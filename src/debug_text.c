@@ -1,5 +1,7 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { u8 start; u8 count; } FontRange_;
+extern FontRange_ D_800F01D0[];
 
 #define CHAR_SPACE 1
 #define CHAR_FIRST 0xF
@@ -11,7 +13,42 @@
 extern u16 *D_8014EB38;
 extern u16 *D_80138E38;
 
-INCLUDE_ASM("asm/nonmatchings/debug_text", Debug_InitFont);
+void Debug_InitFont(u16 *buf) {
+    u32 *rom = (u32 *)0xB0000B74;
+    u32 bits = rom[-1];
+    s32 bit = 0;
+    u32 i;
+    s32 n;
+    s32 j;
+    s32 k;
+    u16 *dst;
+
+    D_8014EB38 = buf;
+    for (n = 0x33F; n >= 0; n--) {
+        *buf++ = 0;
+    }
+    for (i = 0; i < 3; i++) {
+        dst = &D_8014EB38[D_800F01D0[i].start * 16 + 2];
+        for (j = 0; j < D_800F01D0[i].count; j++) {
+            for (k = 0; k < 14; k++) {
+                bit += 13;
+                if (bit & ~31) {
+                    bit &= 31;
+                    *dst = (bits << bit) & 0x1FFF;
+                    bits = *rom++;
+                    if (bit == 0) {
+                        goto next;
+                    }
+                }
+                *dst |= (bits >> (32 - bit)) & 0x1FFF;
+            next:
+                dst++;
+            }
+            dst += 2;
+            bit += 2;
+        }
+    }
+}
 
 void Debug_FormatNumber(u16 n, u8 *out) {
     s32 d;
@@ -67,6 +104,28 @@ inline void Debug_DrawChar(s32 c, u16 color, u16 shadow) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/debug_text", Debug_DrawString);
+void Debug_DrawString(u8 *s, s32 n, u16 color, u16 shadow) {
+    s32 i;
 
-INCLUDE_ASM("asm/nonmatchings/debug_text", func_80065314);
+    for (i = n - 1; i != -1; i--) {
+        if (*s == 0) {
+            return;
+        }
+        Debug_DrawChar(*s++, color, shadow);
+    }
+}
+
+
+void func_80065314(u8 *s, s32 n, u16 color, u16 shadow) {
+    s32 i;
+
+    for (i = n - 1; i != -1; i--) {
+        if (*s != 0) {
+            Debug_DrawChar(*s++, color, shadow);
+        } else {
+            s++;
+            Debug_DrawChar(CHAR_FIRST, color, shadow);
+        }
+    }
+}
+

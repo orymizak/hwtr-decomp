@@ -112,7 +112,29 @@ u16 Font_GetCharWidth16(u8 id, u8 c) {
     return Font_GetCharWidthF(id, c);
 }
 
-INCLUDE_ASM("asm/nonmatchings/font", func_8006F528);
+/* TODO(match-debt): empty loop needed to match (scheduling barrier). Assumed to be a debug assert
+ * compiled out in release builds; verify against a real cause when one turns up. */
+#define FONT_ASSERT(cond) do { } while (0)
+
+s32 func_8006F528(u8 id, u8 c, f32 x, f32 y, f32 scale) {
+    Font *font;
+    u8 index;
+    Glyph *glyph;
+
+    if (c != 0x2E) {
+        font = D_801415C0.fonts[id];
+        index = font->glyphIndex[c];
+        if (index != 0xFF) {
+            glyph = font->glyphs[index];
+            FONT_ASSERT(glyph != NULL);
+            x = (x - 500.0f) * D_800F20FA * 0.9 / 1000.0 + D_800F20FA / 2;
+            y = (500.0f - y) * D_800F20FC * 0.95 / 1000.0 + D_800F20FC / 2;
+            func_80076BCC();
+            func_80076D6C(x, y, glyph->data, glyph->width, glyph->height, scale, scale);
+        }
+    }
+    return 0;
+}
 
 u8 Font_DrawChar(u8 id, u8 c, s32 x, s32 y) {
     Font *font = D_801415C0.fonts[id];

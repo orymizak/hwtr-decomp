@@ -3,7 +3,6 @@
 extern void (*D_80141780)(void);
 extern void (*D_8014C0A8)(s32, s32, f32, f32);
 extern u8 (*D_8014C120)(void);
-void func_8008E700(void);
 typedef struct { u8 id; u8 b; u8 pad[2]; s32 c; } Ent8_;
 typedef struct { u8 b0; u8 pad[0xB]; s32 wC; } E10_;
 typedef struct { u8 b0; u8 pad[0xF]; } E10b_;
@@ -20,6 +19,10 @@ typedef struct { s32 kind; u8 p4; u8 slot; u8 p6[14]; } E20_;
 typedef struct { u8 p0[0x30]; E20_ ent[6]; } Cfg8B_;
 typedef struct { u32 time; u32 best; u8 id; } Res8C_;
 typedef struct { u8 id; u8 b; u8 pad[2]; s32 c; } Ent8b_;
+typedef struct { u8 id; u8 pad[0xF]; } E10g_;
+extern void (*D_8014C0E0[])(u8);
+extern void (*D_8014C0B4)(void);
+void func_8008E700(void);
 void *memset(void *, s32, u32);
 extern void (*D_801416E4)(s32);
 extern void (*D_801416F0)(u32);
@@ -794,7 +797,28 @@ void func_8008E568(s32 arg0) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", func_8008E5B8);
 
-INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", func_8008E700);
+void func_8008E700(void) {
+    u8 i;
+    void (**fp)(u8);
+
+    i = 0;
+    if (D_801184C1 != 0) {
+        fp = D_8014C0E0;
+        do {
+            fp[0](i);
+            fp[14](i);
+            fp[4](i);
+            fp[7](i);
+            fp[12](i);
+            fp[10](i);
+            i++;
+        } while (i < D_801184C1);
+    }
+    for (i = 0; i < D_800F3700; i++) {
+        D_8014C130((*(E10g_ * *)&D_800F3704)[i].id);
+    }
+    D_8014C0B4();
+}
 
 void func_8008E80C(void) {
     u8 i;

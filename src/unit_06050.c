@@ -271,14 +271,15 @@ INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80066504);
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_800665A4);
 
-void func_800665D0(u32 arg0, void *arg1, void *arg2, void *arg3) {
-  u32 temp_a0;
-  s8 new_var;
- do { temp_a0 = arg0 & 0xFFFF; } while (0);
-  *((u8 *) arg1) = (s8) (temp_a0 >> 0xB);
-  new_var = (s8) ((temp_a0 >> 6) & 0x1F);
-  *((u8 *) arg2) = new_var;
-  *((u8 *) arg3) = (s8) ((temp_a0 >> 1) & 0x1F);
+void func_800665D0(u32 color, void *r, void *g, void *b) {
+    u32 c = color & 0xFFFF;
+    u8 cr = c >> 11;
+    u8 cg = (c >> 6) & 0x1F;
+    u8 cb = (c >> 1) & 0x1F;
+
+    *(u8 *)r = cr;
+    *(u8 *)g = cg;
+    *(u8 *)b = cb;
 }
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_800665F8);
@@ -610,7 +611,31 @@ void func_80068E98(u8 *o, Vec3f_ vel, u8 *verts) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80069214);
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_8006936C);
+void func_8006936C(V3f69_ pos, V3f69_ vel) {
+    Pt94_ pt;
+
+    pt.pos = pos;
+    pt.vel = vel;
+    pt.vel.x /= -15.0f;
+    pt.vel.y /= -15.0f;
+    pt.vel.z = pt.vel.z / -15.0f + 1.0f;
+    pt.b66 = 0x20;
+    pt.h64 = 1000;
+    pt.b6A = 4;
+    pt.s6C = 0x8C00;
+    pt.i4 = 0;
+    pt.f8 = 0.0f;
+    pt.fC = 0.0f;
+    pt.s6E = -0x200;
+    pt.f58 = -3.0f;
+    pt.f0 = 4.0f;
+    pt.c[2] = (rand() & 0xF) - 0x65;
+    pt.c[1] = (rand() & 0xF) - 0x65;
+    pt.c[0] = (rand() & 0xF) - 0x65;
+    pt.f5C = 100.0f;
+    func_8007C318(&D_80145488, &pt);
+}
+
 
 void func_80069494(u8 **car, f32 speed, V3f69_ pos, V3f69_ vel) {
     Pt94_ pt;

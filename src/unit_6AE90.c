@@ -202,10 +202,8 @@ void func_800CB168(void) {
 }
 
 void func_800CB268(void) {
-  int new_var;
-  new_var = 0x80;
-  D_80124D70 = new_var;
-  D_80124D71 = 0;
+    *(u8 *)&D_80124D70 = 0x80;
+    D_80124D71 = 0;
 }
 
 void func_800CB280(void) {

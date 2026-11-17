@@ -4,7 +4,11 @@
 
 
 s32 __osAiDeviceBusy(void) {
-  int new_var;
-  new_var = 0;
-  return (*((volatile s32 *) 0xA450000C)) < new_var;
+    register s32 status = *(volatile s32 *)0xA450000C;
+
+    if (status & 0x80000000) {
+        return 1;
+    } else {
+        return 0;
+    }
 }

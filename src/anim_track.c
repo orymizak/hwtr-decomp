@@ -192,24 +192,19 @@ s32 func_80087F2C(u32 index) {
     return 1;
 }
 
-void func_80087F7C(s32 arg0, u32 arg1, s32 arg2) {
-  u32 temp_v1;
-  u8 *new_var;
-  s32 new_var2;
-  u32 var_a1;
-  void *temp_a0;
-  new_var2 = (*(s32 *)&D_800F3014);
-  var_a1 = arg1;
-  temp_a0 = (arg0 * 0x68) + new_var2;
-  if ((*((s32 *) (((u8 *) temp_a0) + 0x18))) == 0) {
-    temp_v1 = (*((s32 *) (((u8 *) temp_a0) + 0x4))) - 1;
-    if (temp_v1 < var_a1) {
-      var_a1 = temp_v1;
+void func_80087F7C(s32 index, u32 t, s32 mode) {
+    u32 base = (u32)D_800F3014;
+    AnimTrack *track = (AnimTrack *)(index * sizeof(AnimTrack) + base);
+    u32 last;
+
+    if (track->seekTime == 0) {
+        last = track->keyCount - 1;
+        if (last < t) {
+            t = last;
+        }
+        track->seekMode = mode;
+        track->seekTime = t * track->duration / last;
     }
-    *((s32 *) (((u8 *) temp_a0) + 0x1C)) = arg2;
-    new_var = (u8 *) temp_a0;
-    *((s32 *) (new_var + 0x18)) = (u32) (((u32) (var_a1 * (*((s32 *) (new_var + 0x0))))) / temp_v1);
-  }
 }
 
 s32 func_80087FF4(s32 arg0, u32 arg1) {

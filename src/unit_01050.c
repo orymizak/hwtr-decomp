@@ -30,6 +30,19 @@ typedef struct { s32 h[6]; f32 rpm; f32 f1C; f32 f20; f32 f24; f32 f28; u8 p2C[0
 typedef struct Nd29_ { u8 p0[0x10]; s32 h; struct Nd29_ *next; } Nd29_;
 typedef struct { f32 x; f32 y; f32 z; } V3c_;
 typedef struct N64c_ { f32 x; f32 y; f32 z; f32 v; s32 f10; struct N64c_ *next; u8 b18; u8 b19; u8 id; u8 b1B; } N64c_;
+typedef struct { f32 x; f32 y; f32 z; } V3r_;
+typedef struct { s32 w; u8 p4[0x10]; } E14s_;
+typedef struct { u32 f0; u8 p4[0x14]; u8 n18; u8 p19[3]; u32 f1C; u8 p20[0x10]; E14s_ e[1]; } Cfg9_;
+s32 func_80064B58(void *);
+f32 func_800649F8(void *, void *);
+extern u8 D_80138AAE;
+extern u8 D_80138AAF;
+extern u8 D_80138AB1;
+void func_8007F4D0(void);
+void func_8007C080(void);
+void func_80066C9C(s32, u8);
+u8 func_8008BAA0(Cfg9_ *);
+f32 sqrtf(f32);
 extern s32 D_800F0108[];
 extern s32 D_800F0120;
 extern s32 D_800F0124[];
@@ -230,7 +243,46 @@ s32 func_800609A8(void) {
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", func_800609C8);
+u8 func_800609C8(Cfg9_ *c) {
+    s32 n = 0;
+    s32 i;
+
+    func_8007F4D0();
+    func_8007C080();
+    for (i = 0; i < c->n18; i++) {
+        if (c->e[i].w == 1) {
+            n++;
+        }
+    }
+    if (c->f1C & 8) {
+        D_80138AAE = 1;
+    } else {
+        D_80138AAE = 0;
+    }
+    if (c->f1C & 1) {
+        D_80138AAF = 1;
+    } else {
+        D_80138AAF = 0;
+    }
+    if (c->f1C & 0x20) {
+        D_80138AB1 = 1;
+    } else {
+        D_80138AB1 = 0;
+    }
+    if (c->f0 & 0x40) {
+        D_80138AB0 = 1;
+        func_8006B838();
+    } else {
+        D_80138AB0 = 0;
+    }
+    func_80066C9C(n, c->n18);
+    if (!(c->f0 & 0x10)) {
+        func_80078980(0);
+    } else {
+        func_80078980(1);
+    }
+    return func_8008BAA0(c);
+}
 
 s32 func_80061B40(void);
 u8 func_80060AFC(s32 a) {
@@ -790,7 +842,37 @@ s32 func_80063E7C(s32 arg0, s32 arg1) {
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80063EA8);
+f32 func_80064988(void *a);
+s32 func_80063EA8(u8 i, s32 k, f32 lvl) {
+    s32 snd = D_800EFC94[k];
+    s32 off;
+    u8 *pos;
+    f32 vol;
+    s32 pan;
+    f32 pitch;
+    s32 busy;
+    s32 v;
+
+    if (snd == 0) {
+        return 0;
+    }
+    off = i * 0x4C;
+    pos = (u8 *)D_800EFC94 + 0x2D0 + off;
+    vol = func_80064988(pos) * D_800EFC70;
+    pan = func_80064B58(pos);
+    pitch = func_800649F8(pos, (u8 *)D_800EFC94 + 0x2DC + off);
+    busy = func_800CE428(*(s32 *)(&D_800EFF48 + off));
+    v = lvl * 128.0f * vol;
+    if (v == 0) {
+        v = 1;
+    }
+    if (busy == 0) {
+        *(s32 *)(&D_800EFF48 + off) = func_800CD8CC(snd, v, pan, 0, 0x40);
+        func_800CE550(*(s32 *)(&D_800EFF48 + off), pitch);
+        return 1;
+    }
+    return 0;
+}
 
 s32 func_80063FE8(s32 arg0) {
     s32 temp_s0;
@@ -803,7 +885,37 @@ s32 func_80063FE8(s32 arg0) {
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80064058);
+f32 func_80064988(void *a);
+s32 func_80064058(u8 i, s32 k) {
+    s32 snd = D_800EFC94[k];
+    s32 off;
+    u8 *pos;
+    f32 vol;
+    s32 pan;
+    f32 pitch;
+    s32 busy;
+    s32 v;
+
+    if (snd == 0) {
+        return 0;
+    }
+    off = i * 0x4C;
+    pos = (u8 *)D_800EFC94 + 0x2D0 + off;
+    vol = func_80064988(pos) * D_800EFC70;
+    pan = func_80064B58(pos);
+    pitch = func_800649F8(pos, (u8 *)D_800EFC94 + 0x2DC + off);
+    busy = func_800CE428(*(s32 *)(&D_800EFF4C + off));
+    v = *(f32 *)(&D_800EFF60 + off) * 128.0f * vol;
+    if (v == 0) {
+        v = 1;
+    }
+    if (busy == 0) {
+        *(s32 *)(&D_800EFF4C + off) = func_800CD8CC(snd, v, pan, 0, 0x40);
+        func_800CE550(*(s32 *)(&D_800EFF4C + off), pitch);
+        return 1;
+    }
+    return 0;
+}
 
 s32 func_80064194(s32 arg0) {
     s32 temp_s0;
@@ -987,7 +1099,27 @@ INCLUDE_ASM("asm/nonmatchings/unit_01050", func_800649F8);
 
 INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80064B58);
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80064D3C);
+f32 func_80064D3C(V3r_ *a, V3r_ *off, V3r_ *b) {
+    f32 d[3];
+    f32 len;
+    f32 nx;
+    f32 ny;
+    f32 nz;
+    f32 da;
+
+    d[0] = a->x - b->x;
+    d[1] = a->y - b->y;
+    d[2] = a->z - b->z;
+    len = sqrtf(d[0] * d[0] + d[1] * d[1] + d[2] * d[2]);
+    if (len == 0.0f) {
+        return 0.0f;
+    }
+    nx = d[0] / len;
+    ny = d[1] / len;
+    nz = d[2] / len;
+    da = -(nx * a->x + ny * a->y + nz * a->z);
+    return len + (nx * (b->x + off->x) + ny * (b->y + off->y) + nz * (b->z + off->z) + da);
+}
 
 f32 func_80064E68(void *arg0, void *arg1) {
     f32 temp_ft0;

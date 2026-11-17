@@ -28,22 +28,13 @@ s32 *func_800D2444(void) {
 }
 
 void func_800D2450(void *arg0, u8 arg1, s32 arg2) {
-  volatile long long pad;
-  s32 var_v0;
-  void *var_a0;
-  u8 new_var;
-  var_a0 = arg0;
-  var_v0 = arg2 - 1;
-  if (arg2 != 0) {
-    do
-    {
-      new_var = arg1;
-      *((u8 *) var_a0) = new_var;
-      var_v0 -= 1;
-      var_a0 += 1;
+    u8 unused[1];
+    u8 *p = arg0;
+    s32 i;
+
+    for (i = arg2 - 1; i != -1; i--) {
+        *p++ = arg1;
     }
-    while (var_v0 != (-1));
-  }
 }
 
 void func_800D247C(u8 *dst, u8 *src, s32 n) {

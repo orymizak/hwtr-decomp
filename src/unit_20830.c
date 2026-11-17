@@ -1,5 +1,6 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { u8 p0[8]; s32 n; u8 pC[4]; s32 a[600]; s32 b[600]; f32 c[600]; } Queue7F_;
 typedef struct { u8 pad[4]; s32 a; s32 b; void *c; } Buf20_;
 s32 func_8007FD40(s32);
 s32 func_80080070(s32);
@@ -27,19 +28,16 @@ void func_8007FC30(void *arg0, MeshFC_ *m, s32 v, f32 *mtx) {
     }
 }
 
-void func_8007FD04(void *arg0, s32 arg1, s32 arg2, f32 arg3) {
-  s32 new_var;
-  s32 temp_v1;
-  void *temp_v0;
-  temp_v1 = *((s32 *) (((u8 *) arg0) + 0x8));
-  if (((u32) (temp_v1 + 1)) < 0x257U) {
-    ;
-    new_var = arg1;
-    *((s32 *) (((u8 *) ((temp_v1 * 4) + arg0)) + 0x10)) = new_var;
-    *((s32 *) (((u8 *) ((temp_v1 * 4) + arg0)) + 0x970)) = arg2;
-    *((f32 *) (((u8 *) ((temp_v1 * 4) + arg0)) + 0x12D0)) = arg3;
-    *((s32 *) (((u8 *) arg0) + 0x8)) = (s32) ((*((s32 *) (((u8 *) arg0) + 0x8))) + 1);
-  }
+void func_8007FD04(void *arg0, s32 a, s32 b, f32 c) {
+    Queue7F_ *q = arg0;
+    s32 n = q->n;
+
+    if ((u32)(n + 1) < 599) {
+        q->a[n] = a;
+        q->b[n] = b;
+        q->c[n] = c;
+        q->n++;
+    }
 }
 
 INCLUDE_ASM("asm/nonmatchings/unit_20830", func_8007FD40);

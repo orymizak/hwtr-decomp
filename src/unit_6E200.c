@@ -36,23 +36,23 @@ extern u8 D_80145528;
 
 
 void func_800CD600(s32 arg0) {
-  u8 *new_var;
-  D_800FABA0 = 1;
-  D_80138B08 = &D_80134780;
-  D_80138AC8 = 2;
-  new_var = &D_800E7AA0;
-  D_80138AD4 = ((u8 *) (&D_800E7B70)) - new_var;
-  D_80138B0C = 0;
-  D_80138AD0 = new_var;
-  D_80138AE4 = 0x800;
-  D_80138AE8 = 0;
-  D_80138AEC = 0;
-  D_80138AF0 = 0;
-  D_80138AF4 = 0;
-  D_80138B00 = 0;
-  D_80138B04 = 0;
-  func_800CE95C(&D_800FABA8);
-  func_800CDB5C(arg0);
+    u8 *start = &D_800E7AA0;
+
+    D_800FABA0 = 1;
+    D_80138B08 = &D_80134780;
+    D_80138AC8 = 2;
+    D_80138AD4 = &D_800E7B70 - start;
+    D_80138B0C = 0;
+    D_80138AD0 = start;
+    D_80138AE4 = 0x800;
+    D_80138AE8 = 0;
+    D_80138AEC = 0;
+    D_80138AF0 = 0;
+    D_80138AF4 = 0;
+    D_80138B00 = 0;
+    D_80138B04 = 0;
+    func_800CE95C(&D_800FABA8);
+    func_800CDB5C(arg0);
 }
 
 void func_800CD6C4(void) {

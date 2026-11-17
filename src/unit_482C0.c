@@ -1,5 +1,6 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { s32 flags; u8 p4[0x13]; u8 b17; u8 p18; u8 b19; u8 b1A; } TrkCfg_;
 typedef struct { u8 p0[0x440]; s32 w440; u8 b444[0xC]; s32 w450[8]; s32 w470; u8 p474[4]; u8 b478; u8 b479; } CrA76_;
 extern void (*D_801416E4)(s32);
 s32 func_8008182C(void);
@@ -149,34 +150,28 @@ done:
 }
 
 s32 func_800A7B88(void *arg0) {
-  s32 new_var;
-  D_800F3904 = 0;
-  D_800F3908 = (s32) (*((u8 *) (((u8 *) arg0) + 0x17)));
-  D_800F390C = (s32) (*((u8 *) (((u8 *) arg0) + 0x19)));
-  new_var = *((s32 *) (((u8 *) arg0) + 0x0));
-  D_800F3910 = (s32) (*((u8 *) (((u8 *) arg0) + 0x1A)));
-  if (new_var & 2) {
-    D_800F391A = 1;
-  }
-  else
-  {
-    D_800F391A = 0;
-  }
-  if ((*((s32 *) (((u8 *) arg0) + 0x0))) & 4) {
-    D_800F3919 = 1;
-  }
-  else
-  {
-    D_800F3919 = 0;
-  }
-  if ((*((s32 *) (((u8 *) arg0) + 0x0))) & 8) {
-    D_800F3918 = 1;
-  }
-  else
-  {
-    D_800F3918 = 0;
-  }
-  return 1;
+    TrkCfg_ *cfg = arg0;
+
+    D_800F3904 = 0;
+    D_800F3908 = cfg->b17;
+    D_800F390C = cfg->b19;
+    D_800F3910 = cfg->b1A;
+    if (cfg->flags & 2) {
+        D_800F391A = 1;
+    } else {
+        D_800F391A = 0;
+    }
+    if (cfg->flags & 4) {
+        D_800F3919 = 1;
+    } else {
+        D_800F3919 = 0;
+    }
+    if (cfg->flags & 8) {
+        D_800F3918 = 1;
+    } else {
+        D_800F3918 = 0;
+    }
+    return 1;
 }
 
 s32 func_800A7C2C(void) {
