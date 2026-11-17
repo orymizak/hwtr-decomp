@@ -1,5 +1,6 @@
 #include "common.h"
 #include "include_asm.h"
+typedef struct { u8 p0[0x94]; f32 m[3][3]; f32 v[3]; } Body4F_;
 typedef struct { s32 x; s32 y; s32 z; } V3i_;
 typedef struct { u8 pad0[8]; u8 state; u8 pad9[3]; V3i_ pos; u8 pad18[0xC]; f32 m[9]; u8 pad48[0x14]; s32 kind; u8 *obj; u8 pad64[0x24]; } E88_;
 typedef struct { f32 x; f32 y; f32 z; } Vec3f_;
