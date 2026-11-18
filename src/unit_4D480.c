@@ -2,33 +2,47 @@
 #include "ultra64.h"
 #include "math.h"
 #include "include_asm.h"
-    /* TODO (Clean version): Unify duplicate physics structs across unit files into a shared header (e.g. physics.h):
-    - Replace Vec3f, Vec3f, Vec3f with Vec3f.
-    - Replace BodyA_, BodyE_, BodyF_ with a unified RigidBody struct (offsets 0x6C pos, 0x78 mom, 0x84 vel, 0x94 rot, 0xB8 am, 0xC4 iw, 0xE8 w, 0xF8 f, 0x104 t).
-    - Replace OwnA_, OwnF_ with Collider (offset 0x5C kind, 0x60 body, 0x84 mass/weight).
-    - Replace CtA_, CtF_ with Contact / CollisionPair.
-    */
-typedef struct { u8 pad0[0x4C]; f32 im; u8 pad50[0x1C]; Vec3f pos; Vec3f mom; Vec3f vel; u8 pad90[0x28]; Vec3f am; f32 m[9]; Vec3f w; } BodyA_;
-typedef struct { u8 pad0[0x5C]; s32 kind; BodyA_ *b; } OwnA_;
-typedef struct { OwnA_ *o; Vec3f p; Vec3f n; } CtA_;
-typedef struct { u8 pad0[0x24]; Mtx3f ib; f32 f48; f32 im; f32 f50; Vec3f g; Vec3f f60; Vec3f pos; Vec3f mom; Vec3f vel; f32 speed; Mtx3f r; Vec3f am; Mtx3f iw; Vec3f w; f32 wlen; Vec3f f; Vec3f t; u8 frozen; u8 pad111[3]; s32 x114; } BodyE_;
-typedef struct { u8 pad0[0x4C]; f32 im; u8 pad50[0x1C]; Vec3f pos; Vec3f mom; Vec3f vel; u8 pad90[0x28]; Vec3f am; f32 m[9]; Vec3f w; } BodyF_;
-typedef struct { u8 pad0[4]; s32 flags; u8 pad8[0x54]; s32 kind; BodyF_ *b; u8 pad64[0x20]; u32 u84; } OwnF_;
-typedef struct { OwnF_ *o0; OwnF_ *o1; Vec3f p; Vec3f n; } CtF_;
-typedef struct { f32 i[9]; f32 ib[9]; f32 m; } BodyI_;
+/* Rigid body (0x118). Inertia tensors are in body space; iw is the world-space inverse. */
+typedef struct {
+    /* 0x000 */ Mtx3f inertia;
+    /* 0x024 */ Mtx3f invInertia;
+    /* 0x048 */ f32 mass;
+    /* 0x04C */ f32 im;        /* 1 / mass */
+    /* 0x050 */ f32 f50;
+    /* 0x054 */ Vec3f g;       /* gravity */
+    /* 0x060 */ Vec3f f60;
+    /* 0x06C */ Vec3f pos;
+    /* 0x078 */ Vec3f mom;     /* linear momentum */
+    /* 0x084 */ Vec3f vel;
+    /* 0x090 */ f32 speed;
+    /* 0x094 */ Mtx3f r;       /* orientation */
+    /* 0x0B8 */ Vec3f am;      /* angular momentum */
+    /* 0x0C4 */ Mtx3f iw;      /* world inverse inertia */
+    /* 0x0E8 */ Vec3f w;       /* angular velocity */
+    /* 0x0F4 */ f32 wlen;
+    /* 0x0F8 */ Vec3f f;       /* accumulated force */
+    /* 0x104 */ Vec3f t;       /* accumulated torque */
+    /* 0x110 */ u8 frozen;
+    /* 0x111 */ u8 pad111[3];
+    /* 0x114 */ s32 x114;
+} RigidBody;
+/* Collision object that owns a rigid body (see unit_39C90). */
+typedef struct { u8 pad0[4]; s32 flags; u8 pad8[0x54]; s32 kind; RigidBody *b; u8 pad64[0x20]; u32 u84; } Collider;
+typedef struct { Collider *o; Vec3f p; Vec3f n; } Contact;        /* body against the world */
+typedef struct { Collider *o0; Collider *o1; Vec3f p; Vec3f n; } ContactPair;
 extern u8 D_80138D38[];
 
 
 
-void RigidBody_SetBoxInertia(BodyI_ *o, f32 x, f32 y, f32 z);
+void RigidBody_SetBoxInertia(RigidBody *o, f32 x, f32 y, f32 z);
 /* Resets a rigid body: mass, identity orientation, zero motion, gravity of 386 units/s^2 along -Z,
  * box inertia from x/y/z, and the derived world inverse inertia and angular velocity. */
-void RigidBody_Init(BodyE_ *b, f32 mass, f32 x, f32 y, f32 z, Vec3f p) {
+void RigidBody_Init(RigidBody *b, f32 mass, f32 x, f32 y, f32 z, Vec3f p) {
     Mtx3f rt;
     Mtx3f ri;
     Vec3f wv;
 
-    b->f48 = mass;
+    b->mass = mass;
     b->im = 1.0f / mass;
     b->pos.x = 0.0f;
     b->pos.y = 0.0f;
@@ -50,7 +64,7 @@ void RigidBody_Init(BodyE_ *b, f32 mass, f32 x, f32 y, f32 z, Vec3f p) {
     b->g.y = 0.0f;
     b->f50 = 386.0f;
     b->g.z = -1.0f;
-    RigidBody_SetBoxInertia((BodyI_ *)b, x, y, z);
+    RigidBody_SetBoxInertia(b, x, y, z);
     rt.m[0][0] = b->r.m[0][0];
     rt.m[0][1] = b->r.m[1][0];
     rt.m[0][2] = b->r.m[2][0];
@@ -60,15 +74,15 @@ void RigidBody_Init(BodyE_ *b, f32 mass, f32 x, f32 y, f32 z, Vec3f p) {
     rt.m[2][0] = b->r.m[0][2];
     rt.m[2][1] = b->r.m[1][2];
     rt.m[2][2] = b->r.m[2][2];
-    ri.m[0][0] = b->r.m[0][0] * b->ib.m[0][0] + b->r.m[0][1] * b->ib.m[1][0] + b->r.m[0][2] * b->ib.m[2][0];
-    ri.m[0][1] = b->r.m[0][0] * b->ib.m[0][1] + b->r.m[0][1] * b->ib.m[1][1] + b->r.m[0][2] * b->ib.m[2][1];
-    ri.m[0][2] = b->r.m[0][0] * b->ib.m[0][2] + b->r.m[0][1] * b->ib.m[1][2] + b->r.m[0][2] * b->ib.m[2][2];
-    ri.m[1][0] = b->r.m[1][0] * b->ib.m[0][0] + b->r.m[1][1] * b->ib.m[1][0] + b->r.m[1][2] * b->ib.m[2][0];
-    ri.m[1][1] = b->r.m[1][0] * b->ib.m[0][1] + b->r.m[1][1] * b->ib.m[1][1] + b->r.m[1][2] * b->ib.m[2][1];
-    ri.m[1][2] = b->r.m[1][0] * b->ib.m[0][2] + b->r.m[1][1] * b->ib.m[1][2] + b->r.m[1][2] * b->ib.m[2][2];
-    ri.m[2][0] = b->r.m[2][0] * b->ib.m[0][0] + b->r.m[2][1] * b->ib.m[1][0] + b->r.m[2][2] * b->ib.m[2][0];
-    ri.m[2][1] = b->r.m[2][0] * b->ib.m[0][1] + b->r.m[2][1] * b->ib.m[1][1] + b->r.m[2][2] * b->ib.m[2][1];
-    ri.m[2][2] = b->r.m[2][0] * b->ib.m[0][2] + b->r.m[2][1] * b->ib.m[1][2] + b->r.m[2][2] * b->ib.m[2][2];
+    ri.m[0][0] = b->r.m[0][0] * b->invInertia.m[0][0] + b->r.m[0][1] * b->invInertia.m[1][0] + b->r.m[0][2] * b->invInertia.m[2][0];
+    ri.m[0][1] = b->r.m[0][0] * b->invInertia.m[0][1] + b->r.m[0][1] * b->invInertia.m[1][1] + b->r.m[0][2] * b->invInertia.m[2][1];
+    ri.m[0][2] = b->r.m[0][0] * b->invInertia.m[0][2] + b->r.m[0][1] * b->invInertia.m[1][2] + b->r.m[0][2] * b->invInertia.m[2][2];
+    ri.m[1][0] = b->r.m[1][0] * b->invInertia.m[0][0] + b->r.m[1][1] * b->invInertia.m[1][0] + b->r.m[1][2] * b->invInertia.m[2][0];
+    ri.m[1][1] = b->r.m[1][0] * b->invInertia.m[0][1] + b->r.m[1][1] * b->invInertia.m[1][1] + b->r.m[1][2] * b->invInertia.m[2][1];
+    ri.m[1][2] = b->r.m[1][0] * b->invInertia.m[0][2] + b->r.m[1][1] * b->invInertia.m[1][2] + b->r.m[1][2] * b->invInertia.m[2][2];
+    ri.m[2][0] = b->r.m[2][0] * b->invInertia.m[0][0] + b->r.m[2][1] * b->invInertia.m[1][0] + b->r.m[2][2] * b->invInertia.m[2][0];
+    ri.m[2][1] = b->r.m[2][0] * b->invInertia.m[0][1] + b->r.m[2][1] * b->invInertia.m[1][1] + b->r.m[2][2] * b->invInertia.m[2][1];
+    ri.m[2][2] = b->r.m[2][0] * b->invInertia.m[0][2] + b->r.m[2][1] * b->invInertia.m[1][2] + b->r.m[2][2] * b->invInertia.m[2][2];
     b->iw.m[0][0] = ri.m[0][0] * rt.m[0][0] + ri.m[0][1] * rt.m[1][0] + ri.m[0][2] * rt.m[2][0];
     b->iw.m[0][1] = ri.m[0][0] * rt.m[0][1] + ri.m[0][1] * rt.m[1][1] + ri.m[0][2] * rt.m[2][1];
     b->iw.m[0][2] = ri.m[0][0] * rt.m[0][2] + ri.m[0][1] * rt.m[1][2] + ri.m[0][2] * rt.m[2][2];
@@ -86,7 +100,8 @@ void RigidBody_Init(BodyE_ *b, f32 mass, f32 x, f32 y, f32 z, Vec3f p) {
     b->x114 = 0;
 }
 
-    /* TODO (Clean version): Rigid body 6-DOF time-step integrator (Semi-implicit Euler):
+    /* TODO (Clean version): [evaluated 2026-11-18: kept as documentation; the code now uses
+    the VEC3_* macros and RigidBody fields] Rigid body 6-DOF time-step integrator (Semi-implicit Euler):
     - Force & Linear integration:
         b->f.x += b->g.x * (b->mass * b->gravity_scale);
         b->mom += b->f * dt;
@@ -96,7 +111,7 @@ void RigidBody_Init(BodyE_ *b, f32 mass, f32 x, f32 y, f32 z, Vec3f p) {
         b->f = (Vec3f){0, 0, 0};
     - Orientation & Angular integration:
         b->am += b->t * dt;
-        b->iw = b->r * b->ib * transpose(b->r); // World inverse inertia tensor
+        b->iw = b->r * b->invInertia * transpose(b->r); // World inverse inertia tensor
         b->w = b->iw * b->am;                   // Angular velocity
         if (b->wlen > 12.56636f) { // Clamp to 4*pi rad/s (2 rev/s)
             f32 k = 12.56636f / b->wlen;
@@ -106,7 +121,7 @@ void RigidBody_Init(BodyE_ *b, f32 mass, f32 x, f32 y, f32 z, Vec3f p) {
         b->r += S * b->r;                       // dR = [w*dt]x * R
         b->t = (Vec3f){0, 0, 0};
     */
-void RigidBody_Integrate(BodyE_ *b, f32 dt) {
+void RigidBody_Integrate(RigidBody *b, f32 dt) {
     Vec3f tmp;
     Vec3f v;
     Mtx3f dr;
@@ -119,47 +134,27 @@ void RigidBody_Integrate(BodyE_ *b, f32 dt) {
     f32 k;
 
     if (b->frozen == 0) {
-        tmp.x = b->g.x * (b->f50 * b->f48);
-        tmp.y = b->g.y * (b->f50 * b->f48);
-        tmp.z = b->g.z * (b->f50 * b->f48);
-        b->f.x = b->f.x + tmp.x;
-        b->f.y = b->f.y + tmp.y;
-        b->f.z = b->f.z + tmp.z;
-        tmp.x = b->f.x * dt;
-        tmp.y = b->f.y * dt;
-        tmp.z = b->f.z * dt;
-        b->mom.x = tmp.x + b->mom.x;
-        b->mom.y = tmp.y + b->mom.y;
-        b->mom.z = tmp.z + b->mom.z;
-        b->vel.x = b->mom.x * b->im;
-        b->vel.y = b->mom.y * b->im;
-        b->vel.z = b->mom.z * b->im;
+        tmp.x = b->g.x * (b->f50 * b->mass);
+        tmp.y = b->g.y * (b->f50 * b->mass);
+        tmp.z = b->g.z * (b->f50 * b->mass);
+        VEC3_ADD(b->f, b->f, tmp);
+        VEC3_SCALE(tmp, b->f, dt);
+        VEC3_ADD(b->mom, tmp, b->mom);
+        VEC3_SCALE(b->vel, b->mom, b->im);
         b->speed = sqrtf(b->vel.x * b->vel.x + b->vel.y * b->vel.y + b->vel.z * b->vel.z);
         if (b->speed > 2304.0f) {
             k1 = 2304.0f / b->speed;
             b->speed = 2304.0f;
-            b->mom.x = b->mom.x * k1;
-            b->mom.y = b->mom.y * k1;
-            b->mom.z = b->mom.z * k1;
-            b->vel.x = b->vel.x * k1;
-            b->vel.y = b->vel.y * k1;
-            b->vel.z = b->vel.z * k1;
+            VEC3_SCALE(b->mom, b->mom, k1);
+            VEC3_SCALE(b->vel, b->vel, k1);
         }
-        v.x = b->vel.x * dt;
-        v.y = b->vel.y * dt;
-        v.z = b->vel.z * dt;
-        b->pos.x = v.x + b->pos.x;
-        b->pos.y = v.y + b->pos.y;
-        b->pos.z = v.z + b->pos.z;
+        VEC3_SCALE(v, b->vel, dt);
+        VEC3_ADD(b->pos, v, b->pos);
         b->f.x = 0.0f;
         b->f.y = 0.0f;
         b->f.z = 0.0f;
-        tmp.x = b->t.x * dt;
-        tmp.y = b->t.y * dt;
-        tmp.z = b->t.z * dt;
-        b->am.x = tmp.x + b->am.x;
-        b->am.y = tmp.y + b->am.y;
-        b->am.z = tmp.z + b->am.z;
+        VEC3_SCALE(tmp, b->t, dt);
+        VEC3_ADD(b->am, tmp, b->am);
         rt.m[0][0] = b->r.m[0][0];
         rt.m[0][1] = b->r.m[1][0];
         rt.m[0][2] = b->r.m[2][0];
@@ -169,15 +164,15 @@ void RigidBody_Integrate(BodyE_ *b, f32 dt) {
         rt.m[2][0] = b->r.m[0][2];
         rt.m[2][1] = b->r.m[1][2];
         rt.m[2][2] = b->r.m[2][2];
-        ri.m[0][0] = b->r.m[0][0] * b->ib.m[0][0] + b->r.m[0][1] * b->ib.m[1][0] + b->r.m[0][2] * b->ib.m[2][0];
-        ri.m[0][1] = b->r.m[0][0] * b->ib.m[0][1] + b->r.m[0][1] * b->ib.m[1][1] + b->r.m[0][2] * b->ib.m[2][1];
-        ri.m[0][2] = b->r.m[0][0] * b->ib.m[0][2] + b->r.m[0][1] * b->ib.m[1][2] + b->r.m[0][2] * b->ib.m[2][2];
-        ri.m[1][0] = b->r.m[1][0] * b->ib.m[0][0] + b->r.m[1][1] * b->ib.m[1][0] + b->r.m[1][2] * b->ib.m[2][0];
-        ri.m[1][1] = b->r.m[1][0] * b->ib.m[0][1] + b->r.m[1][1] * b->ib.m[1][1] + b->r.m[1][2] * b->ib.m[2][1];
-        ri.m[1][2] = b->r.m[1][0] * b->ib.m[0][2] + b->r.m[1][1] * b->ib.m[1][2] + b->r.m[1][2] * b->ib.m[2][2];
-        ri.m[2][0] = b->r.m[2][0] * b->ib.m[0][0] + b->r.m[2][1] * b->ib.m[1][0] + b->r.m[2][2] * b->ib.m[2][0];
-        ri.m[2][1] = b->r.m[2][0] * b->ib.m[0][1] + b->r.m[2][1] * b->ib.m[1][1] + b->r.m[2][2] * b->ib.m[2][1];
-        ri.m[2][2] = b->r.m[2][0] * b->ib.m[0][2] + b->r.m[2][1] * b->ib.m[1][2] + b->r.m[2][2] * b->ib.m[2][2];
+        ri.m[0][0] = b->r.m[0][0] * b->invInertia.m[0][0] + b->r.m[0][1] * b->invInertia.m[1][0] + b->r.m[0][2] * b->invInertia.m[2][0];
+        ri.m[0][1] = b->r.m[0][0] * b->invInertia.m[0][1] + b->r.m[0][1] * b->invInertia.m[1][1] + b->r.m[0][2] * b->invInertia.m[2][1];
+        ri.m[0][2] = b->r.m[0][0] * b->invInertia.m[0][2] + b->r.m[0][1] * b->invInertia.m[1][2] + b->r.m[0][2] * b->invInertia.m[2][2];
+        ri.m[1][0] = b->r.m[1][0] * b->invInertia.m[0][0] + b->r.m[1][1] * b->invInertia.m[1][0] + b->r.m[1][2] * b->invInertia.m[2][0];
+        ri.m[1][1] = b->r.m[1][0] * b->invInertia.m[0][1] + b->r.m[1][1] * b->invInertia.m[1][1] + b->r.m[1][2] * b->invInertia.m[2][1];
+        ri.m[1][2] = b->r.m[1][0] * b->invInertia.m[0][2] + b->r.m[1][1] * b->invInertia.m[1][2] + b->r.m[1][2] * b->invInertia.m[2][2];
+        ri.m[2][0] = b->r.m[2][0] * b->invInertia.m[0][0] + b->r.m[2][1] * b->invInertia.m[1][0] + b->r.m[2][2] * b->invInertia.m[2][0];
+        ri.m[2][1] = b->r.m[2][0] * b->invInertia.m[0][1] + b->r.m[2][1] * b->invInertia.m[1][1] + b->r.m[2][2] * b->invInertia.m[2][1];
+        ri.m[2][2] = b->r.m[2][0] * b->invInertia.m[0][2] + b->r.m[2][1] * b->invInertia.m[1][2] + b->r.m[2][2] * b->invInertia.m[2][2];
         b->iw.m[0][0] = ri.m[0][0] * rt.m[0][0] + ri.m[0][1] * rt.m[1][0] + ri.m[0][2] * rt.m[2][0];
         b->iw.m[0][1] = ri.m[0][0] * rt.m[0][1] + ri.m[0][1] * rt.m[1][1] + ri.m[0][2] * rt.m[2][1];
         b->iw.m[0][2] = ri.m[0][0] * rt.m[0][2] + ri.m[0][1] * rt.m[1][2] + ri.m[0][2] * rt.m[2][2];
@@ -195,16 +190,10 @@ void RigidBody_Integrate(BodyE_ *b, f32 dt) {
         if (b->wlen > 12.56636f) {
             k = 12.56636f / b->wlen;
             b->wlen = 12.56636f;
-            b->am.x = b->am.x * k;
-            b->am.y = b->am.y * k;
-            b->am.z = b->am.z * k;
-            b->w.x = b->w.x * k;
-            b->w.y = b->w.y * k;
-            b->w.z = b->w.z * k;
+            VEC3_SCALE(b->am, b->am, k);
+            VEC3_SCALE(b->w, b->w, k);
         }
-        wd.x = b->w.x * dt;
-        wd.y = b->w.y * dt;
-        wd.z = b->w.z * dt;
+        VEC3_SCALE(wd, b->w, dt);
         s.m[0][0] = 0.0f;
         s.m[0][1] = -wd.z;
         s.m[0][2] = wd.y;
@@ -238,7 +227,8 @@ void RigidBody_Integrate(BodyE_ *b, f32 dt) {
     }
 }
 
-    /* TODO (Clean version): Rigid body collision impulse against a static surface with Coulomb friction:
+    /* TODO (Clean version): [evaluated 2026-11-18: kept as documentation; the code now uses
+    the VEC3_* macros and RigidBody fields] Rigid body collision impulse against a static surface with Coulomb friction:
     - Relative contact velocity:
         Vec3f r = vec3_sub(c->p, b->pos);
         Vec3f v = vec3_add(b->vel, vec3_cross(b->w, r));
@@ -257,7 +247,7 @@ void RigidBody_Integrate(BodyE_ *b, f32 dt) {
         b->mom += J; b->vel = b->mom * b->im;
         b->am += vec3_cross(r, J); b->w = mat3_mul_vec3(b->inv_inertia, b->am);
     */
-f32 RigidBody_ResolveWorldContact(CtA_ *c, f32 fr) {
+f32 RigidBody_ResolveWorldContact(Contact *c, f32 fr) {
     Vec3f p;
     Vec3f n;
     Vec3f v;
@@ -269,7 +259,7 @@ f32 RigidBody_ResolveWorldContact(CtA_ *c, f32 fr) {
     Vec3f tot;
     Vec3f m;
     Vec3f wr;
-    BodyA_ *b;
+    RigidBody *b;
     f32 vn;
     f32 e;
     f32 imp;
@@ -280,15 +270,9 @@ f32 RigidBody_ResolveWorldContact(CtA_ *c, f32 fr) {
     b = c->o->b;
     p = c->p;
     n = c->n;
-    m.x = p.x - b->pos.x;
-    m.y = p.y - b->pos.y;
-    m.z = p.z - b->pos.z;
-    wr.x = b->w.y * m.z - m.y * b->w.z;
-    wr.y = m.x * b->w.z - b->w.x * m.z;
-    wr.z = b->w.x * m.y - m.x * b->w.y;
-    v.x = b->vel.x + wr.x;
-    v.y = b->vel.y + wr.y;
-    v.z = b->vel.z + wr.z;
+    VEC3_SUB(m, p, b->pos);
+    VEC3_CROSS(wr, b->w, m);
+    VEC3_ADD(v, b->vel, wr);
     vn = n.x * v.x + n.y * v.y + n.z * v.z;
     if (vn > 0.0f) {
         return 0.0f;
@@ -297,67 +281,42 @@ f32 RigidBody_ResolveWorldContact(CtA_ *c, f32 fr) {
     if (c->o->kind == 6) {
         e = 1.3f;
     }
-    r.x = p.x - b->pos.x;
-    r.y = p.y - b->pos.y;
-    r.z = p.z - b->pos.z;
-    x.x = r.y * n.z - n.y * r.z;
-    x.y = n.x * r.z - r.x * n.z;
-    x.z = r.x * n.y - n.x * r.y;
-    m.x = b->m[0] * x.x + b->m[1] * x.y + b->m[2] * x.z;
-    m.y = b->m[3] * x.x + b->m[4] * x.y + b->m[5] * x.z;
-    m.z = b->m[6] * x.x + b->m[7] * x.y + b->m[8] * x.z;
+    VEC3_SUB(r, p, b->pos);
+    VEC3_CROSS(x, r, n);
+    m.x = b->iw.m[0][0] * x.x + b->iw.m[0][1] * x.y + b->iw.m[0][2] * x.z;
+    m.y = b->iw.m[1][0] * x.x + b->iw.m[1][1] * x.y + b->iw.m[1][2] * x.z;
+    m.z = b->iw.m[2][0] * x.x + b->iw.m[2][1] * x.y + b->iw.m[2][2] * x.z;
     a = m;
-    x.x = a.y * r.z - r.y * a.z;
-    x.y = r.x * a.z - a.x * r.z;
-    x.z = a.x * r.y - r.x * a.y;
+    VEC3_CROSS(x, a, r);
     imp = (-e * vn) / (b->im + (n.x * x.x + n.y * x.y + n.z * x.z));
-    j.x = n.x * imp;
-    j.y = n.y * imp;
-    j.z = n.z * imp;
+    VEC3_SCALE(j, n, imp);
     d = n.x * v.x + n.y * v.y + n.z * v.z;
-    t.x = n.x * d;
-    t.y = n.y * d;
-    t.z = n.z * d;
-    t.x = v.x - t.x;
-    t.y = v.y - t.y;
-    t.z = v.z - t.z;
+    VEC3_SCALE(t, n, d);
+    VEC3_SUB(t, v, t);
     if (((t.x < 0.0f) ? -t.x : t.x) > 1.0f || ((t.y < 0.0f) ? -t.y : t.y) > 1.0f || ((t.z < 0.0f) ? -t.z : t.z) > 1.0f) {
         inv = 1.0f / sqrtf(t.x * t.x + t.y * t.y + t.z * t.z);
         s = -imp * fr;
-        t.x = t.x * inv;
-        t.y = t.y * inv;
-        t.z = t.z * inv;
-        t.x = t.x * s;
-        t.y = t.y * s;
-        t.z = t.z * s;
+        VEC3_SCALE(t, t, inv);
+        VEC3_SCALE(t, t, s);
     } else {
         t.x = 0.0f;
         t.y = 0.0f;
         t.z = 0.0f;
     }
-    tot.x = j.x + t.x;
-    tot.y = j.y + t.y;
-    tot.z = j.z + t.z;
-    b->mom.x = tot.x + b->mom.x;
-    b->mom.y = tot.y + b->mom.y;
-    b->mom.z = tot.z + b->mom.z;
-    x.x = r.y * tot.z - tot.y * r.z;
-    x.y = tot.x * r.z - r.x * tot.z;
-    x.z = r.x * tot.y - tot.x * r.y;
-    b->am.x = x.x + b->am.x;
-    b->am.y = x.y + b->am.y;
-    b->am.z = x.z + b->am.z;
-    b->vel.x = b->mom.x * b->im;
-    b->vel.y = b->mom.y * b->im;
-    b->vel.z = b->mom.z * b->im;
-    m.x = b->m[0] * b->am.x + b->m[1] * b->am.y + b->m[2] * b->am.z;
-    m.y = b->m[3] * b->am.x + b->m[4] * b->am.y + b->m[5] * b->am.z;
-    m.z = b->m[6] * b->am.x + b->m[7] * b->am.y + b->m[8] * b->am.z;
+    VEC3_ADD(tot, j, t);
+    VEC3_ADD(b->mom, tot, b->mom);
+    VEC3_CROSS(x, r, tot);
+    VEC3_ADD(b->am, x, b->am);
+    VEC3_SCALE(b->vel, b->mom, b->im);
+    m.x = b->iw.m[0][0] * b->am.x + b->iw.m[0][1] * b->am.y + b->iw.m[0][2] * b->am.z;
+    m.y = b->iw.m[1][0] * b->am.x + b->iw.m[1][1] * b->am.y + b->iw.m[1][2] * b->am.z;
+    m.z = b->iw.m[2][0] * b->am.x + b->iw.m[2][1] * b->am.y + b->iw.m[2][2] * b->am.z;
     b->w = m;
     return imp;
 }
 
-    /* TODO (Clean version): Two-body collision impulse resolution:
+    /* TODO (Clean version): [evaluated 2026-11-18: kept as documentation; the code now uses
+    the VEC3_* macros and RigidBody fields] Two-body collision impulse resolution:
     - Coefficient of restitution table lookup based on collider kinds:
         f32 e = D_80138D38[restitution_index(o0->kind, o1->kind)] / 10.0f;
     - Immovable body mass fallback:
@@ -370,7 +329,7 @@ f32 RigidBody_ResolveWorldContact(CtA_ *c, f32 fr) {
         b1->mom += j1; b1->am += vec3_cross(r1, j1);
         b2->mom -= j2; b2->am -= vec3_cross(r2, j2);
     */
-f32 RigidBody_ResolvePairContact(CtF_ *c) {
+f32 RigidBody_ResolvePairContact(ContactPair *c) {
     Vec3f p;
     Vec3f n;
     Vec3f v1;
@@ -385,10 +344,10 @@ f32 RigidBody_ResolvePairContact(CtF_ *c) {
     Vec3f m;
     Vec3f wr1;
     Vec3f wr2;
-    OwnF_ *o0;
-    OwnF_ *o1;
-    BodyF_ *b1;
-    BodyF_ *b2;
+    Collider *o0;
+    Collider *o1;
+    RigidBody *b1;
+    RigidBody *b2;
     f32 vn;
     f32 num;
     f32 d1;
@@ -404,38 +363,24 @@ f32 RigidBody_ResolvePairContact(CtF_ *c) {
     p = c->p;
     n = c->n;
     if (b1 != NULL) {
-        m.x = p.x - b1->pos.x;
-        m.y = p.y - b1->pos.y;
-        m.z = p.z - b1->pos.z;
-        wr1.x = b1->w.y * m.z - m.y * b1->w.z;
-        wr1.y = m.x * b1->w.z - b1->w.x * m.z;
-        wr1.z = b1->w.x * m.y - m.x * b1->w.y;
-        v1.x = b1->vel.x + wr1.x;
-        v1.y = b1->vel.y + wr1.y;
-        v1.z = b1->vel.z + wr1.z;
+        VEC3_SUB(m, p, b1->pos);
+        VEC3_CROSS(wr1, b1->w, m);
+        VEC3_ADD(v1, b1->vel, wr1);
     } else {
         v1.x = 0.0f;
         v1.y = 0.0f;
         v1.z = 0.0f;
     }
     if (b2 != NULL) {
-        m.x = p.x - b2->pos.x;
-        m.y = p.y - b2->pos.y;
-        m.z = p.z - b2->pos.z;
-        wr2.x = b2->w.y * m.z - m.y * b2->w.z;
-        wr2.y = m.x * b2->w.z - b2->w.x * m.z;
-        wr2.z = b2->w.x * m.y - m.x * b2->w.y;
-        v2.x = b2->vel.x + wr2.x;
-        v2.y = b2->vel.y + wr2.y;
-        v2.z = b2->vel.z + wr2.z;
+        VEC3_SUB(m, p, b2->pos);
+        VEC3_CROSS(wr2, b2->w, m);
+        VEC3_ADD(v2, b2->vel, wr2);
     } else {
         v2.x = 0.0f;
         v2.y = 0.0f;
         v2.z = 0.0f;
     }
-    dv.x = v1.x - v2.x;
-    dv.y = v1.y - v2.y;
-    dv.z = v1.z - v2.z;
+    VEC3_SUB(dv, v1, v2);
     vn = n.x * dv.x + n.y * dv.y + n.z * dv.z;
     if (vn > 0.0f) {
         return 0.0f;
@@ -453,26 +398,18 @@ f32 RigidBody_ResolvePairContact(CtF_ *c) {
     }
     num = -(D_80138D38[idx] / 10.0f) * vn;
     if (b1 != NULL) {
-        r1.x = p.x - b1->pos.x;
-        r1.y = p.y - b1->pos.y;
-        r1.z = p.z - b1->pos.z;
+        VEC3_SUB(r1, p, b1->pos);
     }
     if (b2 != NULL) {
-        r2.x = p.x - b2->pos.x;
-        r2.y = p.y - b2->pos.y;
-        r2.z = p.z - b2->pos.z;
+        VEC3_SUB(r2, p, b2->pos);
     }
     if (b1 != NULL) {
-        x.x = r1.y * n.z - n.y * r1.z;
-        x.y = n.x * r1.z - r1.x * n.z;
-        x.z = r1.x * n.y - n.x * r1.y;
-        m.x = b1->m[0] * x.x + b1->m[1] * x.y + b1->m[2] * x.z;
-        m.y = b1->m[3] * x.x + b1->m[4] * x.y + b1->m[5] * x.z;
-        m.z = b1->m[6] * x.x + b1->m[7] * x.y + b1->m[8] * x.z;
+        VEC3_CROSS(x, r1, n);
+        m.x = b1->iw.m[0][0] * x.x + b1->iw.m[0][1] * x.y + b1->iw.m[0][2] * x.z;
+        m.y = b1->iw.m[1][0] * x.x + b1->iw.m[1][1] * x.y + b1->iw.m[1][2] * x.z;
+        m.z = b1->iw.m[2][0] * x.x + b1->iw.m[2][1] * x.y + b1->iw.m[2][2] * x.z;
         a = m;
-        x.x = a.y * r1.z - r1.y * a.z;
-        x.y = r1.x * a.z - a.x * r1.z;
-        x.z = a.x * r1.y - r1.x * a.y;
+        VEC3_CROSS(x, a, r1);
         d1 = b1->im + (n.x * x.x + n.y * x.y + n.z * x.z);
     } else if (c->o0->flags & 6) {
         if (c->o0->u84 != 0) {
@@ -484,16 +421,12 @@ f32 RigidBody_ResolvePairContact(CtF_ *c) {
         d1 = 0.0f;
     }
     if (b2 != NULL) {
-        x.x = r2.y * n.z - n.y * r2.z;
-        x.y = n.x * r2.z - r2.x * n.z;
-        x.z = r2.x * n.y - n.x * r2.y;
-        m.x = b2->m[0] * x.x + b2->m[1] * x.y + b2->m[2] * x.z;
-        m.y = b2->m[3] * x.x + b2->m[4] * x.y + b2->m[5] * x.z;
-        m.z = b2->m[6] * x.x + b2->m[7] * x.y + b2->m[8] * x.z;
+        VEC3_CROSS(x, r2, n);
+        m.x = b2->iw.m[0][0] * x.x + b2->iw.m[0][1] * x.y + b2->iw.m[0][2] * x.z;
+        m.y = b2->iw.m[1][0] * x.x + b2->iw.m[1][1] * x.y + b2->iw.m[1][2] * x.z;
+        m.z = b2->iw.m[2][0] * x.x + b2->iw.m[2][1] * x.y + b2->iw.m[2][2] * x.z;
         a = m;
-        x.x = a.y * r2.z - r2.y * a.z;
-        x.y = r2.x * a.z - a.x * r2.z;
-        x.z = a.x * r2.y - r2.x * a.y;
+        VEC3_CROSS(x, a, r2);
         d2 = b2->im + (n.x * x.x + n.y * x.y + n.z * x.z);
     } else if (c->o1->flags & 6) {
         if (c->o1->u84 != 0) {
@@ -505,9 +438,7 @@ f32 RigidBody_ResolvePairContact(CtF_ *c) {
         d2 = 0.0f;
     }
     f = num / (d1 + d2);
-    j1.x = n.x * f;
-    j1.y = n.y * f;
-    j1.z = n.z * f;
+    VEC3_SCALE(j1, n, f);
     j2 = j1;
     if (o0->flags & 0x40) {
         if (o1->kind == 4) {
@@ -535,9 +466,7 @@ f32 RigidBody_ResolvePairContact(CtF_ *c) {
         b1->mom.x += j1.x;
         b1->mom.y += j1.y;
         b1->mom.z += j1.z;
-        x.x = r1.y * j1.z - j1.y * r1.z;
-        x.y = j1.x * r1.z - r1.x * j1.z;
-        x.z = r1.x * j1.y - j1.x * r1.y;
+        VEC3_CROSS(x, r1, j1);
         b1->am.x += x.x;
         b1->am.y += x.y;
         b1->am.z += x.z;
@@ -546,46 +475,42 @@ f32 RigidBody_ResolvePairContact(CtF_ *c) {
         b2->mom.x -= j2.x;
         b2->mom.y -= j2.y;
         b2->mom.z -= j2.z;
-        x.x = r2.y * j2.z - j2.y * r2.z;
-        x.y = j2.x * r2.z - r2.x * j2.z;
-        x.z = r2.x * j2.y - j2.x * r2.y;
+        VEC3_CROSS(x, r2, j2);
         b2->am.x -= x.x;
         b2->am.y -= x.y;
         b2->am.z -= x.z;
     }
     if (b1 != NULL) {
-        b1->vel.x = b1->mom.x * b1->im;
-        b1->vel.y = b1->mom.y * b1->im;
-        b1->vel.z = b1->mom.z * b1->im;
-        m.x = b1->m[0] * b1->am.x + b1->m[1] * b1->am.y + b1->m[2] * b1->am.z;
-        m.y = b1->m[3] * b1->am.x + b1->m[4] * b1->am.y + b1->m[5] * b1->am.z;
-        m.z = b1->m[6] * b1->am.x + b1->m[7] * b1->am.y + b1->m[8] * b1->am.z;
+        VEC3_SCALE(b1->vel, b1->mom, b1->im);
+        m.x = b1->iw.m[0][0] * b1->am.x + b1->iw.m[0][1] * b1->am.y + b1->iw.m[0][2] * b1->am.z;
+        m.y = b1->iw.m[1][0] * b1->am.x + b1->iw.m[1][1] * b1->am.y + b1->iw.m[1][2] * b1->am.z;
+        m.z = b1->iw.m[2][0] * b1->am.x + b1->iw.m[2][1] * b1->am.y + b1->iw.m[2][2] * b1->am.z;
         b1->w = m;
     }
     if (b2 != NULL) {
-        b2->vel.x = b2->mom.x * b2->im;
-        b2->vel.y = b2->mom.y * b2->im;
-        b2->vel.z = b2->mom.z * b2->im;
-        m.x = b2->m[0] * b2->am.x + b2->m[1] * b2->am.y + b2->m[2] * b2->am.z;
-        m.y = b2->m[3] * b2->am.x + b2->m[4] * b2->am.y + b2->m[5] * b2->am.z;
-        m.z = b2->m[6] * b2->am.x + b2->m[7] * b2->am.y + b2->m[8] * b2->am.z;
+        VEC3_SCALE(b2->vel, b2->mom, b2->im);
+        m.x = b2->iw.m[0][0] * b2->am.x + b2->iw.m[0][1] * b2->am.y + b2->iw.m[0][2] * b2->am.z;
+        m.y = b2->iw.m[1][0] * b2->am.x + b2->iw.m[1][1] * b2->am.y + b2->iw.m[1][2] * b2->am.z;
+        m.z = b2->iw.m[2][0] * b2->am.x + b2->iw.m[2][1] * b2->am.y + b2->iw.m[2][2] * b2->am.z;
         b2->w = m;
     }
     return f;
 }
 
-    /* TODO (Clean version): Box moment of inertia tensor and its inverse (dimensions x, y, z; mass m):
-    void rigid_body_set_box_inertia(BodyI_ *o, f32 x, f32 y, f32 z) {
-        f32 c = (1.0f / 12.0f) * o->m;
+    /* TODO (Clean version): [evaluated 2026-11-18: the memset/1-over-I form changes the ROM;
+    the chained zeroing and a/12, 12/a stay for matching]
+    Box moment of inertia tensor and its inverse (dimensions x, y, z; mass m):
+    void rigid_body_set_box_inertia(RigidBody *o, f32 x, f32 y, f32 z) {
+        f32 c = (1.0f / 12.0f) * o->mass;
         memset(o->i, 0, sizeof(o->i));
         memset(o->ib, 0, sizeof(o->ib));
-        o->i[0]  = c * (y * y + z * z); o->ib[0] = 1.0f / o->i[0];
-        o->i[4]  = c * (x * x + z * z); o->ib[4] = 1.0f / o->i[4];
-        o->i[8]  = c * (x * x + y * y); o->ib[8] = 1.0f / o->i[8];
+        o->inertia.m[0][0]  = c * (y * y + z * z); o->invInertia.m[0][0] = 1.0f / o->inertia.m[0][0];
+        o->inertia.m[1][1]  = c * (x * x + z * z); o->invInertia.m[1][1] = 1.0f / o->inertia.m[1][1];
+        o->inertia.m[2][2]  = c * (x * x + y * y); o->invInertia.m[2][2] = 1.0f / o->inertia.m[2][2];
     }
     Note: chained assignment in original code redundantly zeroes i[4] and ib[4] before setting them.
     */
-void RigidBody_SetBoxInertia(BodyI_ *o, f32 x, f32 y, f32 z) {
+void RigidBody_SetBoxInertia(RigidBody *o, f32 x, f32 y, f32 z) {
     f32 yy;
     f32 zz;
     f32 xx;
@@ -595,39 +520,31 @@ void RigidBody_SetBoxInertia(BodyI_ *o, f32 x, f32 y, f32 z) {
 
     yy = y * y;
     zz = z * z;
-    a = o->m * (yy + zz);
+    a = o->mass * (yy + zz);
     xx = x * x;
-    b = o->m * (xx + zz);
-    c = o->m * (xx + yy);
-    o->i[1] = o->i[2] = o->i[3] = o->i[4] = o->i[5] = o->i[6] = o->i[7] = o->i[8] = 0.0f;
-    o->ib[1] = o->ib[2] = o->ib[3] = o->ib[4] = o->ib[5] = o->ib[6] = o->ib[7] = o->ib[8] = 0.0f;
-    o->i[0] = a / 12.0f;
-    o->ib[0] = 12.0f / a;
-    o->i[4] = b / 12.0f;
-    o->i[8] = c / 12.0f;
-    o->ib[4] = 12.0f / b;
-    o->ib[8] = 12.0f / c;
+    b = o->mass * (xx + zz);
+    c = o->mass * (xx + yy);
+    o->inertia.m[0][1] = o->inertia.m[0][2] = o->inertia.m[1][0] = o->inertia.m[1][1] = o->inertia.m[1][2] = o->inertia.m[2][0] = o->inertia.m[2][1] = o->inertia.m[2][2] = 0.0f;
+    o->invInertia.m[0][1] = o->invInertia.m[0][2] = o->invInertia.m[1][0] = o->invInertia.m[1][1] = o->invInertia.m[1][2] = o->invInertia.m[2][0] = o->invInertia.m[2][1] = o->invInertia.m[2][2] = 0.0f;
+    o->inertia.m[0][0] = a / 12.0f;
+    o->invInertia.m[0][0] = 12.0f / a;
+    o->inertia.m[1][1] = b / 12.0f;
+    o->inertia.m[2][2] = c / 12.0f;
+    o->invInertia.m[1][1] = 12.0f / b;
+    o->invInertia.m[2][2] = 12.0f / c;
 }
 
-    /* TODO (Clean version): Project angular momentum vector onto body local orientation axis i (0=X, 1=Y, 2=Z):
-    void body_project_angular_momentum_axis(RigidBody *b, s32 axis) {
-        // Column 'axis' of orientation matrix r (0x94) is the world-space unit vector of local axis
-        Vec3f local_axis = { b->r.m[0][axis], b->r.m[1][axis], b->r.m[2][axis] };
-        f32 d = vec3_dot(local_axis, b->am); // Offset 0xB8 is angular momentum (am)
-        b->am = vec3_scale(local_axis, d);
-    }
-    */
-void RigidBody_ConstrainSpin(u8 *t, u8 i) {
+/* Keeps only the component of the angular momentum along local axis i (column i of r). */
+void RigidBody_ConstrainSpin(RigidBody *b, u8 i) {
     f32 v[3];
     f32 d;
-    f32 *a = (f32 *)(i * 4 + (u32)t);
 
-    v[0] = *(f32 *)((u8 *)a + 0x94);
-    v[1] = *(f32 *)((u8 *)a + 0xA0);
-    v[2] = *(f32 *)((u8 *)a + 0xAC);
-    d = v[0] * *(f32 *)(t + 0xB8) + v[1] * *(f32 *)(t + 0xBC) + v[2] * *(f32 *)(t + 0xC0);
-    *(f32 *)(t + 0xB8) = v[0] * d;
-    *(f32 *)(t + 0xBC) = v[1] * d;
-    *(f32 *)(t + 0xC0) = v[2] * d;
+    v[0] = b->r.m[0][i];
+    v[1] = b->r.m[1][i];
+    v[2] = b->r.m[2][i];
+    d = v[0] * b->am.x + v[1] * b->am.y + v[2] * b->am.z;
+    b->am.x = v[0] * d;
+    b->am.y = v[1] * d;
+    b->am.z = v[2] * d;
 }
 

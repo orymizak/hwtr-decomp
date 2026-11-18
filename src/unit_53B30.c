@@ -1,6 +1,7 @@
 #include "common.h"
 #include "input.h"
 #include "pak.h"
+#include "save.h"
 
 /* Key newly pressed on any of the four pads. */
 #define INPUT_PRESSED_ANY_PAD(key) \
@@ -305,7 +306,7 @@ extern u8 D_80124C94;
 extern void (*sysFontDrawChar)(s32, s32, s32, s32, s32);
 extern void (*sysDraw2DSetColor)(s32, s32, s32);
 extern void Fsm_Trigger(void *, s32);
-extern u8 *gActiveSave;
+extern GameSave *gActiveSave;
 extern u8 D_80123EBE;
 extern u8 D_80123EBF;
 extern u8 D_80123EC1;
@@ -1186,7 +1187,7 @@ void Save_Load(void) {
     gProfileP1 = SaveSlot_FindPlayer(0);
     gProfileP2 = SaveSlot_FindPlayer(1);
     if (gActiveSave == NULL) {
-        gActiveSave = &D_80124160;
+        gActiveSave = (GameSave *)&D_80124160;
         gProfileP1 = (s32)&D_801249F0;
         gProfileP2 = (s32)&D_80124B30;
         Fsm_Trigger(&gMenuFsm, 0x23);
@@ -1584,15 +1585,6 @@ void PakDialog_SelectBottom(void) {
     gPakDialogSel = 5;
 }
 
-/* TODO (Clean version): Avoid raw offset indexing into game state gActiveSave.
- * Offsets 0x884 and 0x888 correspond to player profile IDs/hashes in the 0x88C save header:
- *   typedef struct {
- *       u8 data[0x884];
- *       s32 player1Id; // 0x884
- *       s32 player2Id; // 0x888
- *   } GameSaveData_;
- * Also replace ((s32 *)p)[1] with player2->id.
- */
 void Save_CreateNew(void) {
     E140b_ buf;
     u8 found;
@@ -1614,7 +1606,7 @@ void Save_CreateNew(void) {
         return;
     }
     Save_ReadAll();
-    gActiveSave = (u8 *)Save_GetProfile(slot);
+    gActiveSave = (GameSave *)Save_GetProfile(slot);
     Save_InitDefault(gActiveSave);
     Profile_InitDefault(&buf, 0);
     SaveSlot_Add(slot, &buf);
@@ -1622,9 +1614,9 @@ void Save_CreateNew(void) {
     SaveSlot_Add(slot, &buf);
     gProfileP1 = (s32)SaveSlot_Get(slot, 0);
     p = SaveSlot_Get(slot, 1);
-    *(s32 *)(gActiveSave + 0x884) = *(s32 *)(gProfileP1 + 4);
+    gActiveSave->player1Id = *(s32 *)(gProfileP1 + 4);
     gProfileP2 = (s32)p;
-    *(s32 *)(gActiveSave + 0x888) = ((s32 *)p)[1];
+    gActiveSave->player2Id = ((s32 *)p)[1];
     Save_Commit();
     gSaveLoaded = 1;
     Menu_Advance();
@@ -1650,7 +1642,7 @@ void Pak_DispatchCreateError(void) {
 
 void Save_NewGame(void) {
     gSaveLoaded = 0;
-    gActiveSave = &D_80124160;
+    gActiveSave = (GameSave *)&D_80124160;
     Save_InitDefault(&D_80124160);
     gProfileP1 = (s32)&D_801249F0;
     Profile_InitDefault(&D_801249F0, 0);
@@ -1668,7 +1660,7 @@ void Save_CommitLoaded(void) {
     *(Big140_ *)&D_801249F0 = *(Big140_ *)gProfileP1;
     *(Big140_ *)&D_80124B30 = *(Big140_ *)gProfileP2;
     x = D_80100DBC;
-    gActiveSave = &D_80124160;
+    gActiveSave = (GameSave *)&D_80124160;
     gProfileP1 = (s32)&D_801249F0;
     gProfileP2 = (s32)&D_80124B30;
     *(s32 *)&gPasswordP1 = x;
@@ -2053,9 +2045,9 @@ void Menu_ExitToGame(void) {
         *Save_GetProfile(0) = *(Big88C_ *)&D_80124160;
     }
     Music_StopMenuTrack();
-    sysAudioSetMusicVolume(gActiveSave[0x87D]);
-    sysAudioSetSfxVolume(gActiveSave[0x87C]);
-    sysAudioSetVoiceVolume(gActiveSave[0x880]);
+    sysAudioSetMusicVolume(gActiveSave->musicVolume);
+    sysAudioSetSfxVolume(gActiveSave->sfxVolume);
+    sysAudioSetVoiceVolume(gActiveSave->voiceVolume);
     sysAudioSetAmbientVolume(0xFF);
     MenuFont_FreeAll();
     Menu_FreeAll();
@@ -2785,7 +2777,7 @@ void GameMode_Prev(void) {
     s32 *p;
 
     sysSfxPlay(0x30, 1, 1.0f, 1.0f);
-    p = (s32 *)(gActiveSave + 0x878);
+    p = &gActiveSave->gameMode;
     if (*p == 0) {
         *p = 4;
     } else {
@@ -2798,7 +2790,7 @@ void GameMode_Next(void) {
     u32 *p;
 
     sysSfxPlay(0x31, 1, 1.0f, 1.0f);
-    p = (u32 *)(gActiveSave + 0x878);
+    p = (u32 *)&gActiveSave->gameMode;
     *p += 1;
     if (*p >= 5) {
         *p = 0;
@@ -2854,7 +2846,7 @@ void TrackSelect_Next(void) {
 
 
 void MainMenu_DispatchMode(void) {
-    switch (*(s32 *)(gActiveSave + 0x878)) {
+    switch (gActiveSave->gameMode) {
     case 0:
         Fsm_Trigger(&(*(s32 *)&gMenuFsm), 0x40);
         break;
@@ -2879,7 +2871,7 @@ void MainMenu_DispatchMode(void) {
 void MainMenu_Dispatch(void) {
     switch (gMainMenuSel) {
     case 0:
-        switch (*(s32 *)(gActiveSave + 0x878)) {
+        switch (gActiveSave->gameMode) {
         case 0:
             Fsm_Trigger(&(*(s32 *)&gMenuFsm), 0x40);
             break;
@@ -4163,10 +4155,10 @@ void Options_CheckSlider(void) {
 void Options_PreviewVolume(void) {
     switch (gOptionsSel) {
         case 2:
-            sysSfxPlay(0x38, 1, gActiveSave[0x87C] / 255.0f, 1.0f);
+            sysSfxPlay(0x38, 1, gActiveSave->sfxVolume / 255.0f, 1.0f);
             break;
         case 3:
-            sysSfxPlay(0x37, 1, gActiveSave[0x880] / 255.0f, 1.0f);
+            sysSfxPlay(0x37, 1, gActiveSave->voiceVolume / 255.0f, 1.0f);
             break;
         case 1:
             break;
@@ -4215,33 +4207,33 @@ void Options_Right(void) {
 void Options_Decrease(void) {
     switch (gOptionsSel) {
     case 0:
-        if (gActiveSave[0x87E] > 10) {
-            gActiveSave[0x87E] -= 10;
+        if (gActiveSave->option0 > 10) {
+            gActiveSave->option0 -= 10;
             sysSfxPlay(0x30, 1, 1.0f, 1.0f);
         } else {
-            gActiveSave[0x87E] = 0;
+            gActiveSave->option0 = 0;
         }
         break;
     case 1:
-        if (gActiveSave[0x87D] > 10) {
-            gActiveSave[0x87D] -= 10;
+        if (gActiveSave->musicVolume > 10) {
+            gActiveSave->musicVolume -= 10;
         } else {
-            gActiveSave[0x87D] = 0;
+            gActiveSave->musicVolume = 0;
         }
-        sysAudioSetMusicVolume(gActiveSave[0x87D]);
+        sysAudioSetMusicVolume(gActiveSave->musicVolume);
         break;
     case 2:
-        if (gActiveSave[0x87C] > 10) {
-            gActiveSave[0x87C] -= 10;
+        if (gActiveSave->sfxVolume > 10) {
+            gActiveSave->sfxVolume -= 10;
         } else {
-            gActiveSave[0x87C] = 0;
+            gActiveSave->sfxVolume = 0;
         }
         break;
     case 3:
-        if (gActiveSave[0x880] > 10) {
-            gActiveSave[0x880] -= 10;
+        if (gActiveSave->voiceVolume > 10) {
+            gActiveSave->voiceVolume -= 10;
         } else {
-            gActiveSave[0x880] = 0;
+            gActiveSave->voiceVolume = 0;
         }
         break;
     }
@@ -4250,33 +4242,33 @@ void Options_Decrease(void) {
 void Options_Increase(void) {
     switch (gOptionsSel) {
     case 0:
-        if (gActiveSave[0x87E] < 245) {
-            gActiveSave[0x87E] += 10;
+        if (gActiveSave->option0 < 245) {
+            gActiveSave->option0 += 10;
             sysSfxPlay(0x31, 1, 1.0f, 1.0f);
         } else {
-            gActiveSave[0x87E] = 255;
+            gActiveSave->option0 = 255;
         }
         break;
     case 1:
-        if (gActiveSave[0x87D] < 245) {
-            gActiveSave[0x87D] += 10;
+        if (gActiveSave->musicVolume < 245) {
+            gActiveSave->musicVolume += 10;
         } else {
-            gActiveSave[0x87D] = 255;
+            gActiveSave->musicVolume = 255;
         }
-        sysAudioSetMusicVolume(gActiveSave[0x87D]);
+        sysAudioSetMusicVolume(gActiveSave->musicVolume);
         break;
     case 2:
-        if (gActiveSave[0x87C] < 245) {
-            gActiveSave[0x87C] += 10;
+        if (gActiveSave->sfxVolume < 245) {
+            gActiveSave->sfxVolume += 10;
         } else {
-            gActiveSave[0x87C] = 255;
+            gActiveSave->sfxVolume = 255;
         }
         break;
     case 3:
-        if (gActiveSave[0x880] < 245) {
-            gActiveSave[0x880] += 10;
+        if (gActiveSave->voiceVolume < 245) {
+            gActiveSave->voiceVolume += 10;
         } else {
-            gActiveSave[0x880] = 255;
+            gActiveSave->voiceVolume = 255;
         }
         break;
     }
@@ -4318,10 +4310,10 @@ void Options_LayoutColorBars(void) {
     u8 c[4];
     u8 i;
 
-    c[0] = gActiveSave[0x87E];
-    c[1] = gActiveSave[0x87D];
-    c[2] = gActiveSave[0x87C];
-    c[3] = gActiveSave[0x880];
+    c[0] = gActiveSave->option0;
+    c[1] = gActiveSave->musicVolume;
+    c[2] = gActiveSave->sfxVolume;
+    c[3] = gActiveSave->voiceVolume;
     for (i = 0; i < 4; i++) {
         (*(ElC05_ **)(D_800F5F48 + 0x28))[i].fC = MenuPos_ToWorldX((s32)(c[i] * 2.1568627f) + 360);
         (*(ElC05_ **)(D_800F5F48 + 0x28))[i].f10 = MenuPos_ToWorldY(i * 0x54 + 0x136);
@@ -5863,7 +5855,7 @@ void Help_Input(void) {
 
 
 void Race_StartForMode(void) {
-    switch (*(s32 *)(gActiveSave + 0x878)) {
+    switch (gActiveSave->gameMode) {
     case 0:
     case 1:
         Fsm_Trigger(&(*(s32 *)&gMenuFsm), 0x7E);
@@ -6053,7 +6045,7 @@ void Race_StartCup(void) {
         gRaceSetup.p[2].f12 = 1;
     } else {
         gRaceSetup.cnt = 6;
-        gRaceSetup.f9C = gActiveSave[0x87E];
+        gRaceSetup.f9C = gActiveSave->option0;
         for (i = 1; i < 6; i++) {
             r = (u8)Car_WrapIndex(((u8 *)gProfileP1 + i)[7]);
             do {

@@ -8,7 +8,6 @@ extern u8 D_800F0548[];
 void nuContRmbForceStopEnd(void);
 typedef struct { u16 button; s8 stick_x; s8 stick_y; u8 errnum; u8 pad; } Pad_;
 typedef struct { u8 buf[8]; s32 st; s32 mode; } PakSt_;
-typedef struct { s32 keys[6]; u8 pad[0x54 - 0x18]; } KeySet_;
 typedef struct { u8 c[0x54]; } Row6B_;
 typedef struct { f32 x; f32 y; f32 z; f32 vx; f32 vy; u8 type; } EntAA_;
 typedef struct { s32 keys[21]; } KeySetB_;
@@ -36,13 +35,11 @@ void Clouds_Update(void);
 void Mtx34_Mul(s32, f32 (*)[4], f32 (*)[4]);
 s32 Mtx_New(f32 (*)[4]);
 extern Row6B_ gPadControls[];
-extern KeySet_ D_800F0404[];
 void nuContDataGet(Pad_ *, s32);
 s32 nuContRmbCheck(s32);
 void nuContRmbModeSet(s32, s32);
 void nuContPakOpen(PakSt_ *, s32);
 extern void nuContDataGetAll(Pad_ *);
-extern u8 D_800F0403;
 extern s32 D_800F0390[];
 extern u8 D_800F03EB;
 extern void *sysInputIsKeyHeldAny;
@@ -376,7 +373,7 @@ s32 Input_GetKeyName(u8 ch, s32 slot) {
     s32 i;
     s32 m;
 
-    v = D_800F0404[ch].keys[slot];
+    v = gPadBindings[ch].k[slot];
     for (i = 1, m = 1; m != v && i < 21; i++) {
         m <<= 1;
     }
@@ -386,7 +383,7 @@ s32 Input_GetKeyName(u8 ch, s32 slot) {
     return D_800F0394[0];
 }
 
-    /* TODO (Clean version):
+    /* TODO (Clean version): [evaluated 2026-11-18: the else-if chain changes the ROM]
     Cadena repetitiva de comprobaciones "if (mask == 0 && ...)" para emular selección de prioridad sin ramas else-if. En C limpio se escribiría con una cadena if / else if directa. Se mantiene para el match.
     */
 s32 Input_BindKey(u8 ch, s32 slot) {
@@ -414,13 +411,13 @@ s32 Input_BindKey(u8 ch, s32 slot) {
     if (mask == 0 && (pad.button & 4)) mask = 4;
     if (mask != 0) {
         if (slot == 0 || slot == 5) {
-            D_800F0404[ch].keys[0] = mask;
-            D_800F0404[ch].keys[5] = mask;
+            gPadBindings[ch].k[0] = mask;
+            gPadBindings[ch].k[5] = mask;
         } else if (slot == 1 || slot == 4) {
-            D_800F0404[ch].keys[1] = mask;
-            D_800F0404[ch].keys[4] = mask;
+            gPadBindings[ch].k[1] = mask;
+            gPadBindings[ch].k[4] = mask;
         } else {
-            D_800F0404[ch].keys[slot] = mask;
+            gPadBindings[ch].k[slot] = mask;
         }
         return 1;
     }
@@ -435,11 +432,8 @@ s32 Input_GetLayoutName(s32 arg0) {
     return D_800F0390[(u8)arg0];
 }
 
-    /* TODO (Clean version):
-    Aritmética manual de punteros (*(u8 *)(&D_800F0403 + ((arg0 & 0xFF) * 0x54))) calculando el stride de 0x54 bytes manualmente sobre un u8. En C limpio debería accederse a través de un arreglo de estructuras (ej. gPadBindings[(u8)arg0].campo). Se mantiene para el match.
-    */
 u8 Input_GetLayout(s32 arg0) {
-    return *(u8 *)(&D_800F0403 + ((arg0 & 0xFF) * 0x54));
+    return gPadBindings[arg0 & 0xFF].mode;
 }
 
 s32 Input_SetLayout(u8 pad, u8 mode) {
@@ -471,7 +465,7 @@ s32 Input_ResetLayout(s32 arg0) {
     return 1;
 }
 
-    /* TODO (Clean version):
+    /* TODO (Clean version): [evaluated 2026-11-18: without it the stack frame shrinks; kept]
     Arreglo local "unused[16]" no utilizado, forzado artificialmente para ajustar el tamaño del frame de pila y lograr el match binario. En C limpio debe eliminarse.
     */
 s32 Input_HasRumble(u8 i) {
@@ -490,9 +484,6 @@ s32 Input_IsPad1Connected(void) {
     return gContPattern & 1;
 }
 
-    /* TODO (Clean version):
-    D_800F0404 fue declarado con KeySet_ donde keys tiene tamaño 6 (s32 keys[6]), pero el bucle itera hasta 13 escribiendo fuera de los límites del arreglo sobre el padding. En C limpio la estructura debería definir el arreglo con al menos 13 elementos (ej. s32 keys[13]). Se mantiene para el match.
-    */
 s32 Input_LoadBindings(u8 *buf, u8 id) {
     s32 sum;
     s32 i;
@@ -505,14 +496,11 @@ s32 Input_LoadBindings(u8 *buf, u8 id) {
         return 0;
     }
     for (i = 0; i < 13; i++) {
-        D_800F0404[id].keys[i] = 1 << buf[i];
+        gPadBindings[id].k[i] = 1 << buf[i];
     }
     return 1;
 }
 
-    /* TODO (Clean version):
-    D_800F0404[ch].keys[j] accede hasta el índice 12 en un struct declarado con keys[6], indexando fuera de los límites sobre el padding. En C limpio la estructura debería tener el tamaño de arreglo adecuado. Se mantiene para el match.
-    */
 s32 Input_SaveBindings(u8 *out, u8 ch) {
     s32 j;
     s32 n;
@@ -523,7 +511,7 @@ s32 Input_SaveBindings(u8 *out, u8 ch) {
     for (j = 0; j < 13; j++) {
         n = 0;
         m = 1;
-        while (m != D_800F0404[ch].keys[j]) {
+        while (m != gPadBindings[ch].k[j]) {
             m <<= 1;
             n++;
         }

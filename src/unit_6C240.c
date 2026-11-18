@@ -1,5 +1,6 @@
 #include "common.h"
 #include "input.h"
+#include "save.h"
 #include "include_asm.h"
 s32 Jukebox_GetArtist(s32);
 s32 Jukebox_GetTitle(s32);
@@ -8,29 +9,16 @@ void PauseUi_ResetTextBuffer(void);
 void PauseUi_Load(s32);
 void PauseUi_FadeIn(void);
 void PauseUi_Unload(s32);
-    /* TODO (Clean version):
-    Replace temporary decomp structures with documented layout:
-    typedef struct {
-        s16 id;
-        s16 x;
-    } IdEntry;
-
-    typedef struct {
-        u8 pad00[0xC];
-        IdEntry *ids;
-        u8 pad10[3];
-        s8 count;
-    } IdTable;
-    */
-typedef struct { s16 id; s16 x; } Id4_;
-typedef struct { u8 pad[0xC]; Id4_ *ids; u8 pad2[3]; s8 n; } IdTab_;
+/* Pause FSM state: the ids of its items. */
+typedef struct { s16 id; s16 x; } IdEntry;
+typedef struct { u8 pad[0xC]; IdEntry *ids; u8 pad2[3]; s8 n; } IdTable;
 extern s32 gPauseRepeatLeft;
 extern s32 gPauseRepeatRight;
 extern void (*audSfxPlay)(s32, s32, f32, f32);
 u8 Volume_StepUp(u8);
 extern u8 (*sysInputIsKeyHeld)(s32, s32);
 extern u32 gPauseButtons;
-extern IdTab_ *gPauseCurState;
+extern IdTable *gPauseCurState;
 extern u8 (*sysInputIsPad1Connected)(void);
 s32 PauseUi_BeginFrame();
 s32 PauseUi_EndFrame();
@@ -60,7 +48,7 @@ extern s32 (*audMusicGetTrack)();
 extern s32 (*audMusicStop)();
 
 s32 Pause_StateHasEvent(s16 id) {
-    Id4_ *p = gPauseCurState->ids;
+    IdEntry *p = gPauseCurState->ids;
     u8 i;
 
     for (i = 0; i < gPauseCurState->n; i++, p++) {
@@ -74,7 +62,7 @@ s32 Pause_StateHasEvent(s16 id) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_6C240", Pause_Input);
 
-    /* TODO (Clean version):
+    /* TODO (Clean version): [evaluated 2026-11-18: direct calls change the ROM]
     Indirect call via 'fp' is a matching artifact to pin sysInputIsKeyHeld in a register.
     Logic performs edge detection for buttons 0x10 and 0x11 (bits 1 and 4 represent newly pressed state):
     u32 r = 0;
@@ -141,7 +129,8 @@ void Confirm_Open(void) {
     PauseUi_Open(gPauseConfirmMenu);
 }
 
-    /* TODO (Clean version):
+    /* TODO (Clean version): [evaluated 2026-11-18: the five menus are separate symbols used by
+    name elsewhere (gPauseOptionsMenu...); an array would need a new symbol over them]
     (&gPauseMainMenu)[i] accesses contiguous global variables gPauseMainMenu..gPauseConfirmMenu.
     Declare as an array:
     extern s32 gPauseMainMenu[5];
@@ -310,7 +299,8 @@ u8 Volume_StepUp(u8 arg0) {
         cur = v * 100 / 255;
         cur = cur / 10 * 10;
     }
-    /* TODO (Bug check): 'v < 0' is dead code; 'v' starts as u8 and is only incremented. */
+    /* TODO (Bug check): [evaluated 2026-11-18: the check is in the ROM; removing it changes it]
+       'v < 0' is dead code; 'v' starts as u8 and is only incremented. */
     if (v < 0) {
         return 0;
     }
@@ -346,7 +336,8 @@ u8 Volume_StepDown(u8 arg0) {
     if (v <= 0) {
         return 0;
     }
-    /* TODO (Bug check): 'v >= 255' is unreachable; 'v' is only decremented from arg0 <= 255. */
+    /* TODO (Bug check): [evaluated 2026-11-18: the check is in the ROM; removing it changes it]
+       'v >= 255' is unreachable; 'v' is only decremented from arg0 <= 255. */
     if (v >= 255) {
         return 255;
     }
@@ -354,86 +345,74 @@ u8 Volume_StepDown(u8 arg0) {
     return v;
 }
 
-    /* TODO (Clean version):
-    Offsets 0x87C, 0x87D, and 0x880 into Save_GetActiveProfile() represent audio settings.
-    Define an options structure:
-    typedef struct {
-        u8 pad00[0x87C];
-        u8 bgm_volume;    // 0x87C
-        u8 sfx_volume;    // 0x87D
-        u8 pad87E[2];
-        u8 voice_volume;  // 0x880
-    } GameSettings;
-    GameSettings *opt = Save_GetActiveProfile();
-    */
 void PauseAudio_SfxUp(void) {
-    u8 *opt = Save_GetActiveProfile();
-    u8 cur = opt[0x87C];
+    GameSave *opt = Save_GetActiveProfile();
+    u8 cur = opt->sfxVolume;
     u8 next;
 
     if (cur != 0xFF) {
         next = Volume_StepUp(cur);
-        opt[0x87C] = next;
+        opt->sfxVolume = next;
         sysAudioSetSfxVolume(next);
     }
 }
 
 void PauseAudio_SfxDown(void) {
-    u8 *opt = Save_GetActiveProfile();
-    u8 cur = opt[0x87C];
+    GameSave *opt = Save_GetActiveProfile();
+    u8 cur = opt->sfxVolume;
     u8 next;
 
     if (cur != 0) {
         next = Volume_StepDown(cur);
-        opt[0x87C] = next;
+        opt->sfxVolume = next;
         sysAudioSetSfxVolume(next);
     }
 }
 
 void PauseAudio_VoiceUp(void) {
-    u8 *opt = Save_GetActiveProfile();
-    u8 cur = opt[0x880];
+    GameSave *opt = Save_GetActiveProfile();
+    u8 cur = opt->voiceVolume;
     u8 next;
 
     if (cur != 0xFF) {
         next = Volume_StepUp(cur);
-        opt[0x880] = next;
+        opt->voiceVolume = next;
         sysAudioSetVoiceVolume(next);
     }
 }
 
 void PauseAudio_VoiceDown(void) {
-    u8 *opt = Save_GetActiveProfile();
-    u8 cur = opt[0x880];
+    GameSave *opt = Save_GetActiveProfile();
+    u8 cur = opt->voiceVolume;
     u8 next;
 
     if (cur != 0) {
         next = Volume_StepDown(cur);
-        opt[0x880] = next;
+        opt->voiceVolume = next;
         sysAudioSetVoiceVolume(next);
     }
 }
 
 void PauseAudio_MusicUp(void) {
-    u8 *opt = Save_GetActiveProfile();
-    u8 cur = opt[0x87D];
+    GameSave *opt = Save_GetActiveProfile();
+    u8 cur = opt->musicVolume;
     u8 next;
 
     if (cur != 0xFF) {
         next = Volume_StepUp(cur);
-        opt[0x87D] = next;
+        opt->musicVolume = next;
         sysAudioSetMusicVolume(next);
     }
 }
 
 void PauseAudio_MusicDown(void) {
-    u8 *opt = Save_GetActiveProfile();
-    u8 cur = opt[0x87D];
+    GameSave *opt = Save_GetActiveProfile();
+    u8 cur = opt->musicVolume;
     u8 next;
 
     if (cur != 0) {
         next = Volume_StepDown(cur);
-        opt[0x87D] = next;
+        opt->musicVolume = next;
         sysAudioSetMusicVolume(next);
     }
 }
@@ -447,7 +426,8 @@ void Jukebox_Animate(void) {
     PauseUi_Animate(gPauseJukeboxMenu);
 }
 
-    /* TODO (Clean version):
+    /* TODO (Clean version): [evaluated 2026-11-18: not applicable as written: the original calls
+    audMusicGetTrack twice, a single cached value would change behaviour and the ROM]
     'fp' is a matching workaround to cache audMusicGetTrack in a register across calls:
     s32 val = audMusicGetTrack();
     PauseUi_BeginFrame();
@@ -486,8 +466,9 @@ void Jukebox_NextTrack(void) {
     s32 next;
 
     next = audMusicGetTrack() + 1;
-    /* TODO (Clean version): 'next &= -((u8)next < 7)' is branchless wrap-around: next = (next >= 7) ? 0 : next; */
-    next &= -((u8)next < 7);
+    if ((u8)next >= 7) {
+        next = 0;
+    }
     audMusicStop();
     audMusicPlayTrack(next & 0xFF);
 }
