@@ -225,7 +225,7 @@ void func_800CAE10(void) {
     D_80125580 = 0;
 }
 
-extern char *D_801410E0[];
+extern char *gLangText[];
 extern u8 D_80124D80[];
 extern u8 D_800FCA20[]; /* ctype table; bit 2 = lowercase */
 u32 strlen(const char *);
@@ -243,10 +243,10 @@ void func_800CAE1C(E18c_ *t) {
     u8 c;
 
     if (t->buf == NULL) {
-        t->len = strlen(D_801410E0[t->id]);
+        t->len = strlen(gLangText[t->id]);
         t->buf = Buf_Alloc(t->len * 10);
         for (i = 0; i < t->len; i++) {
-            c = D_801410E0[t->id][i];
+            c = gLangText[t->id][i];
             if (D_800FCA20[c] & 4) {
                 t->buf[i * 10] = c - 0x20;
             } else {
@@ -262,10 +262,10 @@ void func_800CAF28(E18c_ *t) {
     u8 c;
 
     if (t->buf == NULL) {
-        t->len = strlen(D_801410E0[t->id]);
+        t->len = strlen(gLangText[t->id]);
         t->buf = Buf_Alloc(t->len * 10);
         for (i = 0; i < t->len; i++) {
-            c = D_801410E0[t->id][i];
+            c = gLangText[t->id][i];
             if (D_800FCA20[c] & 4) {
                 t->buf[i * 10] = c - 0x20;
             } else {

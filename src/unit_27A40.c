@@ -11,7 +11,7 @@ f32 func_800B3024(u8);
 extern u8 D_80116C70[];
 extern s32 (*sysFileLoad)(char *, void *);
 extern u32 (*sysFileGetSize)(char *);
-extern u8 *D_801410E0[];
+extern u8 *gLangText[];
 extern char D_800FFAC0[];
 extern KernFont_ D_800F2800[];
 extern s32 D_800F2808;
@@ -30,7 +30,7 @@ s32 Sys_ClearTable();
 
 
 
-u8 func_80086E40(char *name) {
+u8 Lang_Load(char *name) {
     char path[0x100];
     u32 size;
     u32 n;
@@ -61,7 +61,7 @@ u8 func_80086E40(char *name) {
     }
     p = D_80116C70;
     for (i = 0; i < 300; i++) {
-        D_801410E0[i] = p;
+        gLangText[i] = p;
         while (*p != 0) {
             p++;
         }

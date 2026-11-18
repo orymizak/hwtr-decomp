@@ -6,12 +6,12 @@ extern s32 (*sysFileGetSize)(char *);
 extern u32 (*sysFileLoad)(char *, void *);
 extern u8 D_80115860[];
 typedef struct { char s[5][20]; } CdtEntry_;
-extern CdtEntry_ D_80144480[41];
+extern CdtEntry_ gCarNames[41];
 
 
 
 /* Loads "<name>.cdt": 41 entries of 5 strings (up to 20 chars each, '|'-terminated). */
-s32 func_80086BE0(char *name) {
+s32 CarNames_Load(char *name) {
     char buf[0x100];
     s32 size;
     u8 *src;
@@ -37,11 +37,11 @@ s32 func_80086BE0(char *name) {
             do {
                 c = *src;
                 if (c == '|') {
-                    D_80144480[i].s[j][k] = '\0';
+                    gCarNames[i].s[j][k] = '\0';
                     done = 1;
                     k++;
                 } else if (c != '\r' && c != '\n') {
-                    D_80144480[i].s[j][k] = c;
+                    gCarNames[i].s[j][k] = c;
                     k++;
                 }
                 src++;

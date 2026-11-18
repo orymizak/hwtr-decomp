@@ -5,7 +5,7 @@
 typedef struct { u8 b; u8 pad[3]; s32 w[6]; } E1C8_;
 extern E1C8_ D_800F316C[];
 extern u8 (*D_8014169C)(u8);
-extern s32 D_801410E0[];
+extern s32 gLangText[];
 extern char D_8010080C[];
 typedef struct Lnk89_ { s32 *obj; s32 x; struct Lnk89_ *next; } Lnk89_;
 typedef struct { u8 *def; s32 t; u8 pad8; u8 hold; } Tmr89_;
@@ -346,7 +346,7 @@ INCLUDE_ASM("asm/nonmatchings/unit_28C10", func_8008AEC0);
 
 void func_8008B9FC(u16 i, char *out) {
     if (i < 49) {
-        sprintf(out, D_8010080C, D_801410E0[D_800F316C[i].w[D_8014169C(D_800F316C[i].b)]]);
+        sprintf(out, D_8010080C, gLangText[D_800F316C[i].w[D_8014169C(D_800F316C[i].b)]]);
     }
 }
 
