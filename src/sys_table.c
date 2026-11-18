@@ -1,4 +1,5 @@
 #include "common.h"
+#include "ultra64.h"
 
 extern void *sysBootCheck;
 extern void *sysMenuExit;
@@ -112,7 +113,8 @@ s32 Sys_StubTrue(void) {
     return 1;
 }
 
-    /* TODO (Clean version):
+    /* TODO (Clean version): [evaluated 2026-11-18: the sys* pointers are separate globals in
+    .bss, assigned one by one in the ROM; a struct would change addresses and code]
     Populating a massive list of global `void*` variables with raw function addresses 
     bypasses type safety. A clean implementation should use a properly typed 
     plugin interface struct or a static dispatch table with explicit function signatures:
@@ -177,7 +179,7 @@ s32 Sys_InitTable(void) {
     return 1;
 }
 
-    /* TODO (Clean version):
+    /* TODO (Clean version): [evaluated 2026-11-18: same as Sys_InitTable; a memset changes the ROM]
     Manually zeroing out dozens of individual global function pointers during teardown 
     is error-prone and verbose. This should be handled by resetting a registered 
     subsystem interface instance (e.g., `memset(&sysInterface, 0, sizeof(sysInterface))`).
@@ -234,11 +236,6 @@ s32 Sys_MenuExitHookNop(void) {
     return 1;
 }
 
-    /* TODO (Clean version):
-    Comparing `osTvType` against raw `0` should use the established TV type macro 
-    (`OS_TV_PAL`) for clarity and consistency across modules:
-    `return D_0000300 == OS_TV_PAL;`
-    */
 s32 System_IsPAL(void) {
-    return osTvType == 0;
+    return osTvType == OS_TV_PAL;
 }

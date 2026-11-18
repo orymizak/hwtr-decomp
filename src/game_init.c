@@ -52,7 +52,8 @@ inline void Video_Init(void) {
     }
     osViGetCurrentFramebuffer();
     osViSwapBuffer(FRAMEBUFFER);
-    /* TODO (Clean version):
+    /* TODO (Clean version): [evaluated 2026-11-18: memset changes the ROM (the loop stores words
+    inline); the double swap is in the ROM too]
     Manually looping through the raw framebuffer array using a macro pointer 
     can be replaced with `memset(FRAMEBUFFER, 0, FRAMEBUFFER_WORDS * sizeof(s32))`.
     Additionally, calling `osViGetCurrentFramebuffer()` and swapping buffers twice 
@@ -69,22 +70,15 @@ void Game_Init(void) {
     Audio_InitDriver();
     switch (osTvType) {
         case OS_TV_NTSC:
-            gViModeIndex = 0;
+            gViModeIndex = OS_VI_NTSC_LPN1;
             break;
         case OS_TV_PAL:
-            gViModeIndex = 14;
+            gViModeIndex = OS_VI_PAL_LPN1;
             break;
         case OS_TV_MPAL:
-            gViModeIndex = 28;
+            gViModeIndex = OS_VI_MPAL_LPN1;
             break;
     }
-    /* TODO (Clean version):
-    Magic offsets like `14` and `28` used to index VI modes based on TV type 
-    should be defined using an enum or offset constants:
-    #define VI_MODE_NTSC_OFFSET 0
-    #define VI_MODE_PAL_OFFSET  14
-    #define VI_MODE_MPAL_OFFSET 28
-    */
     Video_Init();
     Input_Init();
     Screen_InitGfx();

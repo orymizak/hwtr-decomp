@@ -1,4 +1,7 @@
 #include "common.h"
+/* The original has no error path: on a corrupt stream it hangs (returning an error code
+   would change the ROM). */
+#define LZ_HANG() while (1)
 
 typedef struct {
     /* 0x00 */ u32 size;
@@ -55,13 +58,8 @@ s32 LZ_Decompress(u8 *src, u8 *dst) {
             length = length >> (16 - lengthBits);
             length++;
             if (length == 0) {
-                while (1);
+                LZ_HANG(); /* corrupt stream: the length wrapped to 0 */
             }
-            /* TODO (Clean version):
-            The infinite loop `while (1);` used as a panic mechanism on decompression overflow 
-            should be replaced with a proper error handler, a `PANIC()` macro, or returning 
-            a negative error code instead of hanging execution.
-            */
             for (j = 0; j < length; j++) {
                 *out++ = *(out - (distance + 1));
             }

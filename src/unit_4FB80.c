@@ -14,23 +14,30 @@ void Debris_LoadReplay(u8 *, s32);
 void RaceCam_LoadReplay(u8 *, s32);
 extern s32 gReplayUsed;
 extern u8 gReplayBuf[];
+#define REPLAY_BUF_SIZE 0x1000
 
 extern s32 gReplayCount;
 
-s32 Replay_Init(void) {
+/* Replay snapshot in gReplayBuf: the sizes of the five module blocks, their total, then the
+   blocks (cars, track objects, animated paths, debris, cameras). */
+typedef struct {
+    /* 0x00 */ s32 sizes[5];
+    /* 0x14 */ s32 total;
+    /* 0x18 */ u8 data[1];
+} ReplaySnap;
+#define REPLAY_SNAP(p) ((ReplaySnap *)(p))
+#define REPLAY_HDR_SIZE 0x18 /* offset of ReplaySnap.data */
+
+inline s32 Replay_Init(void) {
     gReplayCount = 0;
     gReplayUsed = 0;
-    memset(gReplayBuf, 0, 0x1000);
+    memset(gReplayBuf, 0, REPLAY_BUF_SIZE);
     return 1;
 }
 
 
-    /* TODO (Clean version): Replay_Shutdown is identical to Replay_Init. Both clear gReplayCount, gReplayUsed and zero 0x1000 bytes in gReplayBuf. */
 s32 Replay_Shutdown(void) {
-    gReplayCount = 0;
-    gReplayUsed = 0;
-    memset(gReplayBuf, 0, 0x1000);
-    return 1;
+    return Replay_Init();
 }
 
 
@@ -41,60 +48,48 @@ void Replay_Record(void) {
     u32 room;
     u32 i;
     /* TODO(match-debt): the header size only goes through a variable here; a literal folds into q - (h + 0x18). */
-    /* TODO (Clean version): Replace raw s32 array indexing with a structured snapshot type:
-       typedef struct {
-           s32 module_sizes[5];
-           s32 payload_size;
-           u8 payload[];
-       } SnapshotEntry;
-
-       SnapshotEntry *entry = (SnapshotEntry *)h;
-       entry->module_sizes[0] = Cars_SaveReplay(q, room);
-       ...
-       entry->payload_size = (q - entry->payload);
-    */
-    s32 hdr = 0x18;
+    s32 hdr = REPLAY_HDR_SIZE;
 
     if (gReplayCount != 0 && (u32)(RaceClock_Get() - gReplayLastTime) < 1000) {
         return;
     }
-    room = 0x1000 - gReplayUsed;
-    if (room < 0x18) {
+    room = REPLAY_BUF_SIZE - gReplayUsed;
+    if (room < REPLAY_HDR_SIZE) {
         return;
     }
     h = gReplayBuf;
     for (i = 0; i < gReplayCount; i++) {
-        h += ((s32 *)h)[5] + 0x18;
+        h += REPLAY_SNAP(h)->total + REPLAY_HDR_SIZE;
     }
-    q = h + 0x18;
-    room -= 0x18;
-    if ((((s32 *)h)[0] = Cars_SaveReplay(q, room)) == 0) {
+    q = h + REPLAY_HDR_SIZE;
+    room -= REPLAY_HDR_SIZE;
+    if ((REPLAY_SNAP(h)->sizes[0] = Cars_SaveReplay(q, room)) == 0) {
         return;
     }
-    room -= ((s32 *)h)[0];
-    q += ((s32 *)h)[0];
-    if ((((s32 *)h)[1] = TrackObj_SaveReplay(q, room)) == 0) {
+    room -= REPLAY_SNAP(h)->sizes[0];
+    q += REPLAY_SNAP(h)->sizes[0];
+    if ((REPLAY_SNAP(h)->sizes[1] = TrackObj_SaveReplay(q, room)) == 0) {
         return;
     }
-    room -= ((s32 *)h)[1];
-    q += ((s32 *)h)[1];
-    if ((((s32 *)h)[2] = AnimTrack_SaveReplay(q, room)) == 0) {
+    room -= REPLAY_SNAP(h)->sizes[1];
+    q += REPLAY_SNAP(h)->sizes[1];
+    if ((REPLAY_SNAP(h)->sizes[2] = AnimTrack_SaveReplay(q, room)) == 0) {
         return;
     }
-    room -= ((s32 *)h)[2];
-    q += ((s32 *)h)[2];
-    if ((((s32 *)h)[3] = Debris_SaveReplay(q, room)) == 0) {
+    room -= REPLAY_SNAP(h)->sizes[2];
+    q += REPLAY_SNAP(h)->sizes[2];
+    if ((REPLAY_SNAP(h)->sizes[3] = Debris_SaveReplay(q, room)) == 0) {
         return;
     }
-    room -= ((s32 *)h)[3];
-    q += ((s32 *)h)[3];
-    if ((((s32 *)h)[4] = RaceCam_SaveReplay(q, room)) == 0) {
+    room -= REPLAY_SNAP(h)->sizes[3];
+    q += REPLAY_SNAP(h)->sizes[3];
+    if ((REPLAY_SNAP(h)->sizes[4] = RaceCam_SaveReplay(q, room)) == 0) {
         return;
     }
-    q += ((s32 *)h)[4];
-    ((s32 *)h)[5] = (q - hdr) - h;
+    q += REPLAY_SNAP(h)->sizes[4];
+    REPLAY_SNAP(h)->total = (q - hdr) - h;
     gReplayCount++;
-    gReplayUsed += 0x18 + ((s32 *)h)[5];
+    gReplayUsed += REPLAY_HDR_SIZE + REPLAY_SNAP(h)->total;
     gReplayLastTime = RaceClock_Get();
 }
 
@@ -113,16 +108,16 @@ void Replay_Show(u32 n) {
        }
     */
     for (i = 0; i < n; i++) {
-        h += ((s32 *)h)[5] + 0x18;
+        h += REPLAY_SNAP(h)->total + REPLAY_HDR_SIZE;
     }
-    q = h + 0x18;
-    Cars_LoadReplay(q, ((s32 *)h)[0]);
-    q += ((s32 *)h)[0];
-    TrackObj_LoadReplay(q, ((s32 *)h)[1]);
-    q += ((s32 *)h)[1];
-    AnimTrack_LoadReplay(q, ((s32 *)h)[2]);
-    q += ((s32 *)h)[2];
-    Debris_LoadReplay(q, ((s32 *)h)[3]);
-    RaceCam_LoadReplay(q + ((s32 *)h)[3], ((s32 *)h)[4]);
+    q = h + REPLAY_HDR_SIZE;
+    Cars_LoadReplay(q, REPLAY_SNAP(h)->sizes[0]);
+    q += REPLAY_SNAP(h)->sizes[0];
+    TrackObj_LoadReplay(q, REPLAY_SNAP(h)->sizes[1]);
+    q += REPLAY_SNAP(h)->sizes[1];
+    AnimTrack_LoadReplay(q, REPLAY_SNAP(h)->sizes[2]);
+    q += REPLAY_SNAP(h)->sizes[2];
+    Debris_LoadReplay(q, REPLAY_SNAP(h)->sizes[3]);
+    RaceCam_LoadReplay(q + REPLAY_SNAP(h)->sizes[3], REPLAY_SNAP(h)->sizes[4]);
 }
 

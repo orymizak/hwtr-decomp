@@ -5,29 +5,17 @@ s32 nuScRemoveClient(void *);
 extern s8 gAudioTaskEnabled;
 extern u8 D_80144450;
 
-    /* TODO (Clean version):
-    nuScRemoveClient is osScRemoveClient(&sc, &audioClient) and Snd_FadeOutAll triggers voice fadeout:
-    void audioHandleEvent(s16 eventType, s32 param) {
-        switch (eventType) {
-        case AUDIO_EVENT_STOP_ALL: // 2
-            audioFadeOutVoices(VOICE_GROUP_SFX, 25);
-            audioFadeOutVoices(VOICE_GROUP_SEQ, 25);
-            return;
-        case AUDIO_EVENT_SHUTDOWN: // 1
-            if (param == AUDIO_SHUTDOWN_PARAM) { // 0x1C
-                audioEnabled = 0;
-                osScRemoveClient(&sc, &audioClient);
-            }
-            return;
-        }
-    }
-    */
+/* Voice groups for Snd_FadeOutAll (bit mask). */
+#define SND_GROUP_SFX 1 /* voices playing sound effects */
+#define SND_GROUP_SEQ 2 /* voices owned by the music sequencer */
 
-    void AudioTask_HandleEvent(s16 arg0, s32 arg1) {
+/* Audio task events. 2 fades every voice out; 1 with 0x1C stops the task and removes its
+   scheduler client. TODO: name the event ids once their senders are known. */
+void AudioTask_HandleEvent(s16 arg0, s32 arg1) {
     switch (arg0) {
     case 2:
-        Snd_FadeOutAll(2, 0x19);
-        Snd_FadeOutAll(1, 0x19);
+        Snd_FadeOutAll(SND_GROUP_SEQ, 0x19);
+        Snd_FadeOutAll(SND_GROUP_SFX, 0x19);
         return;
     case 1:
         if (arg1 == 0x1C) {

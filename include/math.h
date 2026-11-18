@@ -38,6 +38,10 @@ typedef struct { f32 m[3][4]; } Mtx34f;         /* 3x3 rotation + translation co
                               (d).z = (a).x * (b).y - (b).x * (a).y; }
 #define VEC3_NORMALIZE(v) { f32 _l = sqrtf(VEC3_DOT(v, v)); f32 _i = 1.0f / _l; \
                             (v).x = (v).x * _i; (v).y = (v).y * _i; (v).z = (v).z * _i; }
+/* d = transpose(s) for 3x3 arrays (row by row of d). */
+#define MTX3_TRANSPOSE(d, s) { (d)[0][0] = (s)[0][0]; (d)[0][1] = (s)[1][0]; (d)[0][2] = (s)[2][0]; \
+                               (d)[1][0] = (s)[0][1]; (d)[1][1] = (s)[1][1]; (d)[1][2] = (s)[2][1]; \
+                               (d)[2][0] = (s)[0][2]; (d)[2][1] = (s)[1][2]; (d)[2][2] = (s)[2][2]; }
 /* Store three vectors as the columns of a 3x3 matrix. */
 #define MTX3_SET_COLUMNS(m, a, b, c) { (m)[0][0] = (a).x; (m)[1][0] = (a).y; (m)[2][0] = (a).z; \
                                        (m)[0][1] = (b).x; (m)[1][1] = (b).y; (m)[2][1] = (b).z; \

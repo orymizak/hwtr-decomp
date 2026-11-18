@@ -3,31 +3,7 @@
 #include "include_asm.h"
 
 
-    /* TODO (Clean version):
-    En lugar de AnimTrack y AnimTrk_ separadas, se debería usar una sola struct con una union:
-    typedef struct {
-        u32 duration;
-        u32 keyCount;
-        u8 unk08[4];
-        s32 id;
-        u32 time;
-        u8 active;
-        u32 seekTime;
-        s32 seekMode;
-        union {
-            u8 raw[0x3C];
-            struct {
-                s32 key;
-                Vec3f pos0;
-                Quat rot0;
-                Vec3f pos1;
-                Quat rot1;
-            } anim;
-        } data;
-        Vec3i result;
-    } UnifiedAnimTrack;
-    */
-
+/* Animated track path (moving scenery): keyframes are fetched in pairs and interpolated. */
 typedef struct {
     /* 0x00 */ u32 duration;
     /* 0x04 */ u32 keyCount;
@@ -37,8 +13,12 @@ typedef struct {
     /* 0x14 */ u8 active;
     /* 0x18 */ u32 seekTime;
     /* 0x1C */ s32 seekMode;
-    /* 0x20 */ u8 unk20[0x3C];
-    /* 0x5C */ Vec3i result;
+    /* 0x20 */ s32 key;      /* key currently loaded in pos0/rot0 */
+    /* 0x24 */ Vec3f pos0;
+    /* 0x30 */ Quat rot0;
+    /* 0x40 */ Vec3f pos1;
+    /* 0x4C */ Quat rot1;
+    /* 0x5C */ Vec3f result;
 } AnimTrack; /* size = 0x68 */
 
 extern u32 gAnimTrackCount;
@@ -46,13 +26,12 @@ extern AnimTrack *gAnimTracks;
 
 void Memory_Free(void *ptr);
 
-typedef s32 (*AnimFn_)();
-typedef struct { AnimFn_ count; AnimFn_ info; AnimFn_ keys; } AnimIf_;
-    /* TODO (Clean version):
-    Using raw function pointer typedefs without explicit parameter signatures 
-    (e.g. `s32 (*count)(void)`) bypasses type safety, though it matches 
-    the original SDK/compiler ABI layout.
-    */
+/* Track path services: three consecutive pointers starting at svcTrackGetPathCount. */
+typedef struct {
+    s32 (*count)(void);
+    void (*info)(s32, u32 *, u32 *, u8 *, s32 *);
+    void (*keys)(s32, s32, Vec3f *, Quat *);
+} AnimIf_;
 extern AnimIf_ svcTrackGetPathCount;
 void *Memory_Alloc(s32 size);
 s32 AnimTrack_Init(void) {
@@ -65,8 +44,8 @@ s32 AnimTrack_Init(void) {
         memset(gAnimTracks, 0, gAnimTrackCount * sizeof(AnimTrack));
         for (i = 0; i < gAnimTrackCount; i++) {
             svcTrackGetPathCount.info(i, &gAnimTracks[i].duration, &gAnimTracks[i].keyCount, gAnimTracks[i].unk08, &gAnimTracks[i].id);
-            svcTrackGetPathCount.keys(i, 0, &gAnimTracks[i].unk20[4], &gAnimTracks[i].unk20[0x10]);
-            svcTrackGetPathCount.keys(i, 1, &gAnimTracks[i].unk20[0x20], &gAnimTracks[i].unk20[0x2C]);
+            svcTrackGetPathCount.keys(i, 0, &gAnimTracks[i].pos0, &gAnimTracks[i].rot0);
+            svcTrackGetPathCount.keys(i, 1, &gAnimTracks[i].pos1, &gAnimTracks[i].rot1);
         }
     }
     return 1;
@@ -128,22 +107,6 @@ void AnimTrack_Update(void) {
     }
 }
 
-typedef struct {
-    /* 0x00 */ u32 duration;
-    /* 0x04 */ u32 keyCount;
-    /* 0x08 */ u8 unk08[4];
-    /* 0x0C */ s32 id;
-    /* 0x10 */ u32 time;
-    /* 0x14 */ u8 active;
-    /* 0x18 */ u32 seekTime;
-    /* 0x1C */ s32 seekMode;
-    /* 0x20 */ s32 key;
-    /* 0x24 */ Vec3f pos0;
-    /* 0x30 */ Quat rot0;
-    /* 0x40 */ Vec3f pos1;
-    /* 0x4C */ Quat rot1;
-    /* 0x5C */ Vec3f result;
-} AnimTrk_;
 extern void (*svcTrackGetPathKey)(s32, s32, Vec3f *, Quat *);
 extern void (*svcTrackSetPathTransform)(s32, Vec3f *, Mtx3f *);
 Vec3f Vec3_Lerp(f32 t, Vec3f a, Vec3f b);
@@ -151,7 +114,7 @@ Quat Quat_Slerp(f32 t, Quat a, Quat b);
 void Quat_ToMtx3(Quat q, Mtx3f *out);
 
 void AnimTrack_Evaluate(s32 index) {
-    AnimTrk_ *t = (AnimTrk_ *)&gAnimTracks[index];
+    AnimTrack *t = &gAnimTracks[index];
     Mtx3f m;
     Mtx3f m2;
     Quat q;
@@ -177,28 +140,15 @@ void AnimTrack_Evaluate(s32 index) {
     t->result = v;
     q = Quat_Slerp(f, t->rot0, t->rot1);
     Quat_ToMtx3(q, &m);
-    
-    /* TODO (Clean version):
-    Se puede hacer mediante un bucle de transposición o una función auxiliar:
-    Matrix_Transpose(&m, &m2);
-    */
 
-    m2.m[0][0] = m.m[0][0];
-    m2.m[0][1] = m.m[1][0];
-    m2.m[0][2] = m.m[2][0];
-    m2.m[1][0] = m.m[0][1];
-    m2.m[1][1] = m.m[1][1];
-    m2.m[1][2] = m.m[2][1];
-    m2.m[2][0] = m.m[0][2];
-    m2.m[2][1] = m.m[1][2];
-    m2.m[2][2] = m.m[2][2];
+    MTX3_TRANSPOSE(m2.m, m.m);
     svcTrackSetPathTransform(index, &t->result, &m2);
 }
 
 void AnimTrack_GetPos(s32 index, Vec3i *out) {
     AnimTrack *track = &gAnimTracks[index];
 
-    *out = track->result;
+    *out = *(Vec3i *)&track->result;
 }
 
 s32 AnimTrack_FindById(s32 id) {
