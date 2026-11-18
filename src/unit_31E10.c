@@ -795,7 +795,7 @@ typedef struct { void (*a)(u8, f32); void (*b)(u8, u8, P4_B00 *); void (*c)(u8, 
 extern u8 D_8011B31B;
 extern void (*svcModelSetTransform)(u8, V3_B00 *, void *);
 extern void (*svcModelSetWheel)(u8, u8, f32, f32, f32, s32, s32, s32, V3_B00 *, V3_B00 *);
-extern T_B00 D_80141754;
+extern T_B00 svcModelSetEngineShake;
 u32 RaceView_GetPlayerCount(void);
 void RaceCam_Get(u8, V3_B00 *, V3_B00 *, V3_B00 *, V3_B00 *, s32 *, u8 *, u8 *);
 static inline f32 maxf_B00(f32 a, f32 b) { return a > b ? a : b; }
@@ -902,13 +902,13 @@ void Cars_CollideObstacles(u32 dt) {
         if (c->b4B8 != 0) {
             f = 0.0f;
         }
-        D_80141754.a(i, f);
+        svcModelSetEngineShake.a(i, f);
         if (c->unk710 != 0) {
             pl.n = c->planeN;
             pl.d = c->unk72C - (pl.n.x * c->planePt.x + pl.n.y * c->planePt.y + pl.n.z * c->planePt.z);
         }
-        D_80141754.b(i, c->unk710, &pl);
-        D_80141754.c(i, c->flags2);
+        svcModelSetEngineShake.b(i, c->unk710, &pl);
+        svcModelSetEngineShake.c(i, c->flags2);
         c->b778 = 0;
     }
 }

@@ -94,9 +94,9 @@ void *Mesh_Alloc(u16 *n) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_8007A004);
+INCLUDE_ASM("asm/nonmatchings/unit_19D40", Mesh_BuildMaterialDL);
 
-INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_8007A858);
+INCLUDE_ASM("asm/nonmatchings/unit_19D40", Mesh_GetMaterialList);
 
 static inline void V3o_Normalize(Vec3f *v) {
     f32 inv = 1.0f / sqrtf(v->x * v->x + v->y * v->y + v->z * v->z);
@@ -204,7 +204,7 @@ void Mtx34_Mul(f32 a[3][4], f32 b[3][4], f32 out[3][4]) {
     out[2][3] = a[2][0] * b[0][3] + a[2][1] * b[1][3] + a[2][2] * b[2][3] + a[2][3];
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_8007B230);
+INCLUDE_ASM("asm/nonmatchings/unit_19D40", PakMenu_Draw);
 
 void Debug_ShowNumber(u16 n) {
     char buf[8];
@@ -222,7 +222,7 @@ void Debug_ShowNumber(u16 n) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_8007B598);
+INCLUDE_ASM("asm/nonmatchings/unit_19D40", PakMenu_Run);
 
 s32 World_InitSlots(void) {
     s32 i;

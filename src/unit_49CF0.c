@@ -14,8 +14,8 @@ typedef struct { s32 t; s32 w4; s32 w8; u8 pC[4]; El10_ el[6]; Blk28_ blk[3]; u8
 extern u8 gHudRacerCount;
 extern char D_80100A94[];
 extern HudF0_ D_800F3934[];
-void func_800AAA20(Blk28_ *, El10_ *, s32, s32);
-void func_800AABE4(Blk28_ *, El10_ *, s32, s32);
+void Hud_DrawSlideFromLeft(Blk28_ *, El10_ *, s32, s32);
+void Hud_DrawSlideFromRight(Blk28_ *, El10_ *, s32, s32);
 extern s32 gHudTimeLimit;
 extern char D_80100A9C[];
 extern void (*svcFontDrawChar)(s32, s32, u16, u16, s32);
@@ -293,15 +293,15 @@ s32 Hud_DrawPlayer(u8 idx) {
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_49CF0", func_800AAA20);
+INCLUDE_ASM("asm/nonmatchings/unit_49CF0", Hud_DrawSlideFromLeft);
 
-INCLUDE_ASM("asm/nonmatchings/unit_49CF0", func_800AABE4);
+INCLUDE_ASM("asm/nonmatchings/unit_49CF0", Hud_DrawSlideFromRight);
 
 INCLUDE_ASM("asm/nonmatchings/unit_49CF0", Hud_DrawResults);
 
-INCLUDE_ASM("asm/nonmatchings/unit_49CF0", func_800AB38C);
+INCLUDE_ASM("asm/nonmatchings/unit_49CF0", Hud_DrawScoreboard);
 
-INCLUDE_ASM("asm/nonmatchings/unit_49CF0", func_800AB700);
+INCLUDE_ASM("asm/nonmatchings/unit_49CF0", Hud_DrawWrongWay);
 
 void Hud_DrawTrickPopup(u8 p) {
     El10_ *e0;
@@ -345,26 +345,26 @@ void Hud_DrawTrickPopup(u8 p) {
     svcDraw2DSetColor(0xFF, 0xFF, 0);
     if (D_800F3934[p].blk[0].on) {
         if (!e0->bD && !e1->bD) {
-            func_800AAA20(&D_800F3934[p].blk[0], e0, 2, 1);
-            func_800AABE4(&D_800F3934[p].blk[0], e1, 2, 0);
+            Hud_DrawSlideFromLeft(&D_800F3934[p].blk[0], e0, 2, 1);
+            Hud_DrawSlideFromRight(&D_800F3934[p].blk[0], e1, 2, 0);
         } else {
-            func_800AAA20(&D_800F3934[p].blk[0], e0, 1, 0);
+            Hud_DrawSlideFromLeft(&D_800F3934[p].blk[0], e0, 1, 0);
         }
     }
     if (D_800F3934[p].blk[1].on) {
         if (!e0->bD && !e1->bD) {
-            func_800AAA20(&D_800F3934[p].blk[1], e2, 2, 1);
-            func_800AABE4(&D_800F3934[p].blk[1], e3, 2, 0);
+            Hud_DrawSlideFromLeft(&D_800F3934[p].blk[1], e2, 2, 1);
+            Hud_DrawSlideFromRight(&D_800F3934[p].blk[1], e3, 2, 0);
         } else {
-            func_800AAA20(&D_800F3934[p].blk[1], e2, 1, 0);
+            Hud_DrawSlideFromLeft(&D_800F3934[p].blk[1], e2, 1, 0);
         }
     }
     if (D_800F3934[p].blk[2].on) {
         if (!e0->bD && !e1->bD) {
-            func_800AAA20(&D_800F3934[p].blk[2], e4, 2, 1);
-            func_800AABE4(&D_800F3934[p].blk[2], e5, 2, 0);
+            Hud_DrawSlideFromLeft(&D_800F3934[p].blk[2], e4, 2, 1);
+            Hud_DrawSlideFromRight(&D_800F3934[p].blk[2], e5, 2, 0);
         } else {
-            func_800AAA20(&D_800F3934[p].blk[2], e4, 1, 0);
+            Hud_DrawSlideFromLeft(&D_800F3934[p].blk[2], e4, 1, 0);
         }
     }
 }

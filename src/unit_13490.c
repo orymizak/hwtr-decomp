@@ -32,7 +32,7 @@ void Mtx34_Orthonormalize(f32 *);
 extern s32 D_800F1EA0;
 extern s32 gBgPalette;
 extern s32 D_800F1EA4;
-void func_8007A004(s32 *, s32, u8);
+void Mesh_BuildMaterialDL(s32 *, s32, u8);
 extern u8 D_800F2060;
 typedef struct { f32 x; f32 y; f32 z; u8 r; u8 g; u8 b; u8 on; } VtxOut75_;
 typedef struct { u8 p0[6]; u16 nVtx; } MeshHdr75_;
@@ -240,7 +240,7 @@ s32 File_LoadAlloc(s32 name) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_13490", WorldData_Relocate);
 
-ItemList_ *func_800734AC(ItemList_ *l) {
+ItemList_ *WorldData_SetMirrored(ItemList_ *l) {
     u32 i;
 
     for (i = 0; i < l->count; i++) {
@@ -361,7 +361,7 @@ void ModelData_SetVariant(List74_ *l, u8 v) {
                 Mesh_BuildDisplayList(o, &D_3000000, o->w30, l->w34, l->items->flags & 0x4000);
             }
             if (o->p14 != NULL && o->p14[4] != 0) {
-                func_8007A004(o->p14, l->w34, o->b8);
+                Mesh_BuildMaterialDL(o->p14, l->w34, o->b8);
             }
         }
     }
@@ -391,7 +391,7 @@ s32 ModelData_FreeCaches(ItemListB_ *l) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_13490", ModelData_Draw);
 
-INCLUDE_ASM("asm/nonmatchings/unit_13490", func_80075084);
+INCLUDE_ASM("asm/nonmatchings/unit_13490", ModelData_DrawShadow);
 
 u8 Model_GetVariant(Model13_ *m) {
     u8 id;

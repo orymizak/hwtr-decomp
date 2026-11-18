@@ -56,7 +56,7 @@ s32 Bld_InitRacer(TrAD_ *t, u8 i) {
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_21150", func_80080C20);
+INCLUDE_ASM("asm/nonmatchings/unit_21150", Bld_StepRacer);
 
 typedef struct { u16 a; u16 key; f32 x; f32 y; f32 z; f32 rx; f32 ry; f32 rz; } Wp81_;
 typedef struct { u16 n0; u16 n; u16 ids[6]; u8 *p20; u8 *recs; } WpTbl81_;

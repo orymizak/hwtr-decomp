@@ -32,11 +32,11 @@ Screen_SetBgAlpha D_800FF7F0
 Camera_SetPerspective D_800FF800
 Camera_SetPerspectiveRace D_800FF808 D_800FF810
 Mesh_BuildDisplayList jtbl_800FF820 jtbl_800FF858 jtbl_800FF870
-func_8007A004 jtbl_800FF888
+Mesh_BuildMaterialDL jtbl_800FF888
 Math_Acos D_800FF8E0
 Math_Atan2 D_800FF8E8 D_800FF8F0 D_800FF8F8 D_800FF900
 ParticlePool_Update D_800FF9F0
-func_8007D364 D_800FF9F8
+SkidMark_AddQuad D_800FF9F8
 Particle_SpawnColored D_800FFA00
 Particle_SpawnJittered D_800FFA08
 Particle_SpawnBurst D_800FFA10

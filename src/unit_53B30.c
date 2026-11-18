@@ -5932,11 +5932,11 @@ void Race_CopyPlayerNames(void) {
     strcpy(&D_801345B8, gProfileP2 + 8);
 }
 
-s32 func_800C6CC0(u32 arg0) {
+s32 Cheat_GetColorShiftFlag(u32 arg0) {
     return (arg0 >> 3) & 0x10;
 }
 
-s32 func_800C6CCC(u32 arg0) {
+s32 Cheat_GetMirrorFlag(u32 arg0) {
     return (arg0 >> 2) & 0x40;
 }
 
@@ -6111,10 +6111,10 @@ void Race_StartCup(void) {
     }
     g = &gRaceSetup;
     g->flags = 0x20;
-    a = func_800C6CC0(*(s32 *)(gProfileP1 + 0x3C));
-    b = func_800C6CC0(*(s32 *)(gProfileP2 + 0x3C));
-    d = func_800C6CCC(*(s32 *)(gProfileP1 + 0x3C));
-    g->flags |= a | b | d | func_800C6CCC(*(s32 *)(gProfileP2 + 0x3C));
+    a = Cheat_GetColorShiftFlag(*(s32 *)(gProfileP1 + 0x3C));
+    b = Cheat_GetColorShiftFlag(*(s32 *)(gProfileP2 + 0x3C));
+    d = Cheat_GetMirrorFlag(*(s32 *)(gProfileP1 + 0x3C));
+    g->flags |= a | b | d | Cheat_GetMirrorFlag(*(s32 *)(gProfileP2 + 0x3C));
     if (((u8 *)gProfileP1)[0x22] == 1) {
         g->flags |= 0x100;
         sprintf(buf, (s32 *)&D_8010105C, ((u8 *)gProfileP1)[0x23] + 1);

@@ -408,7 +408,7 @@ static inline void PushQ_(PPoolQ_ *pool, PrtQ_ *p) {
 }
 INCLUDE_ASM("asm/nonmatchings/unit_1CC80", ParticlePool_Update);
 
-INCLUDE_ASM("asm/nonmatchings/unit_1CC80", func_8007D364);
+INCLUDE_ASM("asm/nonmatchings/unit_1CC80", SkidMark_AddQuad);
 
 /* Spawns a coloured particle of the given kind at pos, sized by size. */
 void Particle_SpawnColored(Vec3f pos, u32 size, s32 kind, s32 r, s32 g, s32 b) {

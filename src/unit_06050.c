@@ -91,9 +91,9 @@ void ModelData_Update(void *, s32);
 void PointLight_SetColor(s32 arg0, s8 arg1, s8 arg2, s8 arg3);
 void PointLight_Enable(s32);
 void PointLight_Disable(s32);
-void func_800674DC(void);
+void Model_UpdateWheelEffects(void);
 s32 rand(void);
-void func_8007A858(u8 *, u8 *, s32 *, s32);
+void Mesh_GetMaterialList(u8 *, u8 *, s32 *, s32);
 void Particle_SpawnBurst(Vec3f, u32, u8 *, Vec3f);
 s32 File_GetSize(char *);
 extern char D_800FE964[];
@@ -185,7 +185,7 @@ char *strlwr(char *);
 s32 Track_Unload(void);
 s32 File_LoadAlloc(char *);
 World_ *WorldData_Relocate(s32);
-void func_800734AC(World_ *);
+void WorldData_SetMirrored(World_ *);
 void EnvMap_Apply(World_ *);
 void Track_LoadSky(char *, u8);
 void Clouds_Init(Vec3f *, Vec3f *, u8, u8, u8);
@@ -205,7 +205,7 @@ s32 Track_Load(TrackName_ *t) {
     }
     *wp = WorldData_Relocate(File_LoadAlloc(buf));
     if (D_80138AB0 == 1) {
-        func_800734AC(*wp);
+        WorldData_SetMirrored(*wp);
     }
     EnvMap_Apply(*wp);
     b = 255;
@@ -325,7 +325,7 @@ void World_Update(s32 dt) {
                 }
             }
         }
-        func_800674DC();
+        Model_UpdateWheelEffects();
         D_80138AAC = 0;
     }
 }
@@ -372,7 +372,7 @@ void Model_FlashOn(u8 i) {
     gModels[i]->b105 = 0xFF;
 }
 
-void func_80066778(u8 i, s8 val) {
+void Model_SetAlpha(u8 i, s8 val) {
     Model_ *m = gModels[i];
 
     if (m != NULL) {
@@ -506,9 +506,9 @@ INCLUDE_ASM("asm/nonmatchings/unit_06050", Model_SetTransform);
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", Model_SetWheel);
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80067310);
+INCLUDE_ASM("asm/nonmatchings/unit_06050", Model_SetWheelContact);
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_800674DC);
+INCLUDE_ASM("asm/nonmatchings/unit_06050", Model_UpdateWheelEffects);
 
 void Model_RotateAllParts(u8 i, f32 v) {
     u32 j;
@@ -526,7 +526,7 @@ void Model_SetShadowPlane(u8 i, u8 val, Vec4L_ *src) {
 }
 
 
-void func_80067F40(u8 i, f32 v) {
+void Model_SetEngineShake(u8 i, f32 v) {
     gModels[i]->b10E = v * 240.0f;
 }
 
@@ -604,7 +604,7 @@ void Model_Wreck(u8 slot, u8 mode, Pair68_ unused) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", Model_Repair);
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_800685E0);
+INCLUDE_ASM("asm/nonmatchings/unit_06050", Model_SetPartTransform);
 
 u16 Track_GetLinkCount(void) {
     return gTrackWorld->n6;
@@ -723,7 +723,7 @@ void Fx_ShatterMesh(u8 *o, Vec3f vel, u8 *verts) {
     } else {
         n = (rand() & 7) + 7;
     }
-    func_8007A858(m, verts, idx, 16);
+    Mesh_GetMaterialList(m, verts, idx, 16);
     sz = *(f32 *)(o + 0x38) / 2.5f;
     vel.x /= 14.0f;
     vel.y /= 14.0f;
