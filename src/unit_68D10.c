@@ -80,7 +80,7 @@ u8 Input_PressedOnce(u8 i, s32 k) {
 }
 
 
-void func_800C82B4(void) {
+void Menu_TickEverySecond(void) {
     s32 (**fp)() = &sysTimeGetMillis;
 
     if ((u32)((*fp)() - gMenuTimer) >= 1000) {
@@ -125,7 +125,7 @@ void func_800C8464(void) {
     }
 }
 
-void func_800C84B0(void) {
+void Menu_IdleTimeout30s(void) {
     if ((u32) (sysTimeGetMillis() - gMenuIdleTime) >= 0x7530U) {
         Fsm_Trigger(&gMenuFsm, 0x38);
     }

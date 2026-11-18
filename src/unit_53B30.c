@@ -51,7 +51,7 @@ extern u8 (*D_801455A4)(void);
 extern void (*D_8014556C)(s32);
 extern u8 (*D_80145578)(s32, s32);
 extern u8 (*sysGameEndRace)(void *);
-extern u8 (*D_80140FA8)(void);
+extern u8 (*sysGameUpdate)(void);
 extern void (*sysSfxPlay)(s32, s32, f32, f32);
 extern Vec3f gMenuCarPos[];
 s32 strcmp(const char *, const char *);
@@ -71,7 +71,7 @@ extern u8 gNameChangedP2;
 extern s32 D_80124C78;
 void func_800B2A20(s32);
 s32 KeyRepeat_IsDue(u8 i);
-s32 func_800B7D60(void);
+s32 Pak_AnyChanged(void);
 extern u8 gRaceResult;
 typedef struct { u8 pad[0x23]; u8 b23; s32 w24[6]; } Blk23_;
 extern s32 D_800F60E8[];
@@ -336,7 +336,7 @@ extern s32 D_801240D8;
 extern u8 D_801240DC;
 extern s8 D_801240DD;
 extern s8 D_801240DE;
-extern s8 D_800F610A;
+extern s8 gRenamePending;
 extern void *D_80124CE0;
 void * SaveSlot_Get(u32, u32);
 extern s32 D_80124150;
@@ -408,7 +408,7 @@ extern s32 (*sysTimeGetMillis)();
 s32 func_800B2A84();
 extern s32 (*sysScreenAllocBg)();
 s32 func_80086F78();
-extern s32 (*D_80140F94)();
+extern s32 (*sysMenuExit)();
 s32 Menu_StartEnter(s32);
 extern s32 gMenuObjs[];
 s32 Menu_HandlePad1(s32);
@@ -438,7 +438,7 @@ extern s32 (*sysWorldFree)(s32);
 extern s32 D_800F5F28;
 s32 Menu_Nop(s32);
 extern s32 D_800F5F2C;
-extern s8 D_800F6100;
+extern s8 gInChampionship;
 extern s8 gChampionshipSel;
 s32 Menu_StartLeave(s32);
 extern s32 D_800F5F34;
@@ -491,14 +491,14 @@ extern s8 D_801240B6;
 extern s8 D_801240B2;
 extern u8 D_801240B5;
 extern u8 gLoadPlayer;
-extern u8 D_801240B7;
+extern u8 gDeleteConfirmSel;
 s32 Save_Commit();
 s32 SaveSlot_Delete(u8, s32);
 extern s32 D_800F5F7C;
 extern s32 D_800F5F78;
 extern s32 D_800F5F80;
-extern u8 D_80124103;
-extern u8 D_80124104;
+extern u8 gHighScoresAutoCycle;
+extern u8 gHighScoresCycleTicks;
 extern u8 gHighScoresPage;
 extern s32 D_800F5F88;
 extern s32 D_80101014;
@@ -1736,7 +1736,7 @@ void Save_ApplyProfiles(void) {
     }
 }
 
-s32 func_800B7D60(void) {
+s32 Pak_AnyChanged(void) {
     u8 i;
 
     for (i = 0; i < 4; i++) {
@@ -1748,8 +1748,8 @@ s32 func_800B7D60(void) {
 }
 
 
-void func_800B7DB4(void) {
-    if (func_800B7D60() & 0xFF) {
+void PakCheck_Dispatch(void) {
+    if (Pak_AnyChanged() & 0xFF) {
         Fsm_Trigger((s32) &gMenuFsm, 0x1D);
     }
     Fsm_Trigger((s32) &gMenuFsm, 0x21);
@@ -2067,7 +2067,7 @@ void Boot_LoadTuning(void) {
     }
 }
 
-void func_800B87B4(void) {
+void Menu_ShutdownNop(void) {
     func_80086F78();
 }
 
@@ -2107,15 +2107,15 @@ void Menu_ReturnFromGame(void) {
 }
 
 
-extern u8 (*D_80140F90)(void);
-void func_800B89DC(void) {
-    if (D_80140F90() == 0) {
+extern u8 (*sysBootCheck)(void);
+void Boot_CheckSystem(void) {
+    if (sysBootCheck() == 0) {
         Fsm_Trigger(&gMenuFsm, 0x12);
     }
 }
 
-void func_800B8A1C(void) {
-    D_80140F94();
+void Menu_Exit(void) {
+    sysMenuExit();
 }
 
 /* TODO (Clean version): Millisecond time formatting helpers. Propose unifying into inline helpers or a struct:
@@ -3057,8 +3057,8 @@ u8 Cup_GetPositionNoTies(u8 n) {
 }
 
 
-void func_800BB66C(void) {
-    if ((*(u8 *)&D_800F6100) != 0) {
+void Menu_EnterMainOrCup(void) {
+    if ((*(u8 *)&gInChampionship) != 0) {
         Fsm_Trigger(&gMenuFsm, 0x36);
     } else {
         Fsm_Trigger(&gMenuFsm, 0x37);
@@ -3067,7 +3067,7 @@ void func_800BB66C(void) {
 
 
 void Championship_Enter(void) {
-    D_800F6100 = 1;
+    gInChampionship = 1;
     Menu_LoadBg((s32 *)&D_80100E74);
     Menu_StartFadeIn();
     gNumPlayers = 1;
@@ -3248,7 +3248,7 @@ void ChampProfile_Select(void) {
 
 void Championship_ResetSel(void) {
     gChampionshipSel = 0;
-    D_800F6100 = 0;
+    gInChampionship = 0;
 }
 
 void func_800BC3FC(void) {
@@ -3775,8 +3775,8 @@ void Garage_LayoutTexts(void) {
     Menu_LayoutTexts(D_800F5F44);
 }
 
-void func_800BE64C(void) {
-    if (gNumPlayers == 1 || *(u8 *)&D_800F6100 != 0) {
+void Garage_DispatchPlayers(void) {
+    if (gNumPlayers == 1 || *(u8 *)&gInChampionship != 0) {
         Fsm_Trigger(&gMenuFsm, 0x57);
     } else {
         Fsm_Trigger(&gMenuFsm, 0x58);
@@ -4812,7 +4812,7 @@ void LoadGame_Draw(void) {
         Menu_Draw((s32)D_800F5F6C, -1, D_801240B3, -1, -1, -1, -1, 0);
     } else if (*(u8 *)&D_801240B4) {
         if (*(u8 *)&D_801240B6) {
-            Menu_Draw(D_800F5F74, -1, *(s8 *)&D_801240B7, -1, -1, -1, -1, 0);
+            Menu_Draw(D_800F5F74, -1, *(s8 *)&gDeleteConfirmSel, -1, -1, -1, -1, 0);
         } else {
             Menu_Draw(D_800F5F70, -1, *(s8 *)&D_801240B5, -1, -1, -1, -1, 0);
         }
@@ -5049,11 +5049,11 @@ void LoadGame_CopyEntryName(void) {
     rec = SaveSlot_Get((u32) pak, entry - 1);
     D_80124CE0 = rec;
     strcpy(&gKeyboardText, rec + 8);
-    D_800F610A = 1;
+    gRenamePending = 1;
 }
 
-void func_800C30C4(void) {
-    if ((*(u8 *)&D_800F610A) != 0) {
+void LoadGame_CheckRename(void) {
+    if ((*(u8 *)&gRenamePending) != 0) {
         Fsm_Trigger(&gMenuFsm, 0x67);
     } else {
         Fsm_Trigger(&gMenuFsm, 0x11);
@@ -5072,18 +5072,18 @@ void Keyboard_SaveName(void) {
 }
 
 void DeleteConfirm_MoveTop(void) {
-    (*(s8 *)&D_801240B7) = 0;
+    (*(s8 *)&gDeleteConfirmSel) = 0;
 }
 
 void DeleteConfirm_MoveBottom(void) {
-    (*(s8 *)&D_801240B7) = 1;
+    (*(s8 *)&gDeleteConfirmSel) = 1;
 }
 
 void DeleteConfirm_Input(void) {
     s32 screen;
 
     screen = 0x31;
-    if (D_801240B7 == 0) {
+    if (gDeleteConfirmSel == 0) {
         screen = 0x32;
     }
     if (gLoadPlayer == 0) {
@@ -5093,8 +5093,8 @@ void DeleteConfirm_Input(void) {
     Menu_HandlePad2(screen);
 }
 
-void func_800C31D4(void) {
-    if (D_801240B7 == 0) {
+void DeleteConfirm_Apply(void) {
+    if (gDeleteConfirmSel == 0) {
         Fsm_Trigger(&gMenuFsm, 0x73);
     } else {
         Fsm_Trigger(&gMenuFsm, 0x74);
@@ -5280,7 +5280,7 @@ void Register_Cancel(void) {
             Fsm_Trigger(&gMenuFsm, 0x76);
             break;
         case 2:
-            D_800F610A = 0;
+            gRenamePending = 0;
             Fsm_Trigger(&gMenuFsm, 0x76);
             break;
         case 0:
@@ -5414,12 +5414,12 @@ void Register_Confirm(void) {
     }
 }
 
-void func_800C4480(void) {
+void RegisterError_Enter(void) {
     Menu_StartDim();
     Menu_StartEnter(D_800F5F78);
 }
 
-void func_800C44A8(void) {
+void RegisterError_Draw(void) {
     s32 m;
     s32 *q;
     q = &D_800F5F78;
@@ -5431,7 +5431,7 @@ void func_800C44A8(void) {
     Menu_EndFrame();
 }
 
-void func_800C452C(void) {
+void RegisterError_Input(void) {
     if (gLoadPlayer == 0) {
         Menu_HandlePad1(0x30);
         return;
@@ -5489,8 +5489,8 @@ void HighScores_Enter(void) {
     Menu_StartFadeIn();
     Menu_StartEnter(gMenuObjs[30]);
     MenuList_Reset(gMenuObjs[30]);
-    D_80124103 = 0;
-    D_80124104 = 0;
+    gHighScoresAutoCycle = 0;
+    gHighScoresCycleTicks = 0;
     gHighScoresPage = 0;
     gHighScoresCategory = 0;
     D_80124101 = 0;
@@ -5507,13 +5507,13 @@ void HighScores_Animate(void) {
     Menu_Animate((*(void * *)&D_800F5F80), 0x1EU);
 }
 
-void func_800C4838(void) {
-    if (D_80124103 != 0) {
-        func_800C82B4();
+void HighScores_AutoCycleTick(void) {
+    if (gHighScoresAutoCycle != 0) {
+        Menu_TickEverySecond();
     }
 }
 
-void func_800C4860(void) {
+void HighScores_Input(void) {
     if (gHighScoresPage == 0) {
         Menu_HandlePad1(0x6E);
     } else {
@@ -5538,22 +5538,22 @@ void HighScores_PickRandom(void) {
 }
 
 void HighScores_StartAutoCycle(void) {
-    if (D_80124103 == 0) {
+    if (gHighScoresAutoCycle == 0) {
         HighScores_PickRandom();
-        D_80124103 = 1;
-        (*(s8 *)&D_80124104) = 0;
+        gHighScoresAutoCycle = 1;
+        (*(s8 *)&gHighScoresCycleTicks) = 0;
     }
 }
 
 void HighScores_StopAutoCycle(void) {
-    (*(s8 *)&D_80124103) = 0;
+    (*(s8 *)&gHighScoresAutoCycle) = 0;
 }
 
 void HighScores_AutoCycle(void) {
-    if (D_80124103 != 0) {
-        if (++D_80124104 >= 20) {
+    if (gHighScoresAutoCycle != 0) {
+        if (++gHighScoresCycleTicks >= 20) {
             HighScores_PickRandom();
-            D_80124104 = 0;
+            gHighScoresCycleTicks = 0;
         }
     }
 }
@@ -5637,7 +5637,7 @@ void HighScores_LeaveFrame(void) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800C5218);
 
-void func_800C53E0(void) {
+void Unlocks_CheckNew(void) {
     if (D_80124CE4 != 0 || D_80124CE8 != 0 || D_80124CEC != 0 || D_80124CF0 != 0 || D_80124CF4 != 0 ||
         D_80124CF8 != 0 || D_80124CFC != 0) {
         Fsm_Trigger(&gMenuFsm, 0x55);
@@ -5669,7 +5669,7 @@ void Unlocks_Enter(void) {
     Menu_StartFadeIn();
 }
 
-void func_800C5530(void) {
+void Unlocks_FreeModel(void) {
     if ((D_80124CFD != -1) || (D_80124CFF != D_80124CFD)) {
         sysModelFree(0);
         return;
@@ -5730,7 +5730,7 @@ void Unlocks_Draw(void) {
     Menu_EndFrame();
 }
 
-void func_800C5F20(void) {
+void Unlocks_Input(void) {
     if ((D_80124CFD != -1) || (D_80124CFE != D_80124CFD) || (D_80124D01 != D_80124CFE)) {
         Menu_HandlePad1(0x50);
         return;
@@ -5745,7 +5745,7 @@ void Unlocks_Leave(void) {
     Menu_StartFadeOut();
 }
 
-void func_800C5FC8(void) {
+void Unlocks_LeaveNop(void) {
 
 }
 
@@ -5906,7 +5906,7 @@ void Race_StartForMode(void) {
     }
 }
 
-void func_800C6950(void) {
+void Demo_Input(void) {
     Menu_HandlePad1(0x50);
 }
 
@@ -5920,8 +5920,8 @@ void Race_ReturnDemo(void) {
 }
 
 
-void func_800C6C3C(void) {
-    if (D_80140FA8() != 0) {
+void Demo_RunRace(void) {
+    if (sysGameUpdate() != 0) {
         Fsm_Trigger(&gMenuFsm, 0x11);
     }
 }
@@ -5966,8 +5966,8 @@ void Race_ReturnPractice(void) {
 }
 
 
-void func_800C708C(void) {
-    if (D_80140FA8() != 0) {
+void Practice_RunRace(void) {
+    if (sysGameUpdate() != 0) {
         Fsm_Trigger(&gMenuFsm, 0x11);
     }
 }
@@ -5999,8 +5999,8 @@ void Race_ReturnExhibition(void) {
 }
 
 
-void func_800C7640(void) {
-    if (D_80140FA8() != 0) {
+void Exhibition_RunRace(void) {
+    if (sysGameUpdate() != 0) {
         Fsm_Trigger(&gMenuFsm, 0x11);
     }
 }
@@ -6032,8 +6032,8 @@ void Race_ReturnAirtime(void) {
 }
 
 
-void func_800C7A30(void) {
-    if (D_80140FA8() != 0) {
+void Airtime_RunRace(void) {
+    if (sysGameUpdate() != 0) {
         Fsm_Trigger(&gMenuFsm, 0x11);
     }
 }
@@ -6132,8 +6132,8 @@ void Race_StartCup(void) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_53B30", Race_ReturnCup);
 
-void func_800C80C8(void) {
-    if (D_80140FA8() != 0) {
+void Cup_RunRace(void) {
+    if (sysGameUpdate() != 0) {
         Fsm_Trigger(&gMenuFsm, 0x11);
     }
 }

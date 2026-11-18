@@ -157,7 +157,7 @@ extern void *D_801417B0;
 extern void *D_801417B4;
 
 s32 func_8007F514();
-s32 func_8008C08C();
+s32 Game_RunState();
 s32 func_8006C468();
 s32 Pause_Init();
 s32 func_8006C488();
@@ -451,8 +451,8 @@ u8 Game_EndRace(s32 a) {
 }
 
 
-s32 func_80060B6C(void) {
-    return func_8008C08C() & 0xFF;
+s32 Game_Update(void) {
+    return Game_RunState() & 0xFF;
 }
 
 void Game_PauseBegin(void) {

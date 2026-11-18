@@ -15,7 +15,7 @@ extern u8 *gLangText[];
 extern char D_800FFAC0[];
 extern KernFont_ D_800F2800[];
 extern s32 D_800F2808;
-extern u8 D_80140F90;
+extern u8 sysBootCheck;
 extern u8 D_80145568;
 extern u8 D_8014C0A8;
 extern u8 D_80141698;
@@ -202,7 +202,7 @@ void func_8008745C(Scr74_ *s, u8 fast) {
 
 void func_800876D4(void **tbl, u32 size);
 s32 func_800875A0(void) {
-    func_800876D4((void **)&D_80140F90, 0xFC);
+    func_800876D4((void **)&sysBootCheck, 0xFC);
     if (Sys_InitTable() == 0) {
         return 0;
     }

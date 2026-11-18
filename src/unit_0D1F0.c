@@ -6,7 +6,7 @@
 typedef struct { u8 p0[4]; u16 *unk4; } BufD_;
 typedef struct { u8 p0[0x34]; Gfx *unk34; } ObjA2_;
 extern s32 D_80138AA8;
-extern s32 D_8014C1A8;
+extern s32 gGameState;
 typedef struct { s32 f0; s32 f4; u8 p8[0x548]; } S_D_801455C0;
 void func_80075600(s32 arg0, s8 arg1, s8 arg2, s8 arg3);
 void func_80075640(s32 arg0, f32 arg1, f32 arg2, f32 arg3, f32 arg4);
@@ -232,7 +232,7 @@ void func_8006DF34(s16 *samples) {
     register u16 *dst;
     register s16 v;
 
-    if (D_800F05E0 != NULL && D_800F05E4 != 0 && ((1 != D_8014C1A8) & (D_80138AA8 != 0))) {
+    if (D_800F05E0 != NULL && D_800F05E4 != 0 && ((1 != gGameState) & (D_80138AA8 != 0))) {
         dst = D_800F05E0->unk4;
         i = 0;
         idx = &D_8014D980;

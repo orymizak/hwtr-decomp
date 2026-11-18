@@ -133,8 +133,8 @@ extern void (*D_8014C130)(s32);
 extern s32 D_800F378C[];
 extern s32 D_800F3770[];
 extern s32 D_80141448;
-extern s32 D_800F36D0[];
-extern s32 D_8014C1A8;
+extern s32 gGameStateFuncs[];
+extern s32 gGameState;
 
 extern s32 D_800F36F4;
 extern s32 D_801184B4;
@@ -258,7 +258,7 @@ s32 Race_Init(u8 *cfg) {
     if (!D_801417AC(cfg)) {
         return 0;
     }
-    D_8014C1A8 = 0;
+    gGameState = 0;
     D_800F36F4 = 0;
     D_801417B8(0);
     func_800A76F0();
@@ -326,18 +326,18 @@ u8 func_8008BE7C(u8 *o) {
 }
 
     /* TODO (Clean version / Bug check): Eliminate dead branch and clean up state dispatch:
-    if (D_8014C1A8 != 2) {
-        D_800F36D0[D_8014C1A8]();
+    if (gGameState != 2) {
+        gGameStateFuncs[gGameState]();
         return 0;
     }
-    return 1; // Both if (D_8014C1A8) and else branches redundantly return 1
+    return 1; // Both if (gGameState) and else branches redundantly return 1
     */
-s32 func_8008C08C(void) {
-  if (D_8014C1A8 != 2) {
-    ((s32 (*)()) D_800F36D0[D_8014C1A8])();
+s32 Game_RunState(void) {
+  if (gGameState != 2) {
+    ((s32 (*)()) gGameStateFuncs[gGameState])();
     return 0;
   }
-  if (D_8014C1A8) {
+  if (gGameState) {
     return 1;
   }
   else
@@ -558,7 +558,7 @@ void func_8008C548(void) {
                     }
                 }
             } else {
-                D_8014C1A8 = 2;
+                gGameState = 2;
             }
         }
         break;
@@ -594,7 +594,7 @@ void func_8008C548(void) {
                 func_800AF180(i % n);
             }
             if (now - D_80118490 > 30000 || (D_801184AD != 0 && D_80145568(0x12)) || D_80145568(0x1A)) {
-                D_8014C1A8 = 2;
+                gGameState = 2;
             }
         }
         break;
@@ -605,10 +605,10 @@ void func_8008C548(void) {
     if (D_801184AE == 0 && D_801184AF == 0) {
         D_801184AF = 1;
     }
-    if (D_8014C1A8 == 0 && D_801184AC == 0 && D_801184B0 != 0 && (u32)D_800F36F4 < 2) {
+    if (gGameState == 0 && D_801184AC == 0 && D_801184B0 != 0 && (u32)D_800F36F4 < 2) {
         Pause_SetPlayer(D_801184AE);
         func_8008CDAC();
-        D_8014C1A8 = 1;
+        gGameState = 1;
     }
 }
 
@@ -641,7 +641,7 @@ void func_8008CDFC(void) {
             v = D_80141698();
             D_800F36DC = v;
             D_800F36D8 = v;
-            D_8014C1A8 = 0;
+            gGameState = 0;
             break;
         case 2:
             D_80141784(2);
@@ -650,7 +650,7 @@ void func_8008CDFC(void) {
             v = D_80141698();
             D_800F36DC = v;
             D_800F36D8 = v;
-            D_8014C1A8 = 2;
+            gGameState = 2;
             D_800F36F0 = 2;
             break;
         case 3:
@@ -661,9 +661,9 @@ void func_8008CDFC(void) {
             D_800F36DC = v;
             D_800F36D8 = v;
             if (D_800F36F4 == 0) {
-                D_8014C1A8 = 2;
+                gGameState = 2;
             } else {
-                D_8014C1A8 = 0;
+                gGameState = 0;
                 D_800F36F4 = 2;
                 D_801417B8(3);
                 D_801184AB = 1;

@@ -1,10 +1,10 @@
 #include "common.h"
 
-extern void *D_80140F90;
-extern void *D_80140F94;
+extern void *sysBootCheck;
+extern void *sysMenuExit;
 extern void *sysGameStartRace;
 extern void *sysGameEndRace;
-extern void *D_80140FA8;
+extern void *sysGameUpdate;
 extern void *sysSfxPlay;
 extern void *D_80140FB0;
 extern void *sysModelFree;
@@ -89,7 +89,7 @@ void Time_GetMillis();
 void Rand_Range();
 void Game_StartRace();
 void Game_EndRace();
-void func_80060B6C();
+void Game_Update();
 void Audio_GetMusicVolume();
 void Audio_SetMusicVolume();
 void Audio_GetSfxVolume();
@@ -100,8 +100,8 @@ void Sfx_Play();
 void func_80064884();
 u8 func_80078388(void);
 
-s32 func_8007EFF8(void);
-s32 func_8007F000(void);
+s32 Sys_BootCheck(void);
+s32 Sys_MenuExit(void);
 s32 func_8007F008(void);
 s32 func_8007F028(void);
 s32 func_8007F030(void);
@@ -158,11 +158,11 @@ s32 Sys_InitTable(void) {
     D_80141044 = &func_8007BF20;
     sysTimeGetMillis = &Time_GetMillis;
     sysRandRange = &Rand_Range;
-    D_80140F90 = &func_8007EFF8;
-    D_80140F94 = &func_8007F000;
+    sysBootCheck = &Sys_BootCheck;
+    sysMenuExit = &Sys_MenuExit;
     sysGameStartRace = &Game_StartRace;
     sysGameEndRace = &Game_EndRace;
-    D_80140FA8 = &func_80060B6C;
+    sysGameUpdate = &Game_Update;
     sysAudioGetMusicVolume = &Audio_GetMusicVolume;
     sysAudioSetMusicVolume = &Audio_SetMusicVolume;
     D_80141058 = &Audio_GetSfxVolume;
@@ -202,7 +202,7 @@ s32 Sys_ClearTable(void) {
     sysRandRange = 0;
     sysGameStartRace = 0;
     sysGameEndRace = 0;
-    D_80140FA8 = 0;
+    sysGameUpdate = 0;
     D_80141074 = 0;
     D_80141078 = 0;
     D_8014107C = 0;
@@ -210,11 +210,11 @@ s32 Sys_ClearTable(void) {
     return 1;
 }
 
-s32 func_8007EFF8(void) {
+s32 Sys_BootCheck(void) {
     return 1;
 }
 
-s32 func_8007F000(void) {
+s32 Sys_MenuExit(void) {
     return 1;
 }
 
