@@ -21,16 +21,16 @@ void func_800AC6EC(u8, s32);
 void func_800B0614(u8, s32);
 void Car_ApplyPickup(u8 *arg0, u8 *arg1);
 extern void (*audSfxPlay)(s32, s32, f32, f32);
-void func_800A8268(Lnk89_ **, s32 *);
+void RefList_Add(Lnk89_ **, s32 *);
 void *Memory_Alloc(u32 size);
-u8 *func_80089B10(u8 *);
-s32 func_80089FC4(u8 *);
-extern Evt18_ *D_800F3020;
-extern u32 D_800F3024;
+u8 *Pickup_PickDef(u8 *);
+s32 Pickup_GetHudIcon(u8 *);
+extern Evt18_ *gPickupSpawns;
+extern u32 gPickupSpawnCount;
 extern void (*svcTrackSetEntityVisible)(u8, s32, f32);
 s32 RaceClock_Get(void);
-extern Lnk89_ **D_80118470[];
-void func_800A82F8(Lnk89_ **, s32 *);
+extern Lnk89_ **gCarPickups[];
+void RefList_Release(Lnk89_ **, s32 *);
 void Memory_Free(void *);
 s32 func_80095970(void *);
 extern s32 (*D_80141768)(u8,s32);
@@ -148,7 +148,7 @@ void Car_ApplyPickup(u8 *arg0, u8 *arg1) {
     c->invScale = 1.0f / c->k[0];
 }
 
-void func_80088558(P_8010 *p, Car *c) {
+void Car_RemovePickup(P_8010 *p, Car *c) {
     if (c->state == 2) {
         c->k4CC /= p->fA4;
         c->col[0] -= p->col[0];
@@ -210,29 +210,29 @@ INCLUDE_ASM("asm/nonmatchings/unit_28C10", func_800888E0);
 
 INCLUDE_ASM("asm/nonmatchings/unit_28C10", func_80088B50);
 
-INCLUDE_ASM("asm/nonmatchings/unit_28C10", func_8008955C);
+INCLUDE_ASM("asm/nonmatchings/unit_28C10", Pickup_Init);
 
-INCLUDE_ASM("asm/nonmatchings/unit_28C10", func_80089848);
+INCLUDE_ASM("asm/nonmatchings/unit_28C10", Pickup_Shutdown);
 
-INCLUDE_ASM("asm/nonmatchings/unit_28C10", func_80089B10);
+INCLUDE_ASM("asm/nonmatchings/unit_28C10", Pickup_PickDef);
 
-void func_80089F28(u8 *o) {
-    Lnk89_ *n = *D_80118470[*o];
+void Pickup_ClearCar(u8 *o) {
+    Lnk89_ *n = *gCarPickups[*o];
     s32 *x;
 
     while (n != NULL) {
         x = n->obj;
         n = n->next;
-        func_80088558((void *)*x, o);
-        func_800A82F8(D_80118470[*o], x);
+        Car_RemovePickup((void *)*x, o);
+        RefList_Release(gCarPickups[*o], x);
         Memory_Free(x);
     }
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_28C10", func_80089FC4);
+INCLUDE_ASM("asm/nonmatchings/unit_28C10", Pickup_GetHudIcon);
 
-s32 func_8008AA9C(u8 *o, u8 *q) {
+s32 Pickup_Collect(u8 *o, u8 *q) {
     u8 *d;
     Tmr89_ *t;
     Lnk89_ *l;
@@ -244,21 +244,21 @@ s32 func_8008AA9C(u8 *o, u8 *q) {
     if (q[0x10] == 0) {
         return 0;
     }
-    d = func_80089B10(q);
+    d = Pickup_PickDef(q);
     if (d == NULL) {
         return 0;
     }
 
-    l = *D_80118470[*o];
+    l = *gCarPickups[*o];
     while (l != NULL) {
         t = (Tmr89_ *) l->obj;
         l = l->next;
-        func_80088558(t->def, o);
-        func_800A82F8(D_80118470[*o], (s32 *) t);
+        Car_RemovePickup(t->def, o);
+        RefList_Release(gCarPickups[*o], (s32 *) t);
         Memory_Free(t);
     }
 
-    m = *D_80118470[*o];
+    m = *gCarPickups[*o];
     n = 0;
     while (m != NULL) {
         n += (((Tmr89_ *) m->obj)->hold != 0);
@@ -272,24 +272,24 @@ s32 func_8008AA9C(u8 *o, u8 *q) {
         nt->hold = d[0xAC];
         nt->pad8 = *(s32 *) (d + 0x30);
         if (d[0xAC] != 0) {
-            m = *D_80118470[*o];
+            m = *gCarPickups[*o];
             while (m != NULL) {
                 t = (Tmr89_ *) m->obj;
                 m = m->next;
                 if (t->hold != 0) {
-                    func_80088558(t->def, o);
-                    func_800A82F8(D_80118470[*o], (s32 *) t);
+                    Car_RemovePickup(t->def, o);
+                    RefList_Release(gCarPickups[*o], (s32 *) t);
                     Memory_Free(t);
                     break;
                 }
             }
         }
-        func_800A8268(D_80118470[*o], (s32 *) nt);
+        RefList_Add(gCarPickups[*o], (s32 *) nt);
         if (nt->hold == 0) {
             Car_ApplyPickup(d, Car_Get(*o));
         }
         svcTrackSetEntityVisible(q[4], 0, 0.0f);
-        r = func_80089FC4(d);
+        r = Pickup_GetHudIcon(d);
         *(s32 *) (o + 0x6DC) = r;
         if (r == 1) {
             *(s32 *) (o + 0x6DC) = 0;
@@ -303,7 +303,7 @@ s32 func_8008AA9C(u8 *o, u8 *q) {
     return 1;
 }
 
-void func_8008AD04(void) {
+void Pickup_Update(void) {
     s32 now;
     u32 i;
     s32 n;
@@ -315,7 +315,7 @@ void func_8008AD04(void) {
     now = RaceClock_Get();
     for (i = 0; i < 6; i++) {
         p = Car_Get(i);
-        l = *D_80118470[i];
+        l = *gCarPickups[i];
         n = 0;
         while (l != NULL) {
             t = (Tmr89_ *) l->obj;
@@ -324,8 +324,8 @@ void func_8008AD04(void) {
             if (t->hold == 1) {
                 t->t = RaceClock_Get();
             } else if ((u32) (now - t->t) > (u32) (*(s32 *) (t->def + 0x2C) * 1000)) {
-                func_80088558(t->def, p);
-                func_800A82F8(D_80118470[i], (s32 *) t);
+                Car_RemovePickup(t->def, p);
+                RefList_Release(gCarPickups[i], (s32 *) t);
                 Memory_Free(t);
             }
             l = next;
@@ -334,10 +334,10 @@ void func_8008AD04(void) {
             p->unk6DC = 0;
         }
     }
-    for (i = 0; i < D_800F3024; i++) {
-        if (D_800F3020[i].fired == 0 && (u32) (now - D_800F3020[i].t) > 10000 && D_800F3020[i].on != 0) {
-            D_800F3020[i].fired = 1;
-            svcTrackSetEntityVisible(D_800F3020[i].id, 1, 1.0f);
+    for (i = 0; i < gPickupSpawnCount; i++) {
+        if (gPickupSpawns[i].fired == 0 && (u32) (now - gPickupSpawns[i].t) > 10000 && gPickupSpawns[i].on != 0) {
+            gPickupSpawns[i].fired = 1;
+            svcTrackSetEntityVisible(gPickupSpawns[i].id, 1, 1.0f);
         }
     }
 }

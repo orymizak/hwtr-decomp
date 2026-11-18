@@ -3,7 +3,7 @@
 #include "include_asm.h"
 #include "car.h"
 extern u8 D_800F3B3C[];
-extern u16 D_800F3B34[];
+extern u16 gHudFlags[];
 extern u16 D_800F3B38[];
 typedef struct { u8 a[32]; } E32_;
 typedef struct { E32_ e[7]; u8 pad[16]; } E240_;
@@ -21,7 +21,7 @@ extern char D_80100A9C[];
 extern void (*svcFontDrawChar)(s32, s32, u16, u16, s32);
 extern void (*svcDraw2DSetColor)(s32, s32, s32);
 extern E0Cb_ D_800F3B18[];
-extern u8 D_800F3B42;
+extern u8 gHudPlayerCount;
 extern E240_ D_800F3951[];
 extern E240_ D_800F3961[];
 extern s32 (*svcFontFree)(s32);
@@ -32,13 +32,13 @@ extern u8 D_800F3A1E;
 extern u8 D_800F3A1F;
 extern u8 D_8011F68F;
 extern u8 D_800F3B10;
-extern u8 D_800F3B40;
+extern u8 gHudRacer;
 
 extern s8 D_800F3B45;
 
-INCLUDE_ASM("asm/nonmatchings/unit_49CF0", func_800A90F0);
+INCLUDE_ASM("asm/nonmatchings/unit_49CF0", Hud_Init);
 
-s32 func_800A9370(void) {
+s32 Hud_Shutdown(void) {
     s32 (**fp)(s32) = &svcFontFree;
     s32 a = (*fp)(0) & 1;
 
@@ -48,7 +48,7 @@ s32 func_800A9370(void) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_49CF0", func_800A93B4);
 
-void func_800A9604(u8 idx, u8 flag) {
+void Hud_DrawLaps(u8 idx, u8 flag) {
     u8 buf[80];
     Car *p;
     u8 *c;
@@ -56,7 +56,7 @@ void func_800A9604(u8 idx, u8 flag) {
     s32 y;
     s32 laps;
 
-    p = Car_Get((&D_800F3B40)[idx]);
+    p = Car_Get((&gHudRacer)[idx]);
     if (p->flags & 0x4000) {
         return;
     }
@@ -107,7 +107,7 @@ void func_800A978C(u8 idx, u8 flag) {
     s32 color;
     s32 t;
 
-    p = Car_Get((&D_800F3B40)[idx]);
+    p = Car_Get((&gHudRacer)[idx]);
     svcDraw2DSetColor(0xFF, 0xFF, 0xFF);
     if (flag == 0) {
         x = 0xCB;
@@ -151,7 +151,7 @@ void func_800A99D0(u8 idx, u8 flag) {
     s32 color;
     u32 t;
 
-    p = Car_Get((&D_800F3B40)[idx]);
+    p = Car_Get((&gHudRacer)[idx]);
     svcDraw2DSetColor(0xFF, 0xFF, 0xFF);
     if (flag == 0) {
         x = 0xCB;
@@ -210,7 +210,7 @@ void func_800A9EDC(u8 idx, u8 flag) {
     }
     svcFontDrawChar(1, 1, x, y, 2);
     svcDraw2DSetColor(0xFF, 0, 0);
-    sprintf(buf, D_80100A90, Car_Get((&D_800F3B40)[idx])->unk4B0);
+    sprintf(buf, D_80100A90, Car_Get((&gHudRacer)[idx])->unk4B0);
     if (flag == 0) {
         x = 0x11E;
         y = 0x20;
@@ -237,22 +237,22 @@ INCLUDE_ASM("asm/nonmatchings/unit_49CF0", func_800AA054);
 INCLUDE_ASM("asm/nonmatchings/unit_49CF0", func_800AA214);
 
 extern u8 D_800F3B3F;
-/* Draws the HUD elements enabled in D_800F3B34[idx] for player idx. */
-s32 func_800AA80C(u8 idx) {
+/* Draws the HUD elements enabled in gHudFlags[idx] for player idx. */
+s32 Hud_DrawPlayer(u8 idx) {
     u8 two;
     u8 done;
     Car *p;
     u16 x;
     u16 y;
 
-    two = D_800F3B42 == 2;
+    two = gHudPlayerCount == 2;
     svcDraw2DSetColor(0xFF, 0xFF, 0xFF);
     done = 0;
-    if (D_800F3B34[idx] & 1) {
+    if (gHudFlags[idx] & 1) {
         func_800A93B4(idx, two);
     }
-    if (D_800F3B34[idx] & 0x10) {
-        p = Car_Get((&D_800F3B40)[idx]);
+    if (gHudFlags[idx] & 0x10) {
+        p = Car_Get((&gHudRacer)[idx]);
         svcDraw2DSetColor(0xFF, 0xFF, 0xFF);
         if (p->unk6DC != 0) {
             if ((u8)two == 0) {
@@ -268,7 +268,7 @@ s32 func_800AA80C(u8 idx) {
             svcFontDrawChar(1, (u8)(p->unk6DC + 10), x, y, 2);
         }
     }
-    if (D_800F3B34[idx] & 2) {
+    if (gHudFlags[idx] & 2) {
         if (D_800F3B3F != 0) {
             func_800A978C(idx, two);
         } else {
@@ -276,17 +276,17 @@ s32 func_800AA80C(u8 idx) {
         }
         done = func_800A9C00(idx, two);
     }
-    if (D_800F3B34[idx] & 0x200) {
+    if (gHudFlags[idx] & 0x200) {
         func_800A978C(idx, two);
         func_800A9EDC(idx, two);
     }
-    if (D_800F3B34[idx] & 8) {
-        func_800A9604(idx, two);
+    if (gHudFlags[idx] & 8) {
+        Hud_DrawLaps(idx, two);
     }
-    if (((D_800F3B34[idx] & 4) != 0) & (done == 0)) {
+    if (((gHudFlags[idx] & 4) != 0) & (done == 0)) {
         func_800AA054(idx, two);
     }
-    if (D_800F3B34[idx] & 0x20) {
+    if (gHudFlags[idx] & 0x20) {
         func_800AA214(idx, two);
     }
     return 1;
@@ -368,12 +368,12 @@ void func_800AB8AC(u8 p) {
     }
 }
 
-void func_800ABC80(u8 i, s32 v, s8 id) {
+void Hud_SetPlayer(u8 i, s32 v, s8 id) {
     ((s32 *)&D_800F3B10)[i] = v;
-    (&D_800F3B40)[i] = id;
+    (&gHudRacer)[i] = id;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_49CF0", func_800ABCA4);
+INCLUDE_ASM("asm/nonmatchings/unit_49CF0", Hud_Draw);
 
 void func_800ABEA8(s8 arg0, s32 arg1) {
     *(u8 *)(&D_8011F68F + (arg1 & 0xFF)) = arg0;
@@ -383,7 +383,7 @@ void func_800ABEBC(s8 arg0) {
     D_800F3B45 = arg0;
 }
 
-void func_800ABEC8(u8 i, s32 v, s8 b) {
+void Hud_ShowLapTime(u8 i, s32 v, s8 b) {
     D_800F3934[i].bEB = b;
     D_800F3934[i].bEA = 1;
     D_800F3934[i].w4 = v;
@@ -393,9 +393,9 @@ void func_800ABEC8(u8 i, s32 v, s8 b) {
 INCLUDE_ASM("asm/nonmatchings/unit_49CF0", func_800ABF2C);
 
 void func_800AC6EC(u8 i, s32 n) {
-    if (i < D_800F3B42) {
+    if (i < gHudPlayerCount) {
         D_800F3B18[i].t = ((s32 (*)(void))RaceClock_Get)();
-        D_800F3B18[i].a = Car_Get((&D_800F3B40)[i])->n6CC;
+        D_800F3B18[i].a = Car_Get((&gHudRacer)[i])->n6CC;
         D_800F3B18[i].b = n;
         if (D_800F3B18[i].a + (u8)n >= 11) {
             D_800F3B18[i].b = 10 - D_800F3B18[i].a;
@@ -413,10 +413,10 @@ void func_800AC7C8(u8 i, u8 v) {
         return;
     }
     if (v != 0) {
-        if (D_800F3B34[i] != D_800F3B38[i]) {
-            D_800F3B34[i] = D_800F3B38[i];
+        if (gHudFlags[i] != D_800F3B38[i]) {
+            gHudFlags[i] = D_800F3B38[i];
         } else {
-            D_800F3B34[i] = 0;
+            gHudFlags[i] = 0;
         }
     }
     D_800F3B3C[i] = v;

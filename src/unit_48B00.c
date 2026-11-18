@@ -9,7 +9,7 @@ s32 Memory_Free(void *);
 
 
 
-Obj0C_ *func_800A7F00(s16 a, s16 b) {
+Obj0C_ *Array_New(s16 a, s16 b) {
     Obj0C_ *o = Memory_Alloc(0xC);
 
     memset(o, 0, 0xC);
@@ -18,14 +18,14 @@ Obj0C_ *func_800A7F00(s16 a, s16 b) {
     return o;
 }
 
-void func_800A7F5C(VecA7_ *v) {
+void Array_Free(VecA7_ *v) {
     if (v->data != NULL) {
         Memory_Free(v->data);
     }
     Memory_Free(v);
 }
 
-void *func_800A7F98(VecA7_ *v) {
+void *Array_Push(VecA7_ *v) {
     u8 *n;
 
     if (v->count % v->cap == 0) {
@@ -39,7 +39,7 @@ void *func_800A7F98(VecA7_ *v) {
 
 
 /* Removes element i. Note: when shrinking, the tail goes to n + i rather than n + size * i (original behavior). */
-void func_800A8050(VecA7_ *v, u16 i) {
+void Array_Remove(VecA7_ *v, u16 i) {
     u8 *n;
     u16 j;
 
@@ -57,22 +57,22 @@ void func_800A8050(VecA7_ *v, u16 i) {
     v->count--;
 }
 
-u8 *func_800A81B4(VecA7_ *v, u16 i) {
+u8 *Array_At(VecA7_ *v, u16 i) {
     return v->data + v->size * i;
 }
 
-u16 func_800A81D4(VecA7_ *v) {
+u16 Array_Count(VecA7_ *v) {
     return v->count;
 }
 
-void *func_800A81DC(void) {
+void *RefList_New(void) {
     void *p = Memory_Alloc(4);
 
     memset(p, 0, 4);
     return p;
 }
 
-void func_800A8218(Nd8_ **list) {
+void RefList_Free(Nd8_ **list) {
     Nd8_ *n;
     Nd8_ *next;
 
@@ -86,7 +86,7 @@ void func_800A8218(Nd8_ **list) {
     Memory_Free(list);
 }
 
-void func_800A8268(Nd8_ **list, s32 key) {
+void RefList_Add(Nd8_ **list, s32 key) {
     Nd8_ *n;
 
     for (n = *list; n != NULL; n = n->next) {
@@ -109,7 +109,7 @@ void func_800A8268(Nd8_ **list, s32 key) {
 }
 
 
-void func_800A82F8(Nd8_ **list, s32 key) {
+void RefList_Release(Nd8_ **list, s32 key) {
     Nd8_ *n;
 
     for (n = *list; n != NULL; n = n->next) {

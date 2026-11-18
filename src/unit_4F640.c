@@ -25,7 +25,7 @@ extern char D_80100AF0[];
 void Cars_CollideObstacles(void);
 void Debris_Draw(u32);
 void RaceView_DrawScene(u32);
-void func_800ABCA4(void);
+void Hud_Draw(void);
 u32 strlen(const char *);
 extern s32 D_801415B8;
 extern u8 gShowFps;
@@ -84,7 +84,7 @@ void RaceView_Draw(u32 dt) {
     svcScreenBeginFrame();
     D_801416AC();
     RaceView_DrawScene(dt);
-    func_800ABCA4();
+    Hud_Draw();
     if (gShowFps) {
         fps = 0.0f;
         if (dt != 0) {

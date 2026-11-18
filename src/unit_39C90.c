@@ -86,7 +86,7 @@ typedef struct {
 } RObj_;
 typedef struct { f32 a; f32 b; f32 c; f32 d; s16 e; u16 f; } PlF_;
 extern u32 D_8011C830[];
-void func_800A780C(u8, u8, s32);
+void Lap_PassCheckpoint(u8, u8, s32);
 void Car_Boost(u8 *);
 void func_8009751C(u8 *, u16, u8);
 void func_800C9B84(u16);
@@ -481,7 +481,7 @@ void Coll_Solve(void);
 extern NdCD8_ gCollNodePool[];
 void CollList_InitPool(void);
 extern u8 gCollTypeMask[][7];
-void func_8008AA9C(s32, s32);
+void Pickup_Collect(s32, s32);
 void Coll_BroadPhase(void);
 extern u8 gCollSepCache[][128];
 extern f32 D_8011B760[];
@@ -696,7 +696,7 @@ void Coll_BroadPhase(void) {
                     if (res != 0) {
                         gCollSepCache[a->id][b->id] = res;
                     } else if (b->type == 5) {
-                        func_8008AA9C(a->w64, b->w68);
+                        Pickup_Collect(a->w64, b->w68);
                     } else {
                         Coll_ResolveBoxPair(a, b);
                     }
@@ -1114,7 +1114,7 @@ void Coll_ApplyRoomFlags(RObj_ *o, u16 idx, s32 arg2) {
         c = o->car;
         if (c->b4B8 == 0) {
             if ((r->flags & 1) && (u8)arg2 == 0) {
-                func_800A780C(c->id, r->param.b[1], 1);
+                Lap_PassCheckpoint(c->id, r->param.b[1], 1);
             }
             if (r->flags & 0x10) {
                 c->flags2 |= 1;

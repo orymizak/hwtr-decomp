@@ -33,11 +33,11 @@ void Cars_Update(s32);
 void TrackObj_Update(void);
 void Debris_Update(s32);
 void RaceCam_Update(s32);
-void func_8008AD04(void);
+void Pickup_Update(void);
 void RaceClock_Advance(s32);
 void RaceAudio_Update(s32);
 void AnimTrack_Update(void);
-void func_800ABC80(u8, s32, u8);
+void Hud_SetPlayer(u8, s32, u8);
 void RaceView_Draw(u32);
 void RaceClock_Start(void);
 u32 Replay_GetCount(void);
@@ -47,7 +47,7 @@ extern s32 D_800F3740[];
 extern s32 gRaceEndTime;
 extern u8 gRaceSkipArmed;
 void Replay_Record(void);
-void func_800A7C8C(u8, u32 *, u32 *);
+void Lap_GetTimes(u8, u32 *, u32 *);
 void func_800ABEA8(u8, u8);
 void func_800ABEBC(u8);
 void RaceAudio_Silence(void);
@@ -70,18 +70,18 @@ s32 RaceCam_GetIntroDuration(void);
 void RaceCam_EndIntro(void);
 void Coll_Update(void);
 void func_80085780(void);
-u8 func_800A90F0(u8 *);
+u8 Hud_Init(u8 *);
 u8 RaceView_Init(u8 *);
 u8 AnimTrack_Init(u8 *);
-u8 func_80080550(u8 *);
+u8 Bld_Load(u8 *);
 u8 Rumble_Init(u8 *);
 u8 Coll_Init(u8 *);
-u8 func_800853F4(u8 *);
+u8 Ai_Init(u8 *);
 u8 Cars_Init(u8 *);
 u8 RaceCam_Init(u8 *);
 u8 TrackObj_Init(u8 *);
-u8 func_8008955C(u8 *);
-u8 func_800A7B88(u8 *);
+u8 Pickup_Init(u8 *);
+u8 Lap_Init(u8 *);
 u8 Debris_Init(u8 *);
 u8 Replay_Init(u8 *);
 extern void (*audCarSndPlayOneShot)(u8, s32, f32);
@@ -102,19 +102,19 @@ extern u8 gRacePoints[];
 extern s32 gRaceOutcome;
 u8 Replay_Shutdown(u8 *);
 u8 Debris_Shutdown(u8 *);
-u8 func_800A7C2C(u8 *);
-u8 func_80089848(u8 *);
+u8 Lap_Shutdown(u8 *);
+u8 Pickup_Shutdown(u8 *);
 u8 TrackObj_Shutdown(u8 *);
 u8 RaceCam_Shutdown(u8 *);
 u8 RaceAudio_Unload(u8 *);
 u8 Cars_Shutdown(u8 *);
-u8 func_800858E8(u8 *);
+u8 Ai_Shutdown(u8 *);
 u8 RaceView_Shutdown(u8 *);
 u8 Coll_Shutdown(u8 *);
 u8 Rumble_Shutdown(u8 *);
-u8 func_800806FC();
+u8 Bld_Free();
 u8 AnimTrack_Shutdown(u8 *);
-u8 func_800A9370(u8 *);
+u8 Hud_Shutdown(u8 *);
 extern u8 D_801184C1;
 extern u8 D_800F3700;
 extern E10_ *D_800F3704;
@@ -199,7 +199,7 @@ s32 Race_Init(u8 *cfg) {
     }
     Race_LoadProgressInit(cfg);
     Race_LoadProgressStep();
-    if (!func_800A90F0(cfg)) {
+    if (!Hud_Init(cfg)) {
         return 0;
     }
     Race_LoadProgressStep();
@@ -211,7 +211,7 @@ s32 Race_Init(u8 *cfg) {
     if (!AnimTrack_Init(cfg)) {
         return 0;
     }
-    if (!func_80080550(cfg)) {
+    if (!Bld_Load(cfg)) {
         return 0;
     }
     if (!Rumble_Init(cfg)) {
@@ -224,7 +224,7 @@ s32 Race_Init(u8 *cfg) {
     if (!RaceView_Init(cfg)) {
         return 0;
     }
-    if (!func_800853F4(cfg)) {
+    if (!Ai_Init(cfg)) {
         return 0;
     }
     if (!Cars_Init(cfg)) {
@@ -239,10 +239,10 @@ s32 Race_Init(u8 *cfg) {
     if (!TrackObj_Init(cfg)) {
         return 0;
     }
-    if (!func_8008955C(cfg)) {
+    if (!Pickup_Init(cfg)) {
         return 0;
     }
-    if (!func_800A7B88(cfg)) {
+    if (!Lap_Init(cfg)) {
         return 0;
     }
     if (!Debris_Init(cfg)) {
@@ -301,20 +301,20 @@ u8 Race_Shutdown(u8 *o) {
     }
     err = Replay_Shutdown(o) == 0;
     err += Debris_Shutdown(o) == 0;
-    err += func_800A7C2C(o) == 0;
-    err += func_80089848(o) == 0;
+    err += Lap_Shutdown(o) == 0;
+    err += Pickup_Shutdown(o) == 0;
     err += TrackObj_Shutdown(o) == 0;
     err += RaceCam_Shutdown(o) == 0;
     err += RaceAudio_Unload(o) == 0;
     err += Cars_Shutdown(o) == 0;
-    err += func_800858E8(o) == 0;
+    err += Ai_Shutdown(o) == 0;
     err += RaceView_Shutdown(o) == 0;
     err += Coll_Shutdown(o) == 0;
     err += Rumble_Shutdown(o) == 0;
-    err += func_800806FC() == 0;
+    err += Bld_Free() == 0;
     err += AnimTrack_Shutdown(o) == 0;
     err += svcTrackUnload() == 0;
-    err += func_800A9370(o) == 0;
+    err += Hud_Shutdown(o) == 0;
     if (svcRacePostUnload(o) == 0) {
         return 0;
     }
@@ -367,7 +367,7 @@ void Race_ComputeResults(void) {
     Replay_Record();
     gRaceEndTime = gRaceLastTime;
     for (i = 0; i < (s8)gRacerCount; i++) {
-        func_800A7C8C(i, &r[i].time, &r[i].best);
+        Lap_GetTimes(i, &r[i].time, &r[i].best);
         r[i].id = i;
     }
     for (i = 0; i < (s8)gRacerCount; i++) {
@@ -477,7 +477,7 @@ void Race_Update(void) {
                 Debris_Update(10);
             }
             RaceCam_Update(10);
-            func_8008AD04();
+            Pickup_Update();
         }
         RaceClock_Advance(10);
         gRaceSimTime += 10;
@@ -496,14 +496,14 @@ void Race_Update(void) {
     if (gRacePhase == 1) {
         for (i = 0; i < gHumanCount; i++) {
             if (gHumanFinished[i] == 0) {
-                func_800ABC80(i, 1, gHumanRacer[i]);
+                Hud_SetPlayer(i, 1, gHumanRacer[i]);
             } else {
-                func_800ABC80(i, 3, gHumanRacer[i]);
+                Hud_SetPlayer(i, 3, gHumanRacer[i]);
             }
         }
     } else if (gRacePhase == 2 || gRacePhase == 3) {
         for (i = 0; i < gHumanCount; i++) {
-            func_800ABC80(i, 3, gHumanRacer[i]);
+            Hud_SetPlayer(i, 3, gHumanRacer[i]);
         }
     }
     svcWorldUpdate(gRaceShowResults == 0 ? delta : 0);

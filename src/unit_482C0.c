@@ -8,10 +8,10 @@ s32 func_8008182C(void);
 extern s32 D_800F3914;
 s32 Car_IsPlayer(s32);
 extern void (*audSfxPlay)(s32, s32, f32, f32);
-void func_800ABEC8(u8, u32, u8);
+void Hud_ShowLapTime(u8, u32, u8);
 extern s32 D_800F3908;
-extern s32 D_800F390C;
-extern s32 D_800F3910;
+extern s32 gLapCount;
+extern s32 gCheckpointCount;
 extern u8 D_800F3918;
 extern u8 D_800F3919;
 extern u8 D_800F391A;
@@ -27,7 +27,7 @@ s32 RaceClock_Get(void) {
     return gRaceClock;
 }
 
-s32 func_800A76E4(void) {
+s32 RaceClock_GetPreStart(void) {
     return D_800F3904;
 }
 
@@ -65,7 +65,7 @@ void RaceClock_Start(void) {
     }
 }
 
-s32 func_800A780C(u8 ch, u8 cp) {
+s32 Lap_PassCheckpoint(u8 ch, u8 cp) {
     Car *c;
     u8 ok;
     u8 k;
@@ -88,7 +88,7 @@ s32 func_800A780C(u8 ch, u8 cp) {
     }
     if ((D_800F391A == 0) & (ok == 0)) {
         if ((u8)Car_IsPlayer(ch) != 0) {
-            if (c->checkpoint != 0 || k != D_800F3910 - 1) {
+            if (c->checkpoint != 0 || k != gCheckpointCount - 1) {
                 if (k != c->checkpoint - 1) {
                     audSfxPlay(11, 0, 1.0f, 1.0f);
                 }
@@ -98,7 +98,7 @@ s32 func_800A780C(u8 ch, u8 cp) {
     if (!ok || c->checkpoints[k] != 0) {
         return 0;
     }
-    if (k < (u32)(D_800F3910 - 1)) {
+    if (k < (u32)(gCheckpointCount - 1)) {
         if (D_800F391A == 0) {
             if ((u8)Car_IsPlayer(ch) != 0) {
                 audSfxPlay(10, 0, 1.0f, 1.0f);
@@ -108,7 +108,7 @@ s32 func_800A780C(u8 ch, u8 cp) {
         c->checkpoint++;
         goto done;
     }
-    if (k != D_800F3910 - 1) {
+    if (k != gCheckpointCount - 1) {
         return 1;
     }
     if (D_800F391A == 0) {
@@ -122,7 +122,7 @@ s32 func_800A780C(u8 ch, u8 cp) {
                 best = 1;
             }
             if ((u8)Car_IsPlayer(ch) != 0) {
-                func_800ABEC8(c->unk00C, t - c->lapStart[0], best);
+                Hud_ShowLapTime(c->unk00C, t - c->lapStart[0], best);
             }
             c->lapStart[0] = t;
             c->lap = 1;
@@ -132,11 +132,11 @@ s32 func_800A780C(u8 ch, u8 cp) {
                 best = 1;
             }
             if ((u8)Car_IsPlayer(ch) != 0) {
-                func_800ABEC8(c->unk00C, t - c->lapStart[c->lap - 1], best);
+                Hud_ShowLapTime(c->unk00C, t - c->lapStart[c->lap - 1], best);
             }
             c->lapStart[c->lap] = t;
             c->lap++;
-            if (D_800F3919 == 0 && c->lap == D_800F390C) {
+            if (D_800F3919 == 0 && c->lap == gLapCount) {
                 c->finished = 1;
             }
         }
@@ -149,13 +149,13 @@ done:
     return 1;
 }
 
-s32 func_800A7B88(void *arg0) {
+s32 Lap_Init(void *arg0) {
     TrkCfg_ *cfg = arg0;
 
     D_800F3904 = 0;
     D_800F3908 = cfg->b17;
-    D_800F390C = cfg->b19;
-    D_800F3910 = cfg->b1A;
+    gLapCount = cfg->b19;
+    gCheckpointCount = cfg->b1A;
     if (cfg->flags & 2) {
         D_800F391A = 1;
     } else {
@@ -174,7 +174,7 @@ s32 func_800A7B88(void *arg0) {
     return 1;
 }
 
-s32 func_800A7C2C(void) {
+s32 Lap_Shutdown(void) {
     return 1;
 }
 
@@ -193,4 +193,4 @@ s32 Car_CheckFinished(u8 i) {
     return 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_482C0", func_800A7C8C);
+INCLUDE_ASM("asm/nonmatchings/unit_482C0", Lap_GetTimes);

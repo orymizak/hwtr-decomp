@@ -14,9 +14,9 @@ extern f32 D_80115828;
 extern f32 D_8011582C;
 extern f32 D_80115830;
 extern u32 D_80115854;
-u8 func_80080AD0(BlkG_ *, u8);
+u8 Bld_InitRacer(BlkG_ *, u8);
 u32 RaceClock_Get(void);
-extern Slot85_ D_80114830[];
+extern Slot85_ gAi[];
 extern s32 D_80115824;
 extern f32 D_80115820;
 void func_80084B9C(u8 *);
@@ -42,13 +42,13 @@ void func_80084FDC(void) {
     for (i = 0; i < 6; i++) {
         c1 = Car_Get(i);
         if (c1->state != 1) {
-            D_80114830[i].f24 = c1->unk474 / 1000.0f;
+            gAi[i].f24 = c1->unk474 / 1000.0f;
         }
         n = D_80115824 - 1;
-        D_80114830[i].f218 = (u32)(n - c1->lap) * D_80115820 + D_80114830[i].f24;
+        gAi[i].f218 = (u32)(n - c1->lap) * D_80115820 + gAi[i].f24;
     }
     for (i = 0; i < 6; i++) {
-        car = Car_Get(D_80114830[i].id);
+        car = Car_Get(gAi[i].id);
         if (car->state != 1 || car->b4B8 != 0 || car->finished != 0) {
             continue;
         }
@@ -59,18 +59,18 @@ void func_80084FDC(void) {
             (car->impulse.x) -= t.x;
             (car->impulse.y) -= t.y;
             (car->impulse.z) -= t.z;
-            D_80114830[i].v228.x = (car->impulse.x) + D_80114830[i].v228.x;
-            D_80114830[i].v228.y = (car->impulse.y) + D_80114830[i].v228.y;
-            D_80114830[i].v228.z = (car->impulse.z) + D_80114830[i].v228.z;
+            gAi[i].v228.x = (car->impulse.x) + gAi[i].v228.x;
+            gAi[i].v228.y = (car->impulse.y) + gAi[i].v228.y;
+            gAi[i].v228.z = (car->impulse.z) + gAi[i].v228.z;
             func_80084B9C(car);
             (car->impulse.x) = 0.0f;
             (car->impulse.y) = 0.0f;
             (car->impulse.z) = 0.0f;
         }
         if ((car->vE4.x) < 0.0f || 0.0f < (car->vE4.x) || (car->vE4.y) < 0.0f || 0.0f < (car->vE4.y) || (car->vE4.z) < 0.0f || 0.0f < (car->vE4.z)) {
-            D_80114830[i].v240.x = (car->vE4.x) + D_80114830[i].v240.x;
-            D_80114830[i].v240.y = (car->vE4.y) + D_80114830[i].v240.y;
-            D_80114830[i].v240.z = (car->vE4.z) + D_80114830[i].v240.z;
+            gAi[i].v240.x = (car->vE4.x) + gAi[i].v240.x;
+            gAi[i].v240.y = (car->vE4.y) + gAi[i].v240.y;
+            gAi[i].v240.z = (car->vE4.z) + gAi[i].v240.z;
             (car->vE4.x) = 0.0f;
             (car->vE4.y) = 0.0f;
             (car->vE4.z) = 0.0f;
@@ -80,12 +80,12 @@ void func_80084FDC(void) {
 
 f32 func_800853B4(u8 i) {
     if (i < 6) {
-        return D_80114830[i].f218;
+        return gAi[i].f218;
     }
     return 0.0f;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_22440", func_800853F4);
+INCLUDE_ASM("asm/nonmatchings/unit_22440", Ai_Init);
 
 extern f32 D_80115838;
 extern s8 D_80115845;
@@ -105,7 +105,7 @@ void func_80085780(void) {
     if (D_80115850 == 0 && car->state != 1) {
         k = 1.0f - D_80115838 * (1.0f - car->k538);
         for (i = 0; i < func_80096100(); i++) {
-            D_80114830[i].f20C = (D_80114830[i].f20C + 100.0f) * k - 100.0f;
+            gAi[i].f20C = (gAi[i].f20C + 100.0f) * k - 100.0f;
         }
     }
     D_8011584C = NULL;
@@ -133,13 +133,13 @@ void func_80085780(void) {
     }
 }
 
-s32 func_800858E8(void) {
+s32 Ai_Shutdown(void) {
     return 1;
 }
 
 INCLUDE_ASM("asm/nonmatchings/unit_22440", func_800858F0);
 
-void *func_8008637C(u8 *arg0) {
+void *Ai_GetSlot(u8 *arg0) {
     return (*arg0 * 0x2A8) + &D_80114838;
 }
 

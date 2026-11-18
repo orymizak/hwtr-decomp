@@ -82,7 +82,7 @@ s32 AnimTrack_Shutdown(void) {
 
 extern u32 gAnimTrackClock;
 u32 RaceClock_Get(void);
-u32 func_800A76E4(void);
+u32 RaceClock_GetPreStart(void);
 void AnimTrack_Evaluate(s32 index);
 void func_800C9D00(s32);
 void func_800C9DA0(s32);
@@ -96,7 +96,7 @@ void AnimTrack_Update(void) {
 
     if (gAnimTracks != NULL) {
         now = RaceClock_Get();
-        now += func_800A76E4();
+        now += RaceClock_GetPreStart();
         prev = gAnimTrackClock;
         gAnimTrackClock = now;
         dt = now - prev;

@@ -6,15 +6,15 @@ typedef struct { u8 busy; u8 pad[3]; V12_ v; u8 pad2[0x28]; } Q817_;
 typedef struct { u8 busy; u8 pad[3]; V12_ v; f32 c; f32 d; u16 h18; u16 h1A; u8 pad2[0x18]; } QAD_;
 typedef struct { V12_ pos; f32 c; f32 d; u8 p14[4]; s32 x18; f32 x1C; u8 p20[0x30]; s32 x50; V12_ p54; V12_ p60; f32 f6C; f32 f70; f32 f74; f32 f78; u16 id; u8 p7E[0xA]; } TrAD_;
 extern u16 D_80114814[];
-u8 func_80080730(Q817_ *, u16);
+u8 Bld_ReadNode(Q817_ *, u16);
 
 s32 Memory_Free(s32);
 extern s32 D_80114800;
 extern s32 D_8011480C;
 
-INCLUDE_ASM("asm/nonmatchings/unit_21150", func_80080550);
+INCLUDE_ASM("asm/nonmatchings/unit_21150", Bld_Load);
 
-s32 func_800806FC(void) {
+s32 Bld_Free(void) {
     if (D_80114800 != 0) {
         Memory_Free(D_80114800);
     }
@@ -22,9 +22,9 @@ s32 func_800806FC(void) {
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_21150", func_80080730);
+INCLUDE_ASM("asm/nonmatchings/unit_21150", Bld_ReadNode);
 
-s32 func_80080AD0(TrAD_ *t, u8 i) {
+s32 Bld_InitRacer(TrAD_ *t, u8 i) {
     QAD_ q;
     u8 n;
 
@@ -34,7 +34,7 @@ s32 func_80080AD0(TrAD_ *t, u8 i) {
     memset(t, 0, sizeof(TrAD_));
     t->id = D_80114814[i];
     t->x50 = -1;
-    n = func_80080730((Q817_ *)&q, t->id);
+    n = Bld_ReadNode((Q817_ *)&q, t->id);
     if (n == 0) {
         return 0;
     }
@@ -66,7 +66,7 @@ extern WpTbl81_ D_80114810;
 #define RD16(p) ((p)[0] | ((p)[1] << 8))
 /* Picks the record for the given time: binary-searches the table by key (time / 10), then steps
  * forward (wrapping) past every record lying within 120 units of one of the n positions. */
-u8 func_80081384(u32 time, u32 n, Vec3f *pts, Wp81_ *out) {
+u8 Bld_FindRecord(u32 time, u32 n, Vec3f *pts, Wp81_ *out) {
     u32 i = 0;
     u32 lo;
     u32 hi;
@@ -137,13 +137,13 @@ u8 func_80081384(u32 time, u32 n, Vec3f *pts, Wp81_ *out) {
     return 1;
 }
 
-s32 func_800817A8(u8 i, V12_ *out) {
+s32 Bld_GetStartPos(u8 i, V12_ *out) {
     Q817_ q;
 
     if (D_80114800 == 0) {
         return 0;
     }
-    if (func_80080730(&q, D_80114814[i]) == 0) {
+    if (Bld_ReadNode(&q, D_80114814[i]) == 0) {
         return 0;
     }
     if (q.busy != 0) {

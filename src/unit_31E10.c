@@ -33,7 +33,7 @@ void func_80091E30(Car *, f32);
 void func_8009887C(u8 *);
 void func_80094234(void);
 void func_800863A4(u8 *, u8 *);
-B88_ *func_8008637C(u8 *);
+B88_ *Ai_GetSlot(u8 *);
 void func_800ACDC8(void *, f32);
 void Mtx3_Orthonormalize(void *);
 extern void (*sysInputUpdate)(s32);
@@ -369,7 +369,7 @@ void func_800937E8(Car *p, f32 dt) {
         p->savedRot.m[2][1] = p->rot.m[2][1];
         p->savedRot.m[2][2] = p->rot.m[2][2];
         p->savedRoom = p->roomObj->list->key;
-        *(B88_ *)p->savedState = *func_8008637C(p);
+        *(B88_ *)p->savedState = *Ai_GetSlot(p);
     }
     if (p->b4B8 != 0 || p->finished != 0) {
         func_800ACDC8((u8 *)&p->m2C, dt);
