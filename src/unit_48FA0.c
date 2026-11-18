@@ -2,13 +2,13 @@
 #include "ultra64.h"
 #include "math.h"
 #include "include_asm.h"
-f32 func_8007AD24(f32);
+f32 Math_Acos(f32);
 
 
 
 extern s32 D_800F3920[3];
 /* Converts a rotation matrix to a quaternion (Shoemake's method). */
-Quat func_800A83A0(f32 m[3][3]) {
+Quat Quat_FromMtx3(f32 m[3][3]) {
     Quat q;
     f32 *p[3] = { &q.x, &q.y, &q.z };
     f32 tr;
@@ -45,7 +45,7 @@ Quat func_800A83A0(f32 m[3][3]) {
     return q;
 }
 
-Quat func_800A8670(f32 angle, Vec3f axis) {
+Quat Quat_FromAxisAngle(f32 angle, Vec3f axis) {
     Quat t;
     f32 half = angle / 2.0f;
     f32 s = sinf(half);
@@ -66,8 +66,8 @@ static inline void Vec3_Normalize_(Vec3f *v) {
 }
 
 /* Builds the rotation that points the forward (Y) axis along dir: makes a basis from dir, a
- * horizontal side vector and their cross product, then converts it as func_800A83A0 does. */
-Quat func_800A8710(Vec3f *dir) {
+ * horizontal side vector and their cross product, then converts it as Quat_FromMtx3 does. */
+Quat Quat_FromDir(Vec3f *dir) {
     Quat q = { 1.0f, 0.0f, 0.0f, 0.0f };
     Vec3f f;
     Vec3f side;
@@ -128,11 +128,11 @@ Quat func_800A8710(Vec3f *dir) {
     return q;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_48FA0", func_800A8BA4);
+INCLUDE_ASM("asm/nonmatchings/unit_48FA0", Quat_ToMtx3);
 
-INCLUDE_ASM("asm/nonmatchings/unit_48FA0", func_800A8C94);
+INCLUDE_ASM("asm/nonmatchings/unit_48FA0", Quat_Mul);
 
-void func_800A8E14(Quat *q) {
+void Quat_Normalize(Quat *q) {
     f32 w = q->w;
     f32 x = q->x;
     f32 y = q->y;
@@ -145,7 +145,7 @@ void func_800A8E14(Quat *q) {
     q->z *= inv;
 }
 
-Quat func_800A8EBC(f32 t, Quat a, Quat b) {
+Quat Quat_Slerp(f32 t, Quat a, Quat b) {
     Quat r;
     f32 c = a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
     f32 s0, s1, om, sinom;
@@ -158,7 +158,7 @@ Quat func_800A8EBC(f32 t, Quat a, Quat b) {
         a.w = -a.w;
     }
     if ((1.0f - c) > 0.001f) {
-        om = func_8007AD24(c);
+        om = Math_Acos(c);
         sinom = sinf(om);
         s0 = sinf((1.0f - t) * om) / sinom;
         s1 = sinf(t * om) / sinom;
@@ -173,7 +173,7 @@ Quat func_800A8EBC(f32 t, Quat a, Quat b) {
     return r;
 }
 
-Vec3f func_800A9068(f32 t, Vec3f a, Vec3f b) {
+Vec3f Vec3_Lerp(f32 t, Vec3f a, Vec3f b) {
     f32 s = 1.0f - t;
 
     a.x = a.x * s + b.x * t;

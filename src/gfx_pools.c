@@ -31,7 +31,7 @@ void *Memory_Alloc(u32 size);
 void Memory_Free(void *ptr);
 void Gfx_SendTask(Gfx *list, s32 size, s32 arg2, s32 arg3);
 void Gfx_WaitTasks(void);
-s32 func_800784F0(void);
+s32 Screen_FlushFrame(void);
 
 inline void GfxPool_Init(GfxPool *pool, u32 capacity, Gfx *buffer) {
     pool->capacity = capacity;
@@ -198,11 +198,11 @@ INCLUDE_ASM("asm/nonmatchings/gfx_pools", GfxPools_Swap);
 
 void GfxPools_Shutdown(void) {
     Gfx_WaitTasks();
-    func_800784F0();
+    Screen_FlushFrame();
     Gfx_WaitTasks();
     GfxPool_Reset(&gGfxPools[0]);
     /* TODO (Clean version):
-    The function `Gfx_WaitTasks()` is called twice consecutively around `func_800784F0()`. 
+    The function `Gfx_WaitTasks()` is called twice consecutively around `Screen_FlushFrame()`. 
     This redundancy is likely a legacy artifact of hardware state synchronization 
     or pipeline flushing, but could be cleaned up into a single pre/post sequence if safe.
     */

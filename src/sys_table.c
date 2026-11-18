@@ -28,10 +28,10 @@ extern void *sysFontGetCharWidth;
 extern void *sysFontDrawChar;
 extern void *sysDraw2DSetColor;
 extern void *sysScreenSetClearColor;
-extern void *D_80141024;
-extern void *D_80141028;
-extern void *D_8014102C;
-extern void *D_80141030;
+extern void *sysScreenSetBgAlpha;
+extern void *sysScreenLoadBg;
+extern void *sysScreenBeginFrame;
+extern void *sysScreenEndFrame;
 extern void *sysCameraApply;
 extern void *sysCameraSetPerspective;
 extern void *sysWorldLoad;
@@ -75,9 +75,9 @@ void Font_GetCharWidth();
 void Font_DrawChar2();
 void Draw2D_SetColor();
 void Screen_SetClearColor();
-void func_8007815C();
-void func_80078238();
-void func_80078300();
+void Screen_SetBgAlpha();
+void Screen_LoadBg();
+void Screen_BeginFrameDefault();
 void Camera_SetPerspective();
 void Camera_Apply();
 void Screen_AllocBg();
@@ -98,11 +98,11 @@ void Audio_GetVoiceVolume();
 void Audio_SetVoiceVolume();
 void Sfx_Play();
 void Audio_SetAmbientVolume();
-u8 func_80078388(void);
+u8 Screen_EndFrame(void);
 
 s32 Sys_BootCheck(void);
 s32 Sys_MenuExit(void);
-s32 func_8007F008(void);
+s32 Sys_ScreenEndFrame(void);
 s32 func_8007F028(void);
 s32 func_8007F030(void);
 s32 func_8007F038(void);
@@ -144,10 +144,10 @@ s32 Sys_InitTable(void) {
     sysFontDrawChar = &Font_DrawChar2;
     sysDraw2DSetColor = &Draw2D_SetColor;
     sysScreenSetClearColor = &Screen_SetClearColor;
-    D_80141024 = &func_8007815C;
-    D_80141028 = &func_80078238;
-    D_8014102C = &func_80078300;
-    D_80141030 = &func_8007F008;
+    sysScreenSetBgAlpha = &Screen_SetBgAlpha;
+    sysScreenLoadBg = &Screen_LoadBg;
+    sysScreenBeginFrame = &Screen_BeginFrameDefault;
+    sysScreenEndFrame = &Sys_ScreenEndFrame;
     sysCameraSetPerspective = &Camera_SetPerspective;
     sysCameraApply = &Camera_Apply;
     sysIsPAL = &System_IsPAL;
@@ -190,9 +190,9 @@ s32 Sys_ClearTable(void) {
     sysFileGetSize = 0;
     sysIsPAL = 0;
     sysScreenSetClearColor = 0;
-    D_80141028 = 0;
-    D_8014102C = 0;
-    D_80141030 = 0;
+    sysScreenLoadBg = 0;
+    sysScreenBeginFrame = 0;
+    sysScreenEndFrame = 0;
     sysCameraApply = 0;
     sysCameraSetPerspective = 0;
     sysWorldLoad = 0;
@@ -218,8 +218,8 @@ s32 Sys_MenuExit(void) {
     return 1;
 }
 
-s32 func_8007F008(void) {
-    return func_80078388();
+s32 Sys_ScreenEndFrame(void) {
+    return Screen_EndFrame();
 }
 
 s32 func_8007F028(void) {

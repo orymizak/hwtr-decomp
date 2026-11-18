@@ -9,7 +9,7 @@ extern u8 D_80138AB0;
 void Input_MirrorSteering(void);
 u8 Race_Shutdown(s32);
 void Particles_FreeAll(void);
-void func_80078980(s32);
+void Screen_SetColorShift(s32);
 typedef struct Node64_ { u8 pad[0xC]; f32 v; u8 pad2[4]; struct Node64_ *next; u8 pad3[2]; u8 id; } Node64_;
 extern Node64_ *gSndSrcList;
 void nuPiReadRom(u32 devAddr, void *dram, u32 size);
@@ -114,15 +114,15 @@ s32 Snd_IsPlaying(s32);
 extern s32 gSfxHandle37;
 extern s32 gSfxHandle36;
 extern f64 D_800FE8A8;
-extern s32 D_8014102C;
+extern s32 sysScreenBeginFrame;
 extern void *svcTimeGetMillis;
 extern void *svcRandRange;
-extern void *D_801416A8;
-extern void *D_801416B4;
-extern void *D_801416B8;
-extern void *D_801416BC;
+extern void *svcScreenEndFrame;
+extern void *svcScreenGetWidth;
+extern void *svcScreenGetHeight;
+extern void *svcScreenSetViewport;
 extern void *svcCameraApply;
-extern void *D_801416C8;
+extern void *svcCameraSetPerspective;
 extern s32 D_801416CC;
 extern void *svcTrackLoad;
 extern void *svcTrackUnload;
@@ -227,14 +227,14 @@ extern void *svcFontDrawChar;
 s32 Font_DrawCharSvc(s32, s32, s32, s32);
 extern void *svcDraw2DSetColor;
 void Draw2D_SetColor();
-extern void *D_801416A4;
-void func_80078320();
-void func_80078388();
-void func_80078624();
-void func_80078630();
-void func_8007863C();
+extern void *svcScreenBeginFrame;
+void Screen_BeginFrame();
+void Screen_EndFrame();
+void Screen_GetWidth();
+void Screen_GetHeight();
+void Screen_SetViewport();
 void Camera_Apply();
-void func_80078828();
+void Camera_SetPerspectiveRace();
 void Time_GetMillis();
 void Game_PauseBegin();
 void Game_PauseEnd();
@@ -299,13 +299,13 @@ s32 Svc_Install(void) {
     svcFontGetCharWidth = &Font_GetCharWidth;
     svcFontDrawChar = &Font_DrawCharSvc;
     svcDraw2DSetColor = &Draw2D_SetColor;
-    D_801416A4 = &func_80078320;
-    D_801416A8 = &func_80078388;
-    D_801416B4 = &func_80078624;
-    D_801416B8 = &func_80078630;
-    D_801416BC = &func_8007863C;
+    svcScreenBeginFrame = &Screen_BeginFrame;
+    svcScreenEndFrame = &Screen_EndFrame;
+    svcScreenGetWidth = &Screen_GetWidth;
+    svcScreenGetHeight = &Screen_GetHeight;
+    svcScreenSetViewport = &Screen_SetViewport;
     svcCameraApply = &Camera_Apply;
-    D_801416C8 = &func_80078828;
+    svcCameraSetPerspective = &Camera_SetPerspectiveRace;
     svcTimeGetMillis = &Time_GetMillis;
     svcRandRange = &Rand_Range;
     svcGamePauseBegin = &Game_PauseBegin;
@@ -349,13 +349,13 @@ s32 Svc_Uninstall(void) {
     D_80141758 = 0;
     D_80141754 = 0;
     D_80141768 = 0;
-    D_8014102C = 0;
-    D_801416A8 = 0;
-    D_801416B4 = 0;
-    D_801416B8 = 0;
-    D_801416BC = 0;
+    sysScreenBeginFrame = 0;
+    svcScreenEndFrame = 0;
+    svcScreenGetWidth = 0;
+    svcScreenGetHeight = 0;
+    svcScreenSetViewport = 0;
     svcCameraApply = 0;
-    D_801416C8 = 0;
+    svcCameraSetPerspective = 0;
     D_801416CC = 0;
     svcTimeGetMillis = 0;
     svcRandRange = 0;
@@ -426,9 +426,9 @@ u8 Game_StartRace(Cfg9_ *c) {
     }
     World_SetupLod(n, c->n18);
     if (!(c->f0 & 0x10)) {
-        func_80078980(0);
+        Screen_SetColorShift(0);
     } else {
-        func_80078980(1);
+        Screen_SetColorShift(1);
     }
     return Race_Init(c);
 }
@@ -446,7 +446,7 @@ u8 Game_EndRace(s32 a) {
     *p = 0;
     r = Race_Shutdown(a);
     Particles_FreeAll();
-    func_80078980(0);
+    Screen_SetColorShift(0);
     return r;
 }
 

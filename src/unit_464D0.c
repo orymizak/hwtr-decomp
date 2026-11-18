@@ -12,7 +12,7 @@ extern u32 (*svcRandRange)(s32);
 void func_800AC880(f32 *, f32, f32, f32, f32, V3a5_);
 void Coll_Register(void *);
 void func_800ACDC8(void *, f32);
-void func_8007A9E0(void *);
+void Mtx3_Orthonormalize(void *);
 
 s32 Coll_Unregister(s32 *);
 extern s32 D_8011E870;
@@ -56,7 +56,7 @@ void func_800A59B8(void) {
     for (i = 0; i < 8; i++, e++) {
         if (e->w0 != 0) {
             func_800ACDC8(e->x90, 0.01f);
-            func_8007A9E0(e->x124);
+            Mtx3_Orthonormalize(e->x124);
         }
     }
 }

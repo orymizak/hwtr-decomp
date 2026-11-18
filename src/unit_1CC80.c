@@ -84,10 +84,10 @@ extern u8 D_800F25C8[];
 void GfxPools_ReserveVtx(s32);
 s32 Mtx_New(f32 (*)[4]);
 u8 Frustum_TestSphere(f32 (*)[4], f32 (*)[4], f32);
-void func_8007AFD4(f32 (*)[4], f32 (*)[4], f32 (*)[4]);
+void Mtx34_Mul(f32 (*)[4], f32 (*)[4], f32 (*)[4]);
 Gfx *func_8007F61C(Gfx *, PDefC4_ *);
-void func_800A8670(Quat *, f32, Vec3f);
-void func_800A8BA4(Quat, f32 (*)[3]);
+void Quat_FromAxisAngle(Quat *, f32, Vec3f);
+void Quat_ToMtx3(Quat, f32 (*)[3]);
 extern PDef_ *D_800F2330[];
     /* TODO (Clean version):
     Función estática inline que duplica exactamente a ParticlePool_FadeOldest para forzar el inlining en ParticlePool_Push. En C limpio se llamaría directamente a ParticlePool_FadeOldest o se compartiría una única función inline. Se mantiene para el match.
@@ -201,9 +201,9 @@ void Particles_Draw(PoolPC4_ *pool, f32 (*m)[4]) {
                 u = b[1][0] * c + b[1][1] * s; v = b[1][1] * c - b[1][0] * s; b[1][0] = u; b[1][1] = v;
                 u = b[2][0] * c + b[2][1] * s; v = b[2][1] * c - b[2][0] * s; b[2][0] = u; b[2][1] = v;
             } else if (p->flags & 8) {
-                func_800A8670(&q, p->angle, p->axis);
-                func_800A8BA4(q, mb);
-                func_800A8BA4(p->q, ma);
+                Quat_FromAxisAngle(&q, p->angle, p->axis);
+                Quat_ToMtx3(q, mb);
+                Quat_ToMtx3(p->q, ma);
                 r[0][0] = mb[0][0] * ma[0][0] + mb[0][1] * ma[1][0] + mb[0][2] * ma[2][0];
                 r[0][1] = mb[0][0] * ma[0][1] + mb[0][1] * ma[1][1] + mb[0][2] * ma[2][1];
                 r[0][2] = mb[0][0] * ma[0][2] + mb[0][1] * ma[1][2] + mb[0][2] * ma[2][2];
@@ -235,7 +235,7 @@ void Particles_Draw(PoolPC4_ *pool, f32 (*m)[4]) {
                 a[2][0] *= sc;
                 a[2][1] *= sc;
                 a[2][2] *= sc;
-                func_8007AFD4(m, a, b);
+                Mtx34_Mul(m, a, b);
             } else {
                 b[0][0] = m[0][0];
                 b[0][1] = m[0][1];
@@ -339,7 +339,7 @@ typedef struct { Quat q; f32 f10; f32 f14; f32 f18; f32 f1C; f32 f20; u8 pad24[0
 typedef struct { u32 cap; s32 tail; s32 head; PrtQ_ *buf; } PPoolQ_;
 extern PPoolQ_ gParticles;
 s32 rand(void);
-void func_800A83A0(Quat *, f32 (*)[3]);
+void Quat_FromMtx3(Quat *, f32 (*)[3]);
     /* TODO (Clean version):
     Funciones inline locales (RotA_, RotB_, RotC_) que aplican rotaciones a matrices 3x4 en Z, Y y X. En C limpio deberían ser funciones matemáticas compartidas del motor con nombres semánticos. Se mantienen inline para el match.
     */
@@ -514,7 +514,7 @@ void Particle_SpawnBurst(Vec3f pos, u32 n, PDef_ *def, Vec3f vel) {
     t.x = m.m[0][3];
     t.y = m.m[1][3];
     t.z = m.m[2][3];
-    func_800A83A0(&q, r);
+    Quat_FromMtx3(&q, r);
     p.q = q;
     a = (f32) (rand() & 0x3F) / 16.0f;
     if (bits & 0x10) {

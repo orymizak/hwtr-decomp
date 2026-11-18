@@ -30,8 +30,8 @@ void func_8006DA88(void);
 void func_8006DC90(void);
 void Font_Init(void);
 void GfxPools_Init(void);
-void func_80077FB0(void);
-void func_80077FD0(void);
+void Screen_InitGfx(void);
+void Screen_Init(void);
 void func_8007BE30(void);
 void func_8007F420(void);
 void func_80087720(void);
@@ -87,7 +87,7 @@ void Game_Init(void) {
     */
     Video_Init();
     Input_Init();
-    func_80077FB0();
+    Screen_InitGfx();
     func_8007F420();
     Memory_InitMain();
     GfxPools_Init();
@@ -96,7 +96,7 @@ void Game_Init(void) {
     World_Init();
     Font_Init();
     func_8007BE30();
-    func_80077FD0();
+    Screen_Init();
     nuGfxPreNMIFuncSet(func_80078BD0);
     func_80087720();
     func_8006DA88();

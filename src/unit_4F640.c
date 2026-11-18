@@ -24,28 +24,28 @@ extern void (*svcFontDrawChar)(s32, u8, u16, s32, s32);
 extern char D_80100AF0[];
 void Cars_CollideObstacles(void);
 void func_800A5A1C(u32);
-void func_800AEB28(u32);
+void RaceView_DrawScene(u32);
 void func_800ABCA4(void);
 u32 strlen(const char *);
 extern s32 D_801415B8;
-extern u8 D_800F3B80;
+extern u8 gShowFps;
 extern u8 D_800F3B81;
 
-extern s32 (*D_801416A4)();
-extern s32 (*D_801416A8)();
-extern s32 D_801345C8;
+extern s32 (*svcScreenBeginFrame)();
+extern s32 (*svcScreenEndFrame)();
+extern s32 gRaceViewCount;
 
-s32 func_800AEA40(TAE_ *t) {
+s32 RaceView_Init(TAE_ *t) {
     u8 i;
 
-    D_801345C8 = 0;
+    gRaceViewCount = 0;
     for (i = 0; i < t->n; i++) {
         if (t->e[i].w == 1) {
-            D_801345C8++;
+            gRaceViewCount++;
         }
     }
-    if (D_801345C8 == 0) {
-        D_801345C8 = 1;
+    if (gRaceViewCount == 0) {
+        gRaceViewCount = 1;
     }
     D_801415B8 = t->n;
     /* TODO (Clean version): Simplify flag assignment:
@@ -56,36 +56,36 @@ s32 func_800AEA40(TAE_ *t) {
     } else {
         D_800F3B81 = 0;
     }
-    D_800F3B80 = 0;
+    gShowFps = 0;
     return 1;
 }
 
-s32 func_800AEAFC(void) {
+s32 RaceView_Shutdown(void) {
     return 1;
 }
 
-void func_800AEB04(void) {
-    D_801416A4();
+void RaceView_BeginFrame(void) {
+    svcScreenBeginFrame();
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_4F640", func_800AEB28);
+INCLUDE_ASM("asm/nonmatchings/unit_4F640", RaceView_DrawScene);
 
-void func_800AEDFC(void) {
-    D_801416A8();
+void RaceView_EndFrame(void) {
+    svcScreenEndFrame();
 }
 
-void func_800AEE20(u32 dt) {
+void RaceView_Draw(u32 dt) {
     char buf[0x100];
     f32 fps;
     u16 i;
 
     Cars_CollideObstacles();
     func_800A5A1C(dt);
-    D_801416A4();
+    svcScreenBeginFrame();
     D_801416AC();
-    func_800AEB28(dt);
+    RaceView_DrawScene(dt);
     func_800ABCA4();
-    if (D_800F3B80) {
+    if (gShowFps) {
         fps = 0.0f;
         if (dt != 0) {
             fps = 1000.0f / (f32)dt;
@@ -102,9 +102,9 @@ void func_800AEE20(u32 dt) {
         }
     }
     D_801416B0();
-    D_801416A8();
+    svcScreenEndFrame();
 }
 
-s32 func_800AEF70(void) {
-    return D_801345C8;
+s32 RaceView_GetPlayerCount(void) {
+    return gRaceViewCount;
 }

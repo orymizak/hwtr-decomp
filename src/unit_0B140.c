@@ -32,7 +32,7 @@ extern f32 D_800F02D0;
 extern u8 D_800F0318[];
 extern u8 D_800F0338[];
 void Clouds_Update(void);
-void func_8007AFD4(s32, f32 (*)[4], f32 (*)[4]);
+void Mtx34_Mul(s32, f32 (*)[4], f32 (*)[4]);
 s32 Mtx_New(f32 (*)[4]);
 extern Row6B_ gPadControls[];
 extern KeySet_ D_800F0404[];
@@ -108,7 +108,7 @@ s32 Clouds_Draw(s32 cam, f32 *pos) {
                     m[0][3] = e->x;
                     m[1][3] = e->y;
                     m[2][3] = e->z;
-                    func_8007AFD4(cam, m, o);
+                    Mtx34_Mul(cam, m, o);
                     o[0][3] *= D_800F02D0;
                     o[1][3] *= D_800F02D0;
                     o[2][3] *= D_800F02D0;

@@ -78,7 +78,7 @@ void Particle_SpawnJitteredVel(Vec3f, Vec3f);
 void Particle_SpawnWithVel(Vec3f, Vec3f);
 extern u8 D_80138A6C[];
 extern s32 D_80138A90[];
-extern u8 D_800F20F6;
+extern u8 gColorShift;
 void ParticlePool_Push(void *, Pt94_ *);
 extern Fade65_ D_80138A78;
 extern u8 D_80138AAC;
@@ -805,9 +805,9 @@ void Fx_SpawnPaintChips(u8 **car, f32 speed, Vec3f pos, Vec3f vel) {
     pt.s6C = 0xFF00;
     pt.s6E = 0;
     r = (rand() % 21) / 100.0;
-    pt.c[2] = (u8)((0.8 - r) * o->c[2]) >> D_800F20F6;
-    pt.c[1] = (u8)((0.8 - r) * o->c[1]) >> D_800F20F6;
-    pt.c[0] = (u8)((0.8 - r) * o->c[0]) >> D_800F20F6;
+    pt.c[2] = (u8)((0.8 - r) * o->c[2]) >> gColorShift;
+    pt.c[1] = (u8)((0.8 - r) * o->c[1]) >> gColorShift;
+    pt.c[0] = (u8)((0.8 - r) * o->c[0]) >> gColorShift;
     if (D_80138A6C[**(u8 **)(*car + 0x64)] == 1) {
         pt.c[0] >>= 4;
         pt.c[2] >>= 4;

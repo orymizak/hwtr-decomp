@@ -16,7 +16,7 @@ typedef struct { union { u32 flags; struct { u32 pad:30; u32 b1:1; u32 b0:1; } b
 s32 Mtx_New(void *);
 s32 Frustum_TestSphere(s32, s32, s32);
 void func_80072EE0(u8 *, void *, s32, s32, s32);
-void func_8007AFD4(s32, s32, void *);
+void Mtx34_Mul(s32, s32, void *);
 void Image_DrawRGBA16Scaled(s32, s32, s32, s32, s32, f32, f32);
 extern u16 gScreenWidth;
 extern u16 gScreenHeight;
@@ -143,7 +143,7 @@ void SceneNode_Draw(Node72_ *n, s32 arg1, s32 arg2, s32 arg3) {
                         SceneNode_Draw(n->child, arg1, arg2, arg3);
                     }
                     if (n->p3C != 0) {
-                        func_8007AFD4(arg1, (s32) n, m);
+                        Mtx34_Mul(arg1, (s32) n, m);
                         if (n->flags & 1) {
                             m[9] = zero;
                             m[8] = zero;
@@ -203,7 +203,7 @@ s32 func_80072D6C(u8 *a0, s32 a1, s32 a2, s32 a3, s32 a4) {
         return 0;
     }
     if (*(s32 *)(a0 + 0x3C) != 0) {
-        func_8007AFD4(a1, a2, buf);
+        Mtx34_Mul(a1, a2, buf);
         func_80072EE0(a0, buf, Mtx_New(buf), a3, a4);
     }
     return 1;

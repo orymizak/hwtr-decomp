@@ -43,7 +43,7 @@ void Coll_Register(u8 *o);
 extern void (*svcTrackGetLink)(u32, Vec3i *, f32 *, f32 *, f32 *, f32 *, f32 *, f32 *);
 extern void (*svcTrackSetLinkTransform)(u32, f32, f32, f32, void *);
 void func_800ACDC8(void *, f32);
-void func_8007A9E0(void *);
+void Mtx3_Orthonormalize(void *);
 extern u8 *D_800F3B90;
 extern void *D_800F3B94;
 extern u32 D_801206C0;
@@ -175,7 +175,7 @@ void func_800AF67C(void) {
         if (e->kind == 1) {
             if (e->obj[0x110] == 0) {
                 func_800ACDC8(e->obj, 0.01f);
-                func_8007A9E0(e->obj + 0x94);
+                Mtx3_Orthonormalize(e->obj + 0x94);
                 v[0] = *(f32 *) (e->obj + 0x6C) + *(f32 *) (e->obj + 0x60);
                 v[1] = *(f32 *) (e->obj + 0x70) + *(f32 *) (e->obj + 0x64);
                 v[2] = *(f32 *) (e->obj + 0x74) + *(f32 *) (e->obj + 0x68);

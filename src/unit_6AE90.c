@@ -45,11 +45,11 @@ void PauseUi_PlaceItem2(TA7_ *t);
 extern s32 (*svcRandRange)(s32);
 void PauseUi_PlaceItem(TA6_ *t);
 extern void (*svcWorldUpdate)(s32);
-extern void (*D_801416A4)(void);
+extern void (*svcScreenBeginFrame)(void);
 extern void (*D_801416AC)(void);
-extern void (*D_801416C8)(f32, f32, f32, f32);
+extern void (*svcCameraSetPerspective)(f32, f32, f32, f32);
 extern void (*svcDraw2DBeginPrim)(s32, s32, s32, s32);
-void func_800AEB28(s32);
+void RaceView_DrawScene(s32);
 void PauseUi_CenterItem2(u8 *t);
 extern s32 (*svcFontGetCharWidth)(s32, u8);
 s8 func_80086F80(u8 font, u8 a, u8 b);
@@ -60,7 +60,7 @@ void PauseUi_BuildText2(E18c_ *);
 extern u32 gPauseTextUsed;
 extern s8 gPauseFadeTarget;
 extern s8 gPauseFadeAlpha;
-extern s32 (*D_801416A8)();
+extern s32 (*svcScreenEndFrame)();
 extern s32 (*D_801416B0)();
 
     /* TODO (Bug check / Clean version):
@@ -299,7 +299,7 @@ void PauseUi_Unload(TCB_ *t) {
 }
 
     /* TODO (Clean version): Projection matrix and screen fade step:
-    - D_801416C8(48.0f, 5000.0f, 1.0471967f, 1.3333334f) sets camera perspective:
+    - svcCameraSetPerspective(48.0f, 5000.0f, 1.0471967f, 1.3333334f) sets camera perspective:
         near=48.0f, far=5000.0f, fov=60 deg (pi/3), aspect=4:3.
     - gPauseFadeTarget is target alpha, gPauseFadeAlpha is current fade alpha (fade in by +15/frame, fade out by -1/frame).
     - svcDraw2DBeginPrim draws a full-screen black overlay with current alpha.
@@ -309,10 +309,10 @@ void PauseUi_BeginFrame(void) {
     u8 b;
 
     svcWorldUpdate(0);
-    D_801416A4();
+    svcScreenBeginFrame();
     D_801416AC();
-    func_800AEB28(0);
-    D_801416C8(48.0f, 5000.0f, 1.0471967f, 1.3333334f);
+    RaceView_DrawScene(0);
+    svcCameraSetPerspective(48.0f, 5000.0f, 1.0471967f, 1.3333334f);
     a = gPauseFadeAlpha;
     b = gPauseFadeTarget;
     if (a > b) {
@@ -338,7 +338,7 @@ void PauseUi_FadeOut(void) {
 
 void PauseUi_EndFrame(void) {
     D_801416B0();
-    D_801416A8();
+    svcScreenEndFrame();
 }
 
 INCLUDE_ASM("asm/nonmatchings/unit_6AE90", PauseUi_DrawMenu);

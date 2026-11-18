@@ -12,12 +12,12 @@ typedef struct { u16 n; u8 pad[2]; Col16b_ *c; u32 p8; u32 pC; s32 w10; } Hdr7E_
 extern s32 D_801454A0;
 void GfxPools_Shutdown(void);
 void WorldData_Free(s32);
-extern u8 D_800F20F6;
+extern u8 gColorShift;
 void func_80079EF4(Hdr7E_ *h);
 extern f64 D_800FF8E0;
 
 s32 Memory_Alloc(s32);
-f32 func_8007ADF0(f32, f32);
+f32 Math_Atan2(f32, f32);
 extern s32 D_8014551C;
 
 INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_80079140);
@@ -79,7 +79,7 @@ void func_80079EF4(Hdr7E_ *h) {
     h->p8 += (u32)h;
     h->pC += (u32)h;
     for (i = 0; i < h->n * 3; i++) {
-        sh = &D_800F20F6;
+        sh = &gColorShift;
         if (h->c[i].flags & 1) {
             h->c[i].r >>= *sh;
             h->c[i].g >>= *sh;
@@ -111,7 +111,7 @@ static inline void V3o_Cross(Vec3f *r, Vec3f *a, Vec3f *b) {
     r->z = a->x * b->y - b->x * a->y;
 }
 /* Re-orthonormalises the rotation part of a 3x3 matrix, keeping the direction of its first column. */
-void func_8007A9E0(f32 *m) {
+void Mtx3_Orthonormalize(f32 *m) {
     Vec3f a;
     Vec3f b;
     Vec3f c;
@@ -145,7 +145,7 @@ void func_8007A9E0(f32 *m) {
     m[8] = c.z;
 }
 
-f32 func_8007AC64(f32 x) {
+f32 Math_Asin(f32 x) {
     f32 c;
     f32 r;
 
@@ -154,7 +154,7 @@ f32 func_8007AC64(f32 x) {
     }
     c = sqrtf(1.0f - x * x);
     if (c != 0.0f) {
-        return func_8007ADF0(x, c);
+        return Math_Atan2(x, c);
     }
     r = 1.5707964f;
     if (!(x > 0.0f)) {
@@ -163,7 +163,7 @@ f32 func_8007AC64(f32 x) {
     return r;
 }
 
-f32 func_8007AD24(f32 x) {
+f32 Math_Acos(f32 x) {
     f32 s;
 
     if (fabsf(x) > 1.0f) {
@@ -171,7 +171,7 @@ f32 func_8007AD24(f32 x) {
     }
     s = sqrtf(1.0f - x * x);
     if (s != 0.0f) {
-        return D_800FF8E0 - func_8007ADF0(x, s);
+        return D_800FF8E0 - Math_Atan2(x, s);
     }
     if (x > 0.0f) {
         return 0.0f;
@@ -179,9 +179,9 @@ f32 func_8007AD24(f32 x) {
     return 3.1415927f;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_8007ADF0);
+INCLUDE_ASM("asm/nonmatchings/unit_19D40", Math_Atan2);
 
-f32 func_8007AFAC(f32 x) {
+f32 Math_Abs(f32 x) {
     if (0.0f <= x) {
         return x;
     }
@@ -189,7 +189,7 @@ f32 func_8007AFAC(f32 x) {
 }
 
 
-void func_8007AFD4(f32 a[3][4], f32 b[3][4], f32 out[3][4]) {
+void Mtx34_Mul(f32 a[3][4], f32 b[3][4], f32 out[3][4]) {
     out[0][0] = a[0][0] * b[0][0] + a[0][1] * b[1][0] + a[0][2] * b[2][0];
     out[0][1] = a[0][0] * b[0][1] + a[0][1] * b[1][1] + a[0][2] * b[2][1];
     out[0][2] = a[0][0] * b[0][2] + a[0][1] * b[1][2] + a[0][2] * b[2][2];

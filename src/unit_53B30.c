@@ -23,7 +23,7 @@ extern void (*sysModelLoadAsync)(s32, char *, s32);
 extern void (*sysCarInfoLoad)(char *, void *, void *);
 extern void (*D_80140FD8)(void);
 void HighScores_UpdateArrows(void);
-extern void (*D_80141024)(s32);
+extern void (*sysScreenSetBgAlpha)(s32);
 extern u8 (*sysPakRepair)(u8);
 extern s32 D_80124CE4;
 extern s32 D_80124CE8;
@@ -43,7 +43,7 @@ u8 Cup_IsUnlocked(u8 i);
 typedef struct { u8 a; u8 pad; s16 b; s16 c; u8 pad2[4]; } E0A_;
 typedef struct { u8 pad[2]; u8 n; u8 pad2; E0A_ *arr; u8 pad3[8]; u8 r; u8 g; u8 bl; } T39_;
 extern void (*sysScreenSetClearColor)(s32, s32, s32);
-extern void (*D_8014102C)(void);
+extern void (*sysScreenBeginFrame)(void);
 extern void (*sysCameraSetPerspective)(f32, f32, f32, f32);
 extern void (*D_8014105C)(s32);
 extern u8 (*sysIsPAL)(void);
@@ -165,7 +165,7 @@ extern void (*D_80141044)(u8);
 extern void (*sysFontLoad)(s32, void *);
 extern u8 D_80100F94;
 void Music_PlaySong(void);
-extern s32 (*D_80141030)();
+extern s32 (*sysScreenEndFrame)();
 s32 Menu_EndFrame();
 s32 Menu_LoadBg(s32 *a);
 extern Race7A_ gRaceSetup;
@@ -396,7 +396,7 @@ extern f32 D_800F60B0[2];
 extern f32 D_800F60B8[2];
 extern u8 D_800F60C0[2];
 
-extern s32 (*D_80141028)(s32);
+extern s32 (*sysScreenLoadBg)(s32);
 extern s8 gPakDialogSel;
 s32 Menu_LayoutTexts(s32);
 extern s32 D_800F5F18;
@@ -576,12 +576,12 @@ void Menu_SubmitModel(s8 a) {
 
 
 s32 Menu_LoadBg(s32 *a) {
-    return D_80141028((s32)a);
+    return sysScreenLoadBg((s32)a);
 }
 
 
 void Menu_FreeBg(void) {
-    D_80141028(0);
+    sysScreenLoadBg(0);
 }
 
 /* Loads the 3x4 identity matrix and moves it back by the camera distance (866 units). */
@@ -602,13 +602,13 @@ void Menu_InitViewMtx(f32 (*m)[4]) {
  */
 void Menu_SetupCamera(void) {
     sysScreenSetClearColor(0, 0, 0);
-    D_8014102C();
+    sysScreenBeginFrame();
     sysCameraSetPerspective(48.0f, 5000.0f, 1.0471967f, 1.3333334f);
 }
 
 
 s32 Menu_EndFrame() {
-    return D_80141030();
+    return sysScreenEndFrame();
 }
 
 
@@ -5016,7 +5016,7 @@ void LoadOptions_MoveDown(void) {
 }
 
 void LoadOptions_Select(void) {
-    D_80141024(0xFF);
+    sysScreenSetBgAlpha(0xFF);
     switch (D_801240B5) {
         case 0:
             Fsm_Trigger(&gMenuFsm, 0x70);

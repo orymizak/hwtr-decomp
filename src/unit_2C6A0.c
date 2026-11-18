@@ -36,9 +36,9 @@ void func_8008EA6C(s32);
 void func_8008AD04(void);
 void RaceClock_Advance(s32);
 void RaceAudio_Update(s32);
-void func_80087B08(void);
+void AnimTrack_Update(void);
 void func_800ABC80(u8, s32, u8);
-void func_800AEE20(u32);
+void RaceView_Draw(u32);
 void RaceClock_Start(void);
 u32 func_800AF174(void);
 void func_800AF180(u32);
@@ -71,8 +71,8 @@ void func_80090934(void);
 void Coll_Update(void);
 void func_80085780(void);
 u8 func_800A90F0(u8 *);
-u8 func_800AEA40(u8 *);
-u8 func_80087990(u8 *);
+u8 RaceView_Init(u8 *);
+u8 AnimTrack_Init(u8 *);
 u8 func_80080550(u8 *);
 u8 func_80098BC0(u8 *);
 u8 Coll_Init(u8 *);
@@ -109,11 +109,11 @@ u8 func_8008EA64(u8 *);
 u8 RaceAudio_Unload(u8 *);
 u8 func_80091BA0(u8 *);
 u8 func_800858E8(u8 *);
-u8 func_800AEAFC(u8 *);
+u8 RaceView_Shutdown(u8 *);
 u8 Coll_Shutdown(u8 *);
 u8 func_80098BEC(u8 *);
 u8 func_800806FC();
-u8 func_80087AD4(u8 *);
+u8 AnimTrack_Shutdown(u8 *);
 u8 func_800A9370(u8 *);
 extern u8 D_801184C1;
 extern u8 D_800F3700;
@@ -208,7 +208,7 @@ s32 Race_Init(u8 *cfg) {
         return 0;
     }
     Race_LoadProgressStep();
-    if (!func_80087990(cfg)) {
+    if (!AnimTrack_Init(cfg)) {
         return 0;
     }
     if (!func_80080550(cfg)) {
@@ -221,7 +221,7 @@ s32 Race_Init(u8 *cfg) {
         return 0;
     }
     Race_LoadProgressStep();
-    if (!func_800AEA40(cfg)) {
+    if (!RaceView_Init(cfg)) {
         return 0;
     }
     if (!func_800853F4(cfg)) {
@@ -308,11 +308,11 @@ u8 Race_Shutdown(u8 *o) {
     err += RaceAudio_Unload(o) == 0;
     err += func_80091BA0(o) == 0;
     err += func_800858E8(o) == 0;
-    err += func_800AEAFC(o) == 0;
+    err += RaceView_Shutdown(o) == 0;
     err += Coll_Shutdown(o) == 0;
     err += func_80098BEC(o) == 0;
     err += func_800806FC() == 0;
-    err += func_80087AD4(o) == 0;
+    err += AnimTrack_Shutdown(o) == 0;
     err += svcTrackUnload() == 0;
     err += func_800A9370(o) == 0;
     if (svcRacePostUnload(o) == 0) {
@@ -491,7 +491,7 @@ void Race_Update(void) {
         }
     }
     if (gRaceShowResults == 0) {
-        func_80087B08();
+        AnimTrack_Update();
     }
     if (gRacePhase == 1) {
         for (i = 0; i < gHumanCount; i++) {
@@ -507,7 +507,7 @@ void Race_Update(void) {
         }
     }
     svcWorldUpdate(gRaceShowResults == 0 ? delta : 0);
-    func_800AEE20(delta);
+    RaceView_Draw(delta);
     gRaceLastTime = now;
     switch ((u32)gRacePhase) {
     case 0:

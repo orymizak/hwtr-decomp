@@ -41,8 +41,8 @@ typedef struct {
     /* 0x5C */ Vec3i result;
 } AnimTrack; /* size = 0x68 */
 
-extern u32 D_800F3010;
-extern AnimTrack *D_800F3014;
+extern u32 gAnimTrackCount;
+extern AnimTrack *gAnimTracks;
 
 void Memory_Free(void *ptr);
 
@@ -55,38 +55,38 @@ typedef struct { AnimFn_ count; AnimFn_ info; AnimFn_ keys; } AnimIf_;
     */
 extern AnimIf_ svcTrackGetPathCount;
 void *Memory_Alloc(s32 size);
-s32 func_80087990(void) {
+s32 AnimTrack_Init(void) {
     u32 i;
 
-    if ((D_800F3010 = svcTrackGetPathCount.count()) != 0) {
-        if ((D_800F3014 = Memory_Alloc(D_800F3010 * sizeof(AnimTrack))) == NULL) {
+    if ((gAnimTrackCount = svcTrackGetPathCount.count()) != 0) {
+        if ((gAnimTracks = Memory_Alloc(gAnimTrackCount * sizeof(AnimTrack))) == NULL) {
             return 0;
         }
-        memset(D_800F3014, 0, D_800F3010 * sizeof(AnimTrack));
-        for (i = 0; i < D_800F3010; i++) {
-            svcTrackGetPathCount.info(i, &D_800F3014[i].duration, &D_800F3014[i].keyCount, D_800F3014[i].unk08, &D_800F3014[i].id);
-            svcTrackGetPathCount.keys(i, 0, &D_800F3014[i].unk20[4], &D_800F3014[i].unk20[0x10]);
-            svcTrackGetPathCount.keys(i, 1, &D_800F3014[i].unk20[0x20], &D_800F3014[i].unk20[0x2C]);
+        memset(gAnimTracks, 0, gAnimTrackCount * sizeof(AnimTrack));
+        for (i = 0; i < gAnimTrackCount; i++) {
+            svcTrackGetPathCount.info(i, &gAnimTracks[i].duration, &gAnimTracks[i].keyCount, gAnimTracks[i].unk08, &gAnimTracks[i].id);
+            svcTrackGetPathCount.keys(i, 0, &gAnimTracks[i].unk20[4], &gAnimTracks[i].unk20[0x10]);
+            svcTrackGetPathCount.keys(i, 1, &gAnimTracks[i].unk20[0x20], &gAnimTracks[i].unk20[0x2C]);
         }
     }
     return 1;
 }
 
-s32 func_80087AD4(void) {
-    if (D_800F3014 != NULL) {
-        Memory_Free(D_800F3014);
-        D_800F3014 = NULL;
+s32 AnimTrack_Shutdown(void) {
+    if (gAnimTracks != NULL) {
+        Memory_Free(gAnimTracks);
+        gAnimTracks = NULL;
     }
     return 1;
 }
 
-extern u32 D_800F3018;
+extern u32 gAnimTrackClock;
 u32 RaceClock_Get(void);
 u32 func_800A76E4(void);
-void func_80087C28(s32 index);
+void AnimTrack_Evaluate(s32 index);
 void func_800C9D00(s32);
 void func_800C9DA0(s32);
-void func_80087B08(void) {
+void AnimTrack_Update(void) {
     u32 now;
     u32 prev;
     u32 dt;
@@ -94,14 +94,14 @@ void func_80087B08(void) {
     u32 i;
     AnimTrack *t;
 
-    if (D_800F3014 != NULL) {
+    if (gAnimTracks != NULL) {
         now = RaceClock_Get();
         now += func_800A76E4();
-        prev = D_800F3018;
-        D_800F3018 = now;
+        prev = gAnimTrackClock;
+        gAnimTrackClock = now;
         dt = now - prev;
         if (dt != 0) {
-            for (i = 0, t = D_800F3014; i < D_800F3010; i++, t++) {
+            for (i = 0, t = gAnimTracks; i < gAnimTrackCount; i++, t++) {
                 if (t->active) {
                     if (t->seekTime != 0) {
                         step = dt;
@@ -111,7 +111,7 @@ void func_80087B08(void) {
                         if (step != 0) {
                             t->time += step;
                             t->seekTime -= step;
-                            func_80087C28(i);
+                            AnimTrack_Evaluate(i);
                         }
                         if (t->seekTime == 0) {
                             func_800C9D00(t->seekMode);
@@ -121,7 +121,7 @@ void func_80087B08(void) {
                     }
                 } else {
                     t->time += dt;
-                    func_80087C28(i);
+                    AnimTrack_Evaluate(i);
                 }
             }
         }
@@ -146,12 +146,12 @@ typedef struct {
 } AnimTrk_;
 extern void (*svcTrackGetPathKey)(s32, s32, Vec3f *, Quat *);
 extern void (*svcTrackSetPathTransform)(s32, Vec3f *, Mtx3f *);
-Vec3f func_800A9068(f32 t, Vec3f a, Vec3f b);
-Quat func_800A8EBC(f32 t, Quat a, Quat b);
-void func_800A8BA4(Quat q, Mtx3f *out);
+Vec3f Vec3_Lerp(f32 t, Vec3f a, Vec3f b);
+Quat Quat_Slerp(f32 t, Quat a, Quat b);
+void Quat_ToMtx3(Quat q, Mtx3f *out);
 
-void func_80087C28(s32 index) {
-    AnimTrk_ *t = (AnimTrk_ *)&D_800F3014[index];
+void AnimTrack_Evaluate(s32 index) {
+    AnimTrk_ *t = (AnimTrk_ *)&gAnimTracks[index];
     Mtx3f m;
     Mtx3f m2;
     Quat q;
@@ -173,10 +173,10 @@ void func_80087C28(s32 index) {
         t->key = key;
     }
     f = (f32)(u32)(kc1 * t->time - key * t->duration) / (f32)t->duration;
-    v = func_800A9068(f, t->pos0, t->pos1);
+    v = Vec3_Lerp(f, t->pos0, t->pos1);
     t->result = v;
-    q = func_800A8EBC(f, t->rot0, t->rot1);
-    func_800A8BA4(q, &m);
+    q = Quat_Slerp(f, t->rot0, t->rot1);
+    Quat_ToMtx3(q, &m);
     
     /* TODO (Clean version):
     Se puede hacer mediante un bucle de transposición o una función auxiliar:
@@ -195,17 +195,17 @@ void func_80087C28(s32 index) {
     svcTrackSetPathTransform(index, &t->result, &m2);
 }
 
-void func_80087EA4(s32 index, Vec3i *out) {
-    AnimTrack *track = &D_800F3014[index];
+void AnimTrack_GetPos(s32 index, Vec3i *out) {
+    AnimTrack *track = &gAnimTracks[index];
 
     *out = track->result;
 }
 
-s32 func_80087EE0(s32 id) {
+s32 AnimTrack_FindById(s32 id) {
     u32 i;
 
-    for (i = 0; i < D_800F3010; i++) {
-        if (D_800F3014[i].id == id) {
+    for (i = 0; i < gAnimTrackCount; i++) {
+        if (gAnimTracks[i].id == id) {
             return i;
         }
     }
@@ -217,18 +217,18 @@ s32 func_80087EE0(s32 id) {
     return 0;
 }
 
-s32 func_80087F2C(u32 index) {
-    if (index >= D_800F3010) {
+s32 AnimTrack_Start(u32 index) {
+    if (index >= gAnimTrackCount) {
         return 0;
     }
-    D_800F3014[index].active = 1;
+    gAnimTracks[index].active = 1;
     return 1;
 }
 
-void func_80087F7C(s32 index, u32 t, s32 mode) {
-    u32 base = (u32)D_800F3014;
+void AnimTrack_SeekKey(s32 index, u32 t, s32 mode) {
+    u32 base = (u32)gAnimTracks;
     AnimTrack *track = (AnimTrack *)(index * sizeof(AnimTrack) + base);
-    /* TODO(match-debt): &D_800F3014[index] loads the base after the index product and adds the
+    /* TODO(match-debt): &gAnimTracks[index] loads the base after the index product and adds the
        operands the other way round; only the byte offset added to a base read first matches. */
     u32 last;
 

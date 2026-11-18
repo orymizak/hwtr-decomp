@@ -35,7 +35,7 @@ void func_80094234(void);
 void func_800863A4(u8 *, u8 *);
 B88_ *func_8008637C(u8 *);
 void func_800ACDC8(void *, f32);
-void func_8007A9E0(void *);
+void Mtx3_Orthonormalize(void *);
 extern void (*sysInputUpdate)(s32);
 extern s32 (*sysInputGetControl)(s32, s32);
 extern void (*sysInputHasRumble)(s32, s32, s32);
@@ -313,7 +313,7 @@ void func_80093164(Car *p, f32 dt) {
         func_800AEFF8();
     }
     if (p->b13C == 0) {
-        func_8007A9E0((u8 *)&p->rot);
+        Mtx3_Orthonormalize((u8 *)&p->rot);
         func_80095804(p);
     }
     if (p->b4B8 == 0) {
@@ -373,7 +373,7 @@ void func_800937E8(Car *p, f32 dt) {
     }
     if (p->b4B8 != 0 || p->finished != 0) {
         func_800ACDC8((u8 *)&p->m2C, dt);
-        func_8007A9E0((u8 *)&p->rot);
+        Mtx3_Orthonormalize((u8 *)&p->rot);
     }
 }
 
@@ -796,7 +796,7 @@ extern u8 D_8011B31B;
 extern void (*D_80141748)(u8, V3_B00 *, void *);
 extern void (*D_8014174C)(u8, u8, f32, f32, f32, s32, s32, s32, V3_B00 *, V3_B00 *);
 extern T_B00 D_80141754;
-u32 func_800AEF70(void);
+u32 RaceView_GetPlayerCount(void);
 void func_80090410(u8, V3_B00 *, V3_B00 *, V3_B00 *, V3_B00 *, s32 *, u8 *, u8 *);
 static inline f32 maxf_B00(f32 a, f32 b) { return a > b ? a : b; }
 void Cars_CollideObstacles(u32 dt) {
@@ -824,7 +824,7 @@ void Cars_CollideObstacles(u32 dt) {
     for (i = 0; i < cnt; i++) {
         near[i] = 0;
     }
-    for (i = 0; i < func_800AEF70(); i++) {
+    for (i = 0; i < RaceView_GetPlayerCount(); i++) {
         func_80090410(i, &o, &v1, &v2, &v3, &s90, &s94, &j);
         for (j = 0; j < cnt; j++) {
             if (near[j] == 0) {

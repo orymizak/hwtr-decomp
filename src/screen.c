@@ -6,10 +6,10 @@
 #define SCREEN_BG_BUFFER_SIZE 0x4B200
 
 
-extern void *D_800F20F0;
+extern void *gBgBuffer;
 extern u8 gLightsEnabled;
 extern u8 gLowRes;
-extern u8 D_800F20F6;
+extern u8 gColorShift;
 extern u8 gLightsDirty;
 extern u16 gScreenWidth;
 extern u16 gScreenHeight;
@@ -17,7 +17,7 @@ extern u8 D_800F20FE;
 extern u8 D_800F20FF;
 extern u8 D_800F2100;
 extern u8 D_800F2102;
-extern void *D_800F2104;
+extern void *gBgImage;
 extern s16 D_800F2108;
 extern s16 D_800F210A;
 extern s16 D_800F210C;
@@ -58,25 +58,25 @@ void func_80076578(f32 arg0, void *arg1);
 void func_800766FC(void *arg0, s32 arg1, s32 arg2);
 void func_800802C0(void);
 void func_80080360(void);
-u8 func_80078320(s32 arg0);
-void func_80078878(f32 arg0, f32 arg1, f32 arg2, f32 arg3);
+u8 Screen_BeginFrame(s32 arg0);
+void Camera_SetProjection(f32 arg0, f32 arg1, f32 arg2, f32 arg3);
 
-s32 func_80077FB0(void) {
+s32 Screen_InitGfx(void) {
     Gfx_Init();
     return 1;
 }
 
-s32 func_80077FD0(void) {
+s32 Screen_Init(void) {
     gLightsDirty = 1;
     gLowRes = 1;
     D_800F2102 = 0xFF;
     D_800F210C = 320;
     gLightsEnabled = 0;
-    D_800F20F6 = 0;
+    gColorShift = 0;
     D_800F20FE = 0;
     D_800F20FF = 0;
     D_800F2100 = 0;
-    D_800F2104 = NULL;
+    gBgImage = NULL;
     D_800F2108 = 0;
     D_800F210A = 0;
     D_800F210E = 240;
@@ -101,7 +101,7 @@ s32 func_80077FD0(void) {
     return 1;
 }
 
-s32 func_80078120(void) {
+s32 Screen_Shutdown(void) {
     func_80080360();
     return 1;
 }
@@ -117,12 +117,12 @@ void Screen_SetClearColor(u8 arg0, u8 arg1, u8 arg2) {
     It should be explicitly typed as a single-precision float (`alpha / 255.0f`) to avoid 
     unnecessary type-promotion overhead on MIPS hardware.
     */
-void func_8007815C(u8 alpha) {
+void Screen_SetBgAlpha(u8 alpha) {
     u8 *current = &D_800F2102;
 
-    if (alpha != *current && D_800F2104 != NULL) {
+    if (alpha != *current && gBgImage != NULL) {
         *current = alpha;
-        func_80076578(alpha / 255.0, D_800F2104);
+        func_80076578(alpha / 255.0, gBgImage);
     }
 }
 
@@ -133,42 +133,42 @@ void func_8007815C(u8 alpha) {
     static texture/framebuffer pool.
     */
 s32 Screen_AllocBg(void) {
-    if (D_800F20F0 == NULL) {
-        D_800F20F0 = Memory_Alloc(SCREEN_BG_BUFFER_SIZE);
+    if (gBgBuffer == NULL) {
+        gBgBuffer = Memory_Alloc(SCREEN_BG_BUFFER_SIZE);
     }
-    return D_800F20F0 != NULL;
+    return gBgBuffer != NULL;
 }
 
 s32 Screen_FreeBg(void) {
-    if (D_800F20F0 != NULL) {
-        Memory_Free(D_800F20F0);
-        D_800F20F0 = NULL;
-        D_800F2104 = NULL;
+    if (gBgBuffer != NULL) {
+        Memory_Free(gBgBuffer);
+        gBgBuffer = NULL;
+        gBgImage = NULL;
     }
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/screen", func_80078238);
+INCLUDE_ASM("asm/nonmatchings/screen", Screen_LoadBg);
 
-s32 func_80078300(void) {
-    return func_80078320(0);
+s32 Screen_BeginFrameDefault(void) {
+    return Screen_BeginFrame(0);
 }
 
-u8 func_80078320(s32 arg0) {
+u8 Screen_BeginFrame(s32 arg0) {
     func_800761D4(D_800F20FE, D_800F20FF, D_800F2100, gScreenWidth, gScreenHeight);
-    if (D_800F2104 != NULL) {
-        func_800766FC(D_800F2104, 640, 480);
+    if (gBgImage != NULL) {
+        func_800766FC(gBgImage, 640, 480);
     }
     func_80071530();
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/screen", func_80078388);
+INCLUDE_ASM("asm/nonmatchings/screen", Screen_EndFrame);
 
 void func_800804B4(void);
 void func_80080500(void);
 void GfxPools_Swap(s32);
-s32 func_800784F0(void) {
+s32 Screen_FlushFrame(void) {
     func_800804B4();
     func_80080500();
 
@@ -191,15 +191,15 @@ s32 func_800784F0(void) {
     return 1;
 }
 
-u16 func_80078624(void) {
+u16 Screen_GetWidth(void) {
     return gScreenWidth;
 }
 
-u16 func_80078630(void) {
+u16 Screen_GetHeight(void) {
     return gScreenHeight;
 }
 
-void func_8007863C(s16 x, s16 y, s16 width, s16 height) {
+void Screen_SetViewport(s16 x, s16 y, s16 width, s16 height) {
     D_800F2108 = x;
     D_800F210C = width;
     D_800F210E = height;
@@ -229,7 +229,7 @@ void Camera_Apply(Mtx34f *m) {
     #define VIEWPORT_SCALE_X_FACTOR 1.04f
     */
 void Camera_SetPerspective(f32 arg0, f32 arg1, f32 arg2, f32 arg3) {
-    func_80078878(arg0, arg1, arg2 * 1.04, arg3);
+    Camera_SetProjection(arg0, arg1, arg2 * 1.04, arg3);
 }
 
     /* TODO (Clean version):
@@ -237,11 +237,11 @@ void Camera_SetPerspective(f32 arg0, f32 arg1, f32 arg2, f32 arg3) {
     should be defined using descriptive configuration constants:
     #define VIEWPORT_SCALE_Y_FACTOR 1.2f
     */
-void func_80078828(f32 arg0, f32 arg1, f32 arg2, f32 arg3) {
-    func_80078878(arg0, arg1 * 1.2, arg2 * 1.15, arg3);
+void Camera_SetPerspectiveRace(f32 arg0, f32 arg1, f32 arg2, f32 arg3) {
+    Camera_SetProjection(arg0, arg1 * 1.2, arg2 * 1.15, arg3);
 }
 
-void func_80078878(f32 arg0, f32 arg1, f32 arg2, f32 arg3) {
+void Camera_SetProjection(f32 arg0, f32 arg1, f32 arg2, f32 arg3) {
     s32 changedA;
     s32 changedB;
 
@@ -256,26 +256,26 @@ void func_80078878(f32 arg0, f32 arg1, f32 arg2, f32 arg3) {
     }
 }
 
-void func_800788F8(u8 arg0, u8 arg1, u8 arg2) {
+void Screen_SetAmbient(u8 arg0, u8 arg1, u8 arg2) {
     func_8006FE2C(arg0, arg1, arg2);
 }
 
-void func_8007891C(s32 arg0, u8 arg1, u8 arg2, u8 arg3) {
+void Screen_SetLightDir(s32 arg0, u8 arg1, u8 arg2, u8 arg3) {
     Light_SetDir(arg0, arg1, arg2, arg3);
 }
 
-void func_80078940(s32 arg0, u8 arg1, u8 arg2, u8 arg3) {
+void Screen_SetLightColor(s32 arg0, u8 arg1, u8 arg2, u8 arg3) {
     Light_SetColor(arg0, arg1, arg2, arg3);
 }
 
-void func_80078964(void) {
+void Screen_ApplyLights(void) {
     Light_SetCount();
 }
 
-void func_80078980(u8 arg0) {
+void Screen_SetColorShift(u8 arg0) {
     if (arg0 == 1) {
-        D_800F20F6 = 2;
+        gColorShift = 2;
     } else {
-        D_800F20F6 = 0;
+        gColorShift = 0;
     }
 }

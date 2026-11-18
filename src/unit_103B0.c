@@ -15,11 +15,11 @@ typedef struct { u8 r; u8 g; u8 b; u8 pad3; u8 r2; u8 g2; u8 b2; u8 pad[9]; } L1
 typedef struct { u8 p[0x54]; s16 *type; } Msg6F_;
 typedef struct { f32 r; f32 g; f32 b; } ColF_;
 extern ColF_ D_800F1E58[6];
-extern u8 D_800F20F6;
-void func_800788F8(u8 arg0, u8 arg1, u8 arg2);
-void func_8007891C(s32 arg0, u8 arg1, u8 arg2, u8 arg3);
-void func_80078940(s32 arg0, u8 arg1, u8 arg2, u8 arg3);
-void func_80078964();
+extern u8 gColorShift;
+void Screen_SetAmbient(u8 arg0, u8 arg1, u8 arg2);
+void Screen_SetLightDir(s32 arg0, u8 arg1, u8 arg2, u8 arg3);
+void Screen_SetLightColor(s32 arg0, u8 arg1, u8 arg2, u8 arg3);
+void Screen_ApplyLights();
 extern f32 D_800F2110;
 extern void (*D_800F1CB4)(Msg6F_ *);
 extern void (*D_800F1CB8)(Msg6F_ *);
@@ -30,7 +30,7 @@ extern u8 D_800FF7B0;
 extern OSViMode D_800FB6F0[];
 void nuGfxRetraceWait(s32);
 extern u8 gLowRes;
-void func_8007863C(s32, s32, s32, s32);
+void Screen_SetViewport(s32, s32, s32, s32);
 void func_800761D4(s32, s32, s32, s32, s32);
 void func_8006DFBC(void);
 void World_SetupLod(s32, s32);
@@ -303,16 +303,16 @@ void Light_SetColor(s32 arg0, s32 arg1, s32 arg2, s32 arg3) {
     }
 }
 
-/* Resets the six color slots from D_800F1E58 (level 100 >> D_800F20F6) after setting 20/20/20. */
+/* Resets the six color slots from D_800F1E58 (level 100 >> gColorShift) after setting 20/20/20. */
 void Light_Reset(void) {
     s32 i;
 
-    func_80078964(6);
-    func_800788F8(0x14, 0x14, 0x14);
+    Screen_ApplyLights(6);
+    Screen_SetAmbient(0x14, 0x14, 0x14);
     (*(s8 *)&gLightsDirty) = 1;
     for (i = 0; i < 6; i++) {
-        func_8007891C(i, D_800F1E58[i].r, D_800F1E58[i].g, D_800F1E58[i].b);
-        func_80078940(i, 100 >> D_800F20F6, 100 >> D_800F20F6, 100 >> D_800F20F6);
+        Screen_SetLightDir(i, D_800F1E58[i].r, D_800F1E58[i].g, D_800F1E58[i].b);
+        Screen_SetLightColor(i, 100 >> gColorShift, 100 >> gColorShift, 100 >> gColorShift);
     }
 }
 
@@ -498,7 +498,7 @@ s32 Video_SetLowRes(void) {
     nuGfxSetCfb(&D_800F1CC0, 2);
     gScreenWidth = 320;
     gScreenHeight = 240;
-    func_8007863C(0, 0, 320, 240);
+    Screen_SetViewport(0, 0, 320, 240);
     func_800761D4(0, 0, 0, gScreenWidth, gScreenHeight);
     func_8006DFBC();
     World_SetupLod(1, 1);
@@ -520,7 +520,7 @@ s32 Video_SetHighRes(void) {
     p = &gScreenWidth;
     *p = 640;
     gScreenHeight = 480;
-    func_8007863C(0, 0, 640, 480);
+    Screen_SetViewport(0, 0, 640, 480);
     func_800761D4(0, 0, 0, *p, gScreenHeight);
     gLowRes = 0;
     World_SetupLod(0, 0);

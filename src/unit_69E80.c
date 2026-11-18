@@ -16,8 +16,8 @@ extern char D_80101080[];
 extern s32 (*sysFileGetSize)(char *);
 extern s32 (*sysFileLoad)(char *, void *);
 extern u8 D_80138D38[];
-void func_80087F7C(u16, u16, s32);
-void func_80087EA4(u16, V12_ *);
+void AnimTrack_SeekKey(u16, u16, s32);
+void AnimTrack_GetPos(u16, V12_ *);
 u8 RaceSfx_Play(V12_, u8, u8, s32);
 s32 RaceSfx_Stop(u8);
 
@@ -118,16 +118,16 @@ void func_800C9B84(s32 i) {
         return;
     }
     if (f & 2) {
-        func_80087F7C(e->a, e->c, i);
-        func_80087EA4(e->a, &v);
+        AnimTrack_SeekKey(e->a, e->c, i);
+        AnimTrack_GetPos(e->a, &v);
         if (e->flags & 0x28) {
             RaceSfx_Play(v, e->d8, e->dA, 0);
         } else if (e->flags & 0x10) {
             s[0] = RaceSfx_Play(v, e->d8, e->dA, 1);
         }
         if (e->flags & 4) {
-            func_80087F7C(e->b, e->c, i);
-            func_80087EA4(e->b, &v);
+            AnimTrack_SeekKey(e->b, e->c, i);
+            AnimTrack_GetPos(e->b, &v);
             if (e->flags & 0x28) {
                 RaceSfx_Play(v, e->d9, e->dB, 0);
             } else if (e->flags & 0x10) {
@@ -165,11 +165,11 @@ void func_800C9DA0(s32 i) {
     if (e->flags & 2) {
         if (e->flags & 0x10) {
             if (s[0] != 0xFF) {
-                func_80087EA4(e->a, &v);
+                AnimTrack_GetPos(e->a, &v);
                 RaceSfx_SetPosition(s[0], v);
             }
             if ((e->flags & 4) && s[1] != 0xFF) {
-                func_80087EA4(e->b, &v);
+                AnimTrack_GetPos(e->b, &v);
                 RaceSfx_SetPosition(s[1], v);
             }
         }
