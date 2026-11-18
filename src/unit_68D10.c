@@ -1,14 +1,14 @@
 #include "common.h"
 #include "include_asm.h"
 u8 Menu_HandlePad1(u16 mask);
-extern void (*D_80140FAC)(s32, s32, f32, f32);
+extern void (*sysSfxPlay)(s32, s32, f32, f32);
 u8 Menu_HandlePad2(u16 mask);
 extern void (*D_8014556C)(s32);
 extern u8 D_800F64B0[][14];
 s32 Fsm_Trigger(void *,s32);
 extern u8 gMenuFsm;
 
-extern s32 (*D_801455A0)(s32);
+extern s32 (*sysInputIsKeyHeld)(s32);
 extern s32 D_80124D48;
 extern s32 D_80124D51;
 extern s32 gMenuIdleTime;
@@ -20,7 +20,7 @@ void Menu_Advance(void) {
 }
 
 s32 func_800C8134(s32 arg0) {
-    return D_801455A0(arg0 & 0xFF) & 0xFF;
+    return sysInputIsKeyHeld(arg0 & 0xFF) & 0xFF;
 }
 
 s32 *func_800C815C(void) {
@@ -68,7 +68,7 @@ void func_800C81CC(u8 player, s8 c) {
 u8 Input_PressedOnce(u8 i, s32 k) {
     s32 j = k - 14;
 
-    if ((u8)D_801455A0(i) != 0) {
+    if ((u8)sysInputIsKeyHeld(i) != 0) {
         if (D_800F64B0[i][j] == 0) {
             D_800F64B0[i][j] = 1;
             return 1;
@@ -148,43 +148,43 @@ u8 Menu_HandlePad1(u16 mask) {
     if (Input_PressedOnce(0, 0xE) && (mask & 0x1)) {
         Menu_ResetIdleTimer();
         hit = 1;
-        D_80140FAC(0x2E, 1, 1.0f, 1.0f);
+        sysSfxPlay(0x2E, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 6);
     }
     if (Input_PressedOnce(0, 0xF) && (mask & 0x2)) {
         Menu_ResetIdleTimer();
         hit = 1;
-        D_80140FAC(0x2F, 1, 1.0f, 1.0f);
+        sysSfxPlay(0x2F, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 8);
     }
     if (Input_PressedOnce(0, 0x12) && (mask & 0x10)) {
         Menu_ResetIdleTimer();
         hit = 1;
-        D_80140FAC(0x32, 1, 1.0f, 1.0f);
+        sysSfxPlay(0x32, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 2);
     }
     if (Input_PressedOnce(0, 0x13) && (mask & 0x20)) {
         Menu_ResetIdleTimer();
         hit = 1;
-        D_80140FAC(0x33, 1, 1.0f, 1.0f);
+        sysSfxPlay(0x33, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 0);
     }
     if (Input_PressedOnce(0, 0x11) && (mask & 0x8)) {
         Menu_ResetIdleTimer();
         hit = 1;
-        D_80140FAC(0x31, 1, 1.0f, 1.0f);
+        sysSfxPlay(0x31, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 12);
     }
     if (Input_PressedOnce(0, 0x10) && (mask & 0x4)) {
         Menu_ResetIdleTimer();
         hit = 1;
-        D_80140FAC(0x30, 1, 1.0f, 1.0f);
+        sysSfxPlay(0x30, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 10);
     }
     if (Input_PressedOnce(0, 0x1A) && (mask & 0x40)) {
         Menu_ResetIdleTimer();
         hit = 1;
-        D_80140FAC(0x32, 1, 1.0f, 1.0f);
+        sysSfxPlay(0x32, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 4);
     }
     if (Input_PressedOnce(0, 0x14)) {
@@ -225,43 +225,43 @@ u8 Menu_HandlePad2(u16 mask) {
     if (Input_PressedOnce(1, 0xE) && (mask & 0x1)) {
         Menu_ResetIdleTimer();
         hit = 1;
-        D_80140FAC(0x2E, 1, 1.0f, 1.0f);
+        sysSfxPlay(0x2E, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 7);
     }
     if (Input_PressedOnce(1, 0xF) && (mask & 0x2)) {
         Menu_ResetIdleTimer();
         hit = 1;
-        D_80140FAC(0x2F, 1, 1.0f, 1.0f);
+        sysSfxPlay(0x2F, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 9);
     }
     if (Input_PressedOnce(1, 0x12) && (mask & 0x10)) {
         Menu_ResetIdleTimer();
         hit = 1;
-        D_80140FAC(0x32, 1, 1.0f, 1.0f);
+        sysSfxPlay(0x32, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 3);
     }
     if (Input_PressedOnce(1, 0x13) && (mask & 0x20)) {
         Menu_ResetIdleTimer();
         hit = 1;
-        D_80140FAC(0x33, 1, 1.0f, 1.0f);
+        sysSfxPlay(0x33, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 1);
     }
     if (Input_PressedOnce(1, 0x11) && (mask & 0x8)) {
         Menu_ResetIdleTimer();
         hit = 1;
-        D_80140FAC(0x31, 1, 1.0f, 1.0f);
+        sysSfxPlay(0x31, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 13);
     }
     if (Input_PressedOnce(1, 0x10) && (mask & 0x4)) {
         Menu_ResetIdleTimer();
         hit = 1;
-        D_80140FAC(0x30, 1, 1.0f, 1.0f);
+        sysSfxPlay(0x30, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 11);
     }
     if (Input_PressedOnce(1, 0x1A) && (mask & 0x40)) {
         Menu_ResetIdleTimer();
         hit = 1;
-        D_80140FAC(0x32, 1, 1.0f, 1.0f);
+        sysSfxPlay(0x32, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 5);
     }
     if (Input_PressedOnce(1, 0x14)) {
@@ -303,7 +303,7 @@ s32 Menu_HandlePads(u16 a, u16 b) {
     return r;
 }
 
-void func_800C8D40(void) {
+void Controls_WaitRelease(void) {
     void (**fp)(s32) = &D_8014556C;
     u8 i;
     u32 k;
@@ -312,7 +312,7 @@ void func_800C8D40(void) {
     (*fp)(1);
     for (i = 0; i < 2; i++) {
         for (k = 14; k < 27; k++) {
-            if ((u8)((s32 (*)(s32, s32))D_801455A0)(i, k) != 0) {
+            if ((u8)((s32 (*)(s32, s32))sysInputIsKeyHeld)(i, k) != 0) {
                 return;
             }
         }

@@ -97,7 +97,7 @@ void func_8007A858(u8 *, u8 *, s32 *, s32);
 void Particle_SpawnBurst(Vec3f, u32, u8 *, Vec3f);
 s32 File_GetSize(char *);
 extern char D_800FE964[];
-s32 func_800682A4(s32 unused, char *name, Big114_ *a, Big40_ *b);
+s32 CarInfo_LoadEx(s32 unused, char *name, Big114_ *a, Big40_ *b);
 extern u8 D_80138150[];
 extern u8 D_80138156[];
 extern f32 D_8013815C;
@@ -156,7 +156,7 @@ s32 func_80065450(void) {
     return 1;
 }
 
-s32 func_80065514(void) {
+s32 Model_AllocBuffers(void) {
     if ((*(s32 *)((u8 *)&D_80101E80 + 0x0)) == 0) {
         (*(s32 *)((u8 *)&D_80101E80 + 0x0)) = Memory_Alloc(0x12C00);
     }
@@ -166,7 +166,7 @@ s32 func_80065514(void) {
     return ((*(s32 *)((u8 *)&D_80101E80 + 0x0)) == 0) + ((*(s32 *)((u8 *)&D_80101E80 + 0x4)) == 0);
 }
 
-s32 func_80065584(void) {
+s32 Model_FreeBuffers(void) {
     void **p = (void **)&D_80101E80;
 
     Memory_Free(*p);
@@ -398,17 +398,17 @@ u8 func_800667F8(u8 a, s32 b) {
 
 extern char D_800FE95C[];
 s32 File_LoadAsync(char *name, void *dst);
-s32 func_8006695C(u8 i);
-s32 func_80066B94(u8 i);
+s32 Model_PollLoad(u8 i);
+s32 Model_Free(u8 i);
 
 /* Starts loading a model file asynchronously, waiting for any previous load in that slot. */
-s32 func_8006681C(u8 id, char *name, u8 mode) {
+s32 Model_LoadAsync(u8 id, char *name, u8 mode) {
     char path[64];
     u32 i;
     s32 h;
 
     if (D_800F0218[id] != 0) {
-        while (!(u8)func_8006695C(id)) {
+        while (!(u8)Model_PollLoad(id)) {
         }
     }
     D_80138150[id] = mode ^ 1;
@@ -416,7 +416,7 @@ s32 func_8006681C(u8 id, char *name, u8 mode) {
     strcpy(path, name);
     strcat(path, D_800FE95C);
     if (D_80138174[id] != NULL) {
-        func_80066B94(id);
+        Model_Free(id);
     }
     GfxPools_Shutdown();
     for (i = 0; i < 6; i++) {
@@ -433,7 +433,7 @@ s32 func_8006681C(u8 id, char *name, u8 mode) {
     return 0;
 }
 
-s32 func_8006695C(u8 i) {
+s32 Model_PollLoad(u8 i) {
     s32 j;
 
     if (File_PollAsync(D_80101E88[i]) == 0) {
@@ -450,7 +450,7 @@ s32 func_8006695C(u8 i) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80066A2C);
 
-s32 func_80066B94(u8 i) {
+s32 Model_Free(u8 i) {
     func_800741D8((s32)D_80138174[i]);
     D_80138174[i] = NULL;
     return 1;
@@ -553,11 +553,11 @@ void func_80068020(u8 id, u32 flags) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_8006810C);
 
-s32 func_80068270(s32 arg0, s32 arg1, s32 arg2) {
-    return func_800682A4(0, arg0, arg1, arg2) & 0xFF;
+s32 CarInfo_Load(s32 arg0, s32 arg1, s32 arg2) {
+    return CarInfo_LoadEx(0, arg0, arg1, arg2) & 0xFF;
 }
 
-s32 func_800682A4(s32 unused, char *name, Big114_ *a, Big40_ *b) {
+s32 CarInfo_LoadEx(s32 unused, char *name, Big114_ *a, Big40_ *b) {
     char path[32];
     u8 *buf;
 

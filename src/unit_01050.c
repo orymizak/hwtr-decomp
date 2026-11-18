@@ -196,7 +196,7 @@ void func_800667F8();
 void func_80066BD4();
 extern void *D_80141740;
 void func_80066ECC();
-void func_800682A4();
+void CarInfo_LoadEx();
 extern void *D_80141760;
 void func_80068390();
 extern void *D_80141764;
@@ -281,7 +281,7 @@ s32 func_80060458(void) {
     D_80141738 = &func_800667F8;
     D_8014173C = &func_80066BD4;
     D_80141740 = &func_80066ECC;
-    D_80141744 = &func_800682A4;
+    D_80141744 = &CarInfo_LoadEx;
     D_80141760 = &func_80068390;
     D_80141764 = &func_80068504;
     D_80141750 = &func_800685E0;
@@ -392,7 +392,7 @@ s32 func_800609A8(void) {
     return 1;
 }
 
-u8 func_800609C8(Cfg9_ *c) {
+u8 Game_StartRace(Cfg9_ *c) {
     s32 n = 0;
     s32 i;
 
@@ -433,13 +433,13 @@ u8 func_800609C8(Cfg9_ *c) {
     return Race_Init(c);
 }
 
-s32 func_80061B40(void);
-u8 func_80060AFC(s32 a) {
+s32 Music_Stop(void);
+u8 Game_EndRace(s32 a) {
     u8 *p = &D_80138AB0;
     u8 r;
 
     func_8006C468();
-    func_80061B40();
+    Music_Stop();
     if (*p != 0) {
         func_8006B838();
     }
@@ -482,7 +482,7 @@ INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80060C50);
 
 void func_80061454(s32 unused, u8 count, u8 *info);
 s32 func_800616A0();
-s32 func_8006185C(u32 id, s32 mode, f32 vol, f32 pitch);
+s32 Sfx_Play(u32 id, s32 mode, f32 vol, f32 pitch);
 s32 func_80061A84(u32 track);
 u8 func_80061B88(void);
 s32 func_80061C70();
@@ -524,9 +524,9 @@ extern s32 D_8014C134;
 s32 func_800610DC(void) {
     D_8014C13C = (s32)func_80061454;
     D_8014C140 = (s32)func_800616A0;
-    D_8014C0A8 = (s32)func_8006185C;
+    D_8014C0A8 = (s32)Sfx_Play;
     D_8014C0AC = (s32)func_80061A84;
-    D_8014C0B4 = (s32)func_80061B40;
+    D_8014C0B4 = (s32)Music_Stop;
     D_8014C0B0 = (s32)func_80061B88;
     D_8014C0C0 = (s32)func_80061C70;
     D_8014C144 = (s32)func_80062950;
@@ -669,7 +669,7 @@ void func_80061454(s32 unused, u8 count, u8 *info) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_01050", func_800616A0);
 
-s32 func_8006185C(u32 id, s32 mode, f32 vol, f32 pitch) {
+s32 Sfx_Play(u32 id, s32 mode, f32 vol, f32 pitch) {
     s32 snd;
     s32 v;
     s32 pri;
@@ -736,7 +736,7 @@ s32 func_80061A84(u32 track) {
     return 1;
 }
 
-s32 func_80061B40(void) {
+s32 Music_Stop(void) {
     s32 *p = &D_800EFC68;
 
     if (func_800CE428(*p) != 0) {

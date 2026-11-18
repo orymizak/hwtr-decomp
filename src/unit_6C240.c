@@ -27,7 +27,7 @@ extern s32 D_800FA264;
 extern s32 D_800FA268;
 extern void (*D_8014C0A8)(s32, s32, f32, f32);
 u8 func_800CCD94(u8);
-extern u8 (*D_801455A0)(s32, s32);
+extern u8 (*sysInputIsKeyHeld)(s32, s32);
 extern u32 D_800FA260;
 extern IdTab_ *D_800FAB90;
 extern u8 (*D_801455A4)(void);
@@ -74,12 +74,12 @@ s32 func_800CB640(s16 id) {
 INCLUDE_ASM("asm/nonmatchings/unit_6C240", func_800CB694);
 
     /* TODO (Clean version):
-    Indirect call via 'fp' is a matching artifact to pin D_801455A0 in a register.
+    Indirect call via 'fp' is a matching artifact to pin sysInputIsKeyHeld in a register.
     Logic performs edge detection for buttons 0x10 and 0x11 (bits 1 and 4 represent newly pressed state):
     u32 r = 0;
     s32 pad = ((u8)D_80125590 != 1);
-    if (D_801455A0(pad, 0x10)) r |= 0x1;
-    if (D_801455A0(pad, 0x11)) r |= 0x8;
+    if (sysInputIsKeyHeld(pad, 0x10)) r |= 0x1;
+    if (sysInputIsKeyHeld(pad, 0x11)) r |= 0x8;
     if ((r & 0x1) != (D_800FA260 & 0x1)) r |= 0x2;
     if ((r & 0x8) != (D_800FA260 & 0x8)) r |= 0x10;
     D_800FA260 = r;
@@ -92,7 +92,7 @@ u32 func_800CC1FC(void) {
     u32 old;
 
     pad = (u8)D_80125590 != 1;
-    fp = &D_801455A0;
+    fp = &sysInputIsKeyHeld;
     r = (*fp)(pad, 0x10) != 0;
     if ((*fp)(pad, 0x11)) {
         r |= 8;
@@ -254,8 +254,8 @@ void func_800CC70C(void) {
     u32 old;
 
     pad = (u8)D_80125590 != 1;
-    r = D_801455A0(pad, 0x10) != 0;
-    if (D_801455A0(pad, 0x11)) {
+    r = sysInputIsKeyHeld(pad, 0x10) != 0;
+    if (sysInputIsKeyHeld(pad, 0x11)) {
         r |= 8;
     }
     old = D_800FA260;

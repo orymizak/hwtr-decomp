@@ -233,9 +233,9 @@ s32 func_8007BE30(void) {
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_8007BE54);
+INCLUDE_ASM("asm/nonmatchings/unit_19D40", World_Load);
 
-s32 func_8007BEBC(u8 i) {
+s32 World_Free(u8 i) {
     s32 *p;
 
     if (i < 32) {

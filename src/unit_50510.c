@@ -46,9 +46,9 @@ s32 func_800C902C(s32, u8);
 void MenuText_ResetPos(u8 *t);
 extern u32 D_80123D10[];
 extern u32 (*D_80140FEC)(u32);
-s8 func_800B0FB0(char *s);
+s8 NameList_Add(char *s);
 extern E140_ D_80122900[][4];
-extern void (*D_8014103C)(u8, s32);
+extern void (*sysWorldLoad)(u8, s32);
 void func_800B1250(s32 x);
 extern s32 D_80123D00[];
 extern u8 D_801206D0;
@@ -56,7 +56,7 @@ extern u8 D_801206D0;
 extern s32 (*sysRandRange)(s32);
 s32 func_800B073C();
 s32 func_800B0A5C();
-extern s32 (*D_80141040)(s32);
+extern s32 (*sysWorldFree)(s32);
 void func_800B1F00();
 void func_800B1FE4();
 s32 func_800B2330(s32);
@@ -341,7 +341,7 @@ void func_800B0F94(void) {
     func_800B0A5C();
 }
 
-s8 func_800B0FB0(char *s) {
+s8 NameList_Add(char *s) {
     u8 i;
     u8 n;
 
@@ -357,7 +357,7 @@ s8 func_800B0FB0(char *s) {
 }
 
 
-s8 func_800B1064(char *s) {
+s8 NameList_Find(char *s) {
     u8 i;
 
     for (i = 0; i < D_800F6040; i++) {
@@ -368,7 +368,7 @@ s8 func_800B1064(char *s) {
     return -1;
 }
 
-void func_800B10F4(char *s) {
+void NameList_Remove(char *s) {
     u8 i;
     u8 j;
 
@@ -395,10 +395,10 @@ void func_800B11FC(void) {
 
 
 void func_800B1250(s32 x) {
-    s8 r = func_800B0FB0(x);
+    s8 r = NameList_Add(x);
 
     if (r >= 0) {
-        D_8014103C(r, x);
+        sysWorldLoad(r, x);
     }
 }
 
@@ -858,7 +858,7 @@ void func_800B2A84(void) {
     u8 i;
 
     for (i = 0; i < 32; i++) {
-        D_80141040(i);
+        sysWorldFree(i);
     }
     func_800B11FC();
 }

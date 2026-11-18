@@ -14,7 +14,7 @@ typedef struct { s32 keys[21]; } KeySetB_;
 typedef struct { s32 mode; s32 k[15]; u8 pad[0x54 - 0x40]; } Bind6C_;
 s32 func_8006BA98();
 s32 func_8006C274();
-extern void *D_801455A0;
+extern void *sysInputIsKeyHeld;
 extern void *D_80145598;
 extern void *D_8014559C;
 extern void *D_801455A8;
@@ -153,7 +153,7 @@ void func_8006B1AC(void) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_0B140", func_8006B2A0);
 
-s32 func_8006B6B8(u8 ch, s32 key);
+s32 Input_IsKeyHeld(u8 ch, s32 key);
 s32 func_8006B894(s32 key);
 u8 func_8006BD78(u8 a, s32 b);
 s32 func_8006BDA8(u8 ch, s32 slot);
@@ -169,9 +169,9 @@ s32 func_8006C34C(u8 *buf, u8 id);
 s32 func_8006C3D4(u8 *out, u8 ch);
 s32 func_8006C468(void);
 s32 func_8006C488(void);
-s32 func_8006B4F8(void) {
+s32 Input_InitTable(void) {
     D_80145568 = func_8006B894;
-    D_801455A0 = func_8006B6B8;
+    sysInputIsKeyHeld = Input_IsKeyHeld;
     D_8014556C = func_8006BA98;
     D_80145570 = func_8006BD78;
     D_801455A4 = func_8006C33C;
@@ -195,7 +195,7 @@ s32 func_8006B4F8(void) {
     /* TODO (Clean version):
     D_80145584 y D_80145588 se asignan a 0 dos veces mientras que las variables void* no se limpian. (Original behavior.)
     */
-s32 func_8006B630(void) {
+s32 Input_ClearTable(void) {
     D_80145568 = NULL;
     D_8014556C = NULL;
     D_80145570 = NULL;
@@ -215,7 +215,7 @@ s32 func_8006B630(void) {
     return 1;
 }
 
-s32 func_8006B6B8(u8 ch, s32 key) {
+s32 Input_IsKeyHeld(u8 ch, s32 key) {
     Pad_ pad[4];
     u16 mask;
 

@@ -2,7 +2,7 @@
 #include "include_asm.h"
 
 extern u8 gMenuFsm[];
-extern char *D_800F9FA0[4][3];
+extern char *gTrackNames[4][3];
 
 s32 strcmp(const char *a, const char *b);
 u8 func_800875A0(void);
@@ -37,7 +37,7 @@ s32 func_800877A0(char *name) {
             using constants or macros (e.g., `#define MENU_ROWS 4`, `#define MENU_COLS 3`) 
             to prevent hardcoding issues if the grid size changes.
             */
-            if (strcmp(name, D_800F9FA0[i][j]) == 0) {
+            if (strcmp(name, gTrackNames[i][j]) == 0) {
                 return i * 3 + j;
             }
         }

@@ -20,12 +20,12 @@ extern u8 D_80145568;
 extern u8 D_8014C0A8;
 extern u8 D_80141698;
 u8 Sys_InitTable(void);
-u8 func_8006B4F8(void);
+u8 Input_InitTable(void);
 u8 func_800610DC(void);
 u8 func_80060458(void);
 s32 func_80060840();
 s32 func_80061334();
-s32 func_8006B630();
+s32 Input_ClearTable();
 s32 Sys_ClearTable();
 
 
@@ -207,7 +207,7 @@ s32 func_800875A0(void) {
         return 0;
     }
     func_800876D4((void **)&D_80145568, 0x4C);
-    if (func_8006B4F8() != 0) {
+    if (Input_InitTable() != 0) {
         func_800876D4((void **)&D_8014C0A8, 0xAC);
         if (func_800610DC() != 0) {
             func_800876D4((void **)&D_80141698, 0x124);
@@ -216,7 +216,7 @@ s32 func_800875A0(void) {
             }
             func_80061334();
         }
-        func_8006B630();
+        Input_ClearTable();
     }
     Sys_ClearTable();
     return 0;
@@ -232,7 +232,7 @@ s32 func_80087660(void) {
     if (!(u8)func_80061334()) {
         n = failed + 1;
     }
-    if (!(u8)func_8006B630()) {
+    if (!(u8)Input_ClearTable()) {
         n++;
     }
     if (!(u8)Sys_ClearTable()) {
