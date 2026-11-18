@@ -3,4 +3,4 @@
 
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_47B70", func_800A6F70);
+INCLUDE_ASM("asm/nonmatchings/unit_47B70", Car_AverageGroundContacts);

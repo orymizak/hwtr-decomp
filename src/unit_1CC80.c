@@ -17,7 +17,7 @@ extern s32 D_801345B4;
 extern s32 D_80138B10;
 extern s32 D_8014C6FC;
 
-INCLUDE_ASM("asm/nonmatchings/unit_1CC80", func_8007C080);
+INCLUDE_ASM("asm/nonmatchings/unit_1CC80", Particles_Init);
 
 void Particles_FreeAll(void) {
     if (D_8014C6FC != 0) {
@@ -406,7 +406,7 @@ static inline void PushQ_(PPoolQ_ *pool, PrtQ_ *p) {
         }
     }
 }
-INCLUDE_ASM("asm/nonmatchings/unit_1CC80", func_8007D14C);
+INCLUDE_ASM("asm/nonmatchings/unit_1CC80", ParticlePool_Update);
 
 INCLUDE_ASM("asm/nonmatchings/unit_1CC80", func_8007D364);
 

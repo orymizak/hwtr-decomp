@@ -25,4 +25,4 @@ s32 nuContRmbCheck(s32 ch) {
     return r;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_77BA0", func_800D7030);
+INCLUDE_ASM("asm/nonmatchings/unit_77BA0", nuContRmbModeSet);

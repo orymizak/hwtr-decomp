@@ -4,11 +4,11 @@
 #include "car.h"
 extern s32 gCollFrame;
 extern s32 D_8011C820;
-extern s32 D_8011C824;
+extern s32 gCollLapLength;
 extern s32 D_8011C828;
 extern u8 gCollIdUsed[];
 extern void (*svcWorldSetCollLevel)(void *);
-s32 func_8008182C(void);
+s32 Bld_GetLapLength(void);
 u8 Coll_LoadLevel(u8 *);
 void TrackSfx_Init(s32 n, s32 b);
 extern s32 gCollMovers;
@@ -107,7 +107,7 @@ s32 Coll_Init(u8 *o) {
 
     gCollFrame = 100;
     D_8011C820 = v;
-    D_8011C824 = func_8008182C();
+    gCollLapLength = Bld_GetLapLength();
     D_8011C828 = o[0x1A];
     CollList_InitPool();
     if (Coll_LoadLevel(o) == 0) {
@@ -499,11 +499,11 @@ void Car_ReportImpact(EntAB_ *);
 void Car_CheckCrashContact(EntAB_ *);
 void Car_SelfRight(PlAB_ *, EntAB_ *);
 s32 RaceClock_Get(void);
-f32 func_800AD774(EntAB_ *, f32);
+f32 RigidBody_ResolveWorldContact(EntAB_ *, f32);
 void RaceAudio_OnCollision(PairAB_ *);
 void Car_ReportPairImpact(PairAB_ *, s32);
 void Car_CheckCrashPair(PairAB_ *, s32);
-void func_800ADE1C(PairAB_ *);
+void RigidBody_ResolvePairContact(PairAB_ *);
 void Replay_Record(void);
 void Coll_Update(void) {
     u32 i;
@@ -559,7 +559,7 @@ void Coll_Update(void) {
         if (isCar && !isRacer && !flag) {
             f *= 4.0f;
         }
-        r = func_800AD774(e, f);
+        r = RigidBody_ResolveWorldContact(e, f);
         if (isRacer & changed) {
             svcFxCarScrape(e, r);
         }
@@ -610,7 +610,7 @@ void Coll_Update(void) {
             pr->a->flags &= ~0x40;
             pr->b->flags &= ~0x40;
         }
-        func_800ADE1C(pr);
+        RigidBody_ResolvePairContact(pr);
         if (pa != NULL) {
             pr->a->flags &= ~0x60;
         }
@@ -1166,7 +1166,7 @@ void Coll_ApplyRoomFlags(RObj_ *o, u16 idx, s32 arg2) {
                 c->flags &= ~0x4000;
                 c->unk474 = r->time * 10;
                 if (c->unk474 < D_8011C830[c->checkpoint]) {
-                    c->unk474 += D_8011C824;
+                    c->unk474 += gCollLapLength;
                 }
             }
             if (r->flags & 0x2000) {

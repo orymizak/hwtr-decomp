@@ -10,7 +10,7 @@ u8 Bld_ReadNode(Q817_ *, u16);
 
 s32 Memory_Free(s32);
 extern s32 D_80114800;
-extern s32 D_8011480C;
+extern s32 gBldLapLength;
 
 INCLUDE_ASM("asm/nonmatchings/unit_21150", Bld_Load);
 
@@ -154,6 +154,6 @@ s32 Bld_GetStartPos(u8 i, V12_ *out) {
 }
 
 
-s32 func_8008182C(void) {
-    return D_8011480C;
+s32 Bld_GetLapLength(void) {
+    return gBldLapLength;
 }

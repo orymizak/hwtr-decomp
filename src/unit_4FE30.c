@@ -38,11 +38,11 @@ extern u32 (*svcTrackGetLinkCount)(void);
 extern Vec3f D_80100B00;
 void *Memory_Alloc(s32 size);
 void CollShape_InitBox(Vec3i *, Vec3f, Vec3f, f32 *, s32);
-void func_800AC880(u8 *, f32, f32, f32, f32, Vec3f);
+void RigidBody_Init(u8 *, f32, f32, f32, f32, Vec3f);
 void Coll_Register(u8 *o);
 extern void (*svcTrackGetLink)(u32, Vec3i *, f32 *, f32 *, f32 *, f32 *, f32 *, f32 *);
 extern void (*svcTrackSetLinkTransform)(u32, f32, f32, f32, void *);
-void func_800ACDC8(void *, f32);
+void RigidBody_Integrate(void *, f32);
 void Mtx3_Orthonormalize(void *);
 extern u8 *gTrackObjs;
 extern void *gTrackObjInfo;
@@ -102,9 +102,9 @@ s32 TrackObj_Init(void) {
             memset(obj, 0, 0x118);
             /* TODO (Clean version): 386.0f is gravitational acceleration in inches/sec^2 (~32.174 ft/s^2 * 12), converting weight into mass:
                #define GRAVITY_INCHES_PER_SEC2 386.0f
-               func_800AC880(e->obj, (f32)val / GRAVITY_INCHES_PER_SEC2, dir.x, dir.y, dir.z, dflt);
+               RigidBody_Init(e->obj, (f32)val / GRAVITY_INCHES_PER_SEC2, dir.x, dir.y, dir.z, dflt);
             */
-            func_800AC880(e->obj, (f32) val / 386.0f, dir.x, dir.y, dir.z, dflt);
+            RigidBody_Init(e->obj, (f32) val / 386.0f, dir.x, dir.y, dir.z, dflt);
             *(f32 *)(e->obj + 0x94) = m[0];
             *(f32 *)(e->obj + 0x98) = m[1];
             *(f32 *)(e->obj + 0x9C) = m[2];
@@ -174,7 +174,7 @@ void TrackObj_Update(void) {
     for (i = 0; i < gTrackObjCount; i++, e++) {
         if (e->kind == 1) {
             if (e->obj[0x110] == 0) {
-                func_800ACDC8(e->obj, 0.01f);
+                RigidBody_Integrate(e->obj, 0.01f);
                 Mtx3_Orthonormalize(e->obj + 0x94);
                 v[0] = *(f32 *) (e->obj + 0x6C) + *(f32 *) (e->obj + 0x60);
                 v[1] = *(f32 *) (e->obj + 0x70) + *(f32 *) (e->obj + 0x64);

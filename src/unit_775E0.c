@@ -166,4 +166,4 @@ s32 contRmbStopMesg(ReqA_ *r) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_775E0", func_800D6F40);
+INCLUDE_ASM("asm/nonmatchings/unit_775E0", nuContRmbStart);

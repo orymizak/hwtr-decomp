@@ -85,9 +85,9 @@ extern u8 D_80138AAC;
 extern u8 gParticles;
 extern u8 gParticlesAlt;
 extern u8 D_80145488;
-void func_8007D14C(void *);
+void ParticlePool_Update(void *);
 void Explosions_Update(s32);
-void func_800738C0(void *, s32);
+void ModelData_Update(void *, s32);
 void PointLight_SetColor(s32 arg0, s8 arg1, s8 arg2, s8 arg3);
 void PointLight_Enable(s32);
 void PointLight_Disable(s32);
@@ -265,17 +265,17 @@ void World_Update(s32 dt) {
 
     D_80138A78.dt = dt;
     if (dt != 0) {
-        func_8007D14C(&gParticles);
-        func_8007D14C(&gParticlesAlt);
-        func_8007D14C(&D_80145488);
+        ParticlePool_Update(&gParticles);
+        ParticlePool_Update(&gParticlesAlt);
+        ParticlePool_Update(&D_80145488);
         Explosions_Update(dt);
-        func_800738C0(gTrackWorld, dt);
+        ModelData_Update(gTrackWorld, dt);
         for (i = 0; i < 6; i++) {
             o = gModels[i];
             if (o == NULL) {
                 continue;
             }
-            func_800738C0(o, dt);
+            ModelData_Update(o, dt);
             if (o->b105 < 5) {
                 o->b105 = 0;
             } else {
@@ -531,7 +531,7 @@ void func_80067F40(u8 i, f32 v) {
 }
 
 
-inline void func_80067FA4(u8 i, f32 v, u8 flag) {
+inline void Model_SetLightIntensity(u8 i, f32 v, u8 flag) {
     s32 n;
 
     if (v == 0.0f) {
@@ -547,7 +547,7 @@ void Model_SetHeadlights(u8, u8, u8);
 void Model_SwapPalette(u8, u8);
 void Model_ApplyFlags(u8 id, u32 flags) {
     Model_SetHeadlights(id, (flags >> 1) & 1, ((flags >> 3) ^ 1) & 1);
-    func_80067FA4(id, !(flags & 1) ? 1.0f : 0.0f, ((flags >> 3) ^ 1) & 1);
+    Model_SetLightIntensity(id, !(flags & 1) ? 1.0f : 0.0f, ((flags >> 3) ^ 1) & 1);
     Model_SwapPalette(id, (flags >> 2) & 1);
 }
 

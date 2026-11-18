@@ -248,7 +248,7 @@ void Light_SetCount(s32 a) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_103B0", func_8006FE2C);
+INCLUDE_ASM("asm/nonmatchings/unit_103B0", Light_SetAmbient);
 
 void Light_SetDir(s32 i, u8 a, u8 b, u8 c) {
     if (gLightDirs[i].a != a) {
@@ -441,11 +441,11 @@ void Camera_CalcFrustum(void) {
     D_800F2134 = D_800F212C * t;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_103B0", func_80070F38);
+INCLUDE_ASM("asm/nonmatchings/unit_103B0", Gfx_SetViewport);
 
-INCLUDE_ASM("asm/nonmatchings/unit_103B0", func_8007126C);
+INCLUDE_ASM("asm/nonmatchings/unit_103B0", Gfx_SetPerspective);
 
-INCLUDE_ASM("asm/nonmatchings/unit_103B0", func_80071530);
+INCLUDE_ASM("asm/nonmatchings/unit_103B0", Gfx_BeginScene);
 
 /* Sphere-in-frustum test: o's translation transformed by view matrix m, radius r. */
 u8 Frustum_TestSphere(f32 (*m)[4], f32 (*o)[4], f32 r) {

@@ -13,7 +13,7 @@ extern void *sysModelLoadAsync;
 extern void *sysModelPollLoad;
 extern void *sysModelAllocBuffers;
 extern void *sysModelFreeBuffers;
-extern void *D_80140FD0;
+extern void *sysModelDrawWithLookAt;
 extern void *sysModelRotateAllParts;
 extern void *sysFileLoad;
 extern void *sysFileGetSize;
@@ -41,14 +41,14 @@ extern void *sysTimeGetMillis;
 extern void *sysRandRange;
 extern void *sysAudioGetMusicVolume;
 extern void *sysAudioSetMusicVolume;
-extern void *D_80141058;
-extern void *D_8014105C;
-extern void *D_80141060;
-extern void *D_80141064;
-extern void *D_80141068;
-extern void *D_80141074;
-extern void *D_80141078;
-extern void *D_8014107C;
+extern void *sysAudioGetSfxVolume;
+extern void *sysAudioSetSfxVolume;
+extern void *sysAudioGetVoiceVolume;
+extern void *sysAudioSetVoiceVolume;
+extern void *sysAudioSetAmbientVolume;
+extern void *sysHookA;
+extern void *sysHookB;
+extern void *sysMenuExitHook;
 extern void *sysIsPAL;
 extern void *sysScreenAllocBg;
 extern void *sysScreenFreeBg;
@@ -103,12 +103,12 @@ u8 Screen_EndFrame(void);
 s32 Sys_BootCheck(void);
 s32 Sys_MenuExit(void);
 s32 Sys_ScreenEndFrame(void);
-s32 func_8007F028(void);
-s32 func_8007F030(void);
-s32 func_8007F038(void);
+s32 Sys_HookA_Nop(void);
+s32 Sys_HookB_Nop(void);
+s32 Sys_MenuExitHookNop(void);
 s32 System_IsPAL(void);
 
-s32 func_8007EBF0(void) {
+s32 Sys_StubTrue(void) {
     return 1;
 }
 
@@ -128,7 +128,7 @@ s32 Sys_InitTable(void) {
     sysModelAllocBuffers = &Model_AllocBuffers;
     sysModelFreeBuffers = &Model_FreeBuffers;
     sysModelFree = &Model_Free;
-    D_80140FD0 = &Model_DrawWithLookAt;
+    sysModelDrawWithLookAt = &Model_DrawWithLookAt;
     sysModelRotateAllParts = &Model_RotateAllParts;
     sysCarInfoLoad = &CarInfo_Load;
     sysFileLoad = &File_Load;
@@ -165,15 +165,15 @@ s32 Sys_InitTable(void) {
     sysGameUpdate = &Game_Update;
     sysAudioGetMusicVolume = &Audio_GetMusicVolume;
     sysAudioSetMusicVolume = &Audio_SetMusicVolume;
-    D_80141058 = &Audio_GetSfxVolume;
-    D_8014105C = &Audio_SetSfxVolume;
-    D_80141060 = &Audio_GetVoiceVolume;
-    D_80141064 = &Audio_SetVoiceVolume;
-    D_80141074 = &func_8007F028;
-    D_80141078 = &func_8007F030;
-    D_8014107C = &func_8007F038;
+    sysAudioGetSfxVolume = &Audio_GetSfxVolume;
+    sysAudioSetSfxVolume = &Audio_SetSfxVolume;
+    sysAudioGetVoiceVolume = &Audio_GetVoiceVolume;
+    sysAudioSetVoiceVolume = &Audio_SetVoiceVolume;
+    sysHookA = &Sys_HookA_Nop;
+    sysHookB = &Sys_HookB_Nop;
+    sysMenuExitHook = &Sys_MenuExitHookNop;
     sysSfxPlay = &Sfx_Play;
-    D_80141068 = &Audio_SetAmbientVolume;
+    sysAudioSetAmbientVolume = &Audio_SetAmbientVolume;
     return 1;
 }
 
@@ -185,7 +185,7 @@ s32 Sys_InitTable(void) {
 s32 Sys_ClearTable(void) {
     D_80140FB0 = 0;
     sysModelFree = 0;
-    D_80140FD0 = 0;
+    sysModelDrawWithLookAt = 0;
     sysFileLoad = 0;
     sysFileGetSize = 0;
     sysIsPAL = 0;
@@ -203,10 +203,10 @@ s32 Sys_ClearTable(void) {
     sysGameStartRace = 0;
     sysGameEndRace = 0;
     sysGameUpdate = 0;
-    D_80141074 = 0;
-    D_80141078 = 0;
-    D_8014107C = 0;
-    D_80141068 = 0;
+    sysHookA = 0;
+    sysHookB = 0;
+    sysMenuExitHook = 0;
+    sysAudioSetAmbientVolume = 0;
     return 1;
 }
 
@@ -222,15 +222,15 @@ s32 Sys_ScreenEndFrame(void) {
     return Screen_EndFrame();
 }
 
-s32 func_8007F028(void) {
+s32 Sys_HookA_Nop(void) {
     return 1;
 }
 
-s32 func_8007F030(void) {
+s32 Sys_HookB_Nop(void) {
     return 1;
 }
 
-s32 func_8007F038(void) {
+s32 Sys_MenuExitHookNop(void) {
     return 1;
 }
 

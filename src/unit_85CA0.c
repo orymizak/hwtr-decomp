@@ -3,4 +3,4 @@
 
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_85CA0", func_800E50A0);
+INCLUDE_ASM("asm/nonmatchings/unit_85CA0", osMapTLBRdb);

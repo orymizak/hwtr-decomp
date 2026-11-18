@@ -20,10 +20,10 @@ extern u8 D_80138D38[];
 
 
 
-void func_800AE8F4(BodyI_ *o, f32 x, f32 y, f32 z);
+void RigidBody_SetBoxInertia(BodyI_ *o, f32 x, f32 y, f32 z);
 /* Resets a rigid body: mass, identity orientation, zero motion, gravity of 386 units/s^2 along -Z,
  * box inertia from x/y/z, and the derived world inverse inertia and angular velocity. */
-void func_800AC880(BodyE_ *b, f32 mass, f32 x, f32 y, f32 z, Vec3f p) {
+void RigidBody_Init(BodyE_ *b, f32 mass, f32 x, f32 y, f32 z, Vec3f p) {
     Mtx3f rt;
     Mtx3f ri;
     Vec3f wv;
@@ -50,7 +50,7 @@ void func_800AC880(BodyE_ *b, f32 mass, f32 x, f32 y, f32 z, Vec3f p) {
     b->g.y = 0.0f;
     b->f50 = 386.0f;
     b->g.z = -1.0f;
-    func_800AE8F4((BodyI_ *)b, x, y, z);
+    RigidBody_SetBoxInertia((BodyI_ *)b, x, y, z);
     rt.m[0][0] = b->r.m[0][0];
     rt.m[0][1] = b->r.m[1][0];
     rt.m[0][2] = b->r.m[2][0];
@@ -106,7 +106,7 @@ void func_800AC880(BodyE_ *b, f32 mass, f32 x, f32 y, f32 z, Vec3f p) {
         b->r += S * b->r;                       // dR = [w*dt]x * R
         b->t = (Vec3f){0, 0, 0};
     */
-void func_800ACDC8(BodyE_ *b, f32 dt) {
+void RigidBody_Integrate(BodyE_ *b, f32 dt) {
     Vec3f tmp;
     Vec3f v;
     Mtx3f dr;
@@ -257,7 +257,7 @@ void func_800ACDC8(BodyE_ *b, f32 dt) {
         b->mom += J; b->vel = b->mom * b->im;
         b->am += vec3_cross(r, J); b->w = mat3_mul_vec3(b->inv_inertia, b->am);
     */
-f32 func_800AD774(CtA_ *c, f32 fr) {
+f32 RigidBody_ResolveWorldContact(CtA_ *c, f32 fr) {
     Vec3f p;
     Vec3f n;
     Vec3f v;
@@ -370,7 +370,7 @@ f32 func_800AD774(CtA_ *c, f32 fr) {
         b1->mom += j1; b1->am += vec3_cross(r1, j1);
         b2->mom -= j2; b2->am -= vec3_cross(r2, j2);
     */
-f32 func_800ADE1C(CtF_ *c) {
+f32 RigidBody_ResolvePairContact(CtF_ *c) {
     Vec3f p;
     Vec3f n;
     Vec3f v1;
@@ -585,7 +585,7 @@ f32 func_800ADE1C(CtF_ *c) {
     }
     Note: chained assignment in original code redundantly zeroes i[4] and ib[4] before setting them.
     */
-void func_800AE8F4(BodyI_ *o, f32 x, f32 y, f32 z) {
+void RigidBody_SetBoxInertia(BodyI_ *o, f32 x, f32 y, f32 z) {
     f32 yy;
     f32 zz;
     f32 xx;
@@ -617,7 +617,7 @@ void func_800AE8F4(BodyI_ *o, f32 x, f32 y, f32 z) {
         b->am = vec3_scale(local_axis, d);
     }
     */
-void func_800AE9C4(u8 *t, u8 i) {
+void RigidBody_ConstrainSpin(u8 *t, u8 i) {
     f32 v[3];
     f32 d;
     f32 *a = (f32 *)(i * 4 + (u32)t);

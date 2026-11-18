@@ -11,7 +11,7 @@ typedef struct { u8 p0[0x18]; u8 n; u8 p19[3]; SbA00_ *sub; u8 b20; u8 p21[7]; s
 typedef struct { char *buf; s16 len; u8 p6[0xB]; u8 b11; u8 p12[2]; } FldX_;
 typedef struct { u8 p0[0x18]; u8 n; u8 p19[3]; FldX_ *f; } MenuX_;
 void MenuFields_AllocBuffers(void);
-s32 func_800C9590();
+s32 MenuTexts_Free();
 extern char D_80101080[];
 extern s32 (*sysFileGetSize)(char *);
 extern s32 (*sysFileLoad)(char *, void *);
@@ -22,16 +22,16 @@ u8 RaceSfx_Play(V12_, u8, u8, s32);
 s32 RaceSfx_Stop(u8);
 
 s32 Memory_Alloc(s32);
-s32 func_800C9280();
+s32 MenuTexts_Alloc();
 extern void *gMenuObjs;
 s32 Memory_Free(s32);
 extern s32 gTrackSfxCount;
 extern s32 gTrackSfxDefs;
 extern s32 gTrackSfxHandles;
 
-INCLUDE_ASM("asm/nonmatchings/unit_69E80", func_800C9280);
+INCLUDE_ASM("asm/nonmatchings/unit_69E80", MenuTexts_Alloc);
 
-INCLUDE_ASM("asm/nonmatchings/unit_69E80", func_800C9590);
+INCLUDE_ASM("asm/nonmatchings/unit_69E80", MenuTexts_Free);
 
 /* Allocates every menu text field that has no buffer yet and fills it with '_'. */
 void MenuFields_AllocBuffers(void) {
@@ -58,7 +58,7 @@ void MenuObjs_Alloc(void) {
     s32 i;
     u8 *t;
 
-    func_800C9280();
+    MenuTexts_Alloc();
     for (i = 0; i < 33; i++) {
         t = (&gMenuObjs)[i];
         if (t[0x20] != 0 && *(s32 *)(t + 0x28) == 0) {
@@ -72,7 +72,7 @@ void Menu_FreeAll(void) {
     s32 i;
     s32 j;
 
-    func_800C9590();
+    MenuTexts_Free();
     for (i = 0; i < 33; i++) {
         if (((TrA00_ **)&gMenuObjs)[i]->b20) {
             Memory_Free(((TrA00_ **)&gMenuObjs)[i]->w28);

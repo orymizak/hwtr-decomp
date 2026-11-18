@@ -34,7 +34,7 @@ void Car_Unstick(u8 *);
 void Car_Respawn(void);
 void Ai_RestoreSlot(u8 *, u8 *);
 B88_ *Ai_GetSlot(u8 *);
-void func_800ACDC8(void *, f32);
+void RigidBody_Integrate(void *, f32);
 void Mtx3_Orthonormalize(void *);
 extern void (*sysInputUpdate)(s32);
 extern s32 (*sysInputGetControl)(s32, s32);
@@ -305,7 +305,7 @@ void Car_UpdatePhysics(Car *p, f32 dt) {
     if ((p->flags & 1) && p->airborne != 0 && p->airTime > 500 && p->vel.z > 0.0f) {
         f = RaceClock_Get() - p->unk770 > 500;
     }
-    func_800ACDC8((u8 *)&p->m2C, dt);
+    RigidBody_Integrate((u8 *)&p->m2C, dt);
     if (f && p->vel.z < 0.0f && svcRandRange(2) == 0) {
         Replay_Record();
     }
@@ -372,7 +372,7 @@ void Car_UpdateOnPath(Car *p, f32 dt) {
         *(B88_ *)p->savedState = *Ai_GetSlot(p);
     }
     if (p->b4B8 != 0 || p->finished != 0) {
-        func_800ACDC8((u8 *)&p->m2C, dt);
+        RigidBody_Integrate((u8 *)&p->m2C, dt);
         Mtx3_Orthonormalize((u8 *)&p->rot);
     }
 }

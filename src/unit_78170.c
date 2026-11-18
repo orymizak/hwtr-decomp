@@ -74,7 +74,7 @@ s32 contReadData(void *data, s32 mask) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_78170", func_800D773C);
+INCLUDE_ASM("asm/nonmatchings/unit_78170", contQuery);
 
 s32 contRetrace(s16 *arg0) {
     if (nuContDataLockKey == 0) {

@@ -147,7 +147,7 @@ void Debug_DrawString(u8 *s, s32 n, u16 color, u16 shadow) {
 }
 
 
-void func_80065314(u8 *s, s32 n, u16 color, u16 shadow) {
+void Debug_DrawChars(u8 *s, s32 n, u16 color, u16 shadow) {
     s32 i;
 
     for (i = n - 1; i != -1; i--) {

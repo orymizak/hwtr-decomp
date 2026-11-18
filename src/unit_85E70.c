@@ -16,7 +16,7 @@ void __osSiGetAccess(void);
 void __osSiRelAccess(void);
 s32 __osSiRawStartDma(s32 direction, void *dramAddr);
 s32 osRecvMesg(void *mq, void **msg, s32 flag);
-void func_800E5BB0(u8 *pattern, ContStatus_ *data);
+void __osPfsGetInitData(u8 *pattern, ContStatus_ *data);
 
 
 
@@ -218,7 +218,7 @@ s32 osPfsIsPlug(void *mq, u8 *pattern) {
         osRecvMesg(mq, &msg, 1);
         ret = __osSiRawStartDma(0, &__osPfsPifRam);
         osRecvMesg(mq, &msg, 1);
-        func_800E5BB0(&bitpattern, &contData[0]);
+        __osPfsGetInitData(&bitpattern, &contData[0]);
         for (channel = 0; channel < __osMaxControllers; channel++) {
             if ((contData[channel].status & 4) == 0) {
                 crcErrorCount--;
@@ -263,7 +263,7 @@ void __osPfsRequestData(u8 cmd) {
 }
 
 
-void func_800E5BB0(u8 *pattern, ContStatus_ *data) {
+void __osPfsGetInitData(u8 *pattern, ContStatus_ *data) {
     u8 *ptr;
     ReqFormat_ requestformat;
     s32 i;

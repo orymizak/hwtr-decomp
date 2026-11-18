@@ -16,8 +16,8 @@ s32 __osSiRawReadIo(u32, u32 *);
 s32 __osSiRawWriteIo(u32, u32);
 void osWritebackDCache(void *, s32);
 void osInvalICache(void *, s32);
-void func_800E5100(void);
-void func_800E50A0(void);
+void osUnmapTLBAll(void);
+void osMapTLBRdb(void);
 void bzero(void *, s32);
 u32 __osGetCause(void);
 extern s8 D_80138024;
@@ -74,8 +74,8 @@ void osInitialize(void) {
     osWritebackDCache((void *)0x80000000, 0x190);
     osInvalICache((void *)0x80000000, 0x190);
     __createSpeedParam();
-    func_800E5100();
-    func_800E50A0();
+    osUnmapTLBAll();
+    osMapTLBRdb();
     D_800FC7F0 = D_800FC7F0 * 3 / 4;
     if (D_8000030C == 0) {
         bzero(D_8000031C, 0x40);

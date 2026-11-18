@@ -18,7 +18,7 @@ extern u16 D_800F3030;
 extern u16 D_800F3032;
 extern u16 D_800F3034;
 void Hud_ShowTurbosGained(u8, s32);
-void func_800B0614(u8, s32);
+void Stats_PickupCollectedNop(u8, s32);
 void Car_ApplyPickup(u8 *arg0, u8 *arg1);
 extern void (*audSfxPlay)(s32, s32, f32, f32);
 void RefList_Add(Lnk89_ **, s32 *);
@@ -125,22 +125,22 @@ void Car_ApplyPickup(u8 *arg0, u8 *arg1) {
             }
         }
         if (p->flags & 0x04000000) {
-            func_800B0614(c->id, 3);
+            Stats_PickupCollectedNop(c->id, 3);
         }
         if (p->flags & 0x08000000) {
-            func_800B0614(c->id, 4);
+            Stats_PickupCollectedNop(c->id, 4);
         }
         if (p->flags & 0x10000000) {
-            func_800B0614(c->id, 5);
+            Stats_PickupCollectedNop(c->id, 5);
         }
         if (p->flags & 0x20000000) {
-            func_800B0614(c->id, 6);
+            Stats_PickupCollectedNop(c->id, 6);
         }
         if (p->flags & 0x40000000) {
-            func_800B0614(c->id, 7);
+            Stats_PickupCollectedNop(c->id, 7);
         }
         if (p->flags & 0x80000000) {
-            func_800B0614(c->id, 8);
+            Stats_PickupCollectedNop(c->id, 8);
         }
     }
     Car_ComputeMass(c);
@@ -204,11 +204,11 @@ void Car_RemovePickup(P_8010 *p, Car *c) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_28C10", func_80088810);
+INCLUDE_ASM("asm/nonmatchings/unit_28C10", Str_EqualNoCase);
 
-INCLUDE_ASM("asm/nonmatchings/unit_28C10", func_800888E0);
+INCLUDE_ASM("asm/nonmatchings/unit_28C10", PickupModel_Load);
 
-INCLUDE_ASM("asm/nonmatchings/unit_28C10", func_80088B50);
+INCLUDE_ASM("asm/nonmatchings/unit_28C10", Pickup_TypeFromName);
 
 INCLUDE_ASM("asm/nonmatchings/unit_28C10", Pickup_Init);
 

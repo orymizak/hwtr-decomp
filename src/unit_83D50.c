@@ -5,7 +5,7 @@
 
 INCLUDE_ASM("asm/nonmatchings/unit_83D50", __osException);
 
-INCLUDE_ASM("asm/nonmatchings/unit_83D50", func_800E36DC);
+INCLUDE_ASM("asm/nonmatchings/unit_83D50", send_mesg);
 
 INCLUDE_ASM("asm/nonmatchings/unit_83D50", __osEnqueueAndYield);
 

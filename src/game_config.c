@@ -10,7 +10,7 @@ u8 Tables_UninstallAll(void);
 void Fsm_Reset(void *arg0);
 s32 Fsm_Update(void *arg0);
 
-s32 func_80087720(void) {
+s32 Game_InitMenus(void) {
     if (Tables_InstallAll()) {
         Fsm_Reset(gMenuFsm);
         return 1;
@@ -18,15 +18,15 @@ s32 func_80087720(void) {
     return 0;
 }
 
-s32 func_80087758(void) {
+s32 Game_ShutdownMenus(void) {
     return Tables_UninstallAll() != 0;
 }
 
-s32 func_8008777C(void) {
+s32 Game_MenuFrame(void) {
     return Fsm_Update(gMenuFsm) == 0;
 }
 
-s32 func_800877A0(char *name) {
+s32 Track_FindByName(char *name) {
     u8 i;
     u8 j;
 

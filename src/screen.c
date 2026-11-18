@@ -44,13 +44,13 @@ char *strcpy(char *dst, const char *src);
 char *strcat(char *dst, const char *src);
 void Gfx_Init(void);
 void Light_SetCount(void);
-void func_8006FE2C(u8 arg0, u8 arg1, u8 arg2);
+void Light_SetAmbient(u8 arg0, u8 arg1, u8 arg2);
 void Light_SetDir(s32 arg0, u8 arg1, u8 arg2, u8 arg3);
 void Light_SetColor(s32 arg0, u8 arg1, u8 arg2, u8 arg3);
 void Light_Reset(void);
 void Camera_CalcFrustum(void);
-void func_80070F38(void);
-void func_80071530(void);
+void Gfx_SetViewport(void);
+void Gfx_BeginScene(void);
 void Video_SetHighRes(void);
 void Gfx_ClearFrame(u8 arg0, u8 arg1, u8 arg2, u16 arg3, u16 arg4);
 void Bg_SetPalette(void *arg0);
@@ -159,7 +159,7 @@ u8 Screen_BeginFrame(s32 arg0) {
     if (gBgImage != NULL) {
         Bg_DrawImage(gBgImage, 640, 480);
     }
-    func_80071530();
+    Gfx_BeginScene();
     return 1;
 }
 
@@ -204,7 +204,7 @@ void Screen_SetViewport(s16 x, s16 y, s16 width, s16 height) {
     D_800F210C = width;
     D_800F210E = height;
     D_800F210A = (gScreenHeight - y) - height;
-    func_80070F38();
+    Gfx_SetViewport();
 }
 
 extern Mtx34f D_800F2138;
@@ -257,7 +257,7 @@ void Camera_SetProjection(f32 arg0, f32 arg1, f32 arg2, f32 arg3) {
 }
 
 void Screen_SetAmbient(u8 arg0, u8 arg1, u8 arg2) {
-    func_8006FE2C(arg0, arg1, arg2);
+    Light_SetAmbient(arg0, arg1, arg2);
 }
 
 void Screen_SetLightDir(s32 arg0, u8 arg1, u8 arg2, u8 arg3) {

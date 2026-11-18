@@ -9,9 +9,9 @@ typedef struct { s32 active; u8 id; u8 idx; u8 p6[2]; u8 f8[0xC]; V3a5_ v14; f32
 typedef struct { u8 p0[0x54]; u16 *p54; } P758a5_;
 extern V3a5_ D_80100A00;
 extern u32 (*svcRandRange)(s32);
-void func_800AC880(f32 *, f32, f32, f32, f32, V3a5_);
+void RigidBody_Init(f32 *, f32, f32, f32, f32, V3a5_);
 void Coll_Register(void *);
-void func_800ACDC8(void *, f32);
+void RigidBody_Integrate(void *, f32);
 void Mtx3_Orthonormalize(void *);
 
 s32 Coll_Unregister(s32 *);
@@ -55,7 +55,7 @@ void Debris_Update(void) {
 
     for (i = 0; i < 8; i++, e++) {
         if (e->w0 != 0) {
-            func_800ACDC8(e->x90, 0.01f);
+            RigidBody_Integrate(e->x90, 0.01f);
             Mtx3_Orthonormalize(e->x124);
         }
     }
@@ -97,7 +97,7 @@ void Debris_SpawnFromCar(Car *c) {
         p->id = c->id;
         p->idx = i;
         h = 2.0f * e->h;
-        func_800AC880(p->m90.m[0], 0.51813471f, e->w / 2.0f, h, h, col);
+        RigidBody_Init(p->m90.m[0], 0.51813471f, e->w / 2.0f, h, h, col);
         p->m124.m[0][0] = c->rot.m[0][0];
         p->m124.m[0][1] = c->rot.m[0][1];
         p->m124.m[0][2] = c->rot.m[0][2];

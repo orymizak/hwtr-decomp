@@ -49,9 +49,9 @@ extern s32 gPauseMainMenu;
 extern s32 gPauseOptionsMenu;
 extern s32 gPauseAudioMenu;
 void *Save_GetActiveProfile();
-extern s32 (*D_8014105C)(s32);
+extern s32 (*sysAudioSetSfxVolume)(s32);
 u8 Volume_StepDown(u8);
-extern s32 (*D_80141064)(s32);
+extern s32 (*sysAudioSetVoiceVolume)(s32);
 extern s32 (*sysAudioSetMusicVolume)(s32);
 extern s32 gPauseJukeboxMenu;
 extern s32 (*audMusicPlayTrack)(s32);
@@ -373,7 +373,7 @@ void PauseAudio_SfxUp(void) {
     if (cur != 0xFF) {
         next = Volume_StepUp(cur);
         opt[0x87C] = next;
-        D_8014105C(next);
+        sysAudioSetSfxVolume(next);
     }
 }
 
@@ -385,7 +385,7 @@ void PauseAudio_SfxDown(void) {
     if (cur != 0) {
         next = Volume_StepDown(cur);
         opt[0x87C] = next;
-        D_8014105C(next);
+        sysAudioSetSfxVolume(next);
     }
 }
 
@@ -397,7 +397,7 @@ void PauseAudio_VoiceUp(void) {
     if (cur != 0xFF) {
         next = Volume_StepUp(cur);
         opt[0x880] = next;
-        D_80141064(next);
+        sysAudioSetVoiceVolume(next);
     }
 }
 
@@ -409,7 +409,7 @@ void PauseAudio_VoiceDown(void) {
     if (cur != 0) {
         next = Volume_StepDown(cur);
         opt[0x880] = next;
-        D_80141064(next);
+        sysAudioSetVoiceVolume(next);
     }
 }
 

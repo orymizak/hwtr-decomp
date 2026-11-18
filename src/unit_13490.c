@@ -296,7 +296,7 @@ void WorldData_TrimMaterialCache(ItemList34_ *l, u32 t) {
     }
 }
 
-void func_800759F0(Node72_ *n);
+void SceneNode_FreeCache(Node72_ *n);
 void WorldData_FreeNodeCache(ItemListB_ *l) {
     s32 i;
 
@@ -304,7 +304,7 @@ void WorldData_FreeNodeCache(ItemListB_ *l) {
         if (l->items[i].p40 != 0) {
             Memory_Free(l->items[i].p40);
             l->items[i].p40 = 0;
-            func_800759F0(&l->items[i]);
+            SceneNode_FreeCache(&l->items[i]);
         }
     }
 }
@@ -323,15 +323,15 @@ void WorldData_TrimNodeCache(ItemListB_ *l, u32 t) {
         if (t - *(u32 *)((u8 *)&l->items[D_800F1EA4] + 0x34) > 40 && l->items[D_800F1EA4].p40 != 0) {
             Memory_Free(l->items[D_800F1EA4].p40);
             l->items[D_800F1EA4].p40 = 0;
-            func_800759F0(&l->items[D_800F1EA4]);
+            SceneNode_FreeCache(&l->items[D_800F1EA4]);
         }
     }
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_13490", func_800738C0);
+INCLUDE_ASM("asm/nonmatchings/unit_13490", ModelData_Update);
 
-s32 func_80073A48(s32 name) {
+s32 File_LoadAllocFixed(s32 name) {
     s32 buf;
 
     buf = Memory_Alloc(0x12C00);
@@ -339,7 +339,7 @@ s32 func_80073A48(s32 name) {
     return buf;
 }
 
-s32 func_80073A88(s32 name) {
+s32 File_LoadAllocCopy(s32 name) {
     s32 buf;
 
     buf = Memory_Alloc(File_GetSize());
@@ -349,7 +349,7 @@ s32 func_80073A88(s32 name) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_13490", ModelData_Load);
 
-void func_800740DC(List74_ *l, u8 v) {
+void ModelData_SetVariant(List74_ *l, u8 v) {
     u32 i;
     Obj74_ *o;
 
@@ -383,7 +383,7 @@ s32 ModelData_FreeCaches(ItemListB_ *l) {
             if (l->items[i].p40 != 0) {
                 Memory_Free(l->items[i].p40);
                 l->items[i].p40 = 0;
-                func_800759F0(&l->items[i]);
+                SceneNode_FreeCache(&l->items[i]);
             }
         }
     }
@@ -393,7 +393,7 @@ INCLUDE_ASM("asm/nonmatchings/unit_13490", ModelData_Draw);
 
 INCLUDE_ASM("asm/nonmatchings/unit_13490", func_80075084);
 
-u8 func_80075564(Model13_ *m) {
+u8 Model_GetVariant(Model13_ *m) {
     u8 id;
 
     id = 0xFF;
@@ -543,7 +543,7 @@ void Mesh_TransformVerts(MeshXf75_ *o) {
     }
 }
 
-void func_800759F0(Node72_ *n) {
+void SceneNode_FreeCache(Node72_ *n) {
     if (n->p44 != 0) {
         Memory_Free(n->p44);
         n->p44 = 0;

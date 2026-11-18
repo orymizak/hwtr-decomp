@@ -47,7 +47,7 @@ void Cheat_ClearP2(void) {
     }
 }
 
-void func_800C81CC(u8 player, s8 c) {
+void Cheat_PushKey(u8 player, s8 c) {
     u8 *buf;
     u8 *p;
 
@@ -119,7 +119,7 @@ void Menu_Timeout30s(void) {
 }
 
 
-void func_800C8464(void) {
+void Menu_CheckIdleTimeout(void) {
     if ((u32) (sysTimeGetMillis() - gMenuIdleTime) >= 0x1388U) {
         Fsm_Trigger(&gMenuFsm, 0x10);
     }
@@ -189,29 +189,29 @@ u8 Menu_HandlePad1(u16 mask) {
     }
     if (Input_PressedOnce(0, 0x14)) {
         hit = 1;
-        func_800C81CC(0, 0x31);
+        Cheat_PushKey(0, 0x31);
     }
     if (Input_PressedOnce(0, 0x15)) {
         hit = 1;
-        func_800C81CC(0, 0x32);
+        Cheat_PushKey(0, 0x32);
     }
     if (Input_PressedOnce(0, 0x16)) {
         hit = 1;
-        func_800C81CC(0, 0x33);
+        Cheat_PushKey(0, 0x33);
         Fsm_Trigger(&gMenuFsm, 0xE);
     }
     if (Input_PressedOnce(0, 0x17)) {
         hit = 1;
-        func_800C81CC(0, 0x34);
+        Cheat_PushKey(0, 0x34);
         Fsm_Trigger(&gMenuFsm, 0x62);
     }
     if (Input_PressedOnce(0, 0x18)) {
         hit = 1;
-        func_800C81CC(0, 0x35);
+        Cheat_PushKey(0, 0x35);
     }
     if (Input_PressedOnce(0, 0x19)) {
         hit = 1;
-        func_800C81CC(0, 0x36);
+        Cheat_PushKey(0, 0x36);
     }
     return hit;
 }
@@ -266,29 +266,29 @@ u8 Menu_HandlePad2(u16 mask) {
     }
     if (Input_PressedOnce(1, 0x14)) {
         hit = 1;
-        func_800C81CC(1, 0x31);
+        Cheat_PushKey(1, 0x31);
     }
     if (Input_PressedOnce(1, 0x15)) {
         hit = 1;
-        func_800C81CC(1, 0x32);
+        Cheat_PushKey(1, 0x32);
     }
     if (Input_PressedOnce(1, 0x16)) {
         hit = 1;
-        func_800C81CC(1, 0x33);
+        Cheat_PushKey(1, 0x33);
         Fsm_Trigger(&gMenuFsm, 0xF);
     }
     if (Input_PressedOnce(1, 0x17)) {
         hit = 1;
-        func_800C81CC(1, 0x34);
+        Cheat_PushKey(1, 0x34);
         Fsm_Trigger(&gMenuFsm, 0x63);
     }
     if (Input_PressedOnce(1, 0x18)) {
         hit = 1;
-        func_800C81CC(1, 0x35);
+        Cheat_PushKey(1, 0x35);
     }
     if (Input_PressedOnce(1, 0x19)) {
         hit = 1;
-        func_800C81CC(1, 0x36);
+        Cheat_PushKey(1, 0x36);
     }
     return hit;
 }

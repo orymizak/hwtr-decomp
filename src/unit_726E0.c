@@ -15,8 +15,8 @@ extern AudDmaBuffer *D_80127994; /* free buffers */
 extern s32 D_801279A8;
 extern u8 D_801279B0;
 
-AudDmaBuffer *func_800D1D9C();
-u32 func_800D1D30(u32 addr);
+AudDmaBuffer *AudDma_Find();
+u32 AudDma_Callback(u32 addr);
 
 extern void *D_801279C8;
 extern s32 D_801279A4;
@@ -24,18 +24,18 @@ extern OSIoMesg *D_8012799C;
 extern AudDmaBuffer *D_80127998;
 extern void *D_801279A0;
 void *SndHeap_Alloc(s32);
-void func_800D2450(void *, u8, s32);
-s32 *func_800D1D24(void);
+void Snd_MemSet(void *, u8, s32);
+s32 *AudDma_New(void);
 /* Sets up the ROM DMA cache: n buffers of size bytes in a doubly linked free list, plus the PI
  * message queue; returns the cached-DMA callback. */
-void *func_800D1AE0(s32 n, s32 size) {
+void *AudDma_Init(s32 n, s32 size) {
     s32 i;
 
     D_801279C8 = osCartRomInit();
     D_8012799C = SndHeap_Alloc(n * 48);
     D_801279A0 = SndHeap_Alloc(n * 8);
     D_80127998 = SndHeap_Alloc(n * 20);
-    func_800D2450(D_80127998, 0, n * 20);
+    Snd_MemSet(D_80127998, 0, n * 20);
     for (i = 0; i < n - 1; i++) {
         D_80127998[i].next = &D_80127998[i] + 1;
         D_80127998[i].next->prev = &D_80127998[i];
@@ -49,11 +49,11 @@ void *func_800D1AE0(s32 n, s32 size) {
     D_80127990 = NULL;
     D_80127994 = D_80127998;
     osCreateMesgQueue(&D_801279B0, D_801279A0, n * 2);
-    return func_800D1D24;
+    return AudDma_New;
 }
 
 /* Once per frame: drains the finished DMA messages and frees the buffers not used for 2 frames. */
-void func_800D1C54(void) {
+void AudDma_Update(void) {
     s32 msg;
     AudDmaBuffer *b;
     AudDmaBuffer *next;
@@ -92,12 +92,12 @@ void func_800D1C54(void) {
     }
 }
 
-s32 *func_800D1D24(void) {
-    return (s32 *)func_800D1D30;
+s32 *AudDma_New(void) {
+    return (s32 *)AudDma_Callback;
 }
 
-u32 func_800D1D30(u32 addr) {
-    AudDmaBuffer *s = func_800D1D9C(addr);
+u32 AudDma_Callback(u32 addr) {
+    AudDmaBuffer *s = AudDma_Find(addr);
 
     if (s == 0) {
         return osVirtualToPhysical((void *)addr);
@@ -112,7 +112,7 @@ u32 func_800D1D30(u32 addr) {
 extern void *D_80138144;
 extern s32 D_80145564;
 
-AudDmaBuffer *func_800D1D9C(u32 addr, s32 len) {
+AudDmaBuffer *AudDma_Find(u32 addr, s32 len) {
     void *h;
     AudDmaBuffer *dp;
     AudDmaBuffer *last;

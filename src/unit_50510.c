@@ -293,7 +293,7 @@ s32 SaveSlot_Delete(u32 i, u32 j) {
     return 1;
 }
 
-void func_800B0614(void) {
+void Stats_PickupCollectedNop(void) {
 
 }
 

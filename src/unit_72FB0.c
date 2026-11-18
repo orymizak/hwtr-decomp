@@ -11,7 +11,7 @@ extern s32 D_80127BB8;
 extern u32 D_80127BBC;
 
 void SndHeap_Init(s32 arg0, s32 arg1) {
-    func_800D2450((void *) arg0, 0U, arg1);
+    Snd_MemSet((void *) arg0, 0U, arg1);
     alHeapInit(&(*(u8 *)&D_80127BA0), (u32) arg0, (u32) arg1);
 }
 
@@ -27,7 +27,7 @@ s32 *SndHeap_Get(void) {
     return &D_80127BA0;
 }
 
-void func_800D2450(void *arg0, u8 arg1, s32 arg2) {
+void Snd_MemSet(void *arg0, u8 arg1, s32 arg2) {
     u8 unused[1];
     u8 *p = arg0;
     s32 i;
@@ -51,9 +51,9 @@ void Snd_MemMove(u8 *dst, u8 *src, s32 n) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_72FB0", func_800D24F0);
+INCLUDE_ASM("asm/nonmatchings/unit_72FB0", Snd_InitFrameSize);
 
-s32 func_800D2594(u32 arg0) {
+s32 Snd_GetFrameSamples(u32 arg0) {
     if ((u32) (D_80127BBC + 0xB8) < arg0) {
         if (D_800FAEC0 != 0) {
             D_800FAEC0 = 0;

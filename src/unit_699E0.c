@@ -4,7 +4,7 @@ extern void (*sysFontFree)(s32);
 extern void (*sysFontLoad)(s32, void *);
 extern u8 D_80101070;
 extern u8 D_80101078;
-void func_800C8DE0(void);
+void KeyboardChars_SetKerning(void);
 
 
 
@@ -39,7 +39,7 @@ extern inline u8 Chr_Width(u8 font, u8 c) {
 s32 Font_ScaleKerning(u8 font, u8 a, u8 pct);
 
 /* Passes every character of the table with its width to Font_ScaleKerning. */
-void func_800C8DE0(void) {
+void KeyboardChars_SetKerning(void) {
     u8 i;
 
     for (i = 0; i < 75; i++) {
@@ -70,7 +70,7 @@ void MenuFont_LoadAll(void) {
 
     (*fp)(0, &D_80101070);
     (*fp)(1, &D_80101078);
-    func_800C8DE0();
+    KeyboardChars_SetKerning();
 }
 
 void MenuFont_FreeAll(void) {
@@ -82,7 +82,7 @@ void MenuFont_FreeAll(void) {
 
 
 /* Returns the character after c in the character table, wrapping around. */
-u8 func_800C916C(u8 c) {
+u8 KeyboardChars_Next(u8 c) {
     u8 i = Chr_Index(c);
 
     i++;
@@ -91,7 +91,7 @@ u8 func_800C916C(u8 c) {
 }
 
 /* Returns the character before c in the character table, wrapping around. */
-u8 func_800C9200(u8 c) {
+u8 KeyboardChars_Prev(u8 c) {
     u8 i = Chr_Index(c);
 
     if (i == 0) {

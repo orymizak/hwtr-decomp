@@ -89,7 +89,7 @@ void MeshColors_Relocate(Hdr7E_ *h) {
 }
 
 
-void *func_80079FC0(u16 *n) {
+void *Mesh_Alloc(u16 *n) {
     return ((void * (*)(s32 size))Memory_Alloc)(*n * 12 + *n * 160 + *n * 48 + 16);
 }
 

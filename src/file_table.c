@@ -271,7 +271,7 @@ void Memory_Free(void *ptr);
 void nuPiReadRom(u32 romAddr, void *dst, u32 size);
 void nuContPakOpen(PakHandle *handle, s32 port);
 void nuContPakRepairId(PakHandle *handle);
-void func_800D7030(s32 port, s32 arg1);
+void nuContRmbModeSet(s32 port, s32 arg1);
 u8 Rumble_Probe(u8 port);
 void nuContPakFileOpenJis(PakHandle *handle, const char *name, const char *ext, s32 create, s32 size);
 void nuContPakFileReadWrite(PakHandle *handle, s32 offset, s32 size, void *buffer, s32 write);
@@ -504,7 +504,7 @@ s32 Pak_Open(s32 port) {
         }
     }
     if (gRumbleState[port].unk00 == 2) {
-        func_800D7030(port, 0);
+        nuContRmbModeSet(port, 0);
     }
     nuContPakFileOpenJis(handle, sPakGameName, sPakExtName, 0, 0);
     if (handle->status != 0) {

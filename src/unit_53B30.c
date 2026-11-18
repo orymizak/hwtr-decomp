@@ -45,7 +45,7 @@ typedef struct { u8 pad[2]; u8 n; u8 pad2; E0A_ *arr; u8 pad3[8]; u8 r; u8 g; u8
 extern void (*sysScreenSetClearColor)(s32, s32, s32);
 extern void (*sysScreenBeginFrame)(void);
 extern void (*sysCameraSetPerspective)(f32, f32, f32, f32);
-extern void (*D_8014105C)(s32);
+extern void (*sysAudioSetSfxVolume)(s32);
 extern u8 (*sysIsPAL)(void);
 extern u8 (*sysInputIsPad1Connected)(void);
 extern void (*sysInputUpdate)(s32);
@@ -259,14 +259,14 @@ extern u8 D_80100FA4;
 extern ObjG1_ D_800F63B8;
 extern void (*sysInputLoadBindings)(s32, s32);
 extern void (*sysAudioSetMusicVolume)(s32);
-extern void (*D_80141064)(s32);
-extern void (*D_8014107C)(void);
+extern void (*sysAudioSetVoiceVolume)(s32);
+extern void (*sysMenuExitHook)(void);
 extern void (*sysScreenFreeBg)(void);
 void MenuFont_FreeAll(void);
 void Menu_FreeAll(void);
 extern u32 D_800F6078[];
 u8 Input_PressedOnce(u8 i, s32 k);
-extern void (*D_80141068)(s32);
+extern void (*sysAudioSetAmbientVolume)(s32);
 void MenuFont_LoadAll(void);
 void MenuObjs_Alloc(void);
 Big88C_ *Save_GetProfile(s32);
@@ -1223,7 +1223,7 @@ void Save_Load(void) {
     if (gProfileP2 == 0) {
         gProfileP2 = (s32)&D_80124B30;
     }
-    D_8014105C(0xFF);
+    sysAudioSetSfxVolume(0xFF);
     fp = &sysInputLoadBindings;
     (*fp)(gProfileP1 + 0x40, 0);
     (*fp)(gProfileP2 + 0x40, 1);
@@ -1247,17 +1247,17 @@ void PakDialog_Input(void) {
     (*fp)(3);
     if ((u8) gPakDialogSel == 4) {
         if (Input_PressedOnce(0, 0xF) || Input_PressedOnce(1, 0xF) || Input_PressedOnce(2, 0xF) || Input_PressedOnce(3, 0xF)) {
-            D_80141068(0xFF);
+            sysAudioSetAmbientVolume(0xFF);
             sysSfxPlay(0x2F, 1, 1.0f, 1.0f);
             Fsm_Trigger(&gMenuFsm, 8);
         }
     } else if (Input_PressedOnce(0, 0xE) || Input_PressedOnce(1, 0xE) || Input_PressedOnce(2, 0xE) || Input_PressedOnce(3, 0xE)) {
-        D_80141068(0xFF);
+        sysAudioSetAmbientVolume(0xFF);
         sysSfxPlay(0x2E, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 6);
     }
     if (Input_PressedOnce(0, 0x12) || Input_PressedOnce(1, 0x12) || Input_PressedOnce(2, 0x12) || Input_PressedOnce(3, 0x12)) {
-        D_80141068(0xFF);
+        sysAudioSetAmbientVolume(0xFF);
         sysSfxPlay(0x32, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 2);
     }
@@ -1334,17 +1334,17 @@ void PakRepair_Input(void) {
     (*fp)(2);
     (*fp)(3);
     if (Input_PressedOnce(0, 0x12) || Input_PressedOnce(1, 0x12) || Input_PressedOnce(2, 0x12) || Input_PressedOnce(3, 0x12)) {
-        D_80141068(0xFF);
+        sysAudioSetAmbientVolume(0xFF);
         sysSfxPlay(0x32, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 2);
     }
     if ((u8) gPakDialogSel < 5 && (Input_PressedOnce(0, 0xF) || Input_PressedOnce(1, 0xF) || Input_PressedOnce(2, 0xF) || Input_PressedOnce(3, 0xF))) {
-        D_80141068(0xFF);
+        sysAudioSetAmbientVolume(0xFF);
         sysSfxPlay(0x2F, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 8);
     }
     if ((u8) gPakDialogSel >= 4 && (Input_PressedOnce(0, 0xE) || Input_PressedOnce(1, 0xE) || Input_PressedOnce(2, 0xE) || Input_PressedOnce(3, 0xE))) {
-        D_80141068(0xFF);
+        sysAudioSetAmbientVolume(0xFF);
         sysSfxPlay(0x2E, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 6);
     }
@@ -1502,7 +1502,7 @@ void PakRepairResult_Input(void) {
     (*fp)(3);
     if (Input_PressedOnce(0, 18) != 0 || Input_PressedOnce(1, 18) != 0 || Input_PressedOnce(2, 18) != 0 ||
         Input_PressedOnce(3, 18) != 0) {
-        D_80141068(0xFF);
+        sysAudioSetAmbientVolume(0xFF);
         sysSfxPlay(0x2F, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 2);
     }
@@ -1682,7 +1682,7 @@ void Save_NewGame(void) {
     Profile_InitDefault(&D_801249F0, 0);
     gProfileP2 = (s32)&D_80124B30;
     Profile_InitDefault(&D_80124B30, 1);
-    D_8014105C(0xFF);
+    sysAudioSetSfxVolume(0xFF);
 }
 
 
@@ -2081,12 +2081,12 @@ void Menu_ExitToGame(void) {
     }
     Music_StopMenuTrack();
     sysAudioSetMusicVolume(gActiveSave[0x87D]);
-    D_8014105C(gActiveSave[0x87C]);
-    D_80141064(gActiveSave[0x880]);
-    D_80141068(0xFF);
+    sysAudioSetSfxVolume(gActiveSave[0x87C]);
+    sysAudioSetVoiceVolume(gActiveSave[0x880]);
+    sysAudioSetAmbientVolume(0xFF);
     MenuFont_FreeAll();
     Menu_FreeAll();
-    D_8014107C();
+    sysMenuExitHook();
     sysScreenFreeBg();
     Menu_UnloadWorlds();
 }
@@ -2096,8 +2096,8 @@ void Menu_ReturnFromGame(void) {
     MenuObjs_Alloc();
     MenuObjs_Reset();
     sysScreenAllocBg();
-    D_80141068(0);
-    D_8014105C(0xFF);
+    sysAudioSetAmbientVolume(0);
+    sysAudioSetSfxVolume(0xFF);
     Music_PickMenuTrack();
     Music_StartMenuTrack();
     if (gSaveLoaded == 0) {

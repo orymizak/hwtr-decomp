@@ -21,7 +21,7 @@ void Snd_SetScheduler(OSSched *sc) {
     D_801279D0 = sc;
 }
 
-void func_800D1F4C(void) {
+void AudClient_Init(void) {
     AudClient *c;
 
     c = SndHeap_Alloc(sizeof(AudClient));
@@ -31,7 +31,7 @@ void func_800D1F4C(void) {
     osScAddClient(D_801279D0, &D_801279D4->client, &D_801279D4->msgQ);
 }
 
-void func_800D1FB0(void) {
+void AudClient_WaitRetrace(void) {
     s16 *msg;
 
     do {
@@ -42,7 +42,7 @@ void func_800D1FB0(void) {
 
 extern u8 D_800E7AA0[];
 extern u8 D_800E7B70[];
-void func_800D2010(AudInfoT_ *a) {
+void AudClient_RunTask(AudInfoT_ *a) {
     OSScTask t;
     u8 msg[0x20];
 

@@ -11,12 +11,12 @@ extern OSThread D_801279E0; /* audio manager thread */
 extern s32 D_80127B98;
 extern AmBuf_ *D_80127B94;
 extern s32 D_80127B90;
-ALDMANew func_800D1AE0(s32, s32);
+ALDMANew AudDma_Init(s32, s32);
 ALHeap *SndHeap_Get(void);
 void SndSyn_Init(void *, ALSynConfig *);
-s32 func_800D24F0(s32, s32, s32, s32);
+s32 Snd_InitFrameSize(s32, s32, s32, s32);
 s32 SndHeap_Alloc(s32);
-void func_800D2228(void *);
+void Snd_ManagerThread(void *);
 
 void Snd_CreateManager(AmCfg_ *c, s32 a1, u8 fx) {
     ALSynConfig sc;
@@ -25,21 +25,21 @@ void Snd_CreateManager(AmCfg_ *c, s32 a1, u8 fx) {
 
     sc.maxVVoices = sc.maxPVoices = c->unk4;
     sc.maxUpdates = c->unk28;
-    sc.dmaproc = func_800D1AE0(c->unk38, c->unk3C);
+    sc.dmaproc = AudDma_Init(c->unk38, c->unk3C);
     sc.fxType = fx;
     sc.outputRate = osAiSetFrequency(c->unk2C);
     sc.heap = SndHeap_Get();
     SndSyn_Init(&D_8014C158, &sc);
-    n = func_800D24F0(c->unk34, sc.outputRate, a1, 15);
+    n = Snd_InitFrameSize(c->unk34, sc.outputRate, a1, 15);
     D_80127B98 = SndHeap_Alloc(c->unk30 << 3);
     D_80127B94 = (AmBuf_ *)SndHeap_Alloc(0x18);
     for (i = 0; i < 3; i++) {
         D_80127B94[i].a = SndHeap_Alloc(n << 2);
     }
     D_80127B90 = SndHeap_Alloc(0x2000);
-    osCreateThread(&D_801279E0, 3, func_800D2228, NULL, (void *)(D_80127B90 + 0x2000), c->unkC);
+    osCreateThread(&D_801279E0, 3, Snd_ManagerThread, NULL, (void *)(D_80127B90 + 0x2000), c->unkC);
     osStartThread(&D_801279E0);
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_72CF0", func_800D2228);
+INCLUDE_ASM("asm/nonmatchings/unit_72CF0", Snd_ManagerThread);

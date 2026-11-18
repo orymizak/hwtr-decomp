@@ -38,7 +38,7 @@ extern Row6B_ gPadControls[];
 extern KeySet_ D_800F0404[];
 void nuContDataGet(Pad_ *, s32);
 s32 nuContRmbCheck(s32);
-void func_800D7030(s32, s32);
+void nuContRmbModeSet(s32, s32);
 void nuContPakOpen(PakSt_ *, s32);
 extern void nuContDataGetAll(Pad_ *);
 extern u8 D_800F0403;
@@ -548,7 +548,7 @@ s32 Input_RumbleResume(void) {
 s32 Rumble_Probe(u8 i) {
     if (nuContRmbCheck(i) == 0) {
         gRumbleState[i].state = 2;
-        func_800D7030(i, 2);
+        nuContRmbModeSet(i, 2);
         return 1;
     }
     return 0;
@@ -565,7 +565,7 @@ s32 Rumble_ProbeAll(void) {
         s.st = nuContRmbCheck(i);
         if (s.st == 0) {
             s.mode = 2;
-            func_800D7030(i, 2);
+            nuContRmbModeSet(i, 2);
         } else if (s.st == 11) {
             nuContPakOpen(&s, i);
             if (s.st == 10) {

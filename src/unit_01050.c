@@ -38,7 +38,7 @@ extern u8 D_80138AAE;
 extern u8 D_80138AAF;
 extern u8 D_80138AB1;
 void Video_EnterRaceMode(void);
-void func_8007C080(void);
+void Particles_Init(void);
 void World_SetupLod(s32, u8);
 u8 Race_Init(Cfg9_ *);
 extern s32 D_800F0108[];
@@ -397,7 +397,7 @@ u8 Game_StartRace(Cfg9_ *c) {
     s32 i;
 
     Video_EnterRaceMode();
-    func_8007C080();
+    Particles_Init();
     for (i = 0; i < c->n18; i++) {
         if (c->e[i].w == 1) {
             n++;
