@@ -11,7 +11,7 @@ typedef struct { Vec3f v; f32 s; u16 node; char name[0xE]; } Ent20_;
 extern void *gTrackSky;
 void WorldData_Free(void *);
 void Clouds_Free(void);
-void func_8006DC28(void);
+void Explosions_Clear(void);
 extern char D_800FE9F0[];
 char *strcpy(char *, const char *);
 char *strcat(char *, const char *);
@@ -86,11 +86,11 @@ extern u8 gParticles;
 extern u8 gParticlesAlt;
 extern u8 D_80145488;
 void func_8007D14C(void *);
-void func_8006DAC4(s32);
+void Explosions_Update(s32);
 void func_800738C0(void *, s32);
-void func_80075600(s32 arg0, s8 arg1, s8 arg2, s8 arg3);
-void func_800756A0(s32);
-void func_80075720(s32);
+void PointLight_SetColor(s32 arg0, s8 arg1, s8 arg2, s8 arg3);
+void PointLight_Enable(s32);
+void PointLight_Disable(s32);
 void func_800674DC(void);
 s32 rand(void);
 void func_8007A858(u8 *, u8 *, s32 *, s32);
@@ -107,15 +107,15 @@ extern f32 gLodDist3;
 extern s32 gModelLoadHandles[];
 extern s32 gModelLoading[];
 u8 File_PollAsync(s32);
-s32 func_80073AC8(s32);
-void func_80067A00(u8, u8, f32, f32, f32);
+s32 ModelData_Load(s32);
+void Model_SetPartRotation(u8, u8, f32, f32, f32);
 s32 Memory_Alloc();
 extern u8 gModelBuffers;
 
 extern World_ *gTrackWorld;
 extern s32 D_8013818C;
 s32 GfxPools_Shutdown();
-s32 func_800741D8(s32);
+s32 ModelData_FreeCaches(s32);
 extern Model_ *gModels[6];
 s32 Model_Draw(s32);
 s32 Gfx_SetLookAt(s32 *);
@@ -129,8 +129,8 @@ extern u8 D_80138AB1;
 extern f32 D_80138AB4;
 void Model_ResetSlot(u8);
 void World_SetupLod(s32 a, s32 b);
-void func_80075580(void);
-void func_80075858(void);
+void PointLights_Reset(void);
+void Gfx_FlipFrameParity(void);
 s32 World_Init(void) {
     void **p = (void **)&gTrackWorld;
     void **q = p + 2;
@@ -151,8 +151,8 @@ s32 World_Init(void) {
     D_80138AB1 = 0;
     D_80138AB4 = 2.0f;
     World_SetupLod(1, 1);
-    func_80075580();
-    func_80075858();
+    PointLights_Reset();
+    Gfx_FlipFrameParity();
     return 1;
 }
 
@@ -184,9 +184,9 @@ s32 strcmp(const char *a, const char *b);
 char *strlwr(char *);
 s32 Track_Unload(void);
 s32 File_LoadAlloc(char *);
-World_ *func_800731DC(s32);
+World_ *WorldData_Relocate(s32);
 void func_800734AC(World_ *);
-void func_8006DD34(World_ *);
+void EnvMap_Apply(World_ *);
 void Track_LoadSky(char *, u8);
 void Clouds_Init(Vec3f *, Vec3f *, u8, u8, u8);
 
@@ -203,11 +203,11 @@ s32 Track_Load(TrackName_ *t) {
     if (*wp != NULL) {
         Track_Unload();
     }
-    *wp = func_800731DC(File_LoadAlloc(buf));
+    *wp = WorldData_Relocate(File_LoadAlloc(buf));
     if (D_80138AB0 == 1) {
         func_800734AC(*wp);
     }
-    func_8006DD34(*wp);
+    EnvMap_Apply(*wp);
     b = 255;
     g = 255;
     r = 255;
@@ -233,7 +233,7 @@ s32 Track_Unload(void) {
     WorldData_Free(*p);
     WorldData_Free(gTrackSky);
     Clouds_Free();
-    func_8006DC28();
+    Explosions_Clear();
     *p = NULL;
     gTrackSky = NULL;
     return 1;
@@ -268,7 +268,7 @@ void World_Update(s32 dt) {
         func_8007D14C(&gParticles);
         func_8007D14C(&gParticlesAlt);
         func_8007D14C(&D_80145488);
-        func_8006DAC4(dt);
+        Explosions_Update(dt);
         func_800738C0(gTrackWorld, dt);
         for (i = 0; i < 6; i++) {
             o = gModels[i];
@@ -318,10 +318,10 @@ void World_Update(s32 dt) {
                 }
                 o->cur = c * 255.0f;
                 if (c != 0.0f) {
-                    func_80075600(o->id, c * o->r, c * o->g, c * o->b);
-                    func_800756A0(o->id);
+                    PointLight_SetColor(o->id, c * o->r, c * o->g, c * o->b);
+                    PointLight_Enable(o->id);
                 } else {
-                    func_80075720(o->id);
+                    PointLight_Disable(o->id);
                 }
             }
         }
@@ -332,24 +332,24 @@ void World_Update(s32 dt) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", World_Draw);
 
-void func_800664A4(s32 arg0) {
+void World_SetCollLevel(s32 arg0) {
     D_8013818C = arg0;
 }
 
-void func_800664B0(void) {
+void Models_FreeCaches(void) {
     u32 i;
 
     GfxPools_Shutdown();
     for (i = 0; i < 6; i++) {
         if (gModels[i] != NULL) {
-            func_800741D8((s32)gModels[i]);
+            ModelData_FreeCaches((s32)gModels[i]);
         }
     }
 }
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", Model_ResetSlot);
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_800665A4);
+INCLUDE_ASM("asm/nonmatchings/unit_06050", Color_PackRGBA5551);
 
 void Color_Unpack5551(u32 color, void *r, void *g, void *b) {
     u32 c = color & 0xFFFF;
@@ -362,7 +362,7 @@ void Color_Unpack5551(u32 color, void *r, void *g, void *b) {
     *(u8 *)b = cb;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_800665F8);
+INCLUDE_ASM("asm/nonmatchings/unit_06050", Model_SwapPalette);
 
 void Model_FlashOff(u8 i) {
     gModels[i]->b105 = 0;
@@ -421,7 +421,7 @@ s32 Model_LoadAsync(u8 id, char *name, u8 mode) {
     GfxPools_Shutdown();
     for (i = 0; i < 6; i++) {
         if (gModels[i] != NULL) {
-            func_800741D8((s32)gModels[i]);
+            ModelData_FreeCaches((s32)gModels[i]);
         }
     }
     h = File_LoadAsync(path, ((void **)&gModelBuffers)[id]);
@@ -440,9 +440,9 @@ s32 Model_PollLoad(u8 i) {
         return 0;
     }
     gModelLoading[i] = 0;
-    gModels[i] = (Model_ *)func_80073AC8(((s32 *)&gModelBuffers)[i]);
+    gModels[i] = (Model_ *)ModelData_Load(((s32 *)&gModelBuffers)[i]);
     for (j = 0; j < gModels[i]->nParts; j++) {
-        func_80067A00(i, j, 0.0f, 0.0f, 0.0f);
+        Model_SetPartRotation(i, j, 0.0f, 0.0f, 0.0f);
     }
     return 1;
 }
@@ -451,12 +451,12 @@ s32 Model_PollLoad(u8 i) {
 INCLUDE_ASM("asm/nonmatchings/unit_06050", Model_Load);
 
 s32 Model_Free(u8 i) {
-    func_800741D8((s32)gModels[i]);
+    ModelData_FreeCaches((s32)gModels[i]);
     gModels[i] = NULL;
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80066BD4);
+INCLUDE_ASM("asm/nonmatchings/unit_06050", Model_Unload);
 
 void Model_DrawWithLookAt(s32 arg0) {
     Gfx_SetLookAt(&D_800F2138);
@@ -502,25 +502,25 @@ void Model_GetColor(u8 i, u8 *r, u8 *g, u8 *b) {
     *b = m->c[2];
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80066EFC);
+INCLUDE_ASM("asm/nonmatchings/unit_06050", Model_SetTransform);
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80067284);
+INCLUDE_ASM("asm/nonmatchings/unit_06050", Model_SetWheel);
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80067310);
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_800674DC);
 
-void func_80067950(u8 i, f32 v) {
+void Model_RotateAllParts(u8 i, f32 v) {
     u32 j;
 
     for (j = 0; j < gModels[i]->nParts; j++) {
-        func_80067A00(i, j, 0.0f, 0.0f, v);
+        Model_SetPartRotation(i, j, 0.0f, 0.0f, v);
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80067A00);
+INCLUDE_ASM("asm/nonmatchings/unit_06050", Model_SetPartRotation);
 
-void func_80067EFC(u8 i, u8 val, Vec4L_ *src) {
+void Model_SetShadowPlane(u8 i, u8 val, Vec4L_ *src) {
     gModels[i]->b14C = val;
     gModels[i]->v = *src;
 }
@@ -543,15 +543,15 @@ inline void func_80067FA4(u8 i, f32 v, u8 flag) {
     }
 }
 
-void func_8006810C(u8, u8, u8);
-void func_800665F8(u8, u8);
+void Model_SetHeadlights(u8, u8, u8);
+void Model_SwapPalette(u8, u8);
 void Model_ApplyFlags(u8 id, u32 flags) {
-    func_8006810C(id, (flags >> 1) & 1, ((flags >> 3) ^ 1) & 1);
+    Model_SetHeadlights(id, (flags >> 1) & 1, ((flags >> 3) ^ 1) & 1);
     func_80067FA4(id, !(flags & 1) ? 1.0f : 0.0f, ((flags >> 3) ^ 1) & 1);
-    func_800665F8(id, (flags >> 2) & 1);
+    Model_SwapPalette(id, (flags >> 2) & 1);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_8006810C);
+INCLUDE_ASM("asm/nonmatchings/unit_06050", Model_SetHeadlights);
 
 s32 CarInfo_Load(s32 arg0, s32 arg1, s32 arg2) {
     return CarInfo_LoadEx(0, arg0, arg1, arg2) & 0xFF;
@@ -573,10 +573,10 @@ s32 CarInfo_LoadEx(s32 unused, char *name, Big114_ *a, Big40_ *b) {
 
 
 typedef struct { s32 a; s32 b; } Pair68_;
-void func_8006DB84(s32 a, f32 b, u8 c);
+void Explosion_Spawn(s32 a, f32 b, u8 c);
 
-/* Unless mode is 2, passes the model matrix moved 96 units along its local Y axis to func_8006DB84. */
-void func_80068390(u8 slot, u8 mode, Pair68_ unused) {
+/* Unless mode is 2, passes the model matrix moved 96 units along its local Y axis to Explosion_Spawn. */
+void Model_Wreck(u8 slot, u8 mode, Pair68_ unused) {
     f32 m[3][4];
 
     D_80138A6C[slot] = 1;
@@ -597,12 +597,12 @@ void func_80068390(u8 slot, u8 mode, Pair68_ unused) {
         m[0][3] += m[0][0] * 0.0f + m[0][1] * 96.0f + m[0][2] * 0.0f;
         m[1][3] += m[1][0] * 0.0f + m[1][1] * 96.0f + m[1][2] * 0.0f;
         m[2][3] += m[2][0] * 0.0f + m[2][1] * 96.0f + m[2][2] * 0.0f;
-        func_8006DB84((s32)m, 1.0f, 1);
+        Explosion_Spawn((s32)m, 1.0f, 1);
     }
     gModels[slot]->b105 = 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80068504);
+INCLUDE_ASM("asm/nonmatchings/unit_06050", Model_Repair);
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_800685E0);
 

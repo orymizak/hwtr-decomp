@@ -139,10 +139,10 @@ extern void *svcTrackSetPathTransform;
 extern void *svcTrackGetMarkerCount;
 extern void *svcTrackGetMarker;
 extern void *svcModelLoadDefault;
-extern void *D_8014173C;
+extern void *svcModelUnload;
 extern void *svcCarInfoLoadEx;
-extern void *D_80141748;
-extern void *D_8014174C;
+extern void *svcModelSetTransform;
+extern void *svcModelSetWheel;
 extern void *D_80141754;
 extern void *D_80141758;
 extern s32 D_80141768;
@@ -164,8 +164,8 @@ s32 Input_RumbleResume();
 s32 Pause_End(s32);
 s32 Pause_Update();
 s32 Font_DrawChar(s32, s32, s32, s32, s32);
-s32 func_800CD600(s32 *);
-extern s32 D_800F015C;
+s32 AudioTask_Init(s32 *);
+extern s32 gSndConfig;
 extern u8 gMusicTrack;
 extern f32 gSfxVolume;
 extern f64 D_800FE898;
@@ -181,8 +181,8 @@ void Track_Unload();
 extern void *svcWorldUpdate;
 void World_Update();
 void World_Draw();
-extern void *D_801416F8;
-void func_800664A4();
+extern void *svcWorldSetCollLevel;
+void World_SetCollLevel();
 void Track_GetLinkCount();
 void Track_GetLink();
 void Track_SetLinkTransform();
@@ -193,19 +193,19 @@ void Track_GetCamera();
 void Track_GetMarkerCount();
 void Track_GetMarker();
 void Model_LoadDefault();
-void func_80066BD4();
+void Model_Unload();
 extern void *svcModelGetColor;
 void Model_GetColor();
 void CarInfo_LoadEx();
-extern void *D_80141760;
-void func_80068390();
-extern void *D_80141764;
-void func_80068504();
+extern void *svcModelWreck;
+void Model_Wreck();
+extern void *svcModelRepair;
+void Model_Repair();
 extern void *D_80141750;
 void func_800685E0();
-void func_80066EFC();
-void func_80067284();
-void func_80067EFC();
+void Model_SetTransform();
+void Model_SetWheel();
+void Model_SetShadowPlane();
 void func_80067F40();
 extern void *svcModelApplyFlags;
 void Model_ApplyFlags();
@@ -252,10 +252,10 @@ extern void *svcTrackGetEntityCount;
 void Track_GetEntityCount();
 extern void *svcTrackSetEntityVisible;
 void Track_SetEntityVisible();
-s32 func_80060990(void);
-s32 func_80060998(void);
-s32 func_800609A0(void);
-s32 func_800609A8(void);
+s32 Svc_RacePreLoadNop(void);
+s32 Svc_RacePostLoadNop(void);
+s32 Svc_RacePreUnloadNop(void);
+s32 Svc_RacePostUnloadNop(void);
 extern void *svcFileGetSize;
 void File_GetSize();
 extern void *svcFileLoad;
@@ -269,7 +269,7 @@ s32 Svc_Install(void) {
     svcTrackUnload = &Track_Unload;
     svcWorldUpdate = &World_Update;
     svcWorldDraw = &World_Draw;
-    D_801416F8 = &func_800664A4;
+    svcWorldSetCollLevel = &World_SetCollLevel;
     svcTrackGetLinkCount = &Track_GetLinkCount;
     svcTrackGetLink = &Track_GetLink;
     svcTrackSetLinkTransform = &Track_SetLinkTransform;
@@ -279,15 +279,15 @@ s32 Svc_Install(void) {
     svcTrackGetMarkerCount = &Track_GetMarkerCount;
     svcTrackGetMarker = &Track_GetMarker;
     svcModelLoadDefault = &Model_LoadDefault;
-    D_8014173C = &func_80066BD4;
+    svcModelUnload = &Model_Unload;
     svcModelGetColor = &Model_GetColor;
     svcCarInfoLoadEx = &CarInfo_LoadEx;
-    D_80141760 = &func_80068390;
-    D_80141764 = &func_80068504;
+    svcModelWreck = &Model_Wreck;
+    svcModelRepair = &Model_Repair;
     D_80141750 = &func_800685E0;
-    D_80141748 = &func_80066EFC;
-    D_8014174C = &func_80067284;
-    D_80141758 = &func_80067EFC;
+    svcModelSetTransform = &Model_SetTransform;
+    svcModelSetWheel = &Model_SetWheel;
+    D_80141758 = &Model_SetShadowPlane;
     D_80141754 = &func_80067F40;
     svcModelApplyFlags = &Model_ApplyFlags;
     svcModelFlashOn = &Model_FlashOn;
@@ -320,10 +320,10 @@ s32 Svc_Install(void) {
     svcTrackGetEntity = &Track_GetEntity;
     svcTrackGetEntityCount = &Track_GetEntityCount;
     svcTrackSetEntityVisible = &Track_SetEntityVisible;
-    svcRacePreLoad = &func_80060990;
-    svcRacePostLoad = &func_80060998;
-    svcRacePreUnload = &func_800609A0;
-    svcRacePostUnload = &func_800609A8;
+    svcRacePreLoad = &Svc_RacePreLoadNop;
+    svcRacePostLoad = &Svc_RacePostLoadNop;
+    svcRacePreUnload = &Svc_RacePreUnloadNop;
+    svcRacePostUnload = &Svc_RacePostUnloadNop;
     svcFileGetSize = &File_GetSize;
     svcFileLoad = &File_Load;
     svcDraw2DBeginPrim = &Draw2D_BeginPrim;
@@ -342,10 +342,10 @@ s32 Svc_Uninstall(void) {
     svcTrackGetMarkerCount = 0;
     svcTrackGetMarker = 0;
     svcModelLoadDefault = 0;
-    D_8014173C = 0;
+    svcModelUnload = 0;
     svcCarInfoLoadEx = 0;
-    D_80141748 = 0;
-    D_8014174C = 0;
+    svcModelSetTransform = 0;
+    svcModelSetWheel = 0;
     D_80141758 = 0;
     D_80141754 = 0;
     D_80141768 = 0;
@@ -375,19 +375,19 @@ s32 Svc_Uninstall(void) {
     return 1;
 }
 
-s32 func_80060990(void) {
+s32 Svc_RacePreLoadNop(void) {
     return 1;
 }
 
-s32 func_80060998(void) {
+s32 Svc_RacePostLoadNop(void) {
     return 1;
 }
 
-s32 func_800609A0(void) {
+s32 Svc_RacePreUnloadNop(void) {
     return 1;
 }
 
-s32 func_800609A8(void) {
+s32 Svc_RacePostUnloadNop(void) {
     func_8007F514();
     return 1;
 }
@@ -474,8 +474,8 @@ s32 Font_DrawCharSvc(s32 arg0, s32 arg1, s32 arg2, s32 arg3) {
     return Font_DrawChar(arg0 & 0xFF, arg1 & 0xFF, arg2 & 0xFFFF, arg3 & 0xFFFF, 0) & 0xFFFF;
 }
 
-void func_80060C30(void) {
-    func_800CD600(&D_800F015C);
+void Audio_InitDriver(void) {
+    AudioTask_Init(&gSndConfig);
 }
 
 INCLUDE_ASM("asm/nonmatchings/unit_01050", Audio_Init);

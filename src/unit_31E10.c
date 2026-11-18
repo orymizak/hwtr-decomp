@@ -8,7 +8,7 @@
 typedef struct { s32 d[0x22]; } B88_;
 typedef Vec3f V3_1B0;
 typedef Mtx3f M3_1B0;
-extern void (*D_80141760)(u8, u8, V3_1B0);
+extern void (*svcModelWreck)(u8, u8, V3_1B0);
 extern void (*sysInputRumble)(u8, u8);
 extern void (*audCarSndSetLoopCVolume)(u8, f32);
 extern void (*audCarSndPlayLoopC)(u8, s32, s32);
@@ -645,7 +645,7 @@ void Car_StartCrash(Car *p, u8 id, u8 flip) {
         w.z = b.m[2][0] * p->angVel.x + b.m[2][1] * p->angVel.y + b.m[2][2] * p->angVel.z;
         p->vE4 = w;
         p->flags2 &= ~2;
-        D_80141760(p->id, id, v);
+        svcModelWreck(p->id, id, v);
         if (p->flags & 1) {
             if ((*rnd)(2) != 0) {
                 p->unk4B9 = one;
@@ -793,8 +793,8 @@ typedef CarRange R_B00;
 typedef CarPoint W_B00;
 typedef struct { void (*a)(u8, f32); void (*b)(u8, u8, P4_B00 *); void (*c)(u8, s32); } T_B00;
 extern u8 D_8011B31B;
-extern void (*D_80141748)(u8, V3_B00 *, void *);
-extern void (*D_8014174C)(u8, u8, f32, f32, f32, s32, s32, s32, V3_B00 *, V3_B00 *);
+extern void (*svcModelSetTransform)(u8, V3_B00 *, void *);
+extern void (*svcModelSetWheel)(u8, u8, f32, f32, f32, s32, s32, s32, V3_B00 *, V3_B00 *);
 extern T_B00 D_80141754;
 u32 RaceView_GetPlayerCount(void);
 void RaceCam_Get(u8, V3_B00 *, V3_B00 *, V3_B00 *, V3_B00 *, s32 *, u8 *, u8 *);
@@ -854,7 +854,7 @@ void Cars_CollideObstacles(u32 dt) {
         d.x = o.x - d.x;
         d.y = o.y - d.y;
         d.z = o.z - d.z;
-        D_80141748(i, &d, (u8 *)&c->rot.m[0][0]);
+        svcModelSetTransform(i, &d, (u8 *)&c->rot.m[0][0]);
         rr = &c->r3EC;
         if (near[i]) {
             for (j = 0, wh = &c->points[0].pos; j < c->nPoints; j++, wh++) {
@@ -894,7 +894,7 @@ void Cars_CollideObstacles(u32 dt) {
                 while (wh->ang > 314.159f) {
                     wh->ang -= 314.159f;
                 }
-                D_8014174C(i, j, h, r, wh->ang, wh->contact, wh->c31, hit, &wh->pt, &d);
+                svcModelSetWheel(i, j, h, r, wh->ang, wh->contact, wh->c31, hit, &wh->pt, &d);
             }
         }
         f = 2.0f * ((rr->cur - rr->lo) / (rr->hi - rr->lo)) - 1.0f;

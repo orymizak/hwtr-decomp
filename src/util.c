@@ -71,7 +71,7 @@ void func_8007F570(Texture *texture) {
     texture->data = texture + 1;
 }
 
-Texture *func_8007F57C(char *name) {
+Texture *Texture_Load(char *name) {
     Texture *texture = Memory_Alloc(File_GetSize(name));
 
     File_Load(name, texture);
@@ -79,7 +79,7 @@ Texture *func_8007F57C(char *name) {
     return texture;
 }
 
-Texture *func_8007F5C4(s32 width, s32 height) {
+Texture *Texture_Create(s32 width, s32 height) {
     Texture *texture = Memory_Alloc(width * height * 2 + sizeof(Texture));
 
     texture->width = width;

@@ -21,7 +21,7 @@ extern OSMesgQueue D_80134780; /* audio task reply queue */
 extern u8 D_80144450;
 extern OSMesgQueue D_80145528; /* scheduler events for audio */
 
-void func_800CD600(s32 arg0) {
+void AudioTask_Init(s32 arg0) {
     u8 *start = &D_800E7AA0;
 
     D_800FABA0 = 1;

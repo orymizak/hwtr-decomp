@@ -8,36 +8,36 @@ typedef struct { u8 p0[0x34]; Gfx *unk34; } ObjA2_;
 extern s32 D_80138AA8;
 extern s32 gGameState;
 typedef struct { s32 f0; s32 f4; u8 p8[0x548]; } S_D_801455C0;
-void func_80075600(s32 arg0, s8 arg1, s8 arg2, s8 arg3);
-void func_80075640(s32 arg0, f32 arg1, f32 arg2, f32 arg3, f32 arg4);
+void PointLight_SetColor(s32 arg0, s8 arg1, s8 arg2, s8 arg3);
+void PointLight_SetPos(s32 arg0, f32 arg1, f32 arg2, f32 arg3, f32 arg4);
 typedef struct { Vtx v[32]; u8 p200[0x30]; f32 r; f32 a; u8 p238; u8 mode; } Ring6D_;
 typedef struct { u32 t; Vec3f pos; Vec3f vel; f32 m[9]; } MvD6_;
-void func_8006D608(MvD6_ *o, u32 dt);
+void ExplosionDebris_Update(MvD6_ *o, u32 dt);
 f64 func_800E6E80(f64);
 f64 func_800E6F60(f64);
-void func_8006D6EC(Ring6D_ *s, u32 t);
-void func_8006CF10(s32 *p, s32 dt);
-extern S_D_801455C0 D_801455C0[];
-void func_8006CA88(S_D_801455C0 *, s32, f32, u8);
-BufD_ *func_8007F5C4(s32, s32);
-s32 func_8006DD60(s32 *,s32,s32);
-extern s32 D_8014D980;
+void ExplosionRing_Update(Ring6D_ *s, u32 t);
+void Explosion_Update(s32 *p, s32 dt);
+extern S_D_801455C0 gExplosions[];
+void Explosion_Start(S_D_801455C0 *, s32, f32, u8);
+BufD_ *Texture_Create(s32, s32);
+s32 EnvMap_BuildIndex(s32 *,s32,s32);
+extern s32 gEnvMapIndex;
 
-s32 func_800757E8(s32);
-s32 func_8006D15C(s32 *, s32, s32);
+s32 PointLight_Free(s32);
+s32 Explosion_Draw(s32 *, s32, s32);
 s32 Memory_Free(void *);
-extern BufD_ *D_800F05E0;
-BufD_ *func_8007F57C(s32);
-extern s32 D_800F05E4;
+extern BufD_ *gEnvMapTex;
+BufD_ *Texture_Load(s32);
+extern s32 gEnvMapDynamic;
 
-INCLUDE_ASM("asm/nonmatchings/unit_0D1F0", func_8006C5F0);
+INCLUDE_ASM("asm/nonmatchings/unit_0D1F0", Explosion_InitDebris);
 
-INCLUDE_ASM("asm/nonmatchings/unit_0D1F0", func_8006CA88);
+INCLUDE_ASM("asm/nonmatchings/unit_0D1F0", Explosion_Start);
 
     /* TODO (Clean version):
     Aritmética manual de punteros y accesos a campos reinterpretando un arreglo s32* (como *(f32 *)&p[135], (Ring6D_ *)(p + 4) y p + 148 + i * 16). En C limpio se debería definir y pasar un puntero a una estructura completa con sus miembros (Ring6D_, coordenadas float y arreglo de MvD6_); se mantiene para el match.
     */
-void func_8006CF10(s32 *p, s32 dt) {
+void Explosion_Update(s32 *p, s32 dt) {
     u8 v;
     f32 t;
     u32 i;
@@ -45,15 +45,15 @@ void func_8006CF10(s32 *p, s32 dt) {
     if (dt >= p[0]) {
         p[0] = 0;
         if (p[1] != -1) {
-            func_800757E8(p[1]);
+            PointLight_Free(p[1]);
             p[1] = -1;
         }
         return;
     }
     if (p[1] != -1) {
         v = p[0] * 255.0f / 1000.0f;
-        func_80075600(p[1], v, v, v);
-        func_80075640(p[1], sinf(p[0] / 1000.0f * 3.141592f) * 1800.0f, *(f32 *)&p[135], *(f32 *)&p[139], *(f32 *)&p[143]);
+        PointLight_SetColor(p[1], v, v, v);
+        PointLight_SetPos(p[1], sinf(p[0] / 1000.0f * 3.141592f) * 1800.0f, *(f32 *)&p[135], *(f32 *)&p[139], *(f32 *)&p[143]);
     }
     p[0] -= dt;
     if (p[0] < 900) {
@@ -61,15 +61,15 @@ void func_8006CF10(s32 *p, s32 dt) {
     } else {
         t = (u32)dt;
     }
-    func_8006D6EC((Ring6D_ *)(p + 4), t);
+    ExplosionRing_Update((Ring6D_ *)(p + 4), t);
     for (i = 0; i < 12; i++) {
-        func_8006D608(p + 148 + i * 16, dt);
+        ExplosionDebris_Update(p + 148 + i * 16, dt);
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_0D1F0", func_8006D15C);
+INCLUDE_ASM("asm/nonmatchings/unit_0D1F0", Explosion_Draw);
 
-void func_8006D608(MvD6_ *o, u32 dt) {
+void ExplosionDebris_Update(MvD6_ *o, u32 dt) {
     Vec3f v;
     f32 x;
     f32 y;
@@ -94,7 +94,7 @@ void func_8006D608(MvD6_ *o, u32 dt) {
     o->vel.z = v.z;
 }
 
-void func_8006D6EC(Ring6D_ *s, u32 t) {
+void ExplosionRing_Update(Ring6D_ *s, u32 t) {
     u32 i;
     f32 ang;
 
@@ -119,46 +119,46 @@ void func_8006D6EC(Ring6D_ *s, u32 t) {
     s->a = s->a + (f32) t * 0.001;
 }
 
-void func_8006DA40(S_D_801455C0 *e) {
+void Explosion_Stop(S_D_801455C0 *e) {
     if (e->f4 != -1) {
-        func_800757E8(e->f4);
+        PointLight_Free(e->f4);
     }
     e->f0 = 0;
     e->f4 = -1;
 }
 
-void func_8006DA88(void) {
+void Explosions_Init(void) {
     u32 i;
 
     for (i = 0; i < 8; i++) {
-        D_801455C0[i].f0 = 0;
-        D_801455C0[i].f4 = -1;
+        gExplosions[i].f0 = 0;
+        gExplosions[i].f4 = -1;
     }
 }
 
-void func_8006DAC4(s32 dt) {
+void Explosions_Update(s32 dt) {
     u32 i;
 
     for (i = 0; i < 8; i++) {
-        func_8006CF10((s32 *)&D_801455C0[i], dt);
+        Explosion_Update((s32 *)&gExplosions[i], dt);
     }
 }
 
-void func_8006DB1C(s32 a, s32 b) {
+void Explosions_Draw(s32 a, s32 b) {
     u32 i;
 
     for (i = 0; i < 8; i++) {
-        func_8006D15C((s32 *)&D_801455C0[i], a, b & 0xFF);
+        Explosion_Draw((s32 *)&gExplosions[i], a, b & 0xFF);
     }
 }
 
-void func_8006DB84(s32 a, f32 b, u8 c) {
-    s32 min = D_801455C0[0].f0;
+void Explosion_Spawn(s32 a, f32 b, u8 c) {
+    s32 min = gExplosions[0].f0;
     u32 best = 0;
     u32 i;
 
     for (i = 1; i < 8; i++) {
-        s32 v = D_801455C0[i].f0;
+        s32 v = gExplosions[i].f0;
 
         if (v == 0) {
             best = i;
@@ -169,55 +169,55 @@ void func_8006DB84(s32 a, f32 b, u8 c) {
             min = v;
         }
     }
-    func_8006CA88(&D_801455C0[best], a, b, c);
+    Explosion_Start(&gExplosions[best], a, b, c);
 }
 
 
-void func_8006DC28(void) {
+void Explosions_Clear(void) {
     u32 i;
     S_D_801455C0 *p;
 
     for (i = 0; i < 8; i++) {
-        p = &D_801455C0[i];
+        p = &gExplosions[i];
         if (p->f4 != -1) {
-            func_800757E8(p->f4);
+            PointLight_Free(p->f4);
         }
         p->f0 = 0;
         p->f4 = -1;
     }
 }
 
-void func_8006DC90(void) {
-    func_8006DD60(&D_8014D980, 0x140, 0xF0);
+void EnvMap_Init(void) {
+    EnvMap_BuildIndex(&gEnvMapIndex, 0x140, 0xF0);
 }
 
-void func_8006DCB8(void) {
-    if (D_800F05E0 != 0) {
-        Memory_Free(D_800F05E0);
-        D_800F05E0 = NULL;
+void EnvMap_Free(void) {
+    if (gEnvMapTex != 0) {
+        Memory_Free(gEnvMapTex);
+        gEnvMapTex = NULL;
     }
 }
 
-void func_8006DCE8(s32 arg0) {
-    if (D_800F05E0 != 0) {
-        Memory_Free(D_800F05E0);
-        D_800F05E0 = NULL;
+void EnvMap_Load(s32 arg0) {
+    if (gEnvMapTex != 0) {
+        Memory_Free(gEnvMapTex);
+        gEnvMapTex = NULL;
     }
-    D_800F05E0 = func_8007F57C(arg0);
+    gEnvMapTex = Texture_Load(arg0);
 }
 
-void func_8006DD34(ObjA2_ *o) {
-    if (D_800F05E0 != NULL) {
-        *o->unk34 = *(Gfx *)D_800F05E0;
+void EnvMap_Apply(ObjA2_ *o) {
+    if (gEnvMapTex != NULL) {
+        *o->unk34 = *(Gfx *)gEnvMapTex;
     }
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_0D1F0", func_8006DD60);
+INCLUDE_ASM("asm/nonmatchings/unit_0D1F0", EnvMap_BuildIndex);
 
-void func_8006DEF4(u16 *pal, s32 *idx) {
+void EnvMap_FromPalette(u16 *pal, s32 *idx) {
     s32 i;
-    u16 *dst = D_800F05E0->unk4;
+    u16 *dst = gEnvMapTex->unk4;
 
     for (i = 0; i < 0x400; i++) {
         *dst++ = pal[*idx++];
@@ -226,16 +226,16 @@ void func_8006DEF4(u16 *pal, s32 *idx) {
 
 /* TODO(match-debt): 'register' locals, the branchless '&' in the condition and the hand-advanced
    do-while are needed to match; the plain for loop over dst[i] = samples[idx[i]] does not. */
-void func_8006DF34(s16 *samples) {
+void EnvMap_Capture(s16 *samples) {
     register s32 i;
     register s32 *idx;
     register u16 *dst;
     register s16 v;
 
-    if (D_800F05E0 != NULL && D_800F05E4 != 0 && ((1 != gGameState) & (D_80138AA8 != 0))) {
-        dst = D_800F05E0->unk4;
+    if (gEnvMapTex != NULL && gEnvMapDynamic != 0 && ((1 != gGameState) & (D_80138AA8 != 0))) {
+        dst = gEnvMapTex->unk4;
         i = 0;
-        idx = &D_8014D980;
+        idx = &gEnvMapIndex;
         do {
             v = samples[*idx];
             idx++;
@@ -246,20 +246,20 @@ void func_8006DF34(s16 *samples) {
     }
 }
 
-void func_8006DFBC(void) {
-    if (D_800F05E0 != 0) {
-        Memory_Free(D_800F05E0);
-        D_800F05E0 = NULL;
+void EnvMap_CreateDynamic(void) {
+    if (gEnvMapTex != 0) {
+        Memory_Free(gEnvMapTex);
+        gEnvMapTex = NULL;
     }
-    D_800F05E0 = func_8007F5C4(0x20, 0x20);
-    D_800F05E4 = 1;
+    gEnvMapTex = Texture_Create(0x20, 0x20);
+    gEnvMapDynamic = 1;
 }
 
-void func_8006E00C(s32 arg0) {
-    if (D_800F05E0 != 0) {
-        Memory_Free(D_800F05E0);
-        D_800F05E0 = NULL;
+void EnvMap_LoadStatic(s32 arg0) {
+    if (gEnvMapTex != 0) {
+        Memory_Free(gEnvMapTex);
+        gEnvMapTex = NULL;
     }
-    D_800F05E0 = func_8007F57C(arg0);
-    D_800F05E4 = 0;
+    gEnvMapTex = Texture_Load(arg0);
+    gEnvMapDynamic = 0;
 }

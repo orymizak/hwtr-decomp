@@ -8,14 +8,14 @@ typedef struct { u8 pad[0x14]; Sub14_ *sub; u8 pad2[0x18]; s32 p30; } Item34_;
 typedef struct { u16 a; u16 count; u8 pad[0x2C]; Item34_ *items; } ItemList34_;
 typedef struct { u8 pad[0x30]; s32 flags; u8 pad2[0xC]; s32 p40; u8 pad3[0x10]; } Item54b_;
 typedef struct { u16 count; u8 pad[0x2A]; Item54b_ *items; } ItemListB_;
-void func_80073740(ItemListB_ *l);
+void WorldData_FreeNodeCache(ItemListB_ *l);
 typedef struct { u32 pad0 : 30; u32 b1 : 1; u32 b0 : 1; u8 pad[0x14]; } Slot18_;
 typedef struct { u8 pad[0x30]; s32 flags; u8 pad2[0x20]; } Item54_;
 typedef struct { u16 count; u8 pad[0x2A]; Item54_ *items; } ItemList_;
 typedef struct { union { u32 flags; struct { u32 pad:30; u32 b1:1; u32 b0:1; } b; } u; f32 f[4]; u8 r; u8 g; u8 b; u8 p17; } SlotM_;
 s32 Mtx_New(void *);
 s32 Frustum_TestSphere(s32, s32, s32);
-void func_80072EE0(u8 *, void *, s32, s32, s32);
+void SceneNode_DrawMesh(u8 *, void *, s32, s32, s32);
 void Mtx34_Mul(s32, s32, void *);
 void Image_DrawRGBA16Scaled(s32, s32, s32, s32, s32, f32, f32);
 extern u16 gScreenWidth;
@@ -30,7 +30,7 @@ typedef struct { u8 p0[0x2C]; Item74_ *inst; } Model13_;
 extern u8 D_800F1FA8[];
 void Mtx34_Orthonormalize(f32 *);
 extern s32 D_800F1EA0;
-extern s32 D_800F2028;
+extern s32 gBgPalette;
 extern s32 D_800F1EA4;
 void func_8007A004(s32 *, s32, u8);
 extern u8 D_800F2060;
@@ -44,21 +44,21 @@ extern u8 D_8014D190;
 extern u8 D_8014D194;
 extern u8 D_8014D195;
 extern u8 D_8014D196;
-extern s32 D_8014C64C;
-extern SlotM_ D_8014D180[];
-s32 func_80079140(void *, s32 *, s32,s32, s32);
-s32 func_80079BD4(void *, s32);
-s32 func_80079E48(void *);
-s32 func_80079E68(void *);
+extern s32 gPointLightCount;
+extern SlotM_ gPointLights[];
+s32 Mesh_BuildDisplayList(void *, s32 *, s32,s32, s32);
+s32 Mesh_FillVtx(void *, s32);
+s32 Mesh_AllocDisplayList(void *);
+s32 Mesh_AllocVtx(void *);
 extern s32 D_3000000;
 
 s32 File_GetSize();
 s32 File_Load(s32, s32);
 s32 Memory_Alloc(s32);
 s32 Memory_Free(s32);
-s32 func_80073530();
-s32 func_800741D8();
-extern s32 D_80134798;
+s32 WorldData_FreeMaterialCache();
+s32 ModelData_FreeCaches();
+extern s32 gFrameParity;
 extern s8 D_800F1FA0;
 extern s8 D_800F1FA1;
 extern s8 D_800F1FA2;
@@ -174,7 +174,7 @@ void SceneNode_Draw(Node72_ *n, s32 arg1, s32 arg2, s32 arg3) {
                             m[5] = one;
                             m[0] = one;
                         }
-                        func_80072EE0((u8 *) n, m, Mtx_New(m), arg2, arg3);
+                        SceneNode_DrawMesh((u8 *) n, m, Mtx_New(m), arg2, arg3);
                     }
                 } else if (n->id != arg2) {
                     n->flags &= ~0x80;
@@ -193,7 +193,7 @@ void SceneNode_Show(Node72_ *n) {
     n->flags |= 0x40;
 }
 
-s32 func_80072D6C(u8 *a0, s32 a1, s32 a2, s32 a3, s32 a4) {
+s32 SceneNode_DrawSingle(u8 *a0, s32 a1, s32 a2, s32 a3, s32 a4) {
     u8 buf[0x30];
 
     if ((Frustum_TestSphere(a1, a2, *(s32 *)(a0 + 0x38)) & 0xFF) != 1) {
@@ -204,31 +204,31 @@ s32 func_80072D6C(u8 *a0, s32 a1, s32 a2, s32 a3, s32 a4) {
     }
     if (*(s32 *)(a0 + 0x3C) != 0) {
         Mtx34_Mul(a1, a2, buf);
-        func_80072EE0(a0, buf, Mtx_New(buf), a3, a4);
+        SceneNode_DrawMesh(a0, buf, Mtx_New(buf), a3, a4);
     }
     return 1;
 }
 
-void func_80072E38(Node72_ *n, s32 arg1) {
+void SceneNode_PrepareMaterial(Node72_ *n, s32 arg1) {
     Node72_ *mat;
 
     if (n->p40 == 0) {
-        n->p40 = func_80079E68((void *)n->p3C);
+        n->p40 = Mesh_AllocVtx((void *)n->p3C);
         if (n->p40 == 0) {
             return;
         }
-        func_80079BD4((void *)n->p3C, n->p40);
+        Mesh_FillVtx((void *)n->p3C, n->p40);
     }
     if (((Node72_ *)n->p3C)->flags == 0) {
-        ((Node72_ *)n->p3C)->flags = func_80079E48((void *)n->p3C);
+        ((Node72_ *)n->p3C)->flags = Mesh_AllocDisplayList((void *)n->p3C);
         mat = (Node72_ *)n->p3C;
         if (mat->flags != 0) {
-            func_80079140((void *)n->p3C, &D_3000000, mat->flags, arg1, n->flags & 0x4000);
+            Mesh_BuildDisplayList((void *)n->p3C, &D_3000000, mat->flags, arg1, n->flags & 0x4000);
         }
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_13490", func_80072EE0);
+INCLUDE_ASM("asm/nonmatchings/unit_13490", SceneNode_DrawMesh);
 
 s32 File_LoadAlloc(s32 name) {
     s32 buf;
@@ -238,7 +238,7 @@ s32 File_LoadAlloc(s32 name) {
     return buf;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_13490", func_800731DC);
+INCLUDE_ASM("asm/nonmatchings/unit_13490", WorldData_Relocate);
 
 ItemList_ *func_800734AC(ItemList_ *l) {
     u32 i;
@@ -252,13 +252,13 @@ ItemList_ *func_800734AC(ItemList_ *l) {
 
 void WorldData_Free(s32 arg0) {
     if (arg0 != 0) {
-        func_80073530();
-        func_80073740(arg0);
+        WorldData_FreeMaterialCache();
+        WorldData_FreeNodeCache(arg0);
         Memory_Free(arg0);
     }
 }
 
-s32 func_80073530(ItemList34_ *l) {
+s32 WorldData_FreeMaterialCache(ItemList34_ *l) {
     s32 i;
 
     for (i = 0; i < l->count; i++) {
@@ -273,7 +273,7 @@ s32 func_80073530(ItemList34_ *l) {
     }
 }
 
-void func_800735E4(ItemList34_ *l, u32 t) {
+void WorldData_TrimMaterialCache(ItemList34_ *l, u32 t) {
     u32 n;
 
     if (t < 41) {
@@ -297,7 +297,7 @@ void func_800735E4(ItemList34_ *l, u32 t) {
 }
 
 void func_800759F0(Node72_ *n);
-void func_80073740(ItemListB_ *l) {
+void WorldData_FreeNodeCache(ItemListB_ *l) {
     s32 i;
 
     for (i = 0; i < l->count; i++) {
@@ -310,7 +310,7 @@ void func_80073740(ItemListB_ *l) {
 }
 
 
-void func_800737C8(ItemListB_ *l, u32 t) {
+void WorldData_TrimNodeCache(ItemListB_ *l, u32 t) {
     u32 n;
 
     if (t < 41) {
@@ -347,7 +347,7 @@ s32 func_80073A88(s32 name) {
     return buf;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_13490", func_80073AC8);
+INCLUDE_ASM("asm/nonmatchings/unit_13490", ModelData_Load);
 
 void func_800740DC(List74_ *l, u8 v) {
     u32 i;
@@ -358,7 +358,7 @@ void func_800740DC(List74_ *l, u8 v) {
             o = l->items[i].p3C;
             o->b8 = v;
             if (o->w30 != 0) {
-                func_80079140(o, &D_3000000, o->w30, l->w34, l->items->flags & 0x4000);
+                Mesh_BuildDisplayList(o, &D_3000000, o->w30, l->w34, l->items->flags & 0x4000);
             }
             if (o->p14 != NULL && o->p14[4] != 0) {
                 func_8007A004(o->p14, l->w34, o->b8);
@@ -367,18 +367,18 @@ void func_800740DC(List74_ *l, u8 v) {
     }
 }
 
-void func_800741AC(s32 arg0) {
-    func_800741D8();
+void ModelData_Free(s32 arg0) {
+    ModelData_FreeCaches();
     Memory_Free(arg0);
 }
 
-void func_800757E8(s32);
-s32 func_800741D8(ItemListB_ *l) {
+void PointLight_Free(s32);
+s32 ModelData_FreeCaches(ItemListB_ *l) {
     s32 i;
 
     if (l != NULL) {
-        func_800757E8(((s8 *)l)[0xFE]);
-        func_80073530(l);
+        PointLight_Free(((s8 *)l)[0xFE]);
+        WorldData_FreeMaterialCache(l);
         for (i = 0; i < l->count; i++) {
             if (l->items[i].p40 != 0) {
                 Memory_Free(l->items[i].p40);
@@ -389,7 +389,7 @@ s32 func_800741D8(ItemListB_ *l) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_13490", func_80074274);
+INCLUDE_ASM("asm/nonmatchings/unit_13490", ModelData_Draw);
 
 INCLUDE_ASM("asm/nonmatchings/unit_13490", func_80075084);
 
@@ -403,84 +403,84 @@ u8 func_80075564(Model13_ *m) {
     return id;
 }
 
-void func_80075580(void) {
+void PointLights_Reset(void) {
     s32 i;
 
-    D_80134798 = 0;
-    D_8014C64C = 0;
+    gFrameParity = 0;
+    gPointLightCount = 0;
     for (i = 0; i < 16; i++) {
-        D_8014D180[i].u.flags = 0;
+        gPointLights[i].u.flags = 0;
     }
 }
 
-void func_800755B4(void) {
+void PointLights_Recount(void) {
     s32 n;
     s32 i;
 
     n = 0;
     for (i = 0; i < 16; i++) {
-        if (D_8014D180[i].u.b.b0 & D_8014D180[i].u.b.b1) {
+        if (gPointLights[i].u.b.b0 & gPointLights[i].u.b.b1) {
             n = i + 1;
         }
     }
-    D_8014C64C = n;
+    gPointLightCount = n;
 }
 
-void func_80075600(s32 i, s8 r, s8 g, s8 b) {
+void PointLight_SetColor(s32 i, s8 r, s8 g, s8 b) {
     if (i != -1) {
-        D_8014D180[i].r = r;
-        D_8014D180[i].g = g;
-        D_8014D180[i].b = b;
+        gPointLights[i].r = r;
+        gPointLights[i].g = g;
+        gPointLights[i].b = b;
     }
 }
 
-void func_80075640(s32 i, f32 a, f32 b, f32 c, f32 d) {
+void PointLight_SetPos(s32 i, f32 a, f32 b, f32 c, f32 d) {
     if (i != -1) {
-        D_8014D180[i].f[0] = a;
-        D_8014D180[i].f[1] = b;
-        D_8014D180[i].f[2] = c;
-        D_8014D180[i].f[3] = d;
+        gPointLights[i].f[0] = a;
+        gPointLights[i].f[1] = b;
+        gPointLights[i].f[2] = c;
+        gPointLights[i].f[3] = d;
     }
 }
 
-void func_800756A0(s32 id) {
+void PointLight_Enable(s32 id) {
     s32 n;
     s32 i;
 
     if (id != -1) {
         n = 0;
-        D_8014D180[id].u.flags |= 1;
+        gPointLights[id].u.flags |= 1;
         for (i = 0; i < 16; i++) {
-            if (D_8014D180[i].u.b.b0 & D_8014D180[i].u.b.b1) {
+            if (gPointLights[i].u.b.b0 & gPointLights[i].u.b.b1) {
                 n = i + 1;
             }
         }
-        D_8014C64C = n;
+        gPointLightCount = n;
     }
 }
 
-void func_80075720(s32 id) {
+void PointLight_Disable(s32 id) {
     s32 n;
     s32 i;
 
     if (id != -1) {
         n = 0;
-        D_8014D180[id].u.flags &= ~1;
+        gPointLights[id].u.flags &= ~1;
         for (i = 0; i < 16; i++) {
-            if (D_8014D180[i].u.b.b0 & D_8014D180[i].u.b.b1) {
+            if (gPointLights[i].u.b.b0 & gPointLights[i].u.b.b1) {
                 n = i + 1;
             }
         }
-        D_8014C64C = n;
+        gPointLightCount = n;
     }
 }
 
-s32 func_800757A4(void) {
+s32 PointLight_Alloc(void) {
     s32 i;
 
     for (i = 0; i < 16; i++) {
-        if (!(D_8014D180[i].u.flags & 2)) {
-            D_8014D180[i].u.flags = 2;
+        if (!(gPointLights[i].u.flags & 2)) {
+            gPointLights[i].u.flags = 2;
             return i;
         }
     }
@@ -488,26 +488,26 @@ s32 func_800757A4(void) {
 }
 
 
-void func_800757E8(s32 id) {
+void PointLight_Free(s32 id) {
     s32 n;
     s32 i;
 
     if (id != -1) {
-        D_8014D180[id].u.flags = 0;
+        gPointLights[id].u.flags = 0;
         n = 0;
         for (i = 0; i < 16; i++) {
-            if (D_8014D180[i].u.b.b0 & D_8014D180[i].u.b.b1) {
+            if (gPointLights[i].u.b.b0 & gPointLights[i].u.b.b1) {
                 n = i + 1;
             }
         }
-        D_8014C64C = n;
+        gPointLightCount = n;
     }
 }
 
 
-void func_80075858(void) {
-    if (++D_80134798 >= 2) {
-        D_80134798 = 0;
+void Gfx_FlipFrameParity(void) {
+    if (++gFrameParity >= 2) {
+        gFrameParity = 0;
     }
 }
 
@@ -572,7 +572,7 @@ void Mesh_StoreColors(MeshXf75_ *o) {
     o->flags &= ~0x100;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_13490", func_80075ABC);
+INCLUDE_ASM("asm/nonmatchings/unit_13490", Mesh_ApplyPointLights);
 
 void Gfx_SetupRDP(s32 w, s32 h) {
     GFX_RESERVE(6);
@@ -584,22 +584,22 @@ void Gfx_SetupRDP(s32 w, s32 h) {
     gSPDisplayList(gDisplayListHead++, D_800F1FA8);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_13490", func_800761D4);
+INCLUDE_ASM("asm/nonmatchings/unit_13490", Gfx_ClearFrame);
 
-void func_80076470(B200_ *src) {
+void Bg_SetPalette(B200_ *src) {
     if (src != NULL) {
-        if (D_800F2028 == 0) {
-            D_800F2028 = Memory_Alloc(0x200);
+        if (gBgPalette == 0) {
+            gBgPalette = Memory_Alloc(0x200);
         }
-        *(B200_ *)D_800F2028 = *src;
-    } else if (D_800F2028 != 0) {
-        Memory_Free(D_800F2028);
-        D_800F2028 = 0;
+        *(B200_ *)gBgPalette = *src;
+    } else if (gBgPalette != 0) {
+        Memory_Free(gBgPalette);
+        gBgPalette = 0;
     }
 }
 
 
-void func_80076578(f32 k, u16 *src) {
+void Bg_FadePalette(f32 k, u16 *src) {
     u16 *dst;
     s32 i;
     u16 c;
@@ -610,7 +610,7 @@ void func_80076578(f32 k, u16 *src) {
     u16 gg;
     u16 bb;
 
-    dst = (u16 *)D_800F2028;
+    dst = (u16 *)gBgPalette;
     for (i = 0; i < 256; i++) {
         c = *src;
         r = (c >> 11) / 31.0;
@@ -625,7 +625,7 @@ void func_80076578(f32 k, u16 *src) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_13490", func_800766FC);
+INCLUDE_ASM("asm/nonmatchings/unit_13490", Bg_DrawImage);
 
 void Draw2D_SetColor(s8 arg0, s8 arg1, s8 arg2) {
     D_800F1FA0 = arg0;

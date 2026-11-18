@@ -21,18 +21,18 @@ extern s32 D_800F2190;
 
 s32 FileTable_Init(void);
 void Memory_InitMain(void);
-void func_80060C30(void);
+void Audio_InitDriver(void);
 void Audio_Init(void);
 void World_Init(void);
 void Input_Init(void);
 void Input_RumbleStopAll(void);
-void func_8006DA88(void);
-void func_8006DC90(void);
+void Explosions_Init(void);
+void EnvMap_Init(void);
 void Font_Init(void);
 void GfxPools_Init(void);
 void Screen_InitGfx(void);
 void Screen_Init(void);
-void func_8007BE30(void);
+void World_InitSlots(void);
 void func_8007F420(void);
 void func_80087720(void);
 void func_8008777C(void);
@@ -66,7 +66,7 @@ inline void Video_Init(void) {
 }
 
 void Game_Init(void) {
-    func_80060C30();
+    Audio_InitDriver();
     switch (osTvType) {
         case OS_TV_NTSC:
             gViModeIndex = 0;
@@ -95,12 +95,12 @@ void Game_Init(void) {
     Audio_Init();
     World_Init();
     Font_Init();
-    func_8007BE30();
+    World_InitSlots();
     Screen_Init();
     nuGfxPreNMIFuncSet(func_80078BD0);
     func_80087720();
-    func_8006DA88();
-    func_8006DC90();
+    Explosions_Init();
+    EnvMap_Init();
     nuGfxFuncSet(func_80078BA4);
     nuGfxDisplayOn();
 }

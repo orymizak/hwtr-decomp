@@ -52,10 +52,10 @@ void Camera_CalcFrustum(void);
 void func_80070F38(void);
 void func_80071530(void);
 void Video_SetHighRes(void);
-void func_800761D4(u8 arg0, u8 arg1, u8 arg2, u16 arg3, u16 arg4);
-void func_80076470(void *arg0);
-void func_80076578(f32 arg0, void *arg1);
-void func_800766FC(void *arg0, s32 arg1, s32 arg2);
+void Gfx_ClearFrame(u8 arg0, u8 arg1, u8 arg2, u16 arg3, u16 arg4);
+void Bg_SetPalette(void *arg0);
+void Bg_FadePalette(f32 arg0, void *arg1);
+void Bg_DrawImage(void *arg0, s32 arg1, s32 arg2);
 void func_800802C0(void);
 void func_80080360(void);
 u8 Screen_BeginFrame(s32 arg0);
@@ -122,7 +122,7 @@ void Screen_SetBgAlpha(u8 alpha) {
 
     if (alpha != *current && gBgImage != NULL) {
         *current = alpha;
-        func_80076578(alpha / 255.0, gBgImage);
+        Bg_FadePalette(alpha / 255.0, gBgImage);
     }
 }
 
@@ -155,9 +155,9 @@ s32 Screen_BeginFrameDefault(void) {
 }
 
 u8 Screen_BeginFrame(s32 arg0) {
-    func_800761D4(D_800F20FE, D_800F20FF, D_800F2100, gScreenWidth, gScreenHeight);
+    Gfx_ClearFrame(D_800F20FE, D_800F20FF, D_800F2100, gScreenWidth, gScreenHeight);
     if (gBgImage != NULL) {
-        func_800766FC(gBgImage, 640, 480);
+        Bg_DrawImage(gBgImage, 640, 480);
     }
     func_80071530();
     return 1;

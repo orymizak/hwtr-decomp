@@ -161,7 +161,7 @@ void HighScores_PickRandom(void);
 extern u8 D_80100BD8;
 void MenuList_Reset(s32 arg0);
 s32 Car_IsUnlocked(u8 i, s32 p);
-extern void (*D_80141044)(u8);
+extern void (*sysWorldDraw)(u8);
 extern void (*sysFontLoad)(s32, void *);
 extern u8 D_80100F94;
 void Music_PlaySong(void);
@@ -570,7 +570,7 @@ f32 Menu_DeltaSeconds(u8 i) {
 
 void Menu_SubmitModel(s8 a) {
     if (a >= 0) {
-        D_80141044(a);
+        sysWorldDraw(a);
     }
 }
 
@@ -1000,7 +1000,7 @@ void MenuGlobe_Draw(s8 unused) {
         m[2][1] = b;
     }
     sysCameraApply(m);
-    D_80141044(NameList_Find(&D_80100BD0));
+    sysWorldDraw(NameList_Find(&D_80100BD0));
 }
 
 extern u8 gMenuHighlight;

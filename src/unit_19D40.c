@@ -9,25 +9,25 @@ void Debug_DrawString(char *, s32, s32, s32);
 typedef struct { u8 pad[0xC]; u8 r; u8 g; u8 b; s8 on; } Col16_;
 typedef struct { u8 pad[0xC]; u8 r; u8 g; u8 b; u8 flags; } Col16b_;
 typedef struct { u16 n; u8 pad[2]; Col16b_ *c; u32 p8; u32 pC; s32 w10; } Hdr7E_;
-extern s32 D_801454A0;
+extern s32 gWorldSlots;
 void GfxPools_Shutdown(void);
 void WorldData_Free(s32);
 extern u8 gColorShift;
-void func_80079EF4(Hdr7E_ *h);
+void MeshColors_Relocate(Hdr7E_ *h);
 extern f64 D_800FF8E0;
 
 s32 Memory_Alloc(s32);
 f32 Math_Atan2(f32, f32);
 extern s32 D_8014551C;
 
-INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_80079140);
+INCLUDE_ASM("asm/nonmatchings/unit_19D40", Mesh_BuildDisplayList);
 
-INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_80079BD4);
+INCLUDE_ASM("asm/nonmatchings/unit_19D40", Mesh_FillVtx);
 
-void func_80079DBC(Hdr79_ *h) {
+void Mesh_Relocate(Hdr79_ *h) {
     if (h->p14 != 0) {
         h->p14 += (u32)h;
-        func_80079EF4(h->p14);
+        MeshColors_Relocate(h->p14);
     }
     h->c = 0;
     h->magic = 0xF6B1;
@@ -41,11 +41,11 @@ void func_80079DBC(Hdr79_ *h) {
 }
 
 
-s32 func_80079E48(u8 *m) {
+s32 Mesh_AllocDisplayList(u8 *m) {
     return Memory_Alloc(*(u16 *)(m + 4) * 8);
 }
 
-s32 func_80079E68(u8 *m) {
+s32 Mesh_AllocVtx(u8 *m) {
     s32 buf;
     u16 n = *(u16 *)(m + 6);
 
@@ -56,7 +56,7 @@ s32 func_80079E68(u8 *m) {
     return buf;
 }
 
-void func_80079E90(Col16_ *src, Col16_ *dst, u32 n) {
+void Mesh_CopyColors(Col16_ *src, Col16_ *dst, u32 n) {
     u32 i;
 
     for (i = 0; i < n; i++, src++) {
@@ -70,7 +70,7 @@ void func_80079E90(Col16_ *src, Col16_ *dst, u32 n) {
 }
 
 
-void func_80079EF4(Hdr7E_ *h) {
+void MeshColors_Relocate(Hdr7E_ *h) {
     u8 *sh;
     s32 i;
 
@@ -206,7 +206,7 @@ void Mtx34_Mul(f32 a[3][4], f32 b[3][4], f32 out[3][4]) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_8007B230);
 
-void func_8007B510(u16 n) {
+void Debug_ShowNumber(u16 n) {
     char buf[8];
     s32 y;
     s32 x;
@@ -224,11 +224,11 @@ void func_8007B510(u16 n) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_8007B598);
 
-s32 func_8007BE30(void) {
+s32 World_InitSlots(void) {
     s32 i;
 
     for (i = 0; i < 32; i++) {
-        (&D_801454A0)[i] = 0;
+        (&gWorldSlots)[i] = 0;
     }
     return 1;
 }
@@ -239,15 +239,15 @@ s32 World_Free(u8 i) {
     s32 *p;
 
     if (i < 32) {
-        if (((s32 *)&D_801454A0)[i] == 0) {
+        if (((s32 *)&gWorldSlots)[i] == 0) {
             return 1;
         }
         GfxPools_Shutdown();
-        WorldData_Free(((s32 *)&D_801454A0)[i]);
-        ((s32 *)&D_801454A0)[i] = 0;
+        WorldData_Free(((s32 *)&gWorldSlots)[i]);
+        ((s32 *)&gWorldSlots)[i] = 0;
         return 1;
     }
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_8007BF20);
+INCLUDE_ASM("asm/nonmatchings/unit_19D40", World_DrawSlot);

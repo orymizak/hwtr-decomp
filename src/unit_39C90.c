@@ -7,7 +7,7 @@ extern s32 D_8011C820;
 extern s32 D_8011C824;
 extern s32 D_8011C828;
 extern u8 gCollIdUsed[];
-extern void (*D_801416F8)(void *);
+extern void (*svcWorldSetCollLevel)(void *);
 s32 func_8008182C(void);
 u8 Coll_LoadLevel(u8 *);
 void func_800C9AF0(s32 n, s32 b);
@@ -113,7 +113,7 @@ s32 Coll_Init(u8 *o) {
     if (Coll_LoadLevel(o) == 0) {
         return 0;
     }
-    D_801416F8(gCollLevel);
+    svcWorldSetCollLevel(gCollLevel);
     func_800C9AF0(gCollLevel->x10, gCollLevel->xD0);
     memset(gCollIdUsed, 0, 0x80);
     return 1;
