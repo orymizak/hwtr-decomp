@@ -1,47 +1,38 @@
 #include "common.h"
 #include "ultra64.h"
+#include "math.h"
 #include "include_asm.h"
 #include "car.h"
 typedef struct { s32 a; s32 b; s32 c; } V12_;
-extern V12_ D_8011855C;
-extern V12_ D_80118568;
-extern f32 D_80118578[3][3];
-typedef struct { s32 w; u8 pad[0x60]; } Ent64w_;
-extern Ent64w_ D_801185B8[];
-typedef struct { u8 on; u8 pad[0x63]; } Ent64_;
-extern Ent64_ D_801185B4[];
-extern u8 gRaceCamCount;
 typedef Vec3f Vec3f_;
-    /* TODO (Clean version): Unify CamE_, Cam90_, Ent64_, and Ent64w_ into a single Camera struct (sizeof 0x64):
-    typedef struct {
-        u32 unk0;
-        Vec3f_ pos;
-        Vec3f_ vel;
-        f32 m[3][3];
-        f32 fov;
-        s32 mode;
-        u8 pt;
-        u8 car;
-        u8 b4A;
-        u8 b4B;
-        u8 b4C;
-        u8 pad4D[3];
-        s32 timer;
-        u32 shake;
-        f32 f58;
-        u8 b5C;
-        u8 pad5D[3];
-        u32 b60;
-    } Camera;
-    extern Camera gCameras[];
-    */
-typedef struct { u8 p0[0x44]; s32 mode; u8 pt; u8 car; u8 p4A[2]; u8 b4C; u8 p4D[3]; s32 timer; } Cam90_;
-typedef struct { u8 p0[4]; Vec3f_ pos; Vec3f_ vel; f32 m[3][3]; f32 fov; s32 mode; u8 pt; u8 car; u8 b4A; u8 b4B; u8 b4C; u8 p4D[7]; u32 shake; f32 f58; u8 b5C; u8 p5D[3]; u32 b60; } CamE_;
+/* Race camera (gRaceCams, gRaceCamCount entries of 0x64). */
+typedef struct {
+    /* 0x00 */ u32 unk0;
+    /* 0x04 */ Vec3f_ pos;
+    /* 0x10 */ Vec3f_ vel;
+    /* 0x1C */ f32 m[3][3];
+    /* 0x40 */ f32 fov;
+    /* 0x44 */ s32 mode;   /* 0 = follow car */
+    /* 0x48 */ u8 pt;      /* trackside camera point */
+    /* 0x49 */ u8 car;     /* car followed */
+    /* 0x4A */ u8 b4A;
+    /* 0x4B */ u8 b4B;
+    /* 0x4C */ u8 reset;   /* set by RaceCam_Reset */
+    /* 0x4D */ u8 p4D[3];
+    /* 0x50 */ s32 timer;
+    /* 0x54 */ u32 shake;  /* RaceCam_Shake sets 0xFA */
+    /* 0x58 */ f32 f58;
+    /* 0x5C */ u8 intro;   /* set during the intro (RaceCam_StartIntro) */
+    /* 0x5D */ u8 p5D[3];
+    /* 0x60 */ u32 b60;    /* 5000 when the intro ends */
+} RaceCam; /* size = 0x64 */
+extern RaceCam gRaceCams[];
+extern u8 gRaceCamCount;
 typedef struct { s32 mode; Vec3f_ ofs; f32 dist; } CamT_;
 extern u8 D_80118550;
 extern u8 D_80138D43;
 s32 Race_GetPhase(void);
-void RaceCam_UpdateIntro(CamE_ *);
+void RaceCam_UpdateIntro(RaceCam *);
 void RaceCam_SmoothTo(Vec3f_, Vec3f_, Vec3f_, Vec3f_ *, f32, f32, f32, f32);
 void Coll_ClipCamera(u8, Vec3f_ *);
 u8 Coll_GetRoomAxis(u8, Vec3f_ *, Vec3f_ *);
@@ -53,11 +44,7 @@ extern u8 (*svcRandRange)(s32);
 extern u8 D_80118621;
 extern s32 *D_80118624;
 s32 Cars_GetCount(void);
-extern u8 gRaceCams[];
 s32 Coll_GetSpawnCount(void);
-extern u8 D_801185AC;
-extern u8 D_801185A4;
-extern u8 D_801185A2;
 
 
 
@@ -67,8 +54,8 @@ s32 RaceCam_Shutdown(void) {
     return 1;
 }
 
-void RaceCam_UpdateTrackside(Cam90_ *cam, u32 dt);
-void RaceCam_Nop(void);
+void RaceCam_UpdateTrackside(RaceCam *cam, u32 dt);
+void RaceCam_Nop(RaceCam *cam, f32 k);
 s32 RaceCam_GetIntroDuration(void);
 void RaceCam_Update(u32 dt) {
     Vec3f_ pos;
@@ -85,7 +72,7 @@ void RaceCam_Update(u32 dt) {
     Vec3f_ tmp;
     s32 flags;
     u32 i;
-    CamE_ *cam;
+    RaceCam *cam;
     f32 k;
     Car *car;
     u8 vis;
@@ -106,9 +93,9 @@ void RaceCam_Update(u32 dt) {
     s32 idx;
 
     k = 1000.0f / (f32)dt;
-    cam = (CamE_ *)gRaceCams;
+    cam = gRaceCams;
     for (i = 0; i < gRaceCamCount; cam++, i++) {
-        if ((*cam).b5C != 0 && RaceCam_GetIntroDuration() != 0) {
+        if ((*cam).intro != 0 && RaceCam_GetIntroDuration() != 0) {
             RaceCam_UpdateIntro(&(*cam));
             continue;
         }
@@ -137,26 +124,11 @@ void RaceCam_Update(u32 dt) {
         fBC = car->fBC;
         switch ((*cam).mode) {
         case 0:
-            /* TODO (Clean version): Replace repetitive inlined vector and matrix math with helper macros:
-             *   #define VEC3_DOT(a, b) ((a).x * (b).x + (a).y * (b).y + (a).z * (b).z)
-             *   #define VEC3_CROSS(dst, a, b) do { \
-             *       (dst).x = (a).y * (b).z - (a).z * (b).y; \
-             *       (dst).y = (a).z * (b).x - (a).x * (b).z; \
-             *       (dst).z = (a).x * (b).y - (a).y * (b).x; \
-             *   } while (0)
-             *   #define VEC3_NORMALIZE(v) do { \
-             *       f32 _l = sqrtf(VEC3_DOT(v, v)); \
-             *       f32 _i = 1.0f / _l; \
-             *       (v).x *= _i; (v).y *= _i; (v).z *= _i; \
-             *   } while (0)
-             *   Mtx33_MultVec3f(m, &((CamT_ *)D_80118624)[cam->pt].ofs, &t);
-             *   VEC3_ADD(cam->pos, pos, t);
-             */
             tmp.x = m[0][0] * (((CamT_ *)D_80118624)[(*cam).pt]).ofs.x + m[0][1] * (((CamT_ *)D_80118624)[(*cam).pt]).ofs.y + m[0][2] * (((CamT_ *)D_80118624)[(*cam).pt]).ofs.z;
             tmp.y = m[1][0] * (((CamT_ *)D_80118624)[(*cam).pt]).ofs.x + m[1][1] * (((CamT_ *)D_80118624)[(*cam).pt]).ofs.y + m[1][2] * (((CamT_ *)D_80118624)[(*cam).pt]).ofs.z;
             tmp.z = m[2][0] * (((CamT_ *)D_80118624)[(*cam).pt]).ofs.x + m[2][1] * (((CamT_ *)D_80118624)[(*cam).pt]).ofs.y + m[2][2] * (((CamT_ *)D_80118624)[(*cam).pt]).ofs.z;
             t = tmp;
-            { ((*cam).pos).x = ( pos).x + ( t).x; ((*cam).pos).y = ( pos).y + ( t).y; ((*cam).pos).z = ( pos).z + ( t).z; };
+            VEC3_ADD((*cam).pos, pos, t);
             (*cam).vel = vel;
             (*cam).m[0][0] = m[0][0];
             (*cam).m[0][1] = m[0][1];
@@ -180,22 +152,22 @@ void RaceCam_Update(u32 dt) {
                 far = 30000.0f;
                 near = 10000.0f;
                 damp = 0.1f;
-                s = ((vel).x * ( t).x + (vel).y * ( t).y + (vel).z * ( t).z);
-                { (vel).x = ( t).x * ( s); (vel).y = ( t).y * ( s); (vel).z = ( t).z * ( s); };
-                sum = ((((vel).x) < 0.0f ? -((vel).x) : ((vel).x)) + (((vel).y) < 0.0f ? -((vel).y) : ((vel).y)) + (((vel).z) < 0.0f ? -((vel).z) : ((vel).z)));
+                s = VEC3_DOT(vel, t);
+                VEC3_SCALE(vel, t, s);
+                sum = VEC3_ABS_SUM(vel);
                 if (sum < 1.0f) {
                     vel = t;
                 }
                 f = vel;
-                { f32 _l = sqrtf(((f).x * (f).x + (f).y * (f).y + (f).z * (f).z)); f32 _i = 1.0f / _l; (f).x = (f).x * _i; (f).y = (f).y * _i; (f).z = (f).z * _i; };
+                VEC3_NORMALIZE(f);
                 if (car->b744 == 0) {
                     u.x = 0.0f;
                     u.y = 0.0f;
                     u.z = 1.0f;
                 }
-                { (r).x = ( f).y * ( u).z - ( u).y * ( f).z; (r).y = ( u).x * ( f).z - ( f).x * ( u).z; (r).z = ( f).x * ( u).y - ( u).x * ( f).y; };
-                { f32 _l = sqrtf(((r).x * (r).x + (r).y * (r).y + (r).z * (r).z)); f32 _i = 1.0f / _l; (r).x = (r).x * _i; (r).y = (r).y * _i; (r).z = (r).z * _i; };
-                { (u).x = ( r).y * ( f).z - ( f).y * ( r).z; (u).y = ( f).x * ( r).z - ( r).x * ( f).z; (u).z = ( r).x * ( f).y - ( f).x * ( r).y; };
+                VEC3_CROSS(r, f, u);
+                VEC3_NORMALIZE(r);
+                VEC3_CROSS(u, r, f);
             } else {
                 far = 30000.0f;
                 near = 10000.0f;
@@ -203,16 +175,16 @@ void RaceCam_Update(u32 dt) {
                 if (!(flags & 4)) {
                     vel.z = 0.0f;
                 }
-                if (sqrtf(((vel).x * ( vel).x + (vel).y * ( vel).y + (vel).z * ( vel).z)) < D_80138D43 * 17.6f) {
-                    if (b3E7 != 0 || (*cam).b60 != 0 || (*cam).b4C != 0) {
+                if (sqrtf(VEC3_DOT(vel, vel)) < D_80138D43 * 17.6f) {
+                    if (b3E7 != 0 || (*cam).b60 != 0 || (*cam).reset != 0) {
                         t.x = m[0][1];
                         t.y = m[1][1];
                         t.z = m[2][1];
                     } else {
-                        { (t).x = ( pos).x - ( (*cam).pos).x; (t).y = ( pos).y - ( (*cam).pos).y; (t).z = ( pos).z - ( (*cam).pos).z; };
+                        VEC3_SUB(t, pos, (*cam).pos);
                     }
                     t.z = 0.0f;
-                    if (((t.x) < 0.0f ? -(t.x) : (t.x)) + ((t.y) < 0.0f ? -(t.y) : (t.y)) > 0.0f) {
+                    if (ABS(t.x) + ABS(t.y) > 0.0f) {
                         f = t;
                     } else {
                         f.x = m[0][2];
@@ -222,19 +194,19 @@ void RaceCam_Update(u32 dt) {
                 } else {
                     f = vel;
                 }
-                { f32 _l = sqrtf(((f).x * (f).x + (f).y * (f).y + (f).z * (f).z)); f32 _i = 1.0f / _l; (f).x = (f).x * _i; (f).y = (f).y * _i; (f).z = (f).z * _i; };
+                VEC3_NORMALIZE(f);
                 if (flags & 4) {
                     u.x = m[0][2];
                     u.y = m[1][2];
                     u.z = m[2][2];
-                    { (r).x = ( f).y * ( u).z - ( u).y * ( f).z; (r).y = ( u).x * ( f).z - ( f).x * ( u).z; (r).z = ( f).x * ( u).y - ( u).x * ( f).y; };
-                    if (!(((((r).x) < 0.0f ? -((r).x) : ((r).x)) + (((r).y) < 0.0f ? -((r).y) : ((r).y)) + (((r).z) < 0.0f ? -((r).z) : ((r).z))) > 0.0f)) {
+                    VEC3_CROSS(r, f, u);
+                    if (!(VEC3_ABS_SUM(r) > 0.0f)) {
                         r.x = 1.0f;
                         r.y = 0.0f;
                         r.z = 0.0f;
                     }
-                    { f32 _l = sqrtf(((r).x * (r).x + (r).y * (r).y + (r).z * (r).z)); f32 _i = 1.0f / _l; (r).x = (r).x * _i; (r).y = (r).y * _i; (r).z = (r).z * _i; };
-                    { (u).x = ( r).y * ( f).z - ( f).y * ( r).z; (u).y = ( f).x * ( r).z - ( r).x * ( f).z; (u).z = ( r).x * ( f).y - ( f).x * ( r).y; };
+                    VEC3_NORMALIZE(r);
+                    VEC3_CROSS(u, r, f);
                 } else {
                     r.x = f.y;
                     r.y = -f.x;
@@ -244,8 +216,8 @@ void RaceCam_Update(u32 dt) {
                     u.z = 1.0f;
                 }
             }
-            { (t).x = ( u).x * ( (((CamT_ *)D_80118624)[(*cam).pt]).dist); (t).y = ( u).y * ( (((CamT_ *)D_80118624)[(*cam).pt]).dist); (t).z = ( u).z * ( (((CamT_ *)D_80118624)[(*cam).pt]).dist); };
-            { (pos).x = ( pos).x + ( t).x; (pos).y = ( pos).y + ( t).y; (pos).z = ( pos).z + ( t).z; };
+            VEC3_SCALE(t, u, (((CamT_ *)D_80118624)[(*cam).pt]).dist);
+            VEC3_ADD(pos, pos, t);
             ofs = (((CamT_ *)D_80118624)[(*cam).pt]).ofs;
             if (b4C0 != 0) {
                 s = ((fBC - f4C4) + 528.0f) / 528.0f;
@@ -257,20 +229,20 @@ void RaceCam_Update(u32 dt) {
             ofs.x *= s;
             ofs.y *= s;
             eye = pos;
-            { (t).x = ( r).x * ( ofs.x); (t).y = ( r).y * ( ofs.x); (t).z = ( r).z * ( ofs.x); };
-            { (eye).x = ( eye).x + ( t).x; (eye).y = ( eye).y + ( t).y; (eye).z = ( eye).z + ( t).z; };
-            { (t).x = ( f).x * ( ofs.y); (t).y = ( f).y * ( ofs.y); (t).z = ( f).z * ( ofs.y); };
-            { (eye).x = ( eye).x + ( t).x; (eye).y = ( eye).y + ( t).y; (eye).z = ( eye).z + ( t).z; };
-            { (t).x = ( u).x * ( ofs.z); (t).y = ( u).y * ( ofs.z); (t).z = ( u).z * ( ofs.z); };
-            { (eye).x = ( eye).x + ( t).x; (eye).y = ( eye).y + ( t).y; (eye).z = ( eye).z + ( t).z; };
+            VEC3_SCALE(t, r, ofs.x);
+            VEC3_ADD(eye, eye, t);
+            VEC3_SCALE(t, f, ofs.y);
+            VEC3_ADD(eye, eye, t);
+            VEC3_SCALE(t, u, ofs.z);
+            VEC3_ADD(eye, eye, t);
             Coll_ClipCamera((*cam).car, &eye);
-            { (t).x = ( eye).x - ( pos).x; (t).y = ( eye).y - ( pos).y; (t).z = ( eye).z - ( pos).z; };
-            dist = sqrtf(((t).x * ( t).x + (t).y * ( t).y + (t).z * ( t).z));
-            olen = sqrtf(((ofs).x * ( ofs).x + (ofs).y * ( ofs).y + (ofs).z * ( ofs).z));
-            if (vis == 0 && (*cam).b4C == 0 && (*cam).b60 == 0) {
-                { (t).x = ( (*cam).pos).x - ( pos).x; (t).y = ( (*cam).pos).y - ( pos).y; (t).z = ( (*cam).pos).z - ( pos).z; };
-                { (d).x = ( eye).x - ( pos).x; (d).y = ( eye).y - ( pos).y; (d).z = ( eye).z - ( pos).z; };
-                if (((t).x * ( d).x + (t).y * ( d).y + (t).z * ( d).z) < 0.0f) {
+            VEC3_SUB(t, eye, pos);
+            dist = sqrtf(VEC3_DOT(t, t));
+            olen = sqrtf(VEC3_DOT(ofs, ofs));
+            if (vis == 0 && (*cam).reset == 0 && (*cam).b60 == 0) {
+                VEC3_SUB(t, (*cam).pos, pos);
+                VEC3_SUB(d, eye, pos);
+                if (VEC3_DOT(t, d) < 0.0f) {
                     eye.z += 120.0f;
                 }
                 RaceCam_SmoothTo((*cam).pos, (*cam).vel, eye, &eye, k, far, near, damp);
@@ -278,18 +250,18 @@ void RaceCam_Update(u32 dt) {
             if (dist < 1.0f) {
                 f.y = 1.0f;
             }
-            { (f).x = ( pos).x - ( eye).x; (f).y = ( pos).y - ( eye).y; (f).z = ( pos).z - ( eye).z; };
-            { f32 _l = sqrtf(((f).x * (f).x + (f).y * (f).y + (f).z * (f).z)); f32 _i = 1.0f / _l; (f).x = (f).x * _i; (f).y = (f).y * _i; (f).z = (f).z * _i; };
+            VEC3_SUB(f, pos, eye);
+            VEC3_NORMALIZE(f);
             if (flags & 0x10) {
                 u.x = 0.0f;
                 u.y = 0.0f;
                 u.z = 1.0f;
             }
-            { (r).x = ( f).y * ( u).z - ( u).y * ( f).z; (r).y = ( u).x * ( f).z - ( f).x * ( u).z; (r).z = ( f).x * ( u).y - ( u).x * ( f).y; };
-            { f32 _l = sqrtf(((r).x * (r).x + (r).y * (r).y + (r).z * (r).z)); f32 _i = 1.0f / _l; (r).x = (r).x * _i; (r).y = (r).y * _i; (r).z = (r).z * _i; };
-            { (u).x = ( r).y * ( f).z - ( f).y * ( r).z; (u).y = ( f).x * ( r).z - ( r).x * ( f).z; (u).z = ( r).x * ( f).y - ( f).x * ( r).y; };
-            { (t).x = ( f).x * ( ((olen) < ( dist) ? (olen) : ( dist))); (t).y = ( f).y * ( ((olen) < ( dist) ? (olen) : ( dist))); (t).z = ( f).z * ( ((olen) < ( dist) ? (olen) : ( dist))); };
-            { (eye).x = ( pos).x - ( t).x; (eye).y = ( pos).y - ( t).y; (eye).z = ( pos).z - ( t).z; };
+            VEC3_CROSS(r, f, u);
+            VEC3_NORMALIZE(r);
+            VEC3_CROSS(u, r, f);
+            VEC3_SCALE(t, f, MIN(olen, dist));
+            VEC3_SUB(eye, pos, t);
             if ((*cam).b60 != 0) {
                 sp = (f32 *)Coll_GetSpawn(Coll_GetSpawnCount() - 1);
                 s = (f32)(5000 - (*cam).b60) / 5000.0f;
@@ -297,24 +269,24 @@ void RaceCam_Update(u32 dt) {
                 tmp = Vec3_Lerp(s, *(Vec3f_ *)&sp[0], eye);
                 (*cam).pos = tmp;
                 c = Vec3_Lerp(s, *(Vec3f_ *)&sp[3], pos);
-                { (f).x = ( c).x - ( (*cam).pos).x; (f).y = ( c).y - ( (*cam).pos).y; (f).z = ( c).z - ( (*cam).pos).z; };
-                { f32 _l = sqrtf(((f).x * (f).x + (f).y * (f).y + (f).z * (f).z)); f32 _i = 1.0f / _l; (f).x = (f).x * _i; (f).y = (f).y * _i; (f).z = (f).z * _i; };
+                VEC3_SUB(f, c, (*cam).pos);
+                VEC3_NORMALIZE(f);
                 r.x = f.y;
                 r.y = -f.x;
                 r.z = 0.0f;
-                { f32 _l = sqrtf(((r).x * (r).x + (r).y * (r).y + (r).z * (r).z)); f32 _i = 1.0f / _l; (r).x = (r).x * _i; (r).y = (r).y * _i; (r).z = (r).z * _i; };
-                { (u).x = ( r).y * ( f).z - ( f).y * ( r).z; (u).y = ( f).x * ( r).z - ( r).x * ( f).z; (u).z = ( r).x * ( f).y - ( f).x * ( r).y; };
-                { (*cam).m[0][0] = (r).x; (*cam).m[1][0] = (r).y; (*cam).m[2][0] = (r).z; (*cam).m[0][1] = ( f).x; (*cam).m[1][1] = ( f).y; (*cam).m[2][1] = ( f).z; (*cam).m[0][2] = ( u).x; (*cam).m[1][2] = ( u).y; (*cam).m[2][2] = ( u).z; };
+                VEC3_NORMALIZE(r);
+                VEC3_CROSS(u, r, f);
+                MTX3_SET_COLUMNS((*cam).m, r, f, u);
                 (*cam).b60 -= dt;
             } else {
-                if ((*cam).b4C == 0) {
-                    { ((*cam).vel).x = ( eye).x - ( (*cam).pos).x; ((*cam).vel).y = ( eye).y - ( (*cam).pos).y; ((*cam).vel).z = ( eye).z - ( (*cam).pos).z; };
-                    { ((*cam).vel).x = ( (*cam).vel).x * ( k); ((*cam).vel).y = ( (*cam).vel).y * ( k); ((*cam).vel).z = ( (*cam).vel).z * ( k); };
+                if ((*cam).reset == 0) {
+                    VEC3_SUB((*cam).vel, eye, (*cam).pos);
+                    VEC3_SCALE((*cam).vel, (*cam).vel, k);
                 } else {
                     (*cam).vel = vel;
                 }
                 (*cam).pos = eye;
-                { (*cam).m[0][0] = (r).x; (*cam).m[1][0] = (r).y; (*cam).m[2][0] = (r).z; (*cam).m[0][1] = ( f).x; (*cam).m[1][1] = ( f).y; (*cam).m[2][1] = ( f).z; (*cam).m[0][2] = ( u).x; (*cam).m[1][2] = ( u).y; (*cam).m[2][2] = ( u).z; };
+                MTX3_SET_COLUMNS((*cam).m, r, f, u);
                 (*cam).fov = 1.570795f;
             }
             break;
@@ -329,22 +301,18 @@ void RaceCam_Update(u32 dt) {
             (*cam).vel.x = 0.0f;
             (*cam).vel.y = 0.0f;
             (*cam).vel.z = 0.0f;
-            { (f).x = ( pos).x - ( (*cam).pos).x; (f).y = ( pos).y - ( (*cam).pos).y; (f).z = ( pos).z - ( (*cam).pos).z; };
-            { f32 _l = sqrtf(((f).x * (f).x + (f).y * (f).y + (f).z * (f).z)); f32 _i = 1.0f / _l; (f).x = (f).x * _i; (f).y = (f).y * _i; (f).z = (f).z * _i; };
+            VEC3_SUB(f, pos, (*cam).pos);
+            VEC3_NORMALIZE(f);
             r.x = f.y;
             r.y = -f.x;
             r.z = 0.0f;
-            { f32 _l = sqrtf(((r).x * (r).x + (r).y * (r).y + (r).z * (r).z)); f32 _i = 1.0f / _l; (r).x = (r).x * _i; (r).y = (r).y * _i; (r).z = (r).z * _i; };
-            { (u).x = ( r).y * ( f).z - ( f).y * ( r).z; (u).y = ( f).x * ( r).z - ( r).x * ( f).z; (u).z = ( r).x * ( f).y - ( f).x * ( r).y; };
-            { f32 _l = sqrtf(((u).x * (u).x + (u).y * (u).y + (u).z * (u).z)); f32 _i = 1.0f / _l; (u).x = (u).x * _i; (u).y = (u).y * _i; (u).z = (u).z * _i; };
-            { (*cam).m[0][0] = (r).x; (*cam).m[1][0] = (r).y; (*cam).m[2][0] = (r).z; (*cam).m[0][1] = ( f).x; (*cam).m[1][1] = ( f).y; (*cam).m[2][1] = ( f).z; (*cam).m[0][2] = ( u).x; (*cam).m[1][2] = ( u).y; (*cam).m[2][2] = ( u).z; };
+            VEC3_NORMALIZE(r);
+            VEC3_CROSS(u, r, f);
+            VEC3_NORMALIZE(u);
+            MTX3_SET_COLUMNS((*cam).m, r, f, u);
             break;
         case 4:
-            /* TODO (Clean version / Bug check): RaceCam_Nop is declared as void(void) but invoked
-             * as void (*)(CamE_ *, f32). If mode 4 is implemented, align the function prototype:
-             *   void RaceCam_Nop(CamE_ *cam, f32 k);
-             */
-            ((void (*)(CamE_ *, f32))RaceCam_Nop)(&(*cam), k);
+            RaceCam_Nop(cam, k);
             break;
         }
         if ((*cam).shake > dt) {
@@ -359,7 +327,7 @@ void RaceCam_Update(u32 dt) {
         } else {
             (*cam).shake = 0;
         }
-        (*cam).b4C = 0;
+        (*cam).reset = 0;
         if (D_80118550 != 0) {
             RaceCam_UpdateTrackside(&(*cam), dt);
         } else if ((*cam).b4A != (*cam).b4B) {
@@ -367,7 +335,7 @@ void RaceCam_Update(u32 dt) {
                 idx = ((*cam).pt + 1) % D_80118621;
                 (*cam).pt = idx;
                 (*cam).mode = (((CamT_ *)D_80118624)[idx]).mode;
-                (*cam).b4C = 1;
+                (*cam).reset = 1;
                 if ((*cam).b60 != 0) {
                     car->cnt3E7 = car->nPoints;
                     (*cam).b60 = 0;
@@ -382,61 +350,40 @@ void RaceCam_Update(u32 dt) {
 INCLUDE_ASM("asm/nonmatchings/unit_2F4F0", RaceCam_SmoothTo);
 
 void RaceCam_Get(u8 i, Vec3i *a1, f32 *a2, f32 *a3, f32 *a4, f32 *a5, s8 *a6, u8 *a7) {
-    /* TODO (Clean version): Replace raw byte indexing with Camera struct member accesses:
-     *   CamE_ *cam = &((CamE_ *)gRaceCams)[i];
-     *   *a1 = *(Vec3i *)&cam->pos;
-     *   a2[0] = cam->m[0][0]; a2[1] = cam->m[1][0]; a2[2] = cam->m[2][0];
-     *   a3[0] = cam->m[0][1]; a3[1] = cam->m[1][1]; a3[2] = cam->m[2][1];
-     *   a4[0] = cam->m[0][2]; a4[1] = cam->m[1][2]; a4[2] = cam->m[2][2];
-     *   *a5 = cam->fov;
-     *   *a6 = (cam->mode == 0);
-     *   *a7 = cam->car;
-     */
-    u8 *p = gRaceCams + i * 0x64;
+    RaceCam *cam = &gRaceCams[i];
 
-    *a1 = *(Vec3i *)(p + 4);
-    a2[0] = *(f32 *)(p + 0x1C);
-    a2[1] = *(f32 *)(p + 0x28);
-    a2[2] = *(f32 *)(p + 0x34);
-    a3[0] = *(f32 *)(p + 0x20);
-    a3[1] = *(f32 *)(p + 0x2C);
-    a3[2] = *(f32 *)(p + 0x38);
-    a4[0] = *(f32 *)(p + 0x24);
-    a4[1] = *(f32 *)(p + 0x30);
-    a4[2] = *(f32 *)(p + 0x3C);
-    *a5 = *(f32 *)(p + 0x40);
-    *a6 = *(s32 *)(p + 0x44) == 0;
-    *a7 = p[0x49];
+    *a1 = *(Vec3i *)&cam->pos;
+    a2[0] = cam->m[0][0];
+    a2[1] = cam->m[1][0];
+    a2[2] = cam->m[2][0];
+    a3[0] = cam->m[0][1];
+    a3[1] = cam->m[1][1];
+    a3[2] = cam->m[2][1];
+    a4[0] = cam->m[0][2];
+    a4[1] = cam->m[1][2];
+    a4[2] = cam->m[2][2];
+    *a5 = cam->fov;
+    *a6 = cam->mode == 0;
+    *a7 = cam->car;
 }
 
 void RaceCam_GetListener(V12_ *a, V12_ *b, Vec3f *c, Vec3f *d) {
-    /* TODO (Clean version): D_8011855C, D_80118568, and D_80118578 are pos, vel, and rot columns
-     * of the first camera in gRaceCams:
-     *   CamE_ *cam0 = (CamE_ *)gRaceCams;
-     *   *a = *(V12_ *)&cam0->pos;
-     *   *b = *(V12_ *)&cam0->vel;
-     *   c->x = cam0->m[0][1]; c->y = cam0->m[1][1]; c->z = cam0->m[2][1];
-     *   d->x = cam0->m[0][2]; d->y = cam0->m[1][2]; d->z = cam0->m[2][2];
-     */
-    *a = D_8011855C;
-    *b = D_80118568;
-    c->x = D_80118578[0][0];
-    c->y = D_80118578[1][0];
-    c->z = D_80118578[2][0];
-    d->x = D_80118578[0][1];
-    d->y = D_80118578[1][1];
-    d->z = D_80118578[2][1];
+    *a = *(V12_ *)&gRaceCams[0].pos;
+    *b = *(V12_ *)&gRaceCams[0].vel;
+    c->x = gRaceCams[0].m[0][1];
+    c->y = gRaceCams[0].m[1][1];
+    c->z = gRaceCams[0].m[2][1];
+    d->x = gRaceCams[0].m[0][2];
+    d->y = gRaceCams[0].m[1][2];
+    d->z = gRaceCams[0].m[2][2];
 }
 
 
 void RaceCam_SetFlag4A(s32 arg0, s8 arg1) {
-    /* TODO (Clean version): &D_801185A2 is &((CamE_ *)gRaceCams)[0].b4A (offset 0x4A). Refactor as:
-     *   ((CamE_ *)gRaceCams)[arg0 & 0xFF].b4A = arg1;
-     */
-    *(u8 *)(&D_801185A2 + ((arg0 & 0xFF) * 0x64)) = arg1;
+    gRaceCams[arg0 & 0xFF].b4A = arg1;
 }
 
-void RaceCam_UpdateTrackside(Cam90_ *cam, u32 dt) {
+void RaceCam_UpdateTrackside(RaceCam *cam, u32 dt) {
     Vec3f_ pos;
     Vec3f_ p;
     Vec3f_ d;
@@ -506,7 +453,8 @@ void RaceCam_UpdateTrackside(Cam90_ *cam, u32 dt) {
             v = flags;
             cam->car = bestCar;
             cam->pt = bestPt;
-            /* TODO (Clean version / Bug check): '(-(v & 1) & 3) | 2' simplifies to (v & 1) ? 3 : 2.
+            /* TODO (Clean version / Bug check): [evaluated 2026-11-18: the ternary changes the ROM]
+             * '(-(v & 1) & 3) | 2' simplifies to (v & 1) ? 3 : 2.
              * Because 'flags |= 1' is unconditionally executed in the loop above, v & 1 is always 1 (mode 3).
              * Clean equivalent:
              *   cam->mode = (v & 1) ? 3 : 2;
@@ -524,13 +472,13 @@ void RaceCam_UpdateTrackside(Cam90_ *cam, u32 dt) {
                 }
             }
         }
-        cam->b4C = 1;
+        cam->reset = 1;
         cam->timer = 4000;
     }
     cam->timer -= dt;
 }
 
-void RaceCam_Nop(void) {
+void RaceCam_Nop(RaceCam *cam, f32 k) {
 
 }
 
@@ -543,20 +491,11 @@ s32 RaceCam_GetIntroDuration(void) {
     return (n - 1) * 200;
 }
 
-    /* TODO (Clean version): D_801185B4[i].on and D_801185B8[i].w correspond to fields b5C (0x5C)
-    * and b60 (0x60) of CamE_:
-    *   for (i = 0; i < gRaceCamCount; i++) {
-    *       if (gCameras[i].b5C != 0) {
-    *           gCameras[i].b60 = 5000;
-    *           gCameras[i].b5C = 0;
-    *       }
-    *   }
-    */
 void RaceCam_StartIntro(void) {
     u32 i;
 
     for (i = 0; i < gRaceCamCount; i++) {
-        D_801185B4[i].on = 1;
+        gRaceCams[i].intro = 1;
     }
 }
 
@@ -565,9 +504,9 @@ void RaceCam_EndIntro(void) {
     u32 i;
 
     for (i = 0; i < gRaceCamCount; i++) {
-        if (D_801185B4[i].on != 0) {
-            D_801185B8[i].w = 5000;
-            D_801185B4[i].on = 0;
+        if (gRaceCams[i].intro != 0) {
+            gRaceCams[i].b60 = 5000;
+            gRaceCams[i].intro = 0;
         }
     }
 }
@@ -579,15 +518,10 @@ INCLUDE_ASM("asm/nonmatchings/unit_2F4F0", RaceCam_SaveReplay);
 
 INCLUDE_ASM("asm/nonmatchings/unit_2F4F0", RaceCam_LoadReplay);
 
-    /* TODO (Clean version): Symbols &D_801185A4 and &D_801185AC represent fields b4C (0x4C)
-    * and shake (0x54) of ((CamE_ *)gRaceCams)[arg0 & 0xFF]:
-    *   ((CamE_ *)gRaceCams)[arg0 & 0xFF].b4C = 1;
-    *   ((CamE_ *)gRaceCams)[arg0 & 0xFF].shake = 0xFA;
-    */
 void RaceCam_Reset(s32 arg0) {
-    *(u8 *)(&D_801185A4 + ((arg0 & 0xFF) * 0x64)) = 1;
+    gRaceCams[arg0 & 0xFF].reset = 1;
 }
 
 void RaceCam_Shake(s32 arg0) {
-    *(s32 *)(&D_801185AC + ((arg0 & 0xFF) * 0x64)) = 0xFA;
+    gRaceCams[arg0 & 0xFF].shake = 0xFA;
 }
