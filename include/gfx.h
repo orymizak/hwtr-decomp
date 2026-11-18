@@ -1,0 +1,32 @@
+#ifndef GFX_H
+#define GFX_H
+
+#include "PR/mbi.h"
+
+/* Display-list pool: a fixed head buffer plus chunks allocated on demand (one pool per frame). */
+typedef struct {
+    /* 0x000 */ Gfx *ptr;
+    /* 0x004 */ Gfx *end;
+    /* 0x008 */ Gfx head[0x41];
+    /* 0x210 */ Gfx *chunks[0x41];
+    /* 0x314 */ u32 capacity;
+    /* 0x318 */ u32 chunkCount;
+    /* 0x31C */ u8 unk31C[4];
+} GfxPool; /* size = 0x320 */
+
+extern GfxPool D_8014C740[2]; /* display-list pools, one per frame */
+extern s32 D_8014C540;        /* index of the current frame's pool */
+extern Gfx *D_8014EC78;       /* display-list write pointer */
+
+void GfxPool_Grow(GfxPool *pool, u32 required);
+
+/* Makes room for n more commands in the current pool before writing them.
+ * n is not parenthesized in the pointer sum: GFX_RESERVE(n + 8) must stay (gfx + n) + 8 to match. */
+#define GFX_RESERVE(n)                                                       \
+    if ((u32)(D_8014EC78 + n) >= (u32)D_8014C740[D_8014C540].end) {          \
+        D_8014C740[D_8014C540].ptr = D_8014EC78;                             \
+        GfxPool_Grow(&D_8014C740[D_8014C540], (n));                          \
+        D_8014EC78 = D_8014C740[D_8014C540].ptr;                             \
+    }
+
+#endif

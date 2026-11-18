@@ -1,4 +1,5 @@
 #include "common.h"
+#include "gfx.h"
 #include "include_asm.h"
 typedef struct { s8 a; s8 b; s8 c; u8 pad[0xD]; } Ent6F_;
 extern Ent6F_ D_800F1DF0[];
@@ -8,10 +9,7 @@ void func_800704DC(void);
 typedef struct { s32 f0; s32 f4; s32 f8; s32 fC; u8 p10[0x78]; s32 f88; s32 f8C; } S_D_8014EB58;
 extern S_D_8014EB58 D_8014EB58[];
 extern s32 D_8014108C;
-typedef struct { s32 f0; s32 f4; u8 p8[0x208]; s32 f210; s32 f214; u8 p218[0xFC]; s32 f314; s32 f318; u8 p31C[0x4]; } S_D_8014C740;
-typedef struct { u32 w0; u32 w1; } Gfx2_;
-typedef struct Task6F_ { struct Task6F_ *next; s32 w4; s32 w8; s32 wC; s32 w10; s32 w14; s32 w18; s32 w1C; s32 w20; s32 w24; s32 w28; s32 w2C; s32 w30; s32 w34; s32 w38; s32 w3C; Gfx2_ *dl; s32 dlsize; s32 w48; s32 w4C; s32 w50; void *msg; } Task6F_;
-typedef struct { u32 w0; u32 w1; } G9_;
+typedef struct Task6F_ { struct Task6F_ *next; s32 w4; s32 w8; s32 wC; s32 w10; s32 w14; s32 w18; s32 w1C; s32 w20; s32 w24; s32 w28; s32 w2C; s32 w30; s32 w34; s32 w38; s32 w3C; Gfx *dl; s32 dlsize; s32 w48; s32 w4C; s32 w50; void *msg; } Task6F_;
 typedef struct { u8 r; u8 g; u8 b; u8 pad3; u8 r2; u8 g2; u8 b2; u8 pad[9]; } L16_;
 typedef struct { u8 b[0x50]; } ViMode7_;
 typedef struct { u8 b[0x50]; } ViMode8_;
@@ -59,7 +57,6 @@ void func_8006F8C4(void);
 extern L16_ D_800F1DE8[];
 void MtxPool_Grow(void *, u32);
 void guLookAtReflect(void *, void *, f32, f32, f32, f32, f32, f32, f32, f32, f32);
-void GfxPool_Grow(void *, u32);
 extern Task6F_ *D_8010A220;
 extern s32 *D_80141690;
 extern u16 D_800F1CBC;
@@ -85,10 +82,7 @@ void func_800D5ED0(void);
 void func_800D60B0(void *, s32);
 void func_800D5FB0(void *);
 void func_800D5FF0(void);
-extern S_D_8014C740 D_8014C740[];
 extern u8 D_800F20F7;
-extern s32 D_8014C540;
-extern s32 D_8014EC78;
 f32 cosf(f32);
 f32 sinf(f32);
 extern f32 D_800F2114;
@@ -169,7 +163,7 @@ extern u32 D_800F1CB0;
 extern s32 *D_8014C6C8;
 
 /* Queues an RSP graphics task for dl (ucode pair ucode); flag bit 0 also flips to the next frame buffer. */
-void func_8006FA7C(Gfx2_ *dl, s32 size, s32 ucode, u32 flags) {
+void func_8006FA7C(Gfx *dl, s32 size, s32 ucode, u32 flags) {
     Task6F_ *t;
     u16 f;
     u32 mask;
@@ -206,7 +200,7 @@ void func_8006FA7C(Gfx2_ *dl, s32 size, s32 ucode, u32 flags) {
 }
 
 s32 func_8006FBF0(void) {
-    Gfx2_ dl[0x101];
+    Gfx dl[0x101];
     Task6F_ *t;
     u16 f;
     u32 mask;
@@ -225,12 +219,9 @@ s32 func_8006FBF0(void) {
     func_8006F8C4();
     t = D_8010A220;
     f = D_800F1CBC;
-    dl[0].w0 = 0xDE000000;
-    dl[0].w1 = (u32)&D_F1CF8;
-    dl[1].w0 = 0xE9000000;
-    dl[1].w1 = 0;
-    dl[2].w0 = 0xDF000000;
-    dl[2].w1 = 0;
+    gSPDisplayList(&dl[0], &D_F1CF8);
+    gDPFullSync(&dl[1]);
+    gSPEndDisplayList(&dl[2]);
     t->dl = dl;
     t->dlsize = 0x18;
     t->w14 = 0;
@@ -340,52 +331,16 @@ void func_80070148(void) {
 }
 
 void func_800702C4(s32 a, s32 b, s32 c) {
-    s32 w;
-    s32 g;
+    s32 color;
 
-    w = (a << 24) + ((b & 0xFF) << 16) + ((c & 0xFF) << 8);
-    if ((u32) (D_8014EC78 + 0x60) >= (u32) D_8014C740[D_8014C540].f4) {
-        D_8014C740[D_8014C540].f0 = D_8014EC78;
-        GfxPool_Grow(&D_8014C740[D_8014C540], 0xCU);
-        D_8014EC78 = D_8014C740[D_8014C540].f0;
-    }
-    g = D_8014EC78;
-    D_8014EC78 = g + 8;
-    ((s32 *)g)[0] = 0xDB0A0000;
-    ((s32 *)g)[1] = w;
-    D_8014EC78 = g + 16;
-    ((s32 *)g)[2] = 0xDB0A0004;
-    ((s32 *)g)[3] = w;
-    D_8014EC78 = g + 24;
-    ((s32 *)g)[4] = 0xDB0A0018;
-    ((s32 *)g)[5] = w;
-    D_8014EC78 = g + 32;
-    ((s32 *)g)[6] = 0xDB0A001C;
-    ((s32 *)g)[7] = w;
-    D_8014EC78 = g + 40;
-    ((s32 *)g)[8] = 0xDB0A0030;
-    ((s32 *)g)[9] = w;
-    D_8014EC78 = g + 48;
-    ((s32 *)g)[10] = 0xDB0A0034;
-    ((s32 *)g)[11] = w;
-    D_8014EC78 = g + 56;
-    ((s32 *)g)[12] = 0xDB0A0048;
-    ((s32 *)g)[13] = w;
-    D_8014EC78 = g + 64;
-    ((s32 *)g)[14] = 0xDB0A004C;
-    ((s32 *)g)[15] = w;
-    D_8014EC78 = g + 72;
-    ((s32 *)g)[16] = 0xDB0A0060;
-    ((s32 *)g)[17] = w;
-    D_8014EC78 = g + 80;
-    ((s32 *)g)[18] = 0xDB0A0064;
-    ((s32 *)g)[19] = w;
-    D_8014EC78 = g + 88;
-    ((s32 *)g)[20] = 0xDB0A0078;
-    ((s32 *)g)[21] = w;
-    D_8014EC78 = g + 96;
-    ((s32 *)g)[22] = 0xDB0A007C;
-    ((s32 *)g)[23] = w;
+    color = (a << 24) + ((b & 0xFF) << 16) + ((c & 0xFF) << 8);
+    GFX_RESERVE(12);
+    gSPLightColor(D_8014EC78++, LIGHT_1, color);
+    gSPLightColor(D_8014EC78++, LIGHT_2, color);
+    gSPLightColor(D_8014EC78++, LIGHT_3, color);
+    gSPLightColor(D_8014EC78++, LIGHT_4, color);
+    gSPLightColor(D_8014EC78++, LIGHT_5, color);
+    gSPLightColor(D_8014EC78++, LIGHT_6, color);
 }
 
 INCLUDE_ASM("asm/nonmatchings/unit_103B0", func_800704DC);
@@ -393,42 +348,21 @@ INCLUDE_ASM("asm/nonmatchings/unit_103B0", func_800704DC);
 void func_80070780(void) {
     u8 n = D_800F20F7;
 
-    if ((u32)(D_8014EC78 + 8) >= (u32)D_8014C740[D_8014C540].f4) {
-        D_8014C740[D_8014C540].f0 = D_8014EC78;
-        GfxPool_Grow(&D_8014C740[D_8014C540], 1);
-        D_8014EC78 = D_8014C740[D_8014C540].f0;
-    }
-    {
-        /* gSPNumLights(n) */
-        Gfx2_ *g = (Gfx2_ *)D_8014EC78;
-
-        D_8014EC78 += 8;
-        g->w0 = 0xDB020000;
-        g->w1 = n * 0x18;
-    }
+    GFX_RESERVE(1);
+    gSPNumLights(D_8014EC78++, n);
 }
 
 void func_80070860(s32 arg0) {
-    s32 g;
-
-    if ((u32) (D_8014EC78 + 0x10) >= (u32) D_8014C740[D_8014C540].f4) {
-        D_8014C740[D_8014C540].f0 = D_8014EC78;
-        GfxPool_Grow(&D_8014C740[D_8014C540], 2U);
-        D_8014EC78 = D_8014C740[D_8014C540].f0;
-    }
-    g = D_8014EC78;
-    D_8014EC78 = g + 8;
-    ((G9_ *)g)[0].w0 = (arg0 & 0xFFFF) | 0xDB0A0000;
-    ((G9_ *)g)[0].w1 = (D_800F1DE8[arg0].r << 24) + (D_800F1DE8[arg0].g << 16) + (D_800F1DE8[arg0].b << 8);
-    D_8014EC78 = g + 16;
-    ((G9_ *)g)[1].w0 = ((arg0 + 4) & 0xFFFF) | 0xDB0A0000;
-    ((G9_ *)g)[1].w1 = (D_800F1DE8[arg0].r << 24) + (D_800F1DE8[arg0].g << 16) + (D_800F1DE8[arg0].b << 8);
+    GFX_RESERVE(2);
+    gMoveWd(D_8014EC78++, G_MW_LIGHTCOL, arg0,
+            (D_800F1DE8[arg0].r << 24) + (D_800F1DE8[arg0].g << 16) + (D_800F1DE8[arg0].b << 8));
+    gMoveWd(D_8014EC78++, G_MW_LIGHTCOL, arg0 + 4,
+            (D_800F1DE8[arg0].r << 24) + (D_800F1DE8[arg0].g << 16) + (D_800F1DE8[arg0].b << 8));
 }
 
 void func_80070BA4(s32 arg0);
 void func_800709CC(void) {
     s32 m;
-    s32 g;
     s32 l;
 
     m = ((s32 (*)(void)) func_80070BA4)();
@@ -437,20 +371,10 @@ void func_800709CC(void) {
         MtxPool_Grow(&D_8014EB58[D_8014C540], 1U);
         D_8014108C = D_8014EB58[D_8014C540].f0;
     }
-    if ((u32) (D_8014EC78 + 8) >= (u32) D_8014C740[D_8014C540].f4) {
-        D_8014C740[D_8014C540].f0 = D_8014EC78;
-        GfxPool_Grow(&D_8014C740[D_8014C540], 1U);
-        D_8014EC78 = D_8014C740[D_8014C540].f0;
-    }
+    GFX_RESERVE(1);
     guLookAtReflect((void *) m, (void *) D_8014108C, 50.0f, 0.0f, 400.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f);
-    g = D_8014EC78;
     l = D_8014108C;
-    D_8014EC78 = g + 8;
-    ((G9_ *)g)[0].w0 = 0xDC08000A;
-    ((G9_ *)g)[0].w1 = l;
-    D_8014EC78 = g + 16;
-    ((G9_ *)g)[1].w0 = 0xDC08030A;
-    ((G9_ *)g)[1].w1 = l + 0x10;
+    gSPLookAt(D_8014EC78++, l);
     D_8014108C = l + 0x40;
 }
 

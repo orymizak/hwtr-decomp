@@ -1,16 +1,10 @@
 #include "common.h"
+#include "gfx.h"
 #include "math.h"
 #include "include_asm.h"
 
 #define SCREEN_BG_BUFFER_SIZE 0x4B200
 
-typedef struct { u32 w0; u32 w1; } GfxWT_;
-typedef union { GfxWT_ words; s64 force; } GfxT_;
-typedef struct { GfxT_ *f0; GfxT_ *f4; u8 p8[0x318]; } PoolT_;
-extern PoolT_ D_8014C740[];
-extern s32 D_8014C540;
-extern GfxT_ *D_8014EC78;
-void GfxPool_Grow(PoolT_ *, u32);
 
 extern void *D_800F20F0;
 extern u8 D_800F20F4;
@@ -183,9 +177,9 @@ s32 func_800784F0(void) {
     inline should be wrapped in clean SDK macro wrappers like `gDPNoOp` or `gSPEndDisplayList()` 
     for readability and platform maintenance.
     */
-    if ((u32) (D_8014EC78 + (2)) >= (u32) D_8014C740[D_8014C540].f4) { D_8014C740[D_8014C540].f0 = D_8014EC78; GfxPool_Grow(&D_8014C740[D_8014C540], (2)); D_8014EC78 = D_8014C740[D_8014C540].f0; };
-    { GfxT_ *_g = (GfxT_ *) (D_8014EC78++); _g->words.w0 = ((u32) (((u32) ( 0xE9) & ((0x01 << (8)) - 1)) << (24))); _g->words.w1 = 0; };
-    { GfxT_ *_g = (GfxT_ *) (D_8014EC78++); _g->words.w0 = ((u32) (((u32) ( 0xDF) & ((0x01 << (8)) - 1)) << (24))); _g->words.w1 = 0; };
+    GFX_RESERVE(2);
+    { Gfx *_g = (Gfx *) (D_8014EC78++); _g->words.w0 = ((u32) (((u32) ( 0xE9) & ((0x01 << (8)) - 1)) << (24))); _g->words.w1 = 0; };
+    { Gfx *_g = (Gfx *) (D_8014EC78++); _g->words.w0 = ((u32) (((u32) ( 0xDF) & ((0x01 << (8)) - 1)) << (24))); _g->words.w1 = 0; };
     GfxPools_Swap(0);
     D_800F20F8 = 1;
     D_800F20F4 = 0;
@@ -225,9 +219,9 @@ void func_80078684(Mtx34f *m) {
     D_800F2138 = *m;
     t = *m;
     D_800F216C[0] = func_80070BA4(&t);
-    if ((u32) (D_8014EC78 + (1)) >= (u32) D_8014C740[D_8014C540].f4) { D_8014C740[D_8014C540].f0 = D_8014EC78; GfxPool_Grow(&D_8014C740[D_8014C540], (1)); D_8014EC78 = D_8014C740[D_8014C540].f0; };
+    GFX_RESERVE(1);
     {
-        GfxT_ *_g = (GfxT_ *) (D_8014EC78++);
+        Gfx *_g = (Gfx *) (D_8014EC78++);
         _g->words.w0 = 0xDA380003;
         _g->words.w1 = D_800F216C[0] - 0x80000000;
     }

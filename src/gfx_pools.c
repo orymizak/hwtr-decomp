@@ -1,31 +1,7 @@
 #include "common.h"
+#include "gfx.h"
 #include "include_asm.h"
 
-#define G_DL_BRANCH 0xDE000000
-#define G_ENDDL 0xDF000000
-
-typedef struct {
-    u32 w0;
-    u32 w1;
-} Gfx;
-
-typedef struct {
-    u8 data[0x10];
-} Vtx;
-
-typedef struct {
-    u8 data[0x40];
-} Mtx;
-
-typedef struct {
-    /* 0x000 */ Gfx *ptr;
-    /* 0x004 */ Gfx *end;
-    /* 0x008 */ Gfx head[0x41];
-    /* 0x210 */ Gfx *chunks[0x41];
-    /* 0x314 */ u32 capacity;
-    /* 0x318 */ u32 chunkCount;
-    /* 0x31C */ u8 unk31C[4];
-} GfxPool; /* size = 0x320 */
 
 typedef struct {
     /* 0x00 */ Vtx *ptr;
@@ -43,14 +19,11 @@ typedef struct {
     /* 0x8C */ u32 chunkCount;
 } MtxPool; /* size = 0x90 */
 
-extern GfxPool D_8014C740[2];
 extern VtxPool D_80140E48[2];
 extern MtxPool D_8014EB58[2];
 extern Gfx D_80134FD0[2][0x301];
 extern Vtx D_801347C0[2][0x40];
 extern Mtx D_801480A0[2][0x80];
-extern s32 D_8014C540;
-extern Gfx *D_8014EC78;
 extern Vtx *D_8014445C;
 extern Mtx *D_8014108C;
 
@@ -79,8 +52,8 @@ void GfxPool_Grow(GfxPool *pool, u32 required) {
     }
     chunk = Memory_Alloc((size + 1) * sizeof(Gfx));
     cur = pool->ptr;
-    cur->w0 = G_ENDDL;
-    cur->w1 = 0;
+    cur->words.w0 = G_ENDDL << 24;
+    cur->words.w1 = 0;
     if (chunk == NULL) {
         pool->ptr = pool->chunks[pool->chunkCount - 1];
     } else {
@@ -117,11 +90,11 @@ void GfxPool_Submit(GfxPool *pool, s32 arg) {
     for (i = 0; i < pool->chunkCount; i++) {
         Gfx *_g = g++;
 
-        _g->w0 = G_DL_BRANCH;
-        _g->w1 = (u32)pool->chunks[i] - 0x80000000; /* K0 to physical */
+        _g->words.w0 = G_DL << 24;
+        _g->words.w1 = (u32)pool->chunks[i] - 0x80000000; /* K0 to physical */
     }
-    g->w0 = G_ENDDL;
-    g->w1 = 0;
+    g->words.w0 = G_ENDDL << 24;
+    g->words.w1 = 0;
     g++;
     func_8006FA7C(pool->head, (g - pool->head) * sizeof(Gfx), 0, arg);
 }

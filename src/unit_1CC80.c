@@ -1,4 +1,5 @@
 #include "common.h"
+#include "gfx.h"
 #include "math.h"
 #include "include_asm.h"
 typedef struct { u8 kind; u8 frames; } PDef_;
@@ -62,18 +63,12 @@ void func_8007C2C8(PPool_ *pool) {
     /* TODO (Clean version):
     Estructuras locales y duplicadas creadas para func_8007C434. En C limpio deben sustituirse por los tipos estándar de libultra (Gfx, Vtx) y definiciones unificadas de partículas (Particle, ParticlePool, Vec3f, Vec4f), evitando tipos artificiales como Vtx4C4_ y Vtx3C4_ usados para copiar memoria. Se mantienen para el match.
     */
-typedef struct { u32 w0; u32 w1; } GfxWC4_;
-typedef union { GfxWC4_ words; s64 force; } GfxC4_;
-typedef struct { GfxC4_ *f0; GfxC4_ *f4; u8 p8[0x318]; } PoolC4_;
 typedef struct { s16 x; s16 y; s16 z; u16 flag; s16 s; s16 t; u8 c[4]; } VtxC4_;
 typedef struct { s32 w[16]; } Vtx4C4_;
 typedef struct { s32 w[12]; } Vtx3C4_;
 typedef struct { u8 kind; u8 frames; u8 p2[2]; f32 scale; } PDefC4_;
 typedef struct { Quat q; Vec3f axis; f32 angle; f32 f20; u8 pad24[0x1C]; Vec3f pos; f32 vx; f32 vy; f32 vz; f32 f58; f32 f5C; PDefC4_ *def; u16 life; u8 flags; u8 r; u8 g; u8 b; u8 kind; u8 frames; u16 h6C; s16 h6E; } PrtC4_;
 typedef struct { u32 cap; s32 tail; s32 head; PrtC4_ *buf; } PoolPC4_;
-extern PoolC4_ D_8014C740[];
-extern s32 D_8014C540;
-extern GfxC4_ *D_8014EC78;
 extern VtxC4_ *D_8014445C;
 extern PDefC4_ *D_801380C8[];
 extern Vtx3C4_ D_800F23C0;
@@ -86,12 +81,11 @@ extern u8 D_800F24F8[];
 extern u8 D_800F2508[];
 extern u8 D_800F25B0[];
 extern u8 D_800F25C8[];
-void GfxPool_Grow(PoolC4_ *, u32);
 void GfxPools_ReserveVtx(s32);
 s32 func_80070BA4(f32 (*)[4]);
 u8 func_800717C8(f32 (*)[4], f32 (*)[4], f32);
 void func_8007AFD4(f32 (*)[4], f32 (*)[4], f32 (*)[4]);
-GfxC4_ *func_8007F61C(GfxC4_ *, PDefC4_ *);
+Gfx *func_8007F61C(Gfx *, PDefC4_ *);
 void func_800A8670(Quat *, f32, Vec3f);
 void func_800A8BA4(Quat, f32 (*)[3]);
 extern PDef_ *D_800F2330[];
@@ -162,11 +156,11 @@ void func_8007C434(PoolPC4_ *pool, f32 (*m)[4]) {
         /* TODO (Clean version):
         Expansión manual de macros de gestión de buffer de gráficos y comandos GBI (gDPPipeSync, gSPMatrix, gSPDisplayList, gDPSetPrimColor, gSPVertex) escribiendo palabras directamente en memoria en vez de usar la API de libultra. Se mantiene para el match.
         */
-        if ((u32) (D_8014EC78 + (1)) >= (u32) D_8014C740[D_8014C540].f4) { D_8014C740[D_8014C540].f0 = D_8014EC78; GfxPool_Grow(&D_8014C740[D_8014C540], (1)); D_8014EC78 = D_8014C740[D_8014C540].f0; };
+        GFX_RESERVE(1);
         cur = NULL;
         changed = 0;
         last = NULL;
-        { GfxC4_ *_g = (GfxC4_ *) (D_8014EC78++); _g->words.w0 = (0xE7000000); _g->words.w1 = (u32) ( 0); };
+        { Gfx *_g = (Gfx *) (D_8014EC78++); _g->words.w0 = (0xE7000000); _g->words.w1 = (u32) ( 0); };
         for (i = pool->tail; ; i++) {
             if (i == pool->cap) {
                 i = 0;
@@ -257,9 +251,9 @@ void func_8007C434(PoolPC4_ *pool, f32 (*m)[4]) {
                 b[2][3] = m[2][0] * a[0][3] + m[2][1] * a[1][3] + m[2][2] * a[2][3] + m[2][3];
             }
             mtx = func_80070BA4(b);
-            if ((u32) (D_8014EC78 + (14)) >= (u32) D_8014C740[D_8014C540].f4) { D_8014C740[D_8014C540].f0 = D_8014EC78; GfxPool_Grow(&D_8014C740[D_8014C540], (14)); D_8014EC78 = D_8014C740[D_8014C540].f0; };
-            { GfxC4_ *_g = (GfxC4_ *) (D_8014EC78++); _g->words.w0 = (0xDA380003); _g->words.w1 = (u32) ( mtx - 0x80000000); };
-            { GfxC4_ *_g = (GfxC4_ *) (D_8014EC78++); _g->words.w0 = (0xE7000000); _g->words.w1 = (u32) ( 0); };
+            GFX_RESERVE(14);
+            { Gfx *_g = (Gfx *) (D_8014EC78++); _g->words.w0 = (0xDA380003); _g->words.w1 = (u32) ( mtx - 0x80000000); };
+            { Gfx *_g = (Gfx *) (D_8014EC78++); _g->words.w0 = (0xE7000000); _g->words.w1 = (u32) ( 0); };
             if (!(p->flags & 0x80)) {
                 k = p->kind;
                 tex = D_801380C8[k];
@@ -296,17 +290,17 @@ void func_8007C434(PoolPC4_ *pool, f32 (*m)[4]) {
             }
             if (last != dl) {
                 last = dl;
-                { GfxC4_ *_g = (GfxC4_ *) (D_8014EC78++); _g->words.w0 = (0xDE000000); _g->words.w1 = (u32) ( (u32) last - 0x80000000); };
+                { Gfx *_g = (Gfx *) (D_8014EC78++); _g->words.w0 = (0xDE000000); _g->words.w1 = (u32) ( (u32) last - 0x80000000); };
             }
-            { GfxC4_ *_g = (GfxC4_ *) (D_8014EC78++); _g->words.w0 = (0xE7000000); _g->words.w1 = (u32) ( 0); };
-            { GfxC4_ *_g = (GfxC4_ *) (D_8014EC78++); _g->words.w0 = (0xFA000000); _g->words.w1 = (u32) ( (p->r << 24) | (p->g << 16) | (p->b << 8) | (p->h6C >> 8)); };
+            { Gfx *_g = (Gfx *) (D_8014EC78++); _g->words.w0 = (0xE7000000); _g->words.w1 = (u32) ( 0); };
+            { Gfx *_g = (Gfx *) (D_8014EC78++); _g->words.w0 = (0xFA000000); _g->words.w1 = (u32) ( (p->r << 24) | (p->g << 16) | (p->b << 8) | (p->h6C >> 8)); };
             if (p->flags & 2) {
                 GfxPools_ReserveVtx(4);
                 /* TODO (Clean version):
                 Copia en bloque de vértices mediante casteo forzado a structs temporales (Vtx4C4_ y Vtx3C4_) de 64 y 48 bytes directamente desde la partícula o plantilla en lugar de usar un array de Vtx o memcpy. Se mantiene para el match.
                 */
                 *(Vtx4C4_ *) D_8014445C = *(Vtx4C4_ *) p;
-                { GfxC4_ *_g = (GfxC4_ *) (D_8014EC78++); _g->words.w0 = (0x01004008); _g->words.w1 = (u32) ( (u32) D_8014445C - 0x80000000); };
+                { Gfx *_g = (Gfx *) (D_8014EC78++); _g->words.w0 = (0x01004008); _g->words.w1 = (u32) ( (u32) D_8014445C - 0x80000000); };
                 D_8014445C += 4;
             } else if (p->flags & 0x20) {
                 GfxPools_ReserveVtx(3);
@@ -328,13 +322,13 @@ void func_8007C434(PoolPC4_ *pool, f32 (*m)[4]) {
                 D_8014445C[2].c[1] = 0;
                 D_8014445C[2].c[2] = 0;
                 D_8014445C[2].c[3] = p->h6C >> 8;
-                { GfxC4_ *_g = (GfxC4_ *) (D_8014EC78++); _g->words.w0 = (0x01003006); _g->words.w1 = (u32) ( (u32) D_8014445C - 0x80000000); };
+                { Gfx *_g = (Gfx *) (D_8014EC78++); _g->words.w0 = (0x01003006); _g->words.w1 = (u32) ( (u32) D_8014445C - 0x80000000); };
                 D_8014445C += 3;
             }
-            { GfxC4_ *_g = (GfxC4_ *) (D_8014EC78++); _g->words.w0 = (0xDE000000); _g->words.w1 = (u32) ( (u32) dl2 - 0x80000000); };
+            { Gfx *_g = (Gfx *) (D_8014EC78++); _g->words.w0 = (0xDE000000); _g->words.w1 = (u32) ( (u32) dl2 - 0x80000000); };
         }
-        if ((u32) (D_8014EC78 + (1)) >= (u32) D_8014C740[D_8014C540].f4) { D_8014C740[D_8014C540].f0 = D_8014EC78; GfxPool_Grow(&D_8014C740[D_8014C540], (1)); D_8014EC78 = D_8014C740[D_8014C540].f0; };
-        { GfxC4_ *_g = (GfxC4_ *) (D_8014EC78++); _g->words.w0 = (0xE7000000); _g->words.w1 = (u32) ( 0); };
+        GFX_RESERVE(1);
+        { Gfx *_g = (Gfx *) (D_8014EC78++); _g->words.w0 = (0xE7000000); _g->words.w1 = (u32) ( 0); };
     }
 }
 
