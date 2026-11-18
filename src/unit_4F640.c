@@ -20,7 +20,7 @@ typedef struct { s32 w; u8 p[16]; } E14t_;
 typedef struct { u8 pad[0x18]; u8 n; u8 p2[3]; s32 w1C; u8 p3[0x10]; E14t_ e[1]; } TAE_;
 extern s32 (*D_801416AC)();
 extern s32 (*D_801416B0)();
-extern void (*D_801416DC)(s32, u8, u16, s32, s32);
+extern void (*svcFontDrawChar)(s32, u8, u16, s32, s32);
 extern char D_80100AF0[];
 void Cars_CollideObstacles(void);
 void func_800A5A1C(u32);
@@ -94,11 +94,11 @@ void func_800AEE20(u32 dt) {
         /* TODO (Clean version / Optimization): Avoid calling strlen(buf) on each iteration; cache length in a local variable:
            u32 len = strlen(buf);
            for (i = 0; i < len; i++) {
-               D_801416DC(0, buf[i], i * 16 + 16, 16, 0);
+               svcFontDrawChar(0, buf[i], i * 16 + 16, 16, 0);
            }
         */
         for (i = 0; i < strlen(buf); i++) {
-            D_801416DC(0, buf[i], i * 16 + 16, 16, 0);
+            svcFontDrawChar(0, buf[i], i * 16 + 16, 16, 0);
         }
     }
     D_801416B0();

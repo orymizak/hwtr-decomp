@@ -7,7 +7,7 @@ extern void (*D_801416E4)(s32);
 s32 func_8008182C(void);
 extern s32 D_800F3914;
 s32 Car_IsPlayer(s32);
-extern void (*D_8014C0A8)(s32, s32, f32, f32);
+extern void (*audSfxPlay)(s32, s32, f32, f32);
 void func_800ABEC8(u8, u32, u8);
 extern s32 D_800F3908;
 extern s32 D_800F390C;
@@ -42,7 +42,7 @@ void func_800A76FC(void) {
     CrA76_ *c;
 
     D_800F3914 = func_8008182C();
-    D_8014C0A8(9, 1, 1.0f, 1.0f);
+    audSfxPlay(9, 1, 1.0f, 1.0f);
     D_801416E4(0);
     z = 0;
     D_800F3904 = D_800F3900;
@@ -90,7 +90,7 @@ s32 func_800A780C(u8 ch, u8 cp) {
         if ((u8)Car_IsPlayer(ch) != 0) {
             if (c->checkpoint != 0 || k != D_800F3910 - 1) {
                 if (k != c->checkpoint - 1) {
-                    D_8014C0A8(11, 0, 1.0f, 1.0f);
+                    audSfxPlay(11, 0, 1.0f, 1.0f);
                 }
             }
         }
@@ -101,7 +101,7 @@ s32 func_800A780C(u8 ch, u8 cp) {
     if (k < (u32)(D_800F3910 - 1)) {
         if (D_800F391A == 0) {
             if ((u8)Car_IsPlayer(ch) != 0) {
-                D_8014C0A8(10, 0, 1.0f, 1.0f);
+                audSfxPlay(10, 0, 1.0f, 1.0f);
             }
         }
         c->checkpoints[k] = 1;
@@ -113,7 +113,7 @@ s32 func_800A780C(u8 ch, u8 cp) {
     }
     if (D_800F391A == 0) {
         if ((u8)Car_IsPlayer(ch) != 0) {
-            D_8014C0A8(12, 0, 1.0f, 1.0f);
+            audSfxPlay(12, 0, 1.0f, 1.0f);
         }
         t = D_800F3900;
         if (D_800F3918 == 1) {

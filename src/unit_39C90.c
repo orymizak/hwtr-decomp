@@ -491,7 +491,7 @@ extern EntAB_ D_8011B358[];
 extern u16 D_8011B558;
 extern PairAB_ D_8011B560[];
 extern u8 D_800F38E4[];
-extern void (*D_8014177C)(EntAB_ *, f32);
+extern void (*svcFxCarScrape)(EntAB_ *, f32);
 void func_8009B0AC(void);
 void func_8008DF18(EntAB_ *);
 void func_80091DC4(PlAB_ *);
@@ -561,7 +561,7 @@ void func_8009ABC8(void) {
         }
         r = func_800AD774(e, f);
         if (isRacer & changed) {
-            D_8014177C(e, r);
+            svcFxCarScrape(e, r);
         }
     }
     for (i = 0, pr = D_8011B560; i < D_8011B558; pr++, i++) {

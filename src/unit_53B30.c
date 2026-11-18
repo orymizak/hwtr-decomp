@@ -401,7 +401,7 @@ extern s8 gPakDialogSel;
 s32 Menu_LayoutTexts(s32);
 extern s32 D_800F5F18;
 extern s32 D_800F5F1C;
-extern s32 (*D_8014C0B4)();
+extern s32 (*audMusicStop)();
 extern s8 gMusicFadeMode;
 extern s32 D_800F6468;
 extern s32 (*sysTimeGetMillis)();
@@ -1929,15 +1929,15 @@ void Song_Prev(void) {
 }
 
 
-extern void (*D_8014C0AC)(u8);
+extern void (*audMusicPlayTrack)(u8);
 
 void Music_PlaySong(void) {
-    D_8014C0AC(*(u8 *)&gMenuSong);
+    audMusicPlayTrack(*(u8 *)&gMenuSong);
 }
 
 
 void Music_StopTrack(void) {
-    D_8014C0B4();
+    audMusicStop();
 }
 
 void Music_StartRaceTrack(void) {
@@ -1967,19 +1967,19 @@ void Music_PickMenuTrack(void) {
     *(u8 *)&gMenuSong = v;
 }
 
-extern void (*D_8014C0AC)(u8);
+extern void (*audMusicPlayTrack)(u8);
 void Music_StartMenuTrack(void) {
     u8 v = gMenuMusicStarted;
 
     if (v == 0) {
         gMenuMusicStarted = 1;
-        D_8014C0AC(gMenuMusicTrack);
+        audMusicPlayTrack(gMenuMusicTrack);
     }
 }
 
 void Music_StopMenuTrack(void) {
     gMenuMusicStarted = 0;
-    D_8014C0B4();
+    audMusicStop();
 }
 
 INCLUDE_ASM("asm/nonmatchings/unit_53B30", Music_UpdateVolumeFade);

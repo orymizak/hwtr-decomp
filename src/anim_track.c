@@ -53,20 +53,20 @@ typedef struct { AnimFn_ count; AnimFn_ info; AnimFn_ keys; } AnimIf_;
     (e.g. `s32 (*count)(void)`) bypasses type safety, though it matches 
     the original SDK/compiler ABI layout.
     */
-extern AnimIf_ D_80141720;
+extern AnimIf_ svcTrackGetPathCount;
 void *Memory_Alloc(s32 size);
 s32 func_80087990(void) {
     u32 i;
 
-    if ((D_800F3010 = D_80141720.count()) != 0) {
+    if ((D_800F3010 = svcTrackGetPathCount.count()) != 0) {
         if ((D_800F3014 = Memory_Alloc(D_800F3010 * sizeof(AnimTrack))) == NULL) {
             return 0;
         }
         memset(D_800F3014, 0, D_800F3010 * sizeof(AnimTrack));
         for (i = 0; i < D_800F3010; i++) {
-            D_80141720.info(i, &D_800F3014[i].duration, &D_800F3014[i].keyCount, D_800F3014[i].unk08, &D_800F3014[i].id);
-            D_80141720.keys(i, 0, &D_800F3014[i].unk20[4], &D_800F3014[i].unk20[0x10]);
-            D_80141720.keys(i, 1, &D_800F3014[i].unk20[0x20], &D_800F3014[i].unk20[0x2C]);
+            svcTrackGetPathCount.info(i, &D_800F3014[i].duration, &D_800F3014[i].keyCount, D_800F3014[i].unk08, &D_800F3014[i].id);
+            svcTrackGetPathCount.keys(i, 0, &D_800F3014[i].unk20[4], &D_800F3014[i].unk20[0x10]);
+            svcTrackGetPathCount.keys(i, 1, &D_800F3014[i].unk20[0x20], &D_800F3014[i].unk20[0x2C]);
         }
     }
     return 1;
@@ -144,8 +144,8 @@ typedef struct {
     /* 0x4C */ Quat rot1;
     /* 0x5C */ Vec3f result;
 } AnimTrk_;
-extern void (*D_80141728)(s32, s32, Vec3f *, Quat *);
-extern void (*D_8014172C)(s32, Vec3f *, Mtx3f *);
+extern void (*svcTrackGetPathKey)(s32, s32, Vec3f *, Quat *);
+extern void (*svcTrackSetPathTransform)(s32, Vec3f *, Mtx3f *);
 Vec3f func_800A9068(f32 t, Vec3f a, Vec3f b);
 Quat func_800A8EBC(f32 t, Quat a, Quat b);
 void func_800A8BA4(Quat q, Mtx3f *out);
@@ -167,7 +167,7 @@ void func_80087C28(s32 index) {
     key = t->time * kc1 / t->duration;
     key1 = key + 1;
     if (key != t->key) {
-        fp = &D_80141728;
+        fp = &svcTrackGetPathKey;
         (*fp)(index, key, &t->pos0, &t->rot0);
         (*fp)(index, key1, &t->pos1, &t->rot1);
         t->key = key;
@@ -192,7 +192,7 @@ void func_80087C28(s32 index) {
     m2.m[2][0] = m.m[0][2];
     m2.m[2][1] = m.m[1][2];
     m2.m[2][2] = m.m[2][2];
-    D_8014172C(index, &t->result, &m2);
+    svcTrackSetPathTransform(index, &t->result, &m2);
 }
 
 void func_80087EA4(s32 index, Vec3i *out) {

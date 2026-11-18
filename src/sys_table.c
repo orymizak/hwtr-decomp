@@ -59,7 +59,7 @@ void Model_PollLoad();
 void Model_AllocBuffers();
 void Model_FreeBuffers();
 void Model_Free();
-void func_80066C64();
+void Model_DrawWithLookAt();
 void func_80067950();
 void CarInfo_Load();
 void File_Load();
@@ -97,7 +97,7 @@ void Audio_SetSfxVolume();
 void Audio_GetVoiceVolume();
 void Audio_SetVoiceVolume();
 void Sfx_Play();
-void func_80064884();
+void Audio_SetAmbientVolume();
 u8 func_80078388(void);
 
 s32 Sys_BootCheck(void);
@@ -128,7 +128,7 @@ s32 Sys_InitTable(void) {
     sysModelAllocBuffers = &Model_AllocBuffers;
     sysModelFreeBuffers = &Model_FreeBuffers;
     sysModelFree = &Model_Free;
-    D_80140FD0 = &func_80066C64;
+    D_80140FD0 = &Model_DrawWithLookAt;
     D_80140FD4 = &func_80067950;
     sysCarInfoLoad = &CarInfo_Load;
     sysFileLoad = &File_Load;
@@ -173,7 +173,7 @@ s32 Sys_InitTable(void) {
     D_80141078 = &func_8007F030;
     D_8014107C = &func_8007F038;
     sysSfxPlay = &Sfx_Play;
-    D_80141068 = &func_80064884;
+    D_80141068 = &Audio_SetAmbientVolume;
     return 1;
 }
 

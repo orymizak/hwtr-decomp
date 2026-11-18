@@ -17,14 +17,14 @@ extern KernFont_ D_800F2800[];
 extern s32 D_800F2808;
 extern u8 sysBootCheck;
 extern u8 D_80145568;
-extern u8 D_8014C0A8;
-extern u8 D_80141698;
+extern u8 audSfxPlay;
+extern u8 svcTimeGetMillis;
 u8 Sys_InitTable(void);
 u8 Input_InitTable(void);
-u8 func_800610DC(void);
-u8 func_80060458(void);
-s32 func_80060840();
-s32 func_80061334();
+u8 Audio_InstallApi(void);
+u8 Svc_Install(void);
+s32 Svc_Uninstall();
+s32 Audio_UninstallApi();
 s32 Input_ClearTable();
 s32 Sys_ClearTable();
 
@@ -208,13 +208,13 @@ s32 func_800875A0(void) {
     }
     func_800876D4((void **)&D_80145568, 0x4C);
     if (Input_InitTable() != 0) {
-        func_800876D4((void **)&D_8014C0A8, 0xAC);
-        if (func_800610DC() != 0) {
-            func_800876D4((void **)&D_80141698, 0x124);
-            if (func_80060458() != 0) {
+        func_800876D4((void **)&audSfxPlay, 0xAC);
+        if (Audio_InstallApi() != 0) {
+            func_800876D4((void **)&svcTimeGetMillis, 0x124);
+            if (Svc_Install() != 0) {
                 return 1;
             }
-            func_80061334();
+            Audio_UninstallApi();
         }
         Input_ClearTable();
     }
@@ -227,9 +227,9 @@ s32 func_80087660(void) {
     register s32 failed;
     s8 n;
 
-    failed = (u8)func_80060840() == 0;
+    failed = (u8)Svc_Uninstall() == 0;
     n = failed;
-    if (!(u8)func_80061334()) {
+    if (!(u8)Audio_UninstallApi()) {
         n = failed + 1;
     }
     if (!(u8)Input_ClearTable()) {

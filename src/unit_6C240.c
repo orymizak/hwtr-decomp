@@ -25,7 +25,7 @@ typedef struct { s16 id; s16 x; } Id4_;
 typedef struct { u8 pad[0xC]; Id4_ *ids; u8 pad2[3]; s8 n; } IdTab_;
 extern s32 gPauseRepeatLeft;
 extern s32 gPauseRepeatRight;
-extern void (*D_8014C0A8)(s32, s32, f32, f32);
+extern void (*audSfxPlay)(s32, s32, f32, f32);
 u8 Volume_StepUp(u8);
 extern u8 (*sysInputIsKeyHeld)(s32, s32);
 extern u32 gPauseButtons;
@@ -54,9 +54,9 @@ u8 Volume_StepDown(u8);
 extern s32 (*D_80141064)(s32);
 extern s32 (*sysAudioSetMusicVolume)(s32);
 extern s32 gPauseJukeboxMenu;
-extern s32 (*D_8014C0AC)(s32);
-extern s32 (*D_8014C0B0)();
-extern s32 (*D_8014C0B4)();
+extern s32 (*audMusicPlayTrack)(s32);
+extern s32 (*audMusicGetTrack)();
+extern s32 (*audMusicStop)();
 
 s32 Pause_StateHasEvent(s16 id) {
     Id4_ *p = gPauseCurState->ids;
@@ -301,7 +301,7 @@ u8 Volume_StepUp(u8 arg0) {
     }
     target = cur + 10;
     if (target >= 100) {
-        D_8014C0A8(0x31, 1, 1.0f, 1.0f);
+        audSfxPlay(0x31, 1, 1.0f, 1.0f);
         return 255;
     }
     while (cur < target) {
@@ -316,7 +316,7 @@ u8 Volume_StepUp(u8 arg0) {
     if (v > 255) {
         return 255;
     }
-    D_8014C0A8(0x31, 1, 1.0f, 1.0f);
+    audSfxPlay(0x31, 1, 1.0f, 1.0f);
     return v;
 }
 
@@ -334,7 +334,7 @@ u8 Volume_StepDown(u8 arg0) {
     }
     target = cur - 10;
     if (target <= 0) {
-        D_8014C0A8(0x31, 1, 1.0f, 1.0f);
+        audSfxPlay(0x31, 1, 1.0f, 1.0f);
         return 0;
     }
     while (target < cur) {
@@ -349,7 +349,7 @@ u8 Volume_StepDown(u8 arg0) {
     if (v >= 255) {
         return 255;
     }
-    D_8014C0A8(0x31, 1, 1.0f, 1.0f);
+    audSfxPlay(0x31, 1, 1.0f, 1.0f);
     return v;
 }
 
@@ -439,7 +439,7 @@ void PauseAudio_MusicDown(void) {
 
 void Jukebox_Open(void) {
     PauseUi_Open(gPauseJukeboxMenu);
-    D_8014C0AC(D_8014C0B0());
+    audMusicPlayTrack(audMusicGetTrack());
 }
 
 void Jukebox_Animate(void) {
@@ -447,8 +447,8 @@ void Jukebox_Animate(void) {
 }
 
     /* TODO (Clean version):
-    'fp' is a matching workaround to cache D_8014C0B0 in a register across calls:
-    s32 val = D_8014C0B0();
+    'fp' is a matching workaround to cache audMusicGetTrack in a register across calls:
+    s32 val = audMusicGetTrack();
     PauseUi_BeginFrame();
     PauseUi_DrawMenu(gPauseJukeboxMenu, 0);
     PauseUi_DrawText(Jukebox_GetArtist(val), 160, 155, 255, 255, 255);
@@ -456,7 +456,7 @@ void Jukebox_Animate(void) {
     PauseUi_EndFrame();
     */
 void Jukebox_DrawPrev(void) {
-    s32 (**fp)() = &D_8014C0B0;
+    s32 (**fp)() = &audMusicGetTrack;
 
     PauseUi_BeginFrame();
     PauseUi_DrawMenu(gPauseJukeboxMenu, 0);
@@ -467,7 +467,7 @@ void Jukebox_DrawPrev(void) {
 
 
 void Jukebox_DrawNext(void) {
-    s32 (**fp)() = &D_8014C0B0;
+    s32 (**fp)() = &audMusicGetTrack;
 
     PauseUi_BeginFrame();
     PauseUi_DrawMenu(gPauseJukeboxMenu, 1);
@@ -478,29 +478,29 @@ void Jukebox_DrawNext(void) {
 
 
 void Jukebox_StopMusic(void) {
-    D_8014C0B4();
+    audMusicStop();
 }
 
 void Jukebox_NextTrack(void) {
     s32 next;
 
-    next = D_8014C0B0() + 1;
+    next = audMusicGetTrack() + 1;
     /* TODO (Clean version): 'next &= -((u8)next < 7)' is branchless wrap-around: next = (next >= 7) ? 0 : next; */
     next &= -((u8)next < 7);
-    D_8014C0B4();
-    D_8014C0AC(next & 0xFF);
+    audMusicStop();
+    audMusicPlayTrack(next & 0xFF);
 }
 
 void Jukebox_PrevTrack(void) {
     s32 t;
     u8 r;
 
-    t = D_8014C0B0();
+    t = audMusicGetTrack();
     if ((t & 0xFF) == 0) {
         r = 6;
     } else {
         r = t - 1;
     }
-    D_8014C0B4();
-    D_8014C0AC(r & 0xFF);
+    audMusicStop();
+    audMusicPlayTrack(r & 0xFF);
 }

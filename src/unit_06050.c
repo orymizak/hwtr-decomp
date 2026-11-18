@@ -8,8 +8,8 @@ typedef struct { V16_ q; V12_ v; } E1C_;
 typedef struct { s32 a; u16 node; u16 h6; s32 b; s32 c; E1C_ *p; } E14_;
 typedef struct { s32 idx; s32 a; s32 b; s32 c; } Rec16_;
 typedef struct { Vec3f v; f32 s; u16 node; char name[0xE]; } Ent20_;
-extern void *D_80138170;
-void func_800734F4(void *);
+extern void *gTrackSky;
+void WorldData_Free(void *);
 void func_8006AA34(void);
 void func_8006DC28(void);
 extern char D_800FE9F0[];
@@ -19,7 +19,7 @@ s32 File_Load(char *, s32);
 extern void *D_80101E84;
 void Memory_Free(void *);
 typedef struct { s32 a; s32 b; s32 c; s32 d; } Vec4L_;
-u8 func_80066A2C(u8 a, s32 b, s32 c);
+u8 Model_Load(u8 a, s32 b, s32 c);
 typedef struct { u16 unk0; s16 x; s16 y; s16 z; s32 unk8; s32 unkC; s32 unk10; s32 unk14; } Node_;
 typedef struct { Vec3i p; f32 m[9]; s32 d; f32 e; } Cam_;
 typedef struct { f32 m[21]; } Node54_;
@@ -100,24 +100,24 @@ extern char D_800FE964[];
 s32 CarInfo_LoadEx(s32 unused, char *name, Big114_ *a, Big40_ *b);
 extern u8 D_80138150[];
 extern u8 D_80138156[];
-extern f32 D_8013815C;
-extern f32 D_80138160;
-extern f32 D_80138164;
-extern f32 D_80138168;
-extern s32 D_80101E88[];
-extern s32 D_800F0218[];
+extern f32 gLodDist0;
+extern f32 gLodDist1;
+extern f32 gLodDist2;
+extern f32 gLodDist3;
+extern s32 gModelLoadHandles[];
+extern s32 gModelLoading[];
 u8 File_PollAsync(s32);
 s32 func_80073AC8(s32);
 void func_80067A00(u8, u8, f32, f32, f32);
 s32 Memory_Alloc();
-extern u8 D_80101E80;
+extern u8 gModelBuffers;
 
-extern World_ *D_8013816C;
+extern World_ *gTrackWorld;
 extern s32 D_8013818C;
 s32 GfxPools_Shutdown();
 s32 func_800741D8(s32);
-extern Model_ *D_80138174[6];
-s32 func_80066D80(s32);
+extern Model_ *gModels[6];
+s32 Model_Draw(s32);
 s32 Gfx_SetLookAt(s32 *);
 extern s32 D_800F2138;
 
@@ -127,22 +127,22 @@ extern u8 D_80138AAF;
 extern u8 D_80138AB0;
 extern u8 D_80138AB1;
 extern f32 D_80138AB4;
-void func_80066504(u8);
-void func_80066C9C(s32 a, s32 b);
+void Model_ResetSlot(u8);
+void World_SetupLod(s32 a, s32 b);
 void func_80075580(void);
 void func_80075858(void);
-s32 func_80065450(void) {
-    void **p = (void **)&D_8013816C;
+s32 World_Init(void) {
+    void **p = (void **)&gTrackWorld;
     void **q = p + 2;
     s32 i;
 
     *p = NULL;
-    D_80138170 = NULL;
+    gTrackSky = NULL;
     D_8013818C = 0;
     D_80138AAC = 0;
     for (i = 0; i < 6; i++) {
         q[i] = NULL;
-        func_80066504(i);
+        Model_ResetSlot(i);
     }
     D_80138AAD = 0;
     D_80138AAE = 0;
@@ -150,24 +150,24 @@ s32 func_80065450(void) {
     D_80138AB0 = 0;
     D_80138AB1 = 0;
     D_80138AB4 = 2.0f;
-    func_80066C9C(1, 1);
+    World_SetupLod(1, 1);
     func_80075580();
     func_80075858();
     return 1;
 }
 
 s32 Model_AllocBuffers(void) {
-    if ((*(s32 *)((u8 *)&D_80101E80 + 0x0)) == 0) {
-        (*(s32 *)((u8 *)&D_80101E80 + 0x0)) = Memory_Alloc(0x12C00);
+    if ((*(s32 *)((u8 *)&gModelBuffers + 0x0)) == 0) {
+        (*(s32 *)((u8 *)&gModelBuffers + 0x0)) = Memory_Alloc(0x12C00);
     }
-    if ((*(s32 *)((u8 *)&D_80101E80 + 0x4)) == 0) {
-        (*(s32 *)((u8 *)&D_80101E80 + 0x4)) = Memory_Alloc(0x12C00);
+    if ((*(s32 *)((u8 *)&gModelBuffers + 0x4)) == 0) {
+        (*(s32 *)((u8 *)&gModelBuffers + 0x4)) = Memory_Alloc(0x12C00);
     }
-    return ((*(s32 *)((u8 *)&D_80101E80 + 0x0)) == 0) + ((*(s32 *)((u8 *)&D_80101E80 + 0x4)) == 0);
+    return ((*(s32 *)((u8 *)&gModelBuffers + 0x0)) == 0) + ((*(s32 *)((u8 *)&gModelBuffers + 0x4)) == 0);
 }
 
 s32 Model_FreeBuffers(void) {
-    void **p = (void **)&D_80101E80;
+    void **p = (void **)&gModelBuffers;
 
     Memory_Free(*p);
     Memory_Free(D_80101E84);
@@ -178,22 +178,22 @@ s32 Model_FreeBuffers(void) {
 
 typedef struct { u8 p0[4]; char name[0x13]; u8 variant; } TrackName_;
 extern char D_800FE944[];
-extern char *D_800F01E0[8];
-extern u8 D_800F0200[8][3];
+extern char *gTrackColorNames[8];
+extern u8 gTrackColors[8][3];
 s32 strcmp(const char *a, const char *b);
 char *strlwr(char *);
-s32 func_8006586C(void);
-s32 func_8007319C(char *);
+s32 Track_Unload(void);
+s32 File_LoadAlloc(char *);
 World_ *func_800731DC(s32);
 void func_800734AC(World_ *);
 void func_8006DD34(World_ *);
-void func_8006572C(char *, u8);
+void Track_LoadSky(char *, u8);
 void func_8006A540(Vec3f *, Vec3f *, u8, u8, u8);
 
 /* Loads "<name><variant>.WLD" and applies the matching per-track RGB color (white if none). */
-s32 func_800655CC(TrackName_ *t) {
+s32 Track_Load(TrackName_ *t) {
     char buf[64];
-    World_ **wp = &D_8013816C;
+    World_ **wp = &gTrackWorld;
     u8 r;
     u8 g;
     u8 b;
@@ -201,9 +201,9 @@ s32 func_800655CC(TrackName_ *t) {
 
     sprintf(buf, D_800FE944, t->name, t->variant);
     if (*wp != NULL) {
-        func_8006586C();
+        Track_Unload();
     }
-    *wp = func_800731DC(func_8007319C(buf));
+    *wp = func_800731DC(File_LoadAlloc(buf));
     if (D_80138AB0 == 1) {
         func_800734AC(*wp);
     }
@@ -211,41 +211,41 @@ s32 func_800655CC(TrackName_ *t) {
     b = 255;
     g = 255;
     r = 255;
-    func_8006572C(t->name, t->variant);
+    Track_LoadSky(t->name, t->variant);
     for (i = 0; i < 8; i++) {
         strlwr(buf);
-        if (strcmp(buf, D_800F01E0[i]) == 0) {
-            r = D_800F0200[i][0];
-            g = D_800F0200[i][1];
-            b = D_800F0200[i][2];
+        if (strcmp(buf, gTrackColorNames[i]) == 0) {
+            r = gTrackColors[i][0];
+            g = gTrackColors[i][1];
+            b = gTrackColors[i][2];
             break;
         }
     }
-    func_8006A540(&D_8013816C->v14, &D_8013816C->v20, r, g, b);
+    func_8006A540(&gTrackWorld->v14, &gTrackWorld->v20, r, g, b);
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_8006572C);
+INCLUDE_ASM("asm/nonmatchings/unit_06050", Track_LoadSky);
 
-s32 func_8006586C(void) {
-    void **p = (void **)&D_8013816C;
+s32 Track_Unload(void) {
+    void **p = (void **)&gTrackWorld;
 
-    func_800734F4(*p);
-    func_800734F4(D_80138170);
+    WorldData_Free(*p);
+    WorldData_Free(gTrackSky);
     func_8006AA34();
     func_8006DC28();
     *p = NULL;
-    D_80138170 = NULL;
+    gTrackSky = NULL;
     return 1;
 }
 
-u16 func_800658C4(void) {
-    return D_8013816C->n10;
+u16 Track_GetMarkerCount(void) {
+    return gTrackWorld->n10;
 }
 
-void func_800658D4(s32 i, Vec3f *pos, s32 *a, s32 *b, s32 *c) {
-    Rec16_ *r = &D_8013816C->recs[i];
-    f32 *m = D_8013816C->nodes[r->idx].m;
+void Track_GetMarker(s32 i, Vec3f *pos, s32 *a, s32 *b, s32 *c) {
+    Rec16_ *r = &gTrackWorld->recs[i];
+    f32 *m = gTrackWorld->nodes[r->idx].m;
 
     pos->x = m[3];
     pos->y = m[7];
@@ -256,7 +256,7 @@ void func_800658D4(s32 i, Vec3f *pos, s32 *a, s32 *b, s32 *c) {
 }
 
 
-void func_80065940(s32 dt) {
+void World_Update(s32 dt) {
     u32 i;
     u32 k;
     Model_ *o;
@@ -269,9 +269,9 @@ void func_80065940(s32 dt) {
         func_8007D14C(&gParticlesAlt);
         func_8007D14C(&D_80145488);
         func_8006DAC4(dt);
-        func_800738C0(D_8013816C, dt);
+        func_800738C0(gTrackWorld, dt);
         for (i = 0; i < 6; i++) {
-            o = D_80138174[i];
+            o = gModels[i];
             if (o == NULL) {
                 continue;
             }
@@ -330,7 +330,7 @@ void func_80065940(s32 dt) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80065C5C);
+INCLUDE_ASM("asm/nonmatchings/unit_06050", World_Draw);
 
 void func_800664A4(s32 arg0) {
     D_8013818C = arg0;
@@ -341,17 +341,17 @@ void func_800664B0(void) {
 
     GfxPools_Shutdown();
     for (i = 0; i < 6; i++) {
-        if (D_80138174[i] != NULL) {
-            func_800741D8((s32)D_80138174[i]);
+        if (gModels[i] != NULL) {
+            func_800741D8((s32)gModels[i]);
         }
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80066504);
+INCLUDE_ASM("asm/nonmatchings/unit_06050", Model_ResetSlot);
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_800665A4);
 
-void func_800665D0(u32 color, void *r, void *g, void *b) {
+void Color_Unpack5551(u32 color, void *r, void *g, void *b) {
     u32 c = color & 0xFFFF;
     u8 cr = c >> 11;
     u8 cg = (c >> 6) & 0x1F;
@@ -364,24 +364,24 @@ void func_800665D0(u32 color, void *r, void *g, void *b) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_800665F8);
 
-void func_8006673C(u8 i) {
-    D_80138174[i]->b105 = 0;
+void Model_FlashOff(u8 i) {
+    gModels[i]->b105 = 0;
 }
 
-void func_80066758(u8 i) {
-    D_80138174[i]->b105 = 0xFF;
+void Model_FlashOn(u8 i) {
+    gModels[i]->b105 = 0xFF;
 }
 
 void func_80066778(u8 i, s8 val) {
-    Model_ *m = D_80138174[i];
+    Model_ *m = gModels[i];
 
     if (m != NULL) {
         m->inst->mat->b9 = val;
     }
 }
 
-void func_800667A8(u8 i, u8 on) {
-    Model_ *m = D_80138174[i];
+void Model_SetVisible(u8 i, u8 on) {
+    Model_ *m = gModels[i];
 
     if (m != NULL) {
         if (on) {
@@ -392,8 +392,8 @@ void func_800667A8(u8 i, u8 on) {
     }
 }
 
-u8 func_800667F8(u8 a, s32 b) {
-    return func_80066A2C(a, b, 0);
+u8 Model_LoadDefault(u8 a, s32 b) {
+    return Model_Load(a, b, 0);
 }
 
 extern char D_800FE95C[];
@@ -407,7 +407,7 @@ s32 Model_LoadAsync(u8 id, char *name, u8 mode) {
     u32 i;
     s32 h;
 
-    if (D_800F0218[id] != 0) {
+    if (gModelLoading[id] != 0) {
         while (!(u8)Model_PollLoad(id)) {
         }
     }
@@ -415,19 +415,19 @@ s32 Model_LoadAsync(u8 id, char *name, u8 mode) {
     D_80138156[id] = mode ^ 1;
     strcpy(path, name);
     strcat(path, D_800FE95C);
-    if (D_80138174[id] != NULL) {
+    if (gModels[id] != NULL) {
         Model_Free(id);
     }
     GfxPools_Shutdown();
     for (i = 0; i < 6; i++) {
-        if (D_80138174[i] != NULL) {
-            func_800741D8((s32)D_80138174[i]);
+        if (gModels[i] != NULL) {
+            func_800741D8((s32)gModels[i]);
         }
     }
-    h = File_LoadAsync(path, ((void **)&D_80101E80)[id]);
-    D_80101E88[id] = h;
+    h = File_LoadAsync(path, ((void **)&gModelBuffers)[id]);
+    gModelLoadHandles[id] = h;
     if (h != -1) {
-        D_800F0218[id] = 1;
+        gModelLoading[id] = 1;
         return 1;
     }
     return 0;
@@ -436,34 +436,34 @@ s32 Model_LoadAsync(u8 id, char *name, u8 mode) {
 s32 Model_PollLoad(u8 i) {
     s32 j;
 
-    if (File_PollAsync(D_80101E88[i]) == 0) {
+    if (File_PollAsync(gModelLoadHandles[i]) == 0) {
         return 0;
     }
-    D_800F0218[i] = 0;
-    D_80138174[i] = (Model_ *)func_80073AC8(((s32 *)&D_80101E80)[i]);
-    for (j = 0; j < D_80138174[i]->nParts; j++) {
+    gModelLoading[i] = 0;
+    gModels[i] = (Model_ *)func_80073AC8(((s32 *)&gModelBuffers)[i]);
+    for (j = 0; j < gModels[i]->nParts; j++) {
         func_80067A00(i, j, 0.0f, 0.0f, 0.0f);
     }
     return 1;
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80066A2C);
+INCLUDE_ASM("asm/nonmatchings/unit_06050", Model_Load);
 
 s32 Model_Free(u8 i) {
-    func_800741D8((s32)D_80138174[i]);
-    D_80138174[i] = NULL;
+    func_800741D8((s32)gModels[i]);
+    gModels[i] = NULL;
     return 1;
 }
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80066BD4);
 
-void func_80066C64(s32 arg0) {
+void Model_DrawWithLookAt(s32 arg0) {
     Gfx_SetLookAt(&D_800F2138);
-    func_80066D80(arg0 & 0xFF);
+    Model_Draw(arg0 & 0xFF);
 }
 
-void func_80066C9C(s32 a, s32 b) {
+void World_SetupLod(s32 a, s32 b) {
     u8 y = 1;
     u8 x = 24;
     f32 *p;
@@ -477,25 +477,25 @@ void func_80066C9C(s32 a, s32 b) {
         D_80138150[i] = x;
         D_80138156[i] = y;
     }
-    p = &D_8013815C;
+    p = &gLodDist0;
     *p = 700.0f;
-    D_80138160 = 1400.0f;
-    D_80138164 = 2800.0f;
-    D_80138168 = 4800.0f;
+    gLodDist1 = 1400.0f;
+    gLodDist2 = 2800.0f;
+    gLodDist3 = 4800.0f;
     if (a != 1) {
         *p = 490.0f;
-        D_80138160 = 980.0f;
-        D_80138164 = 1960.0f;
-        D_80138168 = 3360.0f;
+        gLodDist1 = 980.0f;
+        gLodDist2 = 1960.0f;
+        gLodDist3 = 3360.0f;
     } else {
         D_80138156[0] = 0;
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80066D80);
+INCLUDE_ASM("asm/nonmatchings/unit_06050", Model_Draw);
 
-void func_80066ECC(u8 i, u8 *r, u8 *g, u8 *b) {
-    Model_ *m = D_80138174[i];
+void Model_GetColor(u8 i, u8 *r, u8 *g, u8 *b) {
+    Model_ *m = gModels[i];
 
     *r = m->c[0];
     *g = m->c[1];
@@ -513,7 +513,7 @@ INCLUDE_ASM("asm/nonmatchings/unit_06050", func_800674DC);
 void func_80067950(u8 i, f32 v) {
     u32 j;
 
-    for (j = 0; j < D_80138174[i]->nParts; j++) {
+    for (j = 0; j < gModels[i]->nParts; j++) {
         func_80067A00(i, j, 0.0f, 0.0f, v);
     }
 }
@@ -521,13 +521,13 @@ void func_80067950(u8 i, f32 v) {
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80067A00);
 
 void func_80067EFC(u8 i, u8 val, Vec4L_ *src) {
-    D_80138174[i]->b14C = val;
-    D_80138174[i]->v = *src;
+    gModels[i]->b14C = val;
+    gModels[i]->v = *src;
 }
 
 
 void func_80067F40(u8 i, f32 v) {
-    D_80138174[i]->b10E = v * 240.0f;
+    gModels[i]->b10E = v * 240.0f;
 }
 
 
@@ -545,7 +545,7 @@ inline void func_80067FA4(u8 i, f32 v, u8 flag) {
 
 void func_8006810C(u8, u8, u8);
 void func_800665F8(u8, u8);
-void func_80068020(u8 id, u32 flags) {
+void Model_ApplyFlags(u8 id, u32 flags) {
     func_8006810C(id, (flags >> 1) & 1, ((flags >> 3) ^ 1) & 1);
     func_80067FA4(id, !(flags & 1) ? 1.0f : 0.0f, ((flags >> 3) ^ 1) & 1);
     func_800665F8(id, (flags >> 2) & 1);
@@ -580,39 +580,39 @@ void func_80068390(u8 slot, u8 mode, Pair68_ unused) {
     f32 m[3][4];
 
     D_80138A6C[slot] = 1;
-    D_80138174[slot]->inst->flags84 &= ~0x40;
+    gModels[slot]->inst->flags84 &= ~0x40;
     if (mode != 2) {
-        m[0][0] = D_80138174[slot]->m160[0][0];
-        m[0][1] = D_80138174[slot]->m160[0][1];
-        m[0][2] = D_80138174[slot]->m160[0][2];
-        m[0][3] = D_80138174[slot]->m160[0][3];
-        m[1][0] = D_80138174[slot]->m160[1][0];
-        m[1][1] = D_80138174[slot]->m160[1][1];
-        m[1][2] = D_80138174[slot]->m160[1][2];
-        m[1][3] = D_80138174[slot]->m160[1][3];
-        m[2][0] = D_80138174[slot]->m160[2][0];
-        m[2][1] = D_80138174[slot]->m160[2][1];
-        m[2][2] = D_80138174[slot]->m160[2][2];
-        m[2][3] = D_80138174[slot]->m160[2][3];
+        m[0][0] = gModels[slot]->m160[0][0];
+        m[0][1] = gModels[slot]->m160[0][1];
+        m[0][2] = gModels[slot]->m160[0][2];
+        m[0][3] = gModels[slot]->m160[0][3];
+        m[1][0] = gModels[slot]->m160[1][0];
+        m[1][1] = gModels[slot]->m160[1][1];
+        m[1][2] = gModels[slot]->m160[1][2];
+        m[1][3] = gModels[slot]->m160[1][3];
+        m[2][0] = gModels[slot]->m160[2][0];
+        m[2][1] = gModels[slot]->m160[2][1];
+        m[2][2] = gModels[slot]->m160[2][2];
+        m[2][3] = gModels[slot]->m160[2][3];
         m[0][3] += m[0][0] * 0.0f + m[0][1] * 96.0f + m[0][2] * 0.0f;
         m[1][3] += m[1][0] * 0.0f + m[1][1] * 96.0f + m[1][2] * 0.0f;
         m[2][3] += m[2][0] * 0.0f + m[2][1] * 96.0f + m[2][2] * 0.0f;
         func_8006DB84((s32)m, 1.0f, 1);
     }
-    D_80138174[slot]->b105 = 0;
+    gModels[slot]->b105 = 0;
 }
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80068504);
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_800685E0);
 
-u16 func_800687D8(void) {
-    return D_8013816C->n6;
+u16 Track_GetLinkCount(void) {
+    return gTrackWorld->n6;
 }
 
-void func_800687E8(s32 i, f32 *pos, f32 *rot, f32 *a3, s32 *a4, s32 *a5, s32 *a6, s32 *a7) {
-    Node_ *n = &D_8013816C->links[i];
-    f32 *m = D_8013816C->nodes[n->unk0].m;
+void Track_GetLink(s32 i, f32 *pos, f32 *rot, f32 *a3, s32 *a4, s32 *a5, s32 *a6, s32 *a7) {
+    Node_ *n = &gTrackWorld->links[i];
+    f32 *m = gTrackWorld->nodes[n->unk0].m;
 
     rot[0] = m[0];
     rot[1] = m[1];
@@ -635,8 +635,8 @@ void func_800687E8(s32 i, f32 *pos, f32 *rot, f32 *a3, s32 *a4, s32 *a5, s32 *a6
     *a7 = n->unk14;
 }
 
-void func_800688F4(s32 idx, Vec3f pos, f32 *m) {
-    f32 *q = D_8013816C->nodes[D_8013816C->links[idx].unk0].m;
+void Track_SetLinkTransform(s32 idx, Vec3f pos, f32 *m) {
+    f32 *q = gTrackWorld->nodes[gTrackWorld->links[idx].unk0].m;
 
     q[0] = m[0];
     q[1] = m[1];
@@ -652,7 +652,7 @@ void func_800688F4(s32 idx, Vec3f pos, f32 *m) {
     q[11] = pos.z;
 }
 
-void func_800689A4(O_9A4 *o, Vec3f v) {
+void Fx_BurstAt(O_9A4 *o, Vec3f v) {
     Vec3f d;
     Vec3f p;
     u32 s;
@@ -698,7 +698,7 @@ void func_800689A4(O_9A4 *o, Vec3f v) {
     }
 }
 
-void func_80068E98(u8 *o, Vec3f vel, u8 *verts) {
+void Fx_ShatterMesh(u8 *o, Vec3f vel, u8 *verts) {
     Vec3f v;
     Vec3f p;
     s32 idx[16];
@@ -743,9 +743,9 @@ void func_80068E98(u8 *o, Vec3f vel, u8 *verts) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80069214);
+INCLUDE_ASM("asm/nonmatchings/unit_06050", Track_SmashObject);
 
-void func_8006936C(Vec3f pos, Vec3f vel) {
+void Fx_SpawnSpark(Vec3f pos, Vec3f vel) {
     Pt94_ pt;
 
     pt.pos = pos;
@@ -771,7 +771,7 @@ void func_8006936C(Vec3f pos, Vec3f vel) {
 }
 
 
-void func_80069494(u8 **car, f32 speed, Vec3f pos, Vec3f vel) {
+void Fx_SpawnPaintChips(u8 **car, f32 speed, Vec3f pos, Vec3f vel) {
     Pt94_ pt;
     Model_ *o;
     f32 r;
@@ -779,7 +779,7 @@ void func_80069494(u8 **car, f32 speed, Vec3f pos, Vec3f vel) {
     if (car == NULL || *car == NULL || *(s32 *)(*car + 0x5C) != 3) {
         return;
     }
-    o = D_80138174[**(u8 **)(*car + 0x64)];
+    o = gModels[**(u8 **)(*car + 0x64)];
     if (o == NULL) {
         return;
     }
@@ -825,7 +825,7 @@ void func_80069494(u8 **car, f32 speed, Vec3f pos, Vec3f vel) {
 typedef struct { u8 p0[0x6C]; Vec3f pos; u8 p78[0xC]; Vec3f vel; f32 speed; f32 r[3][3]; } Bds9_;
 typedef struct { u8 p0[0x18]; f32 w; f32 h; f32 l; u8 p24[0x3C]; Bds9_ *body; } Cars9_;
 typedef struct { Cars9_ *car; Vec3f pos; Vec3f n; u8 flag; } Hits9_;
-extern u32 (*D_8014169C)(s32);
+extern u32 (*svcRandRange)(s32);
 
 extern inline void Sparks9_(Vec3f pos, Vec3f vel) {
     f32 pad[2];
@@ -853,7 +853,7 @@ extern inline void Sparks9_(Vec3f pos, Vec3f vel) {
     ParticlePool_Push(&D_80145488, &pt);
 }
 
-void func_800698C0(Hits9_ *h, f32 speed) {
+void Fx_CarScrape(Hits9_ *h, f32 speed) {
     Vec3f t;
     Vec3f v;
     Vec3f ax;
@@ -909,9 +909,9 @@ void func_800698C0(Hits9_ *h, f32 speed) {
                 t.y = 0.0f;
                 t.z = 0.0f;
             }
-            k = D_8014169C(2000) * 0.001f + -1.0f;
+            k = svcRandRange(2000) * 0.001f + -1.0f;
             t.y += k * h->car->h;
-            k = D_8014169C(2000) * 0.001f + -1.0f;
+            k = svcRandRange(2000) * 0.001f + -1.0f;
             t.z += k * h->car->l;
             p.x = b->r[0][0] * t.x + b->r[0][1] * t.y + b->r[0][2] * t.z;
             p.y = b->r[1][0] * t.x + b->r[1][1] * t.y + b->r[1][2] * t.z;
@@ -930,9 +930,9 @@ void func_800698C0(Hits9_ *h, f32 speed) {
                 t.y = h->car->h;
                 t.z = 0.0f;
             }
-            k = D_8014169C(2000) * 0.001f + -1.0f;
+            k = svcRandRange(2000) * 0.001f + -1.0f;
             t.x += k * h->car->w;
-            k = D_8014169C(2000) * 0.001f + -1.0f;
+            k = svcRandRange(2000) * 0.001f + -1.0f;
             t.z += k * h->car->l;
             p.x = b->r[0][0] * t.x + b->r[0][1] * t.y + b->r[0][2] * t.z;
             p.y = b->r[1][0] * t.x + b->r[1][1] * t.y + b->r[1][2] * t.z;
@@ -951,9 +951,9 @@ void func_800698C0(Hits9_ *h, f32 speed) {
                 t.y = 0.0f;
                 t.z = h->car->l;
             }
-            k = D_8014169C(2000) * 0.001f + -1.0f;
+            k = svcRandRange(2000) * 0.001f + -1.0f;
             t.x += k * h->car->w;
-            k = D_8014169C(2000) * 0.001f + -1.0f;
+            k = svcRandRange(2000) * 0.001f + -1.0f;
             t.y += k * h->car->h;
             p.x = b->r[0][0] * t.x + b->r[0][1] * t.y + b->r[0][2] * t.z;
             p.y = b->r[1][0] * t.x + b->r[1][1] * t.y + b->r[1][2] * t.z;
@@ -966,16 +966,16 @@ void func_800698C0(Hits9_ *h, f32 speed) {
             q = h->pos;
         }
         Sparks9_(q, v);
-        func_80069494((u8 **)h, speed, q, v);
+        Fx_SpawnPaintChips((u8 **)h, speed, q, v);
     }
 }
 
-u16 func_8006A1E0(void) {
-    return D_8013816C->nC;
+u16 Track_GetPathCount(void) {
+    return gTrackWorld->nC;
 }
 
-void func_8006A1F0(s32 i, s32 *a, s32 *h, s32 *b, s32 *c) {
-    E14_ *e = &D_8013816C->paths[i];
+void Track_GetPath(s32 i, s32 *a, s32 *h, s32 *b, s32 *c) {
+    E14_ *e = &gTrackWorld->paths[i];
 
     *a = e->a;
     *h = e->h6;
@@ -983,13 +983,13 @@ void func_8006A1F0(s32 i, s32 *a, s32 *h, s32 *b, s32 *c) {
     *c = e->c;
 }
 
-void func_8006A234(s32 a, s32 b, V12_ *v, V16_ *q) {
-    *v = D_8013816C->paths[a].p[b].v;
-    *q = D_8013816C->paths[a].p[b].q;
+void Track_GetPathKey(s32 a, s32 b, V12_ *v, V16_ *q) {
+    *v = gTrackWorld->paths[a].p[b].v;
+    *q = gTrackWorld->paths[a].p[b].q;
 }
 
-void func_8006A2B8(s32 i, Vec3f *t, f32 *m) {
-    f32 *d = D_8013816C->nodes[D_8013816C->paths[i].node].m;
+void Track_SetPathTransform(s32 i, Vec3f *t, f32 *m) {
+    f32 *d = gTrackWorld->nodes[gTrackWorld->paths[i].node].m;
 
     d[0] = m[0];
     d[1] = m[1];
@@ -1005,12 +1005,12 @@ void func_8006A2B8(s32 i, Vec3f *t, f32 *m) {
     d[11] = t->z;
 }
 
-u8 func_8006A358(void) {
-    return D_8013816C->bB;
+u8 Track_GetCameraCount(void) {
+    return gTrackWorld->bB;
 }
 
-void func_8006A368(u8 i, Vec3i *a1, f32 *a2, s32 *a3, f32 *a4) {
-    Cam_ *c = &D_8013816C->cams[i];
+void Track_GetCamera(u8 i, Vec3i *a1, f32 *a2, s32 *a3, f32 *a4) {
+    Cam_ *c = &gTrackWorld->cams[i];
 
     *a1 = c->p;
     *a3 = c->d;
@@ -1026,7 +1026,7 @@ void func_8006A368(u8 i, Vec3i *a1, f32 *a2, s32 *a3, f32 *a4) {
     a2[8] = c->m[8];
 }
 
-s32 func_8006A400(char *name, s32 dst) {
+s32 Track_LoadDup(char *name, s32 dst) {
     char buf[64];
 
     strcpy(buf, name);
@@ -1035,22 +1035,22 @@ s32 func_8006A400(char *name, s32 dst) {
     return 1;
 }
 
-u16 func_8006A450(void) {
-    return D_8013816C->nE;
+u16 Track_GetEntityCount(void) {
+    return gTrackWorld->nE;
 }
 
-void func_8006A460(s32 i, Vec3f *v, f32 *s, char *name) {
-    *v = D_8013816C->ents[i].v;
-    *s = D_8013816C->ents[i].s;
-    strcpy(name, D_8013816C->ents[i].name);
+void Track_GetEntity(s32 i, Vec3f *v, f32 *s, char *name) {
+    *v = gTrackWorld->ents[i].v;
+    *s = gTrackWorld->ents[i].s;
+    strcpy(name, gTrackWorld->ents[i].name);
 }
 
-void func_8006A4D4(s32 i, s8 on) {
-    s32 node = (s32)&D_8013816C->nodes[D_8013816C->ents[i].node];
+void Track_SetEntityVisible(s32 i, s8 on) {
+    s32 node = (s32)&gTrackWorld->nodes[gTrackWorld->ents[i].node];
 
     if (!(on & 0xFF)) {
-        func_80072D48(node);
+        SceneNode_Hide(node);
         return;
     }
-    func_80072D5C(node);
+    SceneNode_Show(node);
 }

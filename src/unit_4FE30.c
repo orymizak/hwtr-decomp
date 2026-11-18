@@ -32,16 +32,16 @@ typedef struct { u8 p0[0x94]; f32 m[3][3]; f32 v[3]; } Body4F_;
 typedef struct { u8 pad0[8]; u8 state; u8 pad9[3]; Vec3i pos; u8 pad18[0xC]; f32 m[9]; u8 pad48[0x14]; s32 kind; u8 *obj; u8 pad64[0x24]; } E88_;
 typedef struct { u8 pad0[4]; u32 flags; u8 pad8[4]; Vec3i pos; u8 pad18[0x70]; } E88b_;
 typedef struct { u32 flags; u8 pad4[3]; u8 b7; u8 pad8[3]; u8 bB; } Inf12b_;
-extern void (*D_80141708[])(s32, Vec3f);
+extern void (*svcTrackSmashObject[])(s32, Vec3f);
 u8 func_8008E38C(Vec3i, u8, u8, s32);
-extern u32 (*D_801416FC)(void);
+extern u32 (*svcTrackGetLinkCount)(void);
 extern Vec3f D_80100B00;
 void *Memory_Alloc(s32 size);
 void func_80099E78(Vec3i *, Vec3f, Vec3f, f32 *, s32);
 void func_800AC880(u8 *, f32, f32, f32, f32, Vec3f);
 void func_8009A4E4(u8 *o);
-extern void (*D_80141700)(u32, Vec3i *, f32 *, f32 *, f32 *, f32 *, f32 *, f32 *);
-extern void (*D_80141704)(u32, f32, f32, f32, void *);
+extern void (*svcTrackGetLink)(u32, Vec3i *, f32 *, f32 *, f32 *, f32 *, f32 *, f32 *);
+extern void (*svcTrackSetLinkTransform)(u32, f32, f32, f32, void *);
 void func_800ACDC8(void *, f32);
 void func_8007A9E0(void *);
 extern u8 *D_800F3B90;
@@ -66,7 +66,7 @@ s32 func_800AF230(void) {
     s32 fl;
 
     dflt = D_80100B00;
-    D_801206C0 = D_801416FC();
+    D_801206C0 = svcTrackGetLinkCount();
     if (D_801206C0 == 0) {
         return 1;
     }
@@ -77,7 +77,7 @@ s32 func_800AF230(void) {
     e = (E88_ *)D_800F3B90;
     info = D_800F3B94;
     for (i = 0; i < D_801206C0; e++, i++, info += 3) {
-        D_80141700(i, (Vec3i *)&pos, m, (f32 *)&dir, (f32 *)&val, (f32 *)info, (f32 *)(info + 1), (f32 *)(info + 2));
+        svcTrackGetLink(i, (Vec3i *)&pos, m, (f32 *)&dir, (f32 *)&val, (f32 *)info, (f32 *)(info + 1), (f32 *)(info + 2));
         if (info[0] & 1) {
             *(s32 *)((u8 *)e + 4) |= 2;
         }
@@ -179,11 +179,11 @@ void func_800AF67C(void) {
                 v[0] = *(f32 *) (e->obj + 0x6C) + *(f32 *) (e->obj + 0x60);
                 v[1] = *(f32 *) (e->obj + 0x70) + *(f32 *) (e->obj + 0x64);
                 v[2] = *(f32 *) (e->obj + 0x74) + *(f32 *) (e->obj + 0x68);
-                D_80141704(i, v[0], v[1], v[2], e->obj + 0x94);
+                svcTrackSetLinkTransform(i, v[0], v[1], v[2], e->obj + 0x94);
             }
             e->state = e->obj[0x110];
         } else if (e->kind == 2) {
-            D_80141700(i, &pos, m, w, &a, &b, &c, &d);
+            svcTrackGetLink(i, &pos, m, w, &a, &b, &c, &d);
             e->pos = pos;
             e->m[0] = m[0];
             e->m[1] = m[1];
@@ -203,7 +203,7 @@ void func_800AF820(E88b_ *e, Vec3f v) {
     Inf12b_ *inf = &((Inf12b_ *)D_800F3B94)[idx];
 
     e->flags |= 1;
-    D_80141708[0](idx, v);
+    svcTrackSmashObject[0](idx, v);
     if (inf->flags & 4) {
         func_8008E38C(e->pos, inf->b7, inf->bB, 0);
     }

@@ -1,16 +1,16 @@
 #include "common.h"
 #include "include_asm.h"
 #include "car.h"
-extern void (*D_80141780)(void);
-extern void (*D_8014C0A8)(s32, s32, f32, f32);
-extern u8 (*D_8014C120)(void);
+extern void (*svcGamePauseBegin)(void);
+extern void (*audSfxPlay)(s32, s32, f32, f32);
+extern u8 (*audSndSrcCreate)(void);
 typedef struct { u8 id; u8 b; u8 pad[2]; s32 c; } Ent8_;
 typedef struct { u8 b0; u8 pad[0xB]; s32 wC; } E10_;
 typedef struct { u8 b0; u8 pad[0xF]; } E10b_;
 extern E10b_ D_801184C8[];
 extern u8 D_801184C2;
 extern s32 D_80118528;
-extern void (*D_8014C13C)(u8, u8, u8 *);
+extern void (*audCarSndInit)(u8, u8, u8 *);
 typedef struct { s32 w; u8 p[16]; } E14t_;
 typedef struct { u8 pad[0x30]; E14t_ e[1]; } T8D_;
 typedef struct { u8 pad[0x12]; u8 b; u8 pad2[0x19]; } E2Cd_;
@@ -20,11 +20,11 @@ typedef struct { u8 p0[0x30]; E20_ ent[6]; } Cfg8B_;
 typedef struct { u32 time; u32 best; u8 id; } Res8C_;
 typedef struct { u8 id; u8 b; u8 pad[2]; s32 c; } Ent8b_;
 typedef struct { u8 id; u8 pad[0xF]; } E10g_;
-extern void (*D_8014C0E0[])(u8);
-extern void (*D_8014C0B4)(void);
+extern void (*audCarSndStopEngine[])(u8);
+extern void (*audMusicStop)(void);
 void func_8008E700(void);
 extern void (*D_801416E4)(s32);
-extern void (*D_801416F0)(u32);
+extern void (*svcWorldUpdate)(u32);
 extern u8 (*D_80145568)(s32);
 extern void (*D_80145598)(void);
 u8 func_80098BF4(void);
@@ -60,7 +60,7 @@ extern u8 D_801184AE;
 extern s32 D_801184A4;
 extern s32 D_800F36E0;
 extern u8 (*D_801417A8)(u8 *);
-extern u8 (*D_801416E8)(u8 *);
+extern u8 (*svcTrackLoad)(u8 *);
 extern u8 (*D_801417AC)(u8 *);
 extern void (*D_8014559C)(void);
 u8 func_8008D5EC(void);
@@ -84,10 +84,10 @@ u8 func_8008955C(u8 *);
 u8 func_800A7B88(u8 *);
 u8 func_800A58D0(u8 *);
 u8 func_800AEF80(u8 *);
-extern void (*D_8014C10C)(u8, s32, f32);
-extern u32 (*D_80141788)(void);
-extern void (*D_80141784)(s32);
-extern s32 (*D_80141698)(void);
+extern void (*audCarSndPlayOneShot)(u8, s32, f32);
+extern u32 (*svcGamePauseUpdate)(void);
+extern void (*svcGamePauseEnd)(s32);
+extern s32 (*svcTimeGetMillis)(void);
 extern void (*D_801417B8)(s32);
 extern u8 D_801184B0;
 extern u8 D_801184AF;
@@ -96,7 +96,7 @@ extern s32 D_800F36DC;
 extern s32 D_800F36D8;
 extern u8 (*D_801417B0)(u8 *);
 extern u8 (*D_801417B4)(u8 *);
-extern u8 (*D_801416EC)();
+extern u8 (*svcTrackUnload)();
 extern u32 D_80118494;
 extern u8 D_8011849C[];
 extern s32 D_800F36F0;
@@ -118,10 +118,10 @@ u8 func_800A9370(u8 *);
 extern u8 D_801184C1;
 extern u8 D_800F3700;
 extern E10_ *D_800F3704;
-extern void (*D_8014C0DC)(u8, s32);
-extern void (*D_8014C12C)(u8, s32, s32, s32);
-extern s32 (*D_8014C0B0)();
-extern void (*D_8014C0AC)(s32);
+extern void (*audCarSndStartEngine)(u8, s32);
+extern void (*audSndSrcPlay)(u8, s32, s32, s32);
+extern s32 (*audMusicGetTrack)();
+extern void (*audMusicPlayTrack)(s32);
 extern u8 D_800F36E8;
 extern u32 D_800F36EC;
 extern u32 D_800F36E4;
@@ -129,7 +129,7 @@ extern u8 D_80118498[];
 u32 func_800A76D8(void);
 u8 func_800A7C34(u8);
 extern Ent8_ D_80118538[];
-extern void (*D_8014C130)(s32);
+extern void (*audSndSrcStop)(s32);
 extern s32 D_800F378C[];
 extern s32 D_800F3770[];
 extern s32 D_80141448;
@@ -204,7 +204,7 @@ s32 Race_Init(u8 *cfg) {
     }
     func_8008D3D4();
     func_8008D3D4();
-    if (!D_801416E8(cfg)) {
+    if (!svcTrackLoad(cfg)) {
         return 0;
     }
     func_8008D3D4();
@@ -271,7 +271,7 @@ s32 Race_Init(u8 *cfg) {
     }
     D_800F36DC = 0;
     D_800F36D8 = 0;
-    D_800F36E0 = D_80141698();
+    D_800F36E0 = svcTimeGetMillis();
     func_8009ABC8();
     func_80085780();
     D_8014559C();
@@ -313,7 +313,7 @@ u8 func_8008BE7C(u8 *o) {
     err += func_80098BEC(o) == 0;
     err += func_800806FC() == 0;
     err += func_80087AD4(o) == 0;
-    err += D_801416EC() == 0;
+    err += svcTrackUnload() == 0;
     err += func_800A9370(o) == 0;
     if (D_801417B4(o) == 0) {
         return 0;
@@ -455,7 +455,7 @@ void func_8008C548(void) {
     Car *c;
     s32 unused[2];
 
-    now = D_80141698();
+    now = svcTimeGetMillis();
     prev = D_800F36D8;
     delta = now - prev;
     if (prev + 100 < now) {
@@ -506,7 +506,7 @@ void func_8008C548(void) {
             func_800ABC80(i, 3, D_8011849A[i]);
         }
     }
-    D_801416F0(D_801184AB == 0 ? delta : 0);
+    svcWorldUpdate(D_801184AB == 0 ? delta : 0);
     func_800AEE20(delta);
     D_800F36D8 = now;
     switch ((u32)D_800F36F4) {
@@ -517,15 +517,15 @@ void func_8008C548(void) {
             D_801184A4 = func_800A76D8();
         }
         if (func_800A76D8() >= D_801184A4 + 1200 && D_801184A8 == 0) {
-            D_8014C0A8(6, 1, 1.0f, 1.0f);
+            audSfxPlay(6, 1, 1.0f, 1.0f);
             D_801416E4(3);
             D_801184A8 = 1;
         } else if (func_800A76D8() >= D_801184A4 + 2550 && D_801184A9 == 0) {
-            D_8014C0A8(7, 1, 1.0f, 1.0f);
+            audSfxPlay(7, 1, 1.0f, 1.0f);
             D_801416E4(2);
             D_801184A9 = 1;
         } else if (func_800A76D8() >= D_801184A4 + 3800 && D_801184AA == 0) {
-            D_8014C0A8(8, 1, 1.0f, 1.0f);
+            audSfxPlay(8, 1, 1.0f, 1.0f);
             D_801416E4(1);
             D_801184AA = 1;
         } else if (func_800A76D8() >= D_801184A4 + 5000) {
@@ -614,17 +614,17 @@ void func_8008C548(void) {
 
 void func_8008CDAC(void) {
     func_8008E700();
-    D_80141780();
-    D_8014C0A8(0xE, 0, 1.0f, 1.0f);
+    svcGamePauseBegin();
+    audSfxPlay(0xE, 0, 1.0f, 1.0f);
 }
 
 
 void func_8008E80C(void);
     /* TODO (Clean version / Bug check): Hoist shared pause-exit state updates out of the switch cases:
-    D_80141784(choice);
+    svcGamePauseEnd(choice);
     D_801184B0 = 0;
     D_801184AF = 0;
-    v = D_80141698();
+    v = svcTimeGetMillis();
     D_800F36DC = v;
     D_800F36D8 = v;
     switch (choice) { ... }
@@ -632,32 +632,32 @@ void func_8008E80C(void);
 void func_8008CDFC(void) {
     s32 v;
 
-    switch (D_80141788()) {
+    switch (svcGamePauseUpdate()) {
         case 1:
-            D_80141784(1);
+            svcGamePauseEnd(1);
             func_8008E80C();
             D_801184B0 = 0;
             D_801184AF = 0;
-            v = D_80141698();
+            v = svcTimeGetMillis();
             D_800F36DC = v;
             D_800F36D8 = v;
             gGameState = 0;
             break;
         case 2:
-            D_80141784(2);
+            svcGamePauseEnd(2);
             D_801184B0 = 0;
             D_801184AF = 0;
-            v = D_80141698();
+            v = svcTimeGetMillis();
             D_800F36DC = v;
             D_800F36D8 = v;
             gGameState = 2;
             D_800F36F0 = 2;
             break;
         case 3:
-            D_80141784(3);
+            svcGamePauseEnd(3);
             D_801184B0 = 0;
             D_801184AF = 0;
-            v = D_80141698();
+            v = svcTimeGetMillis();
             D_800F36DC = v;
             D_800F36D8 = v;
             if (D_800F36F4 == 0) {
@@ -787,7 +787,7 @@ s32 func_8008D4E4(u8 *t) {
             D_801184C2++;
         }
     }
-    D_8014C13C(D_801184C2, D_801184C1, t);
+    audCarSndInit(D_801184C2, D_801184C1, t);
     D_80118528 = 0;
     return 1;
 }
@@ -809,7 +809,7 @@ INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", func_8008DF18);
     Vec3f diff;
     // diff.x = s1->transform->x - s2->transform->x; ...
     f32 dist = sqrtf(diff.x * diff.x + diff.y * diff.y + diff.z * diff.z);
-    D_8014C10C(*s, (dist < 352.0f) ? 2 : (dist < 880.0f) ? 3 : 4, dist / (dist < 352.0f ? 352.0f : dist < 880.0f ? 880.0f : 2304.0f));
+    audCarSndPlayOneShot(*s, (dist < 352.0f) ? 2 : (dist < 880.0f) ? 3 : 4, dist / (dist < 352.0f ? 352.0f : dist < 880.0f ? 880.0f : 2304.0f));
     */
 void func_8008E0BC(u8 **pair) {
     u8 *s;
@@ -840,11 +840,11 @@ void func_8008E0BC(u8 **pair) {
             d = sqrtf(v.x * v.x + v.y * v.y + v.z * v.z);
             if (d > 176.0f) {
                 if (d < 352.0f) {
-                    D_8014C10C(*s, 2, d / 352.0f);
+                    audCarSndPlayOneShot(*s, 2, d / 352.0f);
                 } else if (d < 880.0f) {
-                    D_8014C10C(*s, 3, d / 880.0f);
+                    audCarSndPlayOneShot(*s, 3, d / 880.0f);
                 } else {
-                    D_8014C10C(*s, 4, d / 2304.0f);
+                    audCarSndPlayOneShot(*s, 4, d / 2304.0f);
                 }
             }
         }
@@ -856,28 +856,28 @@ void func_8008E2B0(void) {
 
     memset(D_80118538, 0, 16);
     for (i = 0; i < 2; i++) {
-        D_80118538[i].id = D_8014C120();
+        D_80118538[i].id = audSndSrcCreate();
     }
 }
 
     /* TODO (Clean version / Bug check): Negative function pointer array indexing 'fp[-2]' should be refactored:
-    D_8014C130(e->id);
-    D_8014C128(e->id); // fp[-2] accesses the pointer at (D_8014C130 - 2 * sizeof(void*)). Group these into an audio driver vtable.
+    audSndSrcStop(e->id);
+    audSndSrcDestroy(e->id); // fp[-2] accesses the pointer at (audSndSrcStop - 2 * sizeof(void*)). Group these into an audio driver vtable.
     */
 void func_8008E310(void) {
     u32 i;
     Ent8b_ *e;
     void (**fp)(s32);
 
-    for (i = 0, fp = &D_8014C130, e = ((Ent8b_ *)&D_80118538); i < 2; i++, e++) {
+    for (i = 0, fp = &audSndSrcStop, e = ((Ent8b_ *)&D_80118538); i < 2; i++, e++) {
         fp[0](e->id);
         fp[-2](e->id);
     }
     memset(((Ent8b_ *)&D_80118538), 0, 16);
 }
 
-extern void (*D_8014C124)(u8, Vec3f);
-extern void (*D_8014C134)(u8, f32);
+extern void (*audSndSrcSetPosition)(u8, Vec3f);
+extern void (*audSndSrcSetVolume)(u8, f32);
 /* Plays a sound on the free channel used least recently; returns the channel or 0xFF. */
 u8 func_8008E38C(Vec3f pos, u8 bank, u8 vol, u8 loop) {
     u32 now;
@@ -902,10 +902,10 @@ u8 func_8008E38C(Vec3f pos, u8 bank, u8 vol, u8 loop) {
         return 0xFF;
     }
     e = &D_80118538[slot];
-    D_8014C130(e->id);
-    D_8014C124(e->id, pos);
-    D_8014C134(e->id, vol / 255.0f);
-    D_8014C12C(e->id, bank, 1, loop);
+    audSndSrcStop(e->id);
+    audSndSrcSetPosition(e->id, pos);
+    audSndSrcSetVolume(e->id, vol / 255.0f);
+    audSndSrcPlay(e->id, bank, 1, loop);
     e->c = now;
     if (loop) {
         e->b = 1;
@@ -916,7 +916,7 @@ u8 func_8008E38C(Vec3f pos, u8 bank, u8 vol, u8 loop) {
 void func_8008E510(u8 i) {
     Ent8_ *e = &D_80118538[i];
 
-    D_8014C130(e->id);
+    audSndSrcStop(e->id);
     e->b = 0;
     e->c = 0;
 }
@@ -937,7 +937,7 @@ INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", func_8008E5B8);
 
     /* TODO (Clean version / Bug check): Remove convoluted pointer cast '(*(E10g_ * *)&D_800F3704)[i].id':
     Both E10_ and E10g_ have the id byte at offset 0. Use direct member access:
-    D_8014C130(D_800F3704[i].b0);
+    audSndSrcStop(D_800F3704[i].b0);
     */
 void func_8008E700(void) {
     u8 i;
@@ -945,7 +945,7 @@ void func_8008E700(void) {
 
     i = 0;
     if (D_801184C1 != 0) {
-        fp = D_8014C0E0;
+        fp = audCarSndStopEngine;
         do {
             fp[0](i);
             fp[14](i);
@@ -957,20 +957,20 @@ void func_8008E700(void) {
         } while (i < D_801184C1);
     }
     for (i = 0; i < D_800F3700; i++) {
-        D_8014C130((*(E10g_ * *)&D_800F3704)[i].id);
+        audSndSrcStop((*(E10g_ * *)&D_800F3704)[i].id);
     }
-    D_8014C0B4();
+    audMusicStop();
 }
 
 void func_8008E80C(void) {
     u8 i;
 
     for (i = 0; i < D_801184C1; i++) {
-        D_8014C0DC(i, 0);
+        audCarSndStartEngine(i, 0);
     }
     for (i = 0; i < D_800F3700; i++) {
-        D_8014C12C(D_800F3704[i].b0, D_800F3704[i].wC, 0, 1);
+        audSndSrcPlay(D_800F3704[i].b0, D_800F3704[i].wC, 0, 1);
     }
-    D_8014C0AC(D_8014C0B0());
+    audMusicPlayTrack(audMusicGetTrack());
 }
 

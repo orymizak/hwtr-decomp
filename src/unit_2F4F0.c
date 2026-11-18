@@ -47,9 +47,9 @@ void func_800A4198(u8, Vec3f_ *);
 u8 func_800A4EE8(u8, Vec3f_ *, Vec3f_ *);
 Vec3f_ func_800A9068(f32 t, Vec3f_ a, Vec3f_ b);
 s32 func_800A58A4(s32 arg0);
-extern u8 (*D_80141718)(void);
-extern void (*D_8014171C)(u8, Vec3f_ *, void *, s32 *, s32 *);
-extern u8 (*D_8014169C)(s32);
+extern u8 (*svcTrackGetCameraCount)(void);
+extern void (*svcTrackGetCamera)(u8, Vec3f_ *, void *, s32 *, s32 *);
+extern u8 (*svcRandRange)(s32);
 extern u8 D_80118621;
 extern s32 *D_80118624;
 s32 func_80096100(void);
@@ -319,13 +319,13 @@ void func_8008EA6C(u32 dt) {
             }
             break;
         case 2:
-            D_8014171C((*cam).pt, &(*cam).pos, (*cam).m, &flags, (s32 *)&(*cam).fov);
+            svcTrackGetCamera((*cam).pt, &(*cam).pos, (*cam).m, &flags, (s32 *)&(*cam).fov);
             (*cam).vel.x = 0.0f;
             (*cam).vel.y = 0.0f;
             (*cam).vel.z = 0.0f;
             break;
         case 3:
-            D_8014171C((*cam).pt, &(*cam).pos, m, &flags, (s32 *)&(*cam).fov);
+            svcTrackGetCamera((*cam).pt, &(*cam).pos, m, &flags, (s32 *)&(*cam).fov);
             (*cam).vel.x = 0.0f;
             (*cam).vel.y = 0.0f;
             (*cam).vel.z = 0.0f;
@@ -348,7 +348,7 @@ void func_8008EA6C(u32 dt) {
             break;
         }
         if ((*cam).shake > dt) {
-            rnd = (s32 (**)(s32))&D_8014169C;
+            rnd = (s32 (**)(s32))&svcRandRange;
             s = (*rnd)((*cam).shake) - 125;
             (*cam).pos.x += s / 10.0f;
             s = (*rnd)((*cam).shake) - 125;
@@ -463,8 +463,8 @@ void func_80090578(Cam90_ *cam, u32 dt) {
     if (cam->timer < dt) {
         bestCount = 0;
         bestPt = 0;
-        for (i = 0; i < D_80141718(); i++) {
-            D_8014171C(i, &pos, b, &flags, &x);
+        for (i = 0; i < svcTrackGetCameraCount(); i++) {
+            svcTrackGetCamera(i, &pos, b, &flags, &x);
             /* TODO (Clean version / Bug check): 'flags |= 1;' forces the 'if (flags & 1)' branch,
              * making the 'else' branch (radius = 0.0f) dead code. Verify if flags was intended
              * to be tested without unconditional mutation:
@@ -514,11 +514,11 @@ void func_80090578(Cam90_ *cam, u32 dt) {
             cam->mode = (-(v & 1) & 3) | 2;
         } else {
             do {
-                cam->pt = D_8014169C(D_80118621);
+                cam->pt = svcRandRange(D_80118621);
             } while ((w = D_80118624[cam->pt * 5]) == 0);
             cam->mode = w;
             for (j = 0; j < 10; j++) {
-                cam->car = D_8014169C(func_80096100());
+                cam->car = svcRandRange(func_80096100());
                 if (Car_Get(cam->car)->b4B8 == 0) {
                     break;
                 }

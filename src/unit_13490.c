@@ -185,11 +185,11 @@ void SceneNode_Draw(Node72_ *n, s32 arg1, s32 arg2, s32 arg3) {
     }
 }
 
-void func_80072D48(Node72_ *n) {
+void SceneNode_Hide(Node72_ *n) {
     n->flags &= ~0x40;
 }
 
-void func_80072D5C(Node72_ *n) {
+void SceneNode_Show(Node72_ *n) {
     n->flags |= 0x40;
 }
 
@@ -230,7 +230,7 @@ void func_80072E38(Node72_ *n, s32 arg1) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_13490", func_80072EE0);
 
-s32 func_8007319C(s32 name) {
+s32 File_LoadAlloc(s32 name) {
     s32 buf;
 
     buf = Memory_Alloc(File_GetSize());
@@ -250,7 +250,7 @@ ItemList_ *func_800734AC(ItemList_ *l) {
 }
 
 
-void func_800734F4(s32 arg0) {
+void WorldData_Free(s32 arg0) {
     if (arg0 != 0) {
         func_80073530();
         func_80073740(arg0);

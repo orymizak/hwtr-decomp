@@ -4,24 +4,24 @@
 #include "car.h"
 void Snd_SetVolume(s32, s32);
 void *Memory_Alloc(s32);
-extern void *D_80101E70;
+extern void *gWaveTblBuffer;
 extern u8 D_80138AB0;
 void func_8006B838(void);
 u8 func_8008BE7C(s32);
 void Particles_FreeAll(void);
 void func_80078980(s32);
 typedef struct Node64_ { u8 pad[0xC]; f32 v; u8 pad2[4]; struct Node64_ *next; u8 pad3[2]; u8 id; } Node64_;
-extern Node64_ *D_800F0100;
+extern Node64_ *gSndSrcList;
 void nuPiReadRom(u32 devAddr, void *dram, u32 size);
 void Snd_LoadWaveBank(void *data, s32 a);
 typedef struct { s32 a; s32 b; s32 c; } Vec3J_;
-extern Vec3J_ D_800EFF14;
+extern Vec3J_ gListenerVel;
 typedef struct { s32 a; s32 b; s32 c; } Vec3I_;
-extern Vec3I_ D_800EFF08;
-extern Vec3f D_800EFF20;
-extern Vec3f D_800EFF2C;
+extern Vec3I_ gListenerPos;
+extern Vec3f gListenerOriA;
+extern Vec3f gListenerOriB;
 typedef struct { f32 f0; } S_D_800F01B4;
-extern S_D_800F01B4 D_800F01B4[];
+extern S_D_800F01B4 gCarSndPrevThrottle[];
 typedef struct { f32 f0; u8 p4[0x48]; } S_D_800EFF54;
 extern S_D_800EFF54 D_800EFF54[];
 extern f64 D_800FE868;
@@ -32,14 +32,14 @@ typedef struct Nd29_ { u8 p0[0x10]; s32 h; struct Nd29_ *next; } Nd29_;
 typedef struct N64c_ { f32 x; f32 y; f32 z; f32 v; s32 f10; struct N64c_ *next; u8 b18; u8 b19; u8 id; u8 b1B; } N64c_;
 typedef struct { s32 w; u8 p4[0x10]; } E14s_;
 typedef struct { u32 f0; u8 p4[0x14]; u8 n18; u8 p19[3]; u32 f1C; u8 p20[0x10]; E14s_ e[1]; } Cfg9_;
-f32 func_800649F8(void *pos, void *vel);
-s32 func_80064B58(void *);
+f32 Snd3D_GetDoppler(void *pos, void *vel);
+s32 Snd3D_GetPan(void *);
 extern u8 D_80138AAE;
 extern u8 D_80138AAF;
 extern u8 D_80138AB1;
 void func_8007F4D0(void);
 void func_8007C080(void);
-void func_80066C9C(s32, u8);
+void World_SetupLod(s32, u8);
 u8 Race_Init(Cfg9_ *);
 extern s32 D_800F0108[];
 extern s32 D_800F0120;
@@ -48,56 +48,56 @@ extern s32 D_800F013C;
 extern s32 D_800F0140[];
 extern s32 D_800F0158;
 s32 Rand_Range(s32);
-extern s32 D_800EFC64;
+extern s32 gSndSrcCount;
 extern Vec3f D_800FE7B8;
-extern u8 D_800F01B0;
+extern u8 gReverbOn;
 extern f64 D_800FE848;
 void Snd_SelectFx(s32);
-extern Snd29_ D_800EFF38[];
+extern Snd29_ gCarSnd[];
 void Snd_SetPan(s32, s32);
 extern Slot_ D_800EFF7C[];
-extern u8 D_800F0104;
+extern u8 gTrackSndIndex;
 s32 Snd_SetPitch(s32 id, f32 val);
-extern s32 D_800F01A0;
-extern s32 D_800F01A4;
-extern s32 D_800EFC94[];
-extern s32 D_8014C0C0;
-extern s32 D_8014C0A8;
-extern s32 D_8014C0AC;
-extern s32 D_8014C0B0;
-extern s32 D_8014C0C4;
-extern s32 D_8014C0C8;
-extern s32 D_8014C0CC;
-extern s32 D_8014C0D0;
-extern s32 D_8014C0D4;
-extern s32 D_8014C0D8;
-extern s32 D_8014C0DC;
-extern s32 D_8014C0E0;
-extern s32 D_8014C0E4;
-extern s32 D_8014C0E8;
-extern s32 D_8014C0EC;
-extern s32 D_8014C0F0;
-extern s32 D_8014C0F4;
-extern s32 D_8014C0F8;
-extern s32 D_8014C0FC;
-extern s32 D_8014C100;
-extern s32 D_8014C104;
-extern s32 D_8014C108;
-extern s32 D_8014C10C;
-extern s32 D_8014C110;
-extern s32 D_8014C114;
-extern s32 D_8014C118;
-extern s32 D_8014C11C;
-extern s32 D_8014C120;
-extern s32 D_8014C124;
-extern s32 D_8014C12C;
-extern s32 D_8014C130;
-extern s32 D_8014C144;
-extern s32 D_8014C150;
-extern S_D_800EFC78 D_800EFC78[];
+extern s32 gSfxHandle01;
+extern s32 gSfxHandle0D;
+extern s32 gSfxTable[];
+extern s32 audCarSndUpdate;
+extern s32 audSfxPlay;
+extern s32 audMusicPlayTrack;
+extern s32 audMusicGetTrack;
+extern s32 audListenerSetPosition;
+extern s32 audListenerSetOrientation;
+extern s32 audListenerSetVelocity;
+extern s32 audCarSndSetPosition;
+extern s32 audCarSndSetVelocity;
+extern s32 audSetReverb;
+extern s32 audCarSndStartEngine;
+extern s32 audCarSndStopEngine;
+extern s32 audCarSndSetRpm;
+extern s32 audCarSndSetThrottle;
+extern s32 audCarSndStartLoopA;
+extern s32 audCarSndStopLoopA;
+extern s32 audCarSndSetLoopAVolume;
+extern s32 audCarSndStartLoopB;
+extern s32 audCarSndStopLoopB;
+extern s32 audCarSndSetLoopBVolume;
+extern s32 audCarSndPlayOneShot2;
+extern s32 audCarSndStopOneShot2;
+extern s32 audCarSndPlayOneShot;
+extern s32 audCarSndStopOneShot;
+extern s32 audCarSndPlayLoopC;
+extern s32 audCarSndStopLoopC;
+extern s32 audCarSndSetLoopCVolume;
+extern s32 audSndSrcCreate;
+extern s32 audSndSrcSetPosition;
+extern s32 audSndSrcPlay;
+extern s32 audSndSrcStop;
+extern s32 audCarSndUpdateSplit;
+extern s32 audVoicePlayRandom;
+extern S_D_800EFC78 gSongTable[];
 s32 Snd_Play(s32, s32,s32,s32, s32);
-extern s32 D_800EFC68;
-extern f32 D_800EFC6C;
+extern s32 gMusicHandle;
+extern f32 gMusicVolume;
 extern u8 D_800EFF60;
 extern u8 D_800EFF4C;
 extern u8 D_800EFF48;
@@ -107,50 +107,50 @@ extern u8 D_800EFF58;
 extern u8 D_800EFF40;
 extern u8 D_800EFF50;
 s32 Snd_FadeOutAll(s32,s32);
-s32 func_8006495C(void);
+s32 Audio_FadeOutAll(void);
 s32 Snd_SetMasterVolume(s32, s32);
 s32 Snd_Stop(s32,s32);
 s32 Snd_IsPlaying(s32);
-extern s32 D_800F01A8;
-extern s32 D_800F01AC;
+extern s32 gSfxHandle37;
+extern s32 gSfxHandle36;
 extern f64 D_800FE8A8;
 extern s32 D_8014102C;
-extern void *D_80141698;
-extern void *D_8014169C;
+extern void *svcTimeGetMillis;
+extern void *svcRandRange;
 extern void *D_801416A8;
 extern void *D_801416B4;
 extern void *D_801416B8;
 extern void *D_801416BC;
-extern void *D_801416C4;
+extern void *svcCameraApply;
 extern void *D_801416C8;
 extern s32 D_801416CC;
-extern void *D_801416E8;
-extern void *D_801416EC;
-extern void *D_801416F4;
-extern void *D_801416FC;
-extern void *D_80141700;
-extern void *D_80141704;
-extern void *D_80141718;
-extern void *D_8014171C;
-extern void *D_80141720;
-extern void *D_80141724;
-extern void *D_80141728;
-extern void *D_8014172C;
-extern void *D_80141730;
-extern void *D_80141734;
-extern void *D_80141738;
+extern void *svcTrackLoad;
+extern void *svcTrackUnload;
+extern void *svcWorldDraw;
+extern void *svcTrackGetLinkCount;
+extern void *svcTrackGetLink;
+extern void *svcTrackSetLinkTransform;
+extern void *svcTrackGetCameraCount;
+extern void *svcTrackGetCamera;
+extern void *svcTrackGetPathCount;
+extern void *svcTrackGetPath;
+extern void *svcTrackGetPathKey;
+extern void *svcTrackSetPathTransform;
+extern void *svcTrackGetMarkerCount;
+extern void *svcTrackGetMarker;
+extern void *svcModelLoadDefault;
 extern void *D_8014173C;
-extern void *D_80141744;
+extern void *svcCarInfoLoadEx;
 extern void *D_80141748;
 extern void *D_8014174C;
 extern void *D_80141754;
 extern void *D_80141758;
 extern s32 D_80141768;
-extern void *D_8014177C;
-extern void *D_80141780;
-extern void *D_80141784;
-extern void *D_80141788;
-extern void *D_8014178C;
+extern void *svcFxCarScrape;
+extern void *svcGamePauseBegin;
+extern void *svcGamePauseEnd;
+extern void *svcGamePauseUpdate;
+extern void *svcDraw2DBeginPrim;
 extern void *D_801417A8;
 extern void *D_801417AC;
 extern void *D_801417B0;
@@ -166,7 +166,7 @@ s32 Pause_Update();
 s32 Font_DrawChar(s32, s32, s32, s32, s32);
 s32 func_800CD600(s32 *);
 extern s32 D_800F015C;
-extern u8 D_800F0105;
+extern u8 gMusicTrack;
 extern f32 gSfxVolume;
 extern f64 D_800FE898;
 extern f32 gVoiceVolume;
@@ -176,26 +176,26 @@ s32 func_80060450(void) {
     return 1;
 }
 
-void func_800655CC();
-void func_8006586C();
-extern void *D_801416F0;
-void func_80065940();
-void func_80065C5C();
+void Track_Load();
+void Track_Unload();
+extern void *svcWorldUpdate;
+void World_Update();
+void World_Draw();
 extern void *D_801416F8;
 void func_800664A4();
-void func_800687D8();
-void func_800687E8();
-void func_800688F4();
-extern void *D_80141708;
-void func_80069214();
-void func_8006A358();
-void func_8006A368();
-void func_800658C4();
-void func_800658D4();
-void func_800667F8();
+void Track_GetLinkCount();
+void Track_GetLink();
+void Track_SetLinkTransform();
+extern void *svcTrackSmashObject;
+void Track_SmashObject();
+void Track_GetCameraCount();
+void Track_GetCamera();
+void Track_GetMarkerCount();
+void Track_GetMarker();
+void Model_LoadDefault();
 void func_80066BD4();
-extern void *D_80141740;
-void func_80066ECC();
+extern void *svcModelGetColor;
+void Model_GetColor();
 void CarInfo_LoadEx();
 extern void *D_80141760;
 void func_80068390();
@@ -207,25 +207,25 @@ void func_80066EFC();
 void func_80067284();
 void func_80067EFC();
 void func_80067F40();
-extern void *D_8014175C;
-void func_80068020();
-extern void *D_8014176C;
-void func_80066758();
-extern void *D_80141770;
-void func_8006673C();
-extern void *D_80141774;
-void func_800667A8();
+extern void *svcModelApplyFlags;
+void Model_ApplyFlags();
+extern void *svcModelFlashOn;
+void Model_FlashOn();
+extern void *svcModelFlashOff;
+void Model_FlashOff();
+extern void *svcModelSetVisible;
+void Model_SetVisible();
 extern void *D_80141778;
 void func_80066778();
-extern void *D_801416D0;
+extern void *svcFontLoad;
 void Font_Load();
-extern void *D_801416D4;
+extern void *svcFontFree;
 void Font_Free();
-extern void *D_801416D8;
+extern void *svcFontGetCharWidth;
 void Font_GetCharWidth();
-extern void *D_801416DC;
-s32 func_80060C00(s32, s32, s32, s32);
-extern void *D_801416E0;
+extern void *svcFontDrawChar;
+s32 Font_DrawCharSvc(s32, s32, s32, s32);
+extern void *svcDraw2DSetColor;
 void Draw2D_SetColor();
 extern void *D_801416A4;
 void func_80078320();
@@ -239,49 +239,49 @@ void Time_GetMillis();
 void Game_PauseBegin();
 void Game_PauseEnd();
 void Game_PauseUpdate();
-void func_800698C0();
-void func_8006A1E0();
-void func_8006A1F0();
-void func_8006A234();
-void func_8006A2B8();
-extern void *D_80141790;
-void func_8006A400();
-extern void *D_80141710;
-void func_8006A460();
-extern void *D_8014170C;
-void func_8006A450();
-extern void *D_80141714;
-void func_8006A4D4();
+void Fx_CarScrape();
+void Track_GetPathCount();
+void Track_GetPath();
+void Track_GetPathKey();
+void Track_SetPathTransform();
+extern void *svcTrackLoadDup;
+void Track_LoadDup();
+extern void *svcTrackGetEntity;
+void Track_GetEntity();
+extern void *svcTrackGetEntityCount;
+void Track_GetEntityCount();
+extern void *svcTrackSetEntityVisible;
+void Track_SetEntityVisible();
 s32 func_80060990(void);
 s32 func_80060998(void);
 s32 func_800609A0(void);
 s32 func_800609A8(void);
-extern void *D_8014179C;
+extern void *svcFileGetSize;
 void File_GetSize();
-extern void *D_801417A0;
+extern void *svcFileLoad;
 void File_Load();
 void Draw2D_BeginPrim();
 
-/* Fills the service table at D_80141698..D_801417B4 (font, file, timer and game callbacks);
- * func_80060840 clears it again. */
-s32 func_80060458(void) {
-    D_801416E8 = &func_800655CC;
-    D_801416EC = &func_8006586C;
-    D_801416F0 = &func_80065940;
-    D_801416F4 = &func_80065C5C;
+/* Fills the service table at svcTimeGetMillis..D_801417B4 (font, file, timer and game callbacks);
+ * Svc_Uninstall clears it again. */
+s32 Svc_Install(void) {
+    svcTrackLoad = &Track_Load;
+    svcTrackUnload = &Track_Unload;
+    svcWorldUpdate = &World_Update;
+    svcWorldDraw = &World_Draw;
     D_801416F8 = &func_800664A4;
-    D_801416FC = &func_800687D8;
-    D_80141700 = &func_800687E8;
-    D_80141704 = &func_800688F4;
-    D_80141708 = &func_80069214;
-    D_80141718 = &func_8006A358;
-    D_8014171C = &func_8006A368;
-    D_80141730 = &func_800658C4;
-    D_80141734 = &func_800658D4;
-    D_80141738 = &func_800667F8;
+    svcTrackGetLinkCount = &Track_GetLinkCount;
+    svcTrackGetLink = &Track_GetLink;
+    svcTrackSetLinkTransform = &Track_SetLinkTransform;
+    svcTrackSmashObject = &Track_SmashObject;
+    svcTrackGetCameraCount = &Track_GetCameraCount;
+    svcTrackGetCamera = &Track_GetCamera;
+    svcTrackGetMarkerCount = &Track_GetMarkerCount;
+    svcTrackGetMarker = &Track_GetMarker;
+    svcModelLoadDefault = &Model_LoadDefault;
     D_8014173C = &func_80066BD4;
-    D_80141740 = &func_80066ECC;
-    D_80141744 = &CarInfo_LoadEx;
+    svcModelGetColor = &Model_GetColor;
+    svcCarInfoLoadEx = &CarInfo_LoadEx;
     D_80141760 = &func_80068390;
     D_80141764 = &func_80068504;
     D_80141750 = &func_800685E0;
@@ -289,61 +289,61 @@ s32 func_80060458(void) {
     D_8014174C = &func_80067284;
     D_80141758 = &func_80067EFC;
     D_80141754 = &func_80067F40;
-    D_8014175C = &func_80068020;
-    D_8014176C = &func_80066758;
-    D_80141770 = &func_8006673C;
-    D_80141774 = &func_800667A8;
+    svcModelApplyFlags = &Model_ApplyFlags;
+    svcModelFlashOn = &Model_FlashOn;
+    svcModelFlashOff = &Model_FlashOff;
+    svcModelSetVisible = &Model_SetVisible;
     D_80141778 = &func_80066778;
-    D_801416D0 = &Font_Load;
-    D_801416D4 = &Font_Free;
-    D_801416D8 = &Font_GetCharWidth;
-    D_801416DC = &func_80060C00;
-    D_801416E0 = &Draw2D_SetColor;
+    svcFontLoad = &Font_Load;
+    svcFontFree = &Font_Free;
+    svcFontGetCharWidth = &Font_GetCharWidth;
+    svcFontDrawChar = &Font_DrawCharSvc;
+    svcDraw2DSetColor = &Draw2D_SetColor;
     D_801416A4 = &func_80078320;
     D_801416A8 = &func_80078388;
     D_801416B4 = &func_80078624;
     D_801416B8 = &func_80078630;
     D_801416BC = &func_8007863C;
-    D_801416C4 = &Camera_Apply;
+    svcCameraApply = &Camera_Apply;
     D_801416C8 = &func_80078828;
-    D_80141698 = &Time_GetMillis;
-    D_8014169C = &Rand_Range;
-    D_80141780 = &Game_PauseBegin;
-    D_80141784 = &Game_PauseEnd;
-    D_80141788 = &Game_PauseUpdate;
-    D_8014177C = &func_800698C0;
-    D_80141720 = &func_8006A1E0;
-    D_80141724 = &func_8006A1F0;
-    D_80141728 = &func_8006A234;
-    D_8014172C = &func_8006A2B8;
-    D_80141790 = &func_8006A400;
-    D_80141710 = &func_8006A460;
-    D_8014170C = &func_8006A450;
-    D_80141714 = &func_8006A4D4;
+    svcTimeGetMillis = &Time_GetMillis;
+    svcRandRange = &Rand_Range;
+    svcGamePauseBegin = &Game_PauseBegin;
+    svcGamePauseEnd = &Game_PauseEnd;
+    svcGamePauseUpdate = &Game_PauseUpdate;
+    svcFxCarScrape = &Fx_CarScrape;
+    svcTrackGetPathCount = &Track_GetPathCount;
+    svcTrackGetPath = &Track_GetPath;
+    svcTrackGetPathKey = &Track_GetPathKey;
+    svcTrackSetPathTransform = &Track_SetPathTransform;
+    svcTrackLoadDup = &Track_LoadDup;
+    svcTrackGetEntity = &Track_GetEntity;
+    svcTrackGetEntityCount = &Track_GetEntityCount;
+    svcTrackSetEntityVisible = &Track_SetEntityVisible;
     D_801417A8 = &func_80060990;
     D_801417AC = &func_80060998;
     D_801417B0 = &func_800609A0;
     D_801417B4 = &func_800609A8;
-    D_8014179C = &File_GetSize;
-    D_801417A0 = &File_Load;
-    D_8014178C = &Draw2D_BeginPrim;
+    svcFileGetSize = &File_GetSize;
+    svcFileLoad = &File_Load;
+    svcDraw2DBeginPrim = &Draw2D_BeginPrim;
     return 1;
 }
 
-s32 func_80060840(void) {
-    D_801416E8 = 0;
-    D_801416EC = 0;
-    D_801416F4 = 0;
-    D_801416FC = 0;
-    D_80141700 = 0;
-    D_80141704 = 0;
-    D_80141718 = 0;
-    D_8014171C = 0;
-    D_80141730 = 0;
-    D_80141734 = 0;
-    D_80141738 = 0;
+s32 Svc_Uninstall(void) {
+    svcTrackLoad = 0;
+    svcTrackUnload = 0;
+    svcWorldDraw = 0;
+    svcTrackGetLinkCount = 0;
+    svcTrackGetLink = 0;
+    svcTrackSetLinkTransform = 0;
+    svcTrackGetCameraCount = 0;
+    svcTrackGetCamera = 0;
+    svcTrackGetMarkerCount = 0;
+    svcTrackGetMarker = 0;
+    svcModelLoadDefault = 0;
     D_8014173C = 0;
-    D_80141744 = 0;
+    svcCarInfoLoadEx = 0;
     D_80141748 = 0;
     D_8014174C = 0;
     D_80141758 = 0;
@@ -354,24 +354,24 @@ s32 func_80060840(void) {
     D_801416B4 = 0;
     D_801416B8 = 0;
     D_801416BC = 0;
-    D_801416C4 = 0;
+    svcCameraApply = 0;
     D_801416C8 = 0;
     D_801416CC = 0;
-    D_80141698 = 0;
-    D_8014169C = 0;
+    svcTimeGetMillis = 0;
+    svcRandRange = 0;
     D_801417A8 = 0;
     D_801417AC = 0;
     D_801417B0 = 0;
     D_801417B4 = 0;
-    D_8014177C = 0;
-    D_80141780 = 0;
-    D_80141784 = 0;
-    D_80141788 = 0;
-    D_80141720 = 0;
-    D_80141724 = 0;
-    D_80141728 = 0;
-    D_8014172C = 0;
-    D_8014178C = 0;
+    svcFxCarScrape = 0;
+    svcGamePauseBegin = 0;
+    svcGamePauseEnd = 0;
+    svcGamePauseUpdate = 0;
+    svcTrackGetPathCount = 0;
+    svcTrackGetPath = 0;
+    svcTrackGetPathKey = 0;
+    svcTrackSetPathTransform = 0;
+    svcDraw2DBeginPrim = 0;
     return 1;
 }
 
@@ -424,7 +424,7 @@ u8 Game_StartRace(Cfg9_ *c) {
     } else {
         D_80138AB0 = 0;
     }
-    func_80066C9C(n, c->n18);
+    World_SetupLod(n, c->n18);
     if (!(c->f0 & 0x10)) {
         func_80078980(0);
     } else {
@@ -457,7 +457,7 @@ s32 Game_Update(void) {
 
 void Game_PauseBegin(void) {
     func_8006C468();
-    func_8006495C();
+    Audio_FadeOutAll();
     Pause_Init();
 }
 
@@ -470,7 +470,7 @@ void Game_PauseUpdate(void) {
     Pause_Update();
 }
 
-s32 func_80060C00(s32 arg0, s32 arg1, s32 arg2, s32 arg3) {
+s32 Font_DrawCharSvc(s32 arg0, s32 arg1, s32 arg2, s32 arg3) {
     return Font_DrawChar(arg0 & 0xFF, arg1 & 0xFF, arg2 & 0xFFFF, arg3 & 0xFFFF, 0) & 0xFFFF;
 }
 
@@ -478,134 +478,134 @@ void func_80060C30(void) {
     func_800CD600(&D_800F015C);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80060C50);
+INCLUDE_ASM("asm/nonmatchings/unit_01050", Audio_Init);
 
-void func_80061454(s32 unused, u8 count, u8 *info);
-s32 func_800616A0();
+void CarSnd_Init(s32 unused, u8 count, u8 *info);
+s32 CarSnd_Shutdown();
 s32 Sfx_Play(u32 id, s32 mode, f32 vol, f32 pitch);
 s32 Music_PlayTrack(u32 track);
 u8 Music_GetTrack(void);
-s32 func_80061C70();
-s32 func_80062950(void);
-s32 func_80063434(Vec3I_ v);
-s32 func_80063468(Vec3f a, Vec3f b);
-s32 func_800634C0(Vec3J_ v);
-s32 func_800634F4(u8 i, Vec3f v);
-s32 func_80063550(u8 i, Vec3f v);
-s32 func_800635AC(s32 a, f32 v);
-s32 func_8006365C();
-s32 func_80063938(u8 i);
-s32 func_800639EC(s32 arg0, s32 arg1);
-s32 func_80063A18(u8 car, f32 v);
-s32 func_80063AC0();
-s32 func_80063C18(u8 car);
-s32 func_80063C88(s32 arg0, s32 arg1);
-s32 func_80063CB4();
-s32 func_80063E0C(u8 car);
-s32 func_80063E7C(s32 arg0, s32 arg1);
-s32 func_80063EA8(u8 i, s32 k, f32 lvl);
-s32 func_80063FE8(u8 car);
-s32 func_80064058(u8 i, s32 k);
-s32 func_80064194(u8 car);
-s32 func_80064204(s32 arg0, s32 arg1);
-u8 func_80064230(void);
-s32 func_80064364();
-s32 func_80064418();
-s32 func_800645BC(u8 id);
-s32 func_80064638(u8 id, f32 v);
-s32 func_80064308(u8 id, Vec3f v);
-s32 func_80061B94(s32 kind);
-extern s32 D_8014C13C;
-extern s32 D_8014C140;
-extern s32 D_8014C0B4;
-extern s32 D_8014C128;
-extern s32 D_8014C134;
+s32 CarSnd_Update();
+s32 CarSnd_UpdateSplit(void);
+s32 Listener_SetPosition(Vec3I_ v);
+s32 Listener_SetOrientation(Vec3f a, Vec3f b);
+s32 Listener_SetVelocity(Vec3J_ v);
+s32 CarSnd_SetPosition(u8 i, Vec3f v);
+s32 CarSnd_SetVelocity(u8 i, Vec3f v);
+s32 Audio_SetReverb(s32 a, f32 v);
+s32 CarSnd_StartEngine();
+s32 CarSnd_StopEngine(u8 i);
+s32 CarSnd_SetRpm(s32 arg0, s32 arg1);
+s32 CarSnd_SetThrottle(u8 car, f32 v);
+s32 CarSnd_StartLoopA();
+s32 CarSnd_StopLoopA(u8 car);
+s32 CarSnd_SetLoopAVolume(s32 arg0, s32 arg1);
+s32 CarSnd_StartLoopB();
+s32 CarSnd_StopLoopB(u8 car);
+s32 CarSnd_SetLoopBVolume(s32 arg0, s32 arg1);
+s32 CarSnd_PlayOneShot(u8 i, s32 k, f32 lvl);
+s32 CarSnd_StopOneShot(u8 car);
+s32 CarSnd_PlayLoopC(u8 i, s32 k);
+s32 CarSnd_StopLoopC(u8 car);
+s32 CarSnd_SetLoopCVolume(s32 arg0, s32 arg1);
+u8 SndSrc_Create(void);
+s32 SndSrc_Destroy();
+s32 SndSrc_Play();
+s32 SndSrc_Stop(u8 id);
+s32 SndSrc_SetVolume(u8 id, f32 v);
+s32 SndSrc_SetPosition(u8 id, Vec3f v);
+s32 Voice_PlayRandom(s32 kind);
+extern s32 audCarSndInit;
+extern s32 audCarSndShutdown;
+extern s32 audMusicStop;
+extern s32 audSndSrcDestroy;
+extern s32 audSndSrcSetVolume;
 /* Installs the sound driver entry points used by the rest of the game. */
-s32 func_800610DC(void) {
-    D_8014C13C = (s32)func_80061454;
-    D_8014C140 = (s32)func_800616A0;
-    D_8014C0A8 = (s32)Sfx_Play;
-    D_8014C0AC = (s32)Music_PlayTrack;
-    D_8014C0B4 = (s32)Music_Stop;
-    D_8014C0B0 = (s32)Music_GetTrack;
-    D_8014C0C0 = (s32)func_80061C70;
-    D_8014C144 = (s32)func_80062950;
-    D_8014C0C4 = (s32)func_80063434;
-    D_8014C0C8 = (s32)func_80063468;
-    D_8014C0CC = (s32)func_800634C0;
-    D_8014C0D0 = (s32)func_800634F4;
-    D_8014C0D4 = (s32)func_80063550;
-    D_8014C0D8 = (s32)func_800635AC;
-    D_8014C0DC = (s32)func_8006365C;
-    D_8014C0E0 = (s32)func_80063938;
-    D_8014C0E4 = (s32)func_800639EC;
-    D_8014C0E8 = (s32)func_80063A18;
-    D_8014C0EC = (s32)func_80063AC0;
-    D_8014C0F0 = (s32)func_80063C18;
-    D_8014C0F4 = (s32)func_80063C88;
-    D_8014C0F8 = (s32)func_80063CB4;
-    D_8014C0FC = (s32)func_80063E0C;
-    D_8014C100 = (s32)func_80063E7C;
-    D_8014C10C = (s32)func_80063EA8;
-    D_8014C110 = (s32)func_80063FE8;
-    D_8014C104 = (s32)func_80063EA8;
-    D_8014C108 = (s32)func_80063FE8;
-    D_8014C114 = (s32)func_80064058;
-    D_8014C118 = (s32)func_80064194;
-    D_8014C11C = (s32)func_80064204;
-    D_8014C120 = (s32)func_80064230;
-    D_8014C128 = (s32)func_80064364;
-    D_8014C12C = (s32)func_80064418;
-    D_8014C130 = (s32)func_800645BC;
-    D_8014C134 = (s32)func_80064638;
-    D_8014C124 = (s32)func_80064308;
-    D_8014C150 = (s32)func_80061B94;
+s32 Audio_InstallApi(void) {
+    audCarSndInit = (s32)CarSnd_Init;
+    audCarSndShutdown = (s32)CarSnd_Shutdown;
+    audSfxPlay = (s32)Sfx_Play;
+    audMusicPlayTrack = (s32)Music_PlayTrack;
+    audMusicStop = (s32)Music_Stop;
+    audMusicGetTrack = (s32)Music_GetTrack;
+    audCarSndUpdate = (s32)CarSnd_Update;
+    audCarSndUpdateSplit = (s32)CarSnd_UpdateSplit;
+    audListenerSetPosition = (s32)Listener_SetPosition;
+    audListenerSetOrientation = (s32)Listener_SetOrientation;
+    audListenerSetVelocity = (s32)Listener_SetVelocity;
+    audCarSndSetPosition = (s32)CarSnd_SetPosition;
+    audCarSndSetVelocity = (s32)CarSnd_SetVelocity;
+    audSetReverb = (s32)Audio_SetReverb;
+    audCarSndStartEngine = (s32)CarSnd_StartEngine;
+    audCarSndStopEngine = (s32)CarSnd_StopEngine;
+    audCarSndSetRpm = (s32)CarSnd_SetRpm;
+    audCarSndSetThrottle = (s32)CarSnd_SetThrottle;
+    audCarSndStartLoopA = (s32)CarSnd_StartLoopA;
+    audCarSndStopLoopA = (s32)CarSnd_StopLoopA;
+    audCarSndSetLoopAVolume = (s32)CarSnd_SetLoopAVolume;
+    audCarSndStartLoopB = (s32)CarSnd_StartLoopB;
+    audCarSndStopLoopB = (s32)CarSnd_StopLoopB;
+    audCarSndSetLoopBVolume = (s32)CarSnd_SetLoopBVolume;
+    audCarSndPlayOneShot = (s32)CarSnd_PlayOneShot;
+    audCarSndStopOneShot = (s32)CarSnd_StopOneShot;
+    audCarSndPlayOneShot2 = (s32)CarSnd_PlayOneShot;
+    audCarSndStopOneShot2 = (s32)CarSnd_StopOneShot;
+    audCarSndPlayLoopC = (s32)CarSnd_PlayLoopC;
+    audCarSndStopLoopC = (s32)CarSnd_StopLoopC;
+    audCarSndSetLoopCVolume = (s32)CarSnd_SetLoopCVolume;
+    audSndSrcCreate = (s32)SndSrc_Create;
+    audSndSrcDestroy = (s32)SndSrc_Destroy;
+    audSndSrcPlay = (s32)SndSrc_Play;
+    audSndSrcStop = (s32)SndSrc_Stop;
+    audSndSrcSetVolume = (s32)SndSrc_SetVolume;
+    audSndSrcSetPosition = (s32)SndSrc_SetPosition;
+    audVoicePlayRandom = (s32)Voice_PlayRandom;
     return 1;
 }
 
-s32 func_80061334(void) {
-    s32 *p = &D_8014C0C0;
+s32 Audio_UninstallApi(void) {
+    s32 *p = &audCarSndUpdate;
 
     *p = 0;
-    D_8014C144 = 0;
-    D_8014C0A8 = 0;
-    D_8014C0AC = 0;
-    D_8014C0B0 = 0;
+    audCarSndUpdateSplit = 0;
+    audSfxPlay = 0;
+    audMusicPlayTrack = 0;
+    audMusicGetTrack = 0;
     *p = 0;
-    D_8014C0C4 = 0;
-    D_8014C0C8 = 0;
-    D_8014C0CC = 0;
-    D_8014C0D0 = 0;
-    D_8014C0D4 = 0;
-    D_8014C0D8 = 0;
-    D_8014C0DC = 0;
-    D_8014C0E0 = 0;
-    D_8014C0E4 = 0;
-    D_8014C0E8 = 0;
-    D_8014C0EC = 0;
-    D_8014C0F0 = 0;
-    D_8014C0F4 = 0;
-    D_8014C0F8 = 0;
-    D_8014C0FC = 0;
-    D_8014C100 = 0;
-    D_8014C10C = 0;
-    D_8014C110 = 0;
-    D_8014C104 = 0;
-    D_8014C108 = 0;
-    D_8014C114 = 0;
-    D_8014C118 = 0;
-    D_8014C11C = 0;
-    D_8014C120 = 0;
-    D_8014C12C = 0;
-    D_8014C130 = 0;
-    D_8014C11C = 0;
-    D_8014C124 = 0;
-    D_8014C150 = 0;
+    audListenerSetPosition = 0;
+    audListenerSetOrientation = 0;
+    audListenerSetVelocity = 0;
+    audCarSndSetPosition = 0;
+    audCarSndSetVelocity = 0;
+    audSetReverb = 0;
+    audCarSndStartEngine = 0;
+    audCarSndStopEngine = 0;
+    audCarSndSetRpm = 0;
+    audCarSndSetThrottle = 0;
+    audCarSndStartLoopA = 0;
+    audCarSndStopLoopA = 0;
+    audCarSndSetLoopAVolume = 0;
+    audCarSndStartLoopB = 0;
+    audCarSndStopLoopB = 0;
+    audCarSndSetLoopBVolume = 0;
+    audCarSndPlayOneShot = 0;
+    audCarSndStopOneShot = 0;
+    audCarSndPlayOneShot2 = 0;
+    audCarSndStopOneShot2 = 0;
+    audCarSndPlayLoopC = 0;
+    audCarSndStopLoopC = 0;
+    audCarSndSetLoopCVolume = 0;
+    audSndSrcCreate = 0;
+    audSndSrcPlay = 0;
+    audSndSrcStop = 0;
+    audCarSndSetLoopCVolume = 0;
+    audSndSrcSetPosition = 0;
+    audVoicePlayRandom = 0;
     return 1;
 }
 
 
-void func_80061454(s32 unused, u8 count, u8 *info) {
+void CarSnd_Init(s32 unused, u8 count, u8 *info) {
     s32 i;
     u32 type;
 
@@ -663,11 +663,11 @@ void func_80061454(s32 unused, u8 count, u8 *info) {
             break;
         }
     }
-    D_800F0104 = info[0x16] * 3 + (info[0x17] - 1);
-    D_800F0105 = 0;
+    gTrackSndIndex = info[0x16] * 3 + (info[0x17] - 1);
+    gMusicTrack = 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", func_800616A0);
+INCLUDE_ASM("asm/nonmatchings/unit_01050", CarSnd_Shutdown);
 
 s32 Sfx_Play(u32 id, s32 mode, f32 vol, f32 pitch) {
     s32 snd;
@@ -675,7 +675,7 @@ s32 Sfx_Play(u32 id, s32 mode, f32 vol, f32 pitch) {
     s32 pri;
     s32 h;
 
-    snd = D_800EFC94[id];
+    snd = gSfxTable[id];
     v = gSfxVolume * 128.0f * vol;
     if (snd == 0) {
         return 0;
@@ -695,25 +695,25 @@ s32 Sfx_Play(u32 id, s32 mode, f32 vol, f32 pitch) {
     }
     switch (id) {
         case 0x1:
-            if (Snd_IsPlaying(D_800F01A0) == 0) {
+            if (Snd_IsPlaying(gSfxHandle01) == 0) {
                 h = Snd_Play(snd, v, 0x80, 0, pri);
                 Snd_SetPitch(h, pitch);
-                D_800F01A0 = h;
+                gSfxHandle01 = h;
             }
             return 1;
         case 0xD:
-            if (Snd_IsPlaying(D_800F01A4) == 0) {
+            if (Snd_IsPlaying(gSfxHandle0D) == 0) {
                 h = Snd_Play(snd, v, 0x80, 0, pri);
                 Snd_SetPitch(h, pitch);
-                D_800F01A4 = h;
+                gSfxHandle0D = h;
             }
             return 1;
         case 0x36:
         case 0x38:
-            D_800F01AC = Snd_Play(snd, v, 0x80, 1, pri);
+            gSfxHandle36 = Snd_Play(snd, v, 0x80, 1, pri);
             return 1;
         case 0x37:
-            D_800F01A8 = Snd_Play(snd, v, 0x80, 1, pri);
+            gSfxHandle37 = Snd_Play(snd, v, 0x80, 1, pri);
             return 1;
         default:
             Snd_SetPitch(Snd_Play(snd, v, 0x80, 0, pri), pitch);
@@ -725,19 +725,19 @@ s32 Music_PlayTrack(u32 track) {
     register s32 song;
     register s32 vol;
 
-    song = D_800EFC78[track].f0;
-    vol = 128.0f * D_800EFC6C;
-    if (Snd_IsPlaying(D_800EFC68) != 0) {
-        Snd_Stop(D_800EFC68, 0);
-        D_800EFC68 = 0;
+    song = gSongTable[track].f0;
+    vol = 128.0f * gMusicVolume;
+    if (Snd_IsPlaying(gMusicHandle) != 0) {
+        Snd_Stop(gMusicHandle, 0);
+        gMusicHandle = 0;
     }
-    D_800EFC68 = Snd_Play(song, vol, 0x80, 0, 0xFF);
-    *(s8 *)&D_800F0105 = track;
+    gMusicHandle = Snd_Play(song, vol, 0x80, 0, 0xFF);
+    *(s8 *)&gMusicTrack = track;
     return 1;
 }
 
 s32 Music_Stop(void) {
-    s32 *p = &D_800EFC68;
+    s32 *p = &gMusicHandle;
 
     if (Snd_IsPlaying(*p) != 0) {
         Snd_Stop(*p, 0);
@@ -748,10 +748,10 @@ s32 Music_Stop(void) {
 
 
 u8 Music_GetTrack(void) {
-    return D_800F0105;
+    return gMusicTrack;
 }
 
-s32 func_80061B94(s32 kind) {
+s32 Voice_PlayRandom(s32 kind) {
     s32 vol = gVoiceVolume * 255.0f;
     s32 snd = 0;
 
@@ -771,9 +771,9 @@ s32 func_80061B94(s32 kind) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80061C70);
+INCLUDE_ASM("asm/nonmatchings/unit_01050", CarSnd_Update);
 
-s32 func_80062950(void) {
+s32 CarSnd_UpdateSplit(void) {
     s32 p0;
     s32 p1;
     s32 p2;
@@ -789,21 +789,21 @@ s32 func_80062950(void) {
     f32 pitch;
     Nd29_ *n;
 
-    n = (*(Nd29_ * *)&D_800F0100);
+    n = (*(Nd29_ * *)&gSndSrcList);
     i = 0;
-    p1 = Snd_IsPlaying(D_800EFF38[i].h[1]);
-    p0 = Snd_IsPlaying(D_800EFF38[i].h[0]);
-    p2 = Snd_IsPlaying(D_800EFF38[i].h[2]);
-    p3 = Snd_IsPlaying(D_800EFF38[i].h[3]);
-    p4 = Snd_IsPlaying(D_800EFF38[i].h[4]);
-    p5 = Snd_IsPlaying(D_800EFF38[i].h[5]);
+    p1 = Snd_IsPlaying(gCarSnd[i].h[1]);
+    p0 = Snd_IsPlaying(gCarSnd[i].h[0]);
+    p2 = Snd_IsPlaying(gCarSnd[i].h[2]);
+    p3 = Snd_IsPlaying(gCarSnd[i].h[3]);
+    p4 = Snd_IsPlaying(gCarSnd[i].h[4]);
+    p5 = Snd_IsPlaying(gCarSnd[i].h[5]);
     if (p0 || p2 || p3 || p4 || p5 || p1) {
         vol = gSfxVolume;
-        x = D_800EFF38[i].f1C;
+        x = gCarSnd[i].f1C;
         zero = 0.0f;
         pan = 0x80;
         if (p1) {
-            pitch = (D_800EFF38[i].b45 != 13) ? (D_800EFF38[i].rpm - 1000.0f) * 0.0021818182f + -17.0f : 0.0f;
+            pitch = (gCarSnd[i].b45 != 13) ? (gCarSnd[i].rpm - 1000.0f) * 0.0021818182f + -17.0f : 0.0f;
             pitch = pitch + zero;
             if (pitch > 12.0) {
                 pitch = 12.0f;
@@ -812,12 +812,12 @@ s32 func_80062950(void) {
             if (v == 0) {
                 v = 1;
             }
-            Snd_SetVolume(D_800EFF38[i].h[1], v);
-            Snd_SetPan(D_800EFF38[i].h[1], pan);
-            Snd_SetPitch(D_800EFF38[i].h[1], pitch);
+            Snd_SetVolume(gCarSnd[i].h[1], v);
+            Snd_SetPan(gCarSnd[i].h[1], pan);
+            Snd_SetPitch(gCarSnd[i].h[1], pitch);
         }
         if (p0) {
-            pitch = (D_800EFF38[i].rpm - 1000.0f) * 0.0021818182f + -17.0f;
+            pitch = (gCarSnd[i].rpm - 1000.0f) * 0.0021818182f + -17.0f;
             pitch = pitch + zero;
             if (pitch > 12.0) {
                 pitch = 12.0f;
@@ -826,61 +826,61 @@ s32 func_80062950(void) {
             if (v == 0) {
                 v = 1;
             }
-            Snd_SetVolume(D_800EFF38[i].h[0], v);
-            Snd_SetPan(D_800EFF38[i].h[0], pan);
-            Snd_SetPitch(D_800EFF38[i].h[0], pitch);
+            Snd_SetVolume(gCarSnd[i].h[0], v);
+            Snd_SetPan(gCarSnd[i].h[0], pan);
+            Snd_SetPitch(gCarSnd[i].h[0], pitch);
         }
         if (p2) {
-            v = D_800EFF38[i].f20 * 128.0f * vol;
+            v = gCarSnd[i].f20 * 128.0f * vol;
             if (v == 0) {
                 v = 1;
             }
-            Snd_SetVolume(D_800EFF38[i].h[2], v);
-            Snd_SetPan(D_800EFF38[i].h[2], pan);
-            Snd_SetPitch(D_800EFF38[i].h[2], zero);
+            Snd_SetVolume(gCarSnd[i].h[2], v);
+            Snd_SetPan(gCarSnd[i].h[2], pan);
+            Snd_SetPitch(gCarSnd[i].h[2], zero);
         }
         if (p3) {
-            v = D_800EFF38[i].f24 * 128.0f * vol;
+            v = gCarSnd[i].f24 * 128.0f * vol;
             if (v == 0) {
                 v = 1;
             }
-            Snd_SetVolume(D_800EFF38[i].h[3], v);
-            Snd_SetPan(D_800EFF38[i].h[3], pan);
-            Snd_SetPitch(D_800EFF38[i].h[3], zero);
+            Snd_SetVolume(gCarSnd[i].h[3], v);
+            Snd_SetPan(gCarSnd[i].h[3], pan);
+            Snd_SetPitch(gCarSnd[i].h[3], zero);
         }
         if (p4) {
             v = vol * 128.0f;
             if (v == 0) {
                 v = 1;
             }
-            Snd_SetVolume(D_800EFF38[i].h[4], v);
-            Snd_SetPan(D_800EFF38[i].h[4], pan);
-            Snd_SetPitch(D_800EFF38[i].h[4], zero);
+            Snd_SetVolume(gCarSnd[i].h[4], v);
+            Snd_SetPan(gCarSnd[i].h[4], pan);
+            Snd_SetPitch(gCarSnd[i].h[4], zero);
         }
         if (p5) {
-            v = D_800EFF38[i].f28 * 128.0f * vol;
+            v = gCarSnd[i].f28 * 128.0f * vol;
             if (v == 0) {
                 v = 1;
             }
-            Snd_SetVolume(D_800EFF38[i].h[5], v);
-            Snd_SetPan(D_800EFF38[i].h[5], pan);
-            Snd_SetPitch(D_800EFF38[i].h[5], zero);
+            Snd_SetVolume(gCarSnd[i].h[5], v);
+            Snd_SetPan(gCarSnd[i].h[5], pan);
+            Snd_SetPitch(gCarSnd[i].h[5], zero);
         }
     }
     i++;
-    p1 = Snd_IsPlaying(D_800EFF38[i].h[1]);
-    p0 = Snd_IsPlaying(D_800EFF38[i].h[0]);
-    p2 = Snd_IsPlaying(D_800EFF38[i].h[2]);
-    p3 = Snd_IsPlaying(D_800EFF38[i].h[3]);
-    p4 = Snd_IsPlaying(D_800EFF38[i].h[4]);
-    p5 = Snd_IsPlaying(D_800EFF38[i].h[5]);
+    p1 = Snd_IsPlaying(gCarSnd[i].h[1]);
+    p0 = Snd_IsPlaying(gCarSnd[i].h[0]);
+    p2 = Snd_IsPlaying(gCarSnd[i].h[2]);
+    p3 = Snd_IsPlaying(gCarSnd[i].h[3]);
+    p4 = Snd_IsPlaying(gCarSnd[i].h[4]);
+    p5 = Snd_IsPlaying(gCarSnd[i].h[5]);
     if (p0 || p2 || p3 || p4 || p5 || p1) {
         vol = gSfxVolume;
-        x = D_800EFF38[i].f1C;
+        x = gCarSnd[i].f1C;
         zero = 0.0f;
         pan = 0x80;
         if (p1) {
-            pitch = (D_800EFF38[i].b45 != 13) ? (D_800EFF38[i].rpm - 1000.0f) * 0.0021818182f + -17.0f : 0.0f;
+            pitch = (gCarSnd[i].b45 != 13) ? (gCarSnd[i].rpm - 1000.0f) * 0.0021818182f + -17.0f : 0.0f;
             pitch = pitch + zero;
             if (pitch > 12.0) {
                 pitch = 12.0f;
@@ -889,13 +889,13 @@ s32 func_80062950(void) {
             if (v == 0) {
                 v = 1;
             }
-            Snd_SetVolume(D_800EFF38[i].h[1], v);
-            Snd_SetPan(D_800EFF38[i].h[1], pan);
-            Snd_SetPitch(D_800EFF38[i].h[1], pitch);
+            Snd_SetVolume(gCarSnd[i].h[1], v);
+            Snd_SetPan(gCarSnd[i].h[1], pan);
+            Snd_SetPitch(gCarSnd[i].h[1], pitch);
         }
         if (p0) {
-            if (D_800EFF38[i].b44 != 14) {
-                pitch = (D_800EFF38[i].rpm - 1000.0f) * 0.0021818182f + -17.0f;
+            if (gCarSnd[i].b44 != 14) {
+                pitch = (gCarSnd[i].rpm - 1000.0f) * 0.0021818182f + -17.0f;
             } else {
                 pitch = 0.0f;
             }
@@ -907,45 +907,45 @@ s32 func_80062950(void) {
             if (v == 0) {
                 v = 1;
             }
-            Snd_SetVolume(D_800EFF38[i].h[0], v);
-            Snd_SetPan(D_800EFF38[i].h[0], pan);
-            Snd_SetPitch(D_800EFF38[i].h[0], pitch);
+            Snd_SetVolume(gCarSnd[i].h[0], v);
+            Snd_SetPan(gCarSnd[i].h[0], pan);
+            Snd_SetPitch(gCarSnd[i].h[0], pitch);
         }
         if (p2) {
-            v = D_800EFF38[i].f20 * 128.0f * vol;
+            v = gCarSnd[i].f20 * 128.0f * vol;
             if (v == 0) {
                 v = 1;
             }
-            Snd_SetVolume(D_800EFF38[i].h[2], v);
-            Snd_SetPan(D_800EFF38[i].h[2], pan);
-            Snd_SetPitch(D_800EFF38[i].h[2], zero);
+            Snd_SetVolume(gCarSnd[i].h[2], v);
+            Snd_SetPan(gCarSnd[i].h[2], pan);
+            Snd_SetPitch(gCarSnd[i].h[2], zero);
         }
         if (p3) {
-            v = D_800EFF38[i].f24 * 128.0f * vol;
+            v = gCarSnd[i].f24 * 128.0f * vol;
             if (v == 0) {
                 v = 1;
             }
-            Snd_SetVolume(D_800EFF38[i].h[3], v);
-            Snd_SetPan(D_800EFF38[i].h[3], pan);
-            Snd_SetPitch(D_800EFF38[i].h[3], zero);
+            Snd_SetVolume(gCarSnd[i].h[3], v);
+            Snd_SetPan(gCarSnd[i].h[3], pan);
+            Snd_SetPitch(gCarSnd[i].h[3], zero);
         }
         if (p4) {
             v = vol * 128.0f;
             if (v == 0) {
                 v = 1;
             }
-            Snd_SetVolume(D_800EFF38[i].h[4], v);
-            Snd_SetPan(D_800EFF38[i].h[4], pan);
-            Snd_SetPitch(D_800EFF38[i].h[4], zero);
+            Snd_SetVolume(gCarSnd[i].h[4], v);
+            Snd_SetPan(gCarSnd[i].h[4], pan);
+            Snd_SetPitch(gCarSnd[i].h[4], zero);
         }
         if (p5) {
-            v = D_800EFF38[i].f28 * 128.0f * vol;
+            v = gCarSnd[i].f28 * 128.0f * vol;
             if (v == 0) {
                 v = 1;
             }
-            Snd_SetVolume(D_800EFF38[i].h[5], v);
-            Snd_SetPan(D_800EFF38[i].h[5], pan);
-            Snd_SetPitch(D_800EFF38[i].h[5], zero);
+            Snd_SetVolume(gCarSnd[i].h[5], v);
+            Snd_SetPan(gCarSnd[i].h[5], pan);
+            Snd_SetPitch(gCarSnd[i].h[5], zero);
         }
     }
     while (n != NULL) {
@@ -958,111 +958,111 @@ s32 func_80062950(void) {
     return 1;
 }
 
-s32 func_80063434(Vec3I_ v) {
-    D_800EFF08 = v;
+s32 Listener_SetPosition(Vec3I_ v) {
+    gListenerPos = v;
     return 1;
 }
 
-s32 func_80063468(Vec3f a, Vec3f b) {
-    D_800EFF20 = a;
-    D_800EFF2C = b;
+s32 Listener_SetOrientation(Vec3f a, Vec3f b) {
+    gListenerOriA = a;
+    gListenerOriB = b;
     return 1;
 }
 
-s32 func_800634C0(Vec3J_ v) {
-    D_800EFF14 = v;
+s32 Listener_SetVelocity(Vec3J_ v) {
+    gListenerVel = v;
     return 1;
 }
 
 
-s32 func_800634F4(u8 i, Vec3f v) {
+s32 CarSnd_SetPosition(u8 i, Vec3f v) {
     *(Vec3f *)((u8 *)&D_800EFF54[i] + 0x10) = v;
     return 1;
 }
 
 
-s32 func_80063550(u8 i, Vec3f v) {
+s32 CarSnd_SetVelocity(u8 i, Vec3f v) {
     *(Vec3f *)((u8 *)&D_800EFF54[i] + 0x1C) = v;
     return 1;
 }
 
 
-s32 func_800635AC(s32 a, f32 v) {
-    u8 f = D_800F01B0;
+s32 Audio_SetReverb(s32 a, f32 v) {
+    u8 f = gReverbOn;
     s16 ok = 1;
 
     if ((v == D_800FE848) != f) {
         Snd_SelectFx(v == 1.0f ? 5 : 2);
         if ((u8)ok) {
-            D_800F01B0 = D_800F01B0 == 0;
+            gReverbOn = gReverbOn == 0;
         }
     }
     return ok;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", func_8006365C);
+INCLUDE_ASM("asm/nonmatchings/unit_01050", CarSnd_StartEngine);
 
-s32 func_80063938(u8 i) {
-    D_800EFF38[i].p46[2] = 0;
-    if (Snd_IsPlaying(D_800EFF38[i].h[0]) != 0) {
-        Snd_Stop(D_800EFF38[i].h[0], 0);
-        D_800EFF38[i].h[0] = 0;
+s32 CarSnd_StopEngine(u8 i) {
+    gCarSnd[i].p46[2] = 0;
+    if (Snd_IsPlaying(gCarSnd[i].h[0]) != 0) {
+        Snd_Stop(gCarSnd[i].h[0], 0);
+        gCarSnd[i].h[0] = 0;
     }
-    if (Snd_IsPlaying(D_800EFF38[i].h[1]) != 0) {
-        Snd_Stop(D_800EFF38[i].h[1], 0);
-        D_800EFF38[i].h[1] = 0;
+    if (Snd_IsPlaying(gCarSnd[i].h[1]) != 0) {
+        Snd_Stop(gCarSnd[i].h[1], 0);
+        gCarSnd[i].h[1] = 0;
     }
     return 1;
 }
 
-s32 func_800639EC(s32 arg0, s32 arg1) {
+s32 CarSnd_SetRpm(s32 arg0, s32 arg1) {
     *(s32 *)(&D_800EFF50 + ((arg0 & 0xFF) * 0x4C)) = arg1;
     return 1;
 }
 
-s32 func_80063A18(u8 car, f32 v) {
-    if (D_800F01B4[car].f0 < v || v == D_800FE868) {
+s32 CarSnd_SetThrottle(u8 car, f32 v) {
+    if (gCarSndPrevThrottle[car].f0 < v || v == D_800FE868) {
         D_800EFF54[car].f0 = 1.0f;
     } else {
         D_800EFF54[car].f0 = 0;
     }
-    D_800F01B4[car].f0 = v;
+    gCarSndPrevThrottle[car].f0 = v;
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80063AC0);
+INCLUDE_ASM("asm/nonmatchings/unit_01050", CarSnd_StartLoopA);
 
-s32 func_80063C18(u8 car) {
-    if (Snd_IsPlaying(D_800EFF38[car].h[2]) != 0) {
-        Snd_Stop(D_800EFF38[car].h[2], 0);
-        D_800EFF38[car].h[2] = 0;
+s32 CarSnd_StopLoopA(u8 car) {
+    if (Snd_IsPlaying(gCarSnd[car].h[2]) != 0) {
+        Snd_Stop(gCarSnd[car].h[2], 0);
+        gCarSnd[car].h[2] = 0;
     }
     return 1;
 }
 
-s32 func_80063C88(s32 arg0, s32 arg1) {
+s32 CarSnd_SetLoopAVolume(s32 arg0, s32 arg1) {
     *(s32 *)(&D_800EFF58 + ((arg0 & 0xFF) * 0x4C)) = arg1;
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80063CB4);
+INCLUDE_ASM("asm/nonmatchings/unit_01050", CarSnd_StartLoopB);
 
-s32 func_80063E0C(u8 car) {
-    if (Snd_IsPlaying(D_800EFF38[car].h[3]) != 0) {
-        Snd_Stop(D_800EFF38[car].h[3], 0);
-        D_800EFF38[car].h[3] = 0;
+s32 CarSnd_StopLoopB(u8 car) {
+    if (Snd_IsPlaying(gCarSnd[car].h[3]) != 0) {
+        Snd_Stop(gCarSnd[car].h[3], 0);
+        gCarSnd[car].h[3] = 0;
     }
     return 1;
 }
 
-s32 func_80063E7C(s32 arg0, s32 arg1) {
+s32 CarSnd_SetLoopBVolume(s32 arg0, s32 arg1) {
     *(s32 *)(&D_800EFF5C + ((arg0 & 0xFF) * 0x4C)) = arg1;
     return 1;
 }
 
-f32 func_80064988(void *a);
-s32 func_80063EA8(u8 i, s32 k, f32 lvl) {
-    s32 snd = D_800EFC94[k];
+f32 Snd3D_GetVolume(void *a);
+s32 CarSnd_PlayOneShot(u8 i, s32 k, f32 lvl) {
+    s32 snd = gSfxTable[k];
     s32 off;
     u8 *pos;
     f32 vol;
@@ -1075,10 +1075,10 @@ s32 func_80063EA8(u8 i, s32 k, f32 lvl) {
         return 0;
     }
     off = i * 0x4C;
-    pos = (u8 *)D_800EFC94 + 0x2D0 + off;
-    vol = func_80064988(pos) * gSfxVolume;
-    pan = func_80064B58(pos);
-    pitch = func_800649F8(pos, (u8 *)D_800EFC94 + 0x2DC + off);
+    pos = (u8 *)gSfxTable + 0x2D0 + off;
+    vol = Snd3D_GetVolume(pos) * gSfxVolume;
+    pan = Snd3D_GetPan(pos);
+    pitch = Snd3D_GetDoppler(pos, (u8 *)gSfxTable + 0x2DC + off);
     busy = Snd_IsPlaying(*(s32 *)(&D_800EFF48 + off));
     v = lvl * 128.0f * vol;
     if (v == 0) {
@@ -1092,17 +1092,17 @@ s32 func_80063EA8(u8 i, s32 k, f32 lvl) {
     return 0;
 }
 
-s32 func_80063FE8(u8 car) {
-    if (Snd_IsPlaying(D_800EFF38[car].h[4]) != 0) {
-        Snd_Stop(D_800EFF38[car].h[4], 0);
-        D_800EFF38[car].h[4] = 0;
+s32 CarSnd_StopOneShot(u8 car) {
+    if (Snd_IsPlaying(gCarSnd[car].h[4]) != 0) {
+        Snd_Stop(gCarSnd[car].h[4], 0);
+        gCarSnd[car].h[4] = 0;
     }
     return 1;
 }
 
-f32 func_80064988(void *a);
-s32 func_80064058(u8 i, s32 k) {
-    s32 snd = D_800EFC94[k];
+f32 Snd3D_GetVolume(void *a);
+s32 CarSnd_PlayLoopC(u8 i, s32 k) {
+    s32 snd = gSfxTable[k];
     s32 off;
     u8 *pos;
     f32 vol;
@@ -1115,10 +1115,10 @@ s32 func_80064058(u8 i, s32 k) {
         return 0;
     }
     off = i * 0x4C;
-    pos = (u8 *)D_800EFC94 + 0x2D0 + off;
-    vol = func_80064988(pos) * gSfxVolume;
-    pan = func_80064B58(pos);
-    pitch = func_800649F8(pos, (u8 *)D_800EFC94 + 0x2DC + off);
+    pos = (u8 *)gSfxTable + 0x2D0 + off;
+    vol = Snd3D_GetVolume(pos) * gSfxVolume;
+    pan = Snd3D_GetPan(pos);
+    pitch = Snd3D_GetDoppler(pos, (u8 *)gSfxTable + 0x2DC + off);
     busy = Snd_IsPlaying(*(s32 *)(&D_800EFF4C + off));
     v = *(f32 *)(&D_800EFF60 + off) * 128.0f * vol;
     if (v == 0) {
@@ -1132,20 +1132,20 @@ s32 func_80064058(u8 i, s32 k) {
     return 0;
 }
 
-s32 func_80064194(u8 car) {
-    if (Snd_IsPlaying(D_800EFF38[car].h[5]) != 0) {
-        Snd_Stop(D_800EFF38[car].h[5], 0);
-        D_800EFF38[car].h[5] = 0;
+s32 CarSnd_StopLoopC(u8 car) {
+    if (Snd_IsPlaying(gCarSnd[car].h[5]) != 0) {
+        Snd_Stop(gCarSnd[car].h[5], 0);
+        gCarSnd[car].h[5] = 0;
     }
     return 1;
 }
 
-s32 func_80064204(s32 arg0, s32 arg1) {
+s32 CarSnd_SetLoopCVolume(s32 arg0, s32 arg1) {
     *(s32 *)(&D_800EFF60 + ((arg0 & 0xFF) * 0x4C)) = arg1;
     return 1;
 }
 
-u8 func_80064230(void) {
+u8 SndSrc_Create(void) {
     Vec3f v = D_800FE7B8;
     N64c_ *n = Memory_Alloc(0x1C);
     N64c_ *p;
@@ -1160,7 +1160,7 @@ u8 func_80064230(void) {
     n->next = NULL;
     n->b19 = 0;
     n->b1B = 0;
-    head = &(*(N64c_ * *)&D_800F0100);
+    head = &(*(N64c_ * *)&gSndSrcList);
     if (*head == NULL) {
         *head = n;
         n->id = 1;
@@ -1172,13 +1172,13 @@ u8 func_80064230(void) {
         p->next = n;
         n->id = p->id + 1;
     }
-    cnt = &D_800EFC64;
+    cnt = &gSndSrcCount;
     (*cnt)++;
     return n->id;
 }
 
-s32 func_80064308(u8 id, Vec3f v) {
-    Node64_ *p = D_800F0100;
+s32 SndSrc_SetPosition(u8 id, Vec3f v) {
+    Node64_ *p = gSndSrcList;
 
     while (p != NULL) {
         if (p->id == id) {
@@ -1193,12 +1193,12 @@ s32 func_80064308(u8 id, Vec3f v) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80064364);
+INCLUDE_ASM("asm/nonmatchings/unit_01050", SndSrc_Destroy);
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80064418);
+INCLUDE_ASM("asm/nonmatchings/unit_01050", SndSrc_Play);
 
-s32 func_800645BC(u8 id) {
-    Node64_ *p = D_800F0100;
+s32 SndSrc_Stop(u8 id) {
+    Node64_ *p = gSndSrcList;
 
     while (p != NULL) {
         if (p->id == id) {
@@ -1218,8 +1218,8 @@ s32 func_800645BC(u8 id) {
 }
 
 
-s32 func_80064638(u8 id, f32 v) {
-    Node64_ *p = D_800F0100;
+s32 SndSrc_SetVolume(u8 id, f32 v) {
+    Node64_ *p = gSndSrcList;
 
     while (p != NULL) {
         if (p->id == id) {
@@ -1236,17 +1236,17 @@ s32 func_80064638(u8 id, f32 v) {
 
 
 void Audio_SetMusicVolume(u8 v) {
-    f32 *p = &D_800EFC6C;
+    f32 *p = &gMusicVolume;
 
     *p = v / 255.0;
-    if (Snd_IsPlaying(D_800EFC68) != 0) {
-        Snd_SetVolume(D_800EFC68, *p * 128.0f);
+    if (Snd_IsPlaying(gMusicHandle) != 0) {
+        Snd_SetVolume(gMusicHandle, *p * 128.0f);
     }
 }
 
 
 u8 Audio_GetMusicVolume(void) {
-    return D_800EFC6C * 255.0f;
+    return gMusicVolume * 255.0f;
 }
 
 
@@ -1268,21 +1268,21 @@ u8 Audio_GetVoiceVolume(void) {
 }
 
 
-void func_80064884(u8 vol) {
+void Audio_SetAmbientVolume(u8 vol) {
     Snd_SetMasterVolume(1, (f32)(vol / D_800FE8A8) * 32767.0f);
     if (vol == 0) {
-        if (D_800F01A8 != 0 && Snd_IsPlaying(D_800F01A8) != 0) {
-            Snd_Stop(D_800F01A8, 0);
-            D_800F01A8 = 0;
+        if (gSfxHandle37 != 0 && Snd_IsPlaying(gSfxHandle37) != 0) {
+            Snd_Stop(gSfxHandle37, 0);
+            gSfxHandle37 = 0;
         }
-        if (D_800F01AC != 0 && Snd_IsPlaying(D_800F01AC) != 0) {
-            Snd_Stop(D_800F01AC, 0);
-            D_800F01AC = 0;
+        if (gSfxHandle36 != 0 && Snd_IsPlaying(gSfxHandle36) != 0) {
+            Snd_Stop(gSfxHandle36, 0);
+            gSfxHandle36 = 0;
         }
     }
 }
 
-s32 func_8006495C(void) {
+s32 Audio_FadeOutAll(void) {
     Snd_FadeOutAll(1, 1);
     return 1;
 }
@@ -1291,9 +1291,9 @@ s32 func_80064980(void) {
     return 1;
 }
 
-f32 func_80064E68(Vec3f *a, Vec3f *b);
-f32 func_80064988(void *a) {
-    f32 d = func_80064E68(a, &D_800EFF08);
+f32 Vec3_DistSq(Vec3f *a, Vec3f *b);
+f32 Snd3D_GetVolume(void *a) {
+    f32 d = Vec3_DistSq(a, &gListenerPos);
 
     d = sqrtf(d);
 
@@ -1304,16 +1304,16 @@ f32 func_80064988(void *a) {
 }
 
 
-f32 func_80064D3C(Vec3f *a, Vec3f *off, Vec3f *b);
+f32 Snd3D_ApproachDistance(Vec3f *a, Vec3f *off, Vec3f *b);
 /* Doppler pitch offset (clamped to +-7) for a source at pos moving at vel. */
-f32 func_800649F8(void *pos, void *vel) {
+f32 Snd3D_GetDoppler(void *pos, void *vel) {
     f32 a;
     f32 b;
     f32 ratio;
 
-    /* The listener velocity (D_800EFF14) directly follows its position (D_800EFF08). */
-    a = func_80064D3C(pos, &((Vec3f *)&D_800EFF08)[1], (Vec3f *)&D_800EFF08);
-    b = func_80064D3C((Vec3f *)&D_800EFF08, vel, pos);
+    /* The listener velocity (gListenerVel) directly follows its position (gListenerPos). */
+    a = Snd3D_ApproachDistance(pos, &((Vec3f *)&gListenerPos)[1], (Vec3f *)&gListenerPos);
+    b = Snd3D_ApproachDistance((Vec3f *)&gListenerPos, vel, pos);
     if (b == 1.0f) {
         return 0.0f;
     }
@@ -1334,9 +1334,9 @@ f32 func_800649F8(void *pos, void *vel) {
     return 0.0f;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80064B58);
+INCLUDE_ASM("asm/nonmatchings/unit_01050", Snd3D_GetPan);
 
-f32 func_80064D3C(Vec3f *a, Vec3f *off, Vec3f *b) {
+f32 Snd3D_ApproachDistance(Vec3f *a, Vec3f *off, Vec3f *b) {
     f32 d[3];
     f32 len;
     f32 nx;
@@ -1358,7 +1358,7 @@ f32 func_80064D3C(Vec3f *a, Vec3f *off, Vec3f *b) {
     return len + (nx * (b->x + off->x) + ny * (b->y + off->y) + nz * (b->z + off->z) + da);
 }
 
-f32 func_80064E68(Vec3f *a, Vec3f *b) {
+f32 Vec3_DistSq(Vec3f *a, Vec3f *b) {
     f32 dx = a->x - b->x;
     f32 dy = a->y - b->y;
     f32 dz = a->z - b->z;
@@ -1366,25 +1366,25 @@ f32 func_80064E68(Vec3f *a, Vec3f *b) {
     return dx * dx + dy * dy + dz * dz;
 }
 
-void func_80064EA4(u32 devAddr, u32 size, s32 a) {
+void Audio_LoadWaveBank(u32 devAddr, u32 size, s32 a) {
     nuPiReadRom(devAddr, (void *)0x80010400, size);
     Snd_LoadWaveBank((void *)0x80010400, a);
 }
 
 
-void func_80064EE8(u32 a, u32 sizeA, u32 b, u32 sizeB) {
+void Audio_LoadWaveBankEx(u32 a, u32 sizeA, u32 b, u32 sizeB) {
     nuPiReadRom(a, (void *)0x80010400, sizeA);
-    D_80101E70 = Memory_Alloc(sizeB);
-    nuPiReadRom(b, D_80101E70, sizeB);
-    Snd_LoadWaveBank((void *)0x80010400, (s32)D_80101E70);
+    gWaveTblBuffer = Memory_Alloc(sizeB);
+    nuPiReadRom(b, gWaveTblBuffer, sizeB);
+    Snd_LoadWaveBank((void *)0x80010400, (s32)gWaveTblBuffer);
 }
 
 
-void func_80064F5C(s32 arg0, u32 arg1) {
+void Audio_LoadSongData(s32 arg0, u32 arg1) {
     nuPiReadRom(arg0, 0x80020400, (arg1 & 1) + arg1);
 }
 
-void func_80064F84(s32 arg0, u32 arg1) {
+void Audio_LoadSfxBank(s32 arg0, u32 arg1) {
     nuPiReadRom(arg0, 0x80000400, (arg1 & 1) + arg1);
     Snd_LoadSfxBank((void *)0x80000400);
 }

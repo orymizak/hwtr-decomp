@@ -10,8 +10,8 @@ typedef Vec3f V3_1B0;
 typedef Mtx3f M3_1B0;
 extern void (*D_80141760)(u8, u8, V3_1B0);
 extern void (*D_80145590)(u8, u8);
-extern void (*D_8014C11C)(u8, f32);
-extern void (*D_8014C114)(u8, s32, s32);
+extern void (*audCarSndSetLoopCVolume)(u8, f32);
+extern void (*audCarSndPlayLoopC)(u8, s32, s32);
 extern u8 D_80138D6A;
 extern u8 D_80138D6D;
 extern u8 D_80138D6E;
@@ -21,8 +21,8 @@ extern u8 D_80138D71;
 void func_800A5AB0(u8 *);
 void func_800911E0(u8);
 extern s32 D_8011B320;
-extern s32 (*D_8014169C)(s32);
-extern void (*D_8014C0A8)(s32, s32, f32, f32);
+extern s32 (*svcRandRange)(s32);
+extern void (*audSfxPlay)(s32, s32, f32, f32);
 u8 func_800977AC(u8 *);
 void func_800949E4(u8 *);
 void func_80092534(u8 *);
@@ -42,7 +42,7 @@ extern void (*D_8014558C)(s32, s32, s32);
 s32 func_8008D3AC(void);
 void Car_GetSpeedAndGrip(u8, u8 *, u8 *);
 extern u8 D_800F38A0[];
-extern s32 (*D_80141698)();
+extern s32 (*svcTimeGetMillis)();
 s32 func_80099434(void *);
 s32 func_8009951C(void *);
 
@@ -76,7 +76,7 @@ void func_80091DC4(Car *car) {
     s32 now;
     u32 dt;
 
-    now = D_80141698();
+    now = svcTimeGetMillis();
     dt = now - car->timerLast;
     if (dt <= 100) {
         car->timerAcc += dt;
@@ -195,8 +195,8 @@ void func_80091E30(Car *p, f32 dt) {
             b[2] = (s32)(p->v488.z * 180.0f / 3.14159f) - a[2];
             func_8008AEC0(a[0], b[0], a[1], b[1], a[2], b[2], el, &n, &x, &pts);
             if (pts != 0) {
-                if ((p->flags & 1) && (pts > 1000 || D_8014169C(8) == 0)) {
-                    if (D_8014169C(2) != 0) {
+                if ((p->flags & 1) && (pts > 1000 || svcRandRange(8) == 0)) {
+                    if (svcRandRange(2) != 0) {
                         func_8008E568(1);
                     } else {
                         func_8008E568(2);
@@ -222,9 +222,9 @@ void func_80091E30(Car *p, f32 dt) {
                 z = c;
                 n = z;
                 if (n) {
-                    D_8014C0A8(0x3A, 1, 1.0f, 1.0f);
+                    audSfxPlay(0x3A, 1, 1.0f, 1.0f);
                 } else {
-                    D_8014C0A8(0x3B, 1, 1.0f, 1.0f);
+                    audSfxPlay(0x3B, 1, 1.0f, 1.0f);
                 }
             }
         }
@@ -258,7 +258,7 @@ void func_80093164(Car *p, f32 dt) {
                     p->n6CC--;
                 }
             } else {
-                D_8014C0A8(0x2C, 0, 1.0f, 1.0f);
+                audSfxPlay(0x2C, 0, 1.0f, 1.0f);
             }
             p->unk6CD = 1;
         }
@@ -306,10 +306,10 @@ void func_80093164(Car *p, f32 dt) {
         f = func_800A76D8() - p->unk770 > 500;
     }
     func_800ACDC8((u8 *)&p->m2C, dt);
-    if (f && p->vel.z < 0.0f && D_8014169C(2) == 0) {
+    if (f && p->vel.z < 0.0f && svcRandRange(2) == 0) {
         func_800AEFF8();
     }
-    if ((p->flags & 1) && p->b4B8 != 0 && p->unk4BC == 500 && D_8014169C(2) == 0) {
+    if ((p->flags & 1) && p->b4B8 != 0 && p->unk4BC == 500 && svcRandRange(2) == 0) {
         func_800AEFF8();
     }
     if (p->b13C == 0) {
@@ -600,7 +600,7 @@ void Car_StartCrash(Car *p, u8 id, u8 flip) {
         if (p->flags & 1) {
             func_800A5AB0(p);
         }
-        rnd = &D_8014169C;
+        rnd = &svcRandRange;
         p->vel.z += ((*rnd)(10) + 10) * 17.6f;
         p->impulse.x = p->vel.x * p->scale;
         p->impulse.y = p->vel.y * p->scale;
@@ -652,10 +652,10 @@ void Car_StartCrash(Car *p, u8 id, u8 flip) {
             }
             func_800911E0(p->id);
             D_80145590(p->id, D_80138D6A);
-            D_8014C0A8(0x1D, 1, 1.0f, 1.0f);
+            audSfxPlay(0x1D, 1, 1.0f, 1.0f);
         }
-        D_8014C11C(p->id, 1.0f);
-        D_8014C114(p->id, 0x1D, 1);
+        audCarSndSetLoopCVolume(p->id, 1.0f);
+        audCarSndPlayLoopC(p->id, 0x1D, 1);
     }
 }
 
@@ -737,7 +737,7 @@ void func_80096954(Car *c) {
     d = axis.x * c->planeN.x + axis.y * c->planeN.y + axis.z * c->planeN.z;
     if (-d > 0.7071f) {
         if (c->unk764 == 0) {
-            rnd = &D_8014169C;
+            rnd = &svcRandRange;
             c->unk768 = (u32)(*rnd)(100) > D_80138D70;
             if (c->unk768) {
                 c->unk769 = (*rnd)(2);
@@ -767,7 +767,7 @@ INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_8009751C);
 
 INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_800977AC);
 
-extern void (*D_8014176C)(u8);
+extern void (*svcModelFlashOn)(u8);
 /* Scales the impulse so that the speed becomes 2288 and marks the car (once) as boosted. */
 void Car_Boost(Car *c) {
     if (2288.0f - c->fBC < 88.0f || c->fBC < 35.2f) {
@@ -778,9 +778,9 @@ void Car_Boost(Car *c) {
     c->impulse.z *= 2288.0f / c->fBC;
     if (c->b4C0 == 0) {
         if (c->flags & 1) {
-            D_8014C0A8(1, 1, 1.0f, 1.0f);
+            audSfxPlay(1, 1, 1.0f, 1.0f);
         }
-        D_8014176C(c->id);
+        svcModelFlashOn(c->id);
         c->b4C0 = 1;
         c->f4C4 = 2288.0f;
         c->fBC = 2288.0f;

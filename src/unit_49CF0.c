@@ -18,13 +18,13 @@ void func_800AAA20(Blk28_ *, El10_ *, s32, s32);
 void func_800AABE4(Blk28_ *, El10_ *, s32, s32);
 extern s32 D_800F3B30;
 extern char D_80100A9C[];
-extern void (*D_801416DC)(s32, s32, u16, u16, s32);
-extern void (*D_801416E0)(s32, s32, s32);
+extern void (*svcFontDrawChar)(s32, s32, u16, u16, s32);
+extern void (*svcDraw2DSetColor)(s32, s32, s32);
 extern E0Cb_ D_800F3B18[];
 extern u8 D_800F3B42;
 extern E240_ D_800F3951[];
 extern E240_ D_800F3961[];
-extern s32 (*D_801416D4)(s32);
+extern s32 (*svcFontFree)(s32);
 s32 func_800A76D8(s32);
 extern u8 D_800F3938;
 extern u8 D_800F393C;
@@ -39,7 +39,7 @@ extern s8 D_800F3B45;
 INCLUDE_ASM("asm/nonmatchings/unit_49CF0", func_800A90F0);
 
 s32 func_800A9370(void) {
-    s32 (**fp)(s32) = &D_801416D4;
+    s32 (**fp)(s32) = &svcFontFree;
     s32 a = (*fp)(0) & 1;
 
     return a & (*fp)(1);
@@ -61,7 +61,7 @@ void func_800A9604(u8 idx, u8 flag) {
         return;
     }
     laps = p->lapsDone;
-    D_801416E0(0xFF, 0xFF, 0xFF);
+    svcDraw2DSetColor(0xFF, 0xFF, 0xFF);
     if (flag == 0) {
         x = 0x103;
         y = 0xD7;
@@ -72,11 +72,11 @@ void func_800A9604(u8 idx, u8 flag) {
             y = 0x6B;
         }
     }
-    D_801416DC(1, 0, x, y, 2);
+    svcFontDrawChar(1, 0, x, y, 2);
     if (laps == 0) {
-        D_801416E0(0xFF, 0xFF, 0);
+        svcDraw2DSetColor(0xFF, 0xFF, 0);
     } else {
-        D_801416E0(0, 0xFF, 0);
+        svcDraw2DSetColor(0, 0xFF, 0);
     }
     sprintf(buf, D_80100A94, laps + 1, D_800F3B43);
     if (flag == 0) {
@@ -90,7 +90,7 @@ void func_800A9604(u8 idx, u8 flag) {
         }
     }
     for (c = buf; *c != 0; c++) {
-        D_801416DC(1, *c, x, y, 1);
+        svcFontDrawChar(1, *c, x, y, 1);
         if (*c < '0' || *c > '9') {
             x += 9;
         } else {
@@ -108,7 +108,7 @@ void func_800A978C(u8 idx, u8 flag) {
     s32 t;
 
     p = Car_Get((&D_800F3B40)[idx]);
-    D_801416E0(0xFF, 0xFF, 0xFF);
+    svcDraw2DSetColor(0xFF, 0xFF, 0xFF);
     if (flag == 0) {
         x = 0xCB;
         color = 0x15;
@@ -116,8 +116,8 @@ void func_800A978C(u8 idx, u8 flag) {
         x = 0xCB;
         color = (-(idx != 0) & 0x7F) | 0x15;
     }
-    D_801416DC(1, 1, x, color, 2);
-    D_801416E0(0, 0xFF, 0);
+    svcFontDrawChar(1, 1, x, color, 2);
+    svcDraw2DSetColor(0, 0xFF, 0);
     t = D_800F3B30 - (((s32 (*)(void))func_800A76D8)() - p->unk440);
     if (t < 0) {
         t = 0;
@@ -134,7 +134,7 @@ void func_800A978C(u8 idx, u8 flag) {
         }
     }
     for (c = buf; *c != 0; c++) {
-        D_801416DC(1, *c, x, color, 1);
+        svcFontDrawChar(1, *c, x, color, 1);
         if (*c < '0' || *c > '9') {
             x += 7;
         } else {
@@ -152,7 +152,7 @@ void func_800A99D0(u8 idx, u8 flag) {
     u32 t;
 
     p = Car_Get((&D_800F3B40)[idx]);
-    D_801416E0(0xFF, 0xFF, 0xFF);
+    svcDraw2DSetColor(0xFF, 0xFF, 0xFF);
     if (flag == 0) {
         x = 0xCB;
         color = 0x15;
@@ -160,8 +160,8 @@ void func_800A99D0(u8 idx, u8 flag) {
         x = 0xCB;
         color = (-(idx != 0) & 0x7F) | 0x15;
     }
-    D_801416DC(1, 1, x, color, 2);
-    D_801416E0(0, 0xFF, 0);
+    svcFontDrawChar(1, 1, x, color, 2);
+    svcDraw2DSetColor(0, 0xFF, 0);
     t = ((s32 (*)(void))func_800A76D8)() - p->lapStart[p->lap - 1];
     sprintf(buf, D_80100A9C, t / 60000, (t % 60000) / 1000, ((t % 60000) % 1000) / 100, (((t % 60000) % 1000) % 100) / 10);
     if (flag == 0) {
@@ -175,7 +175,7 @@ void func_800A99D0(u8 idx, u8 flag) {
         }
     }
     for (c = buf; *c != 0; c++) {
-        D_801416DC(1, *c, x, color, 1);
+        svcFontDrawChar(1, *c, x, color, 1);
         if (*c < '0' || *c > '9') {
             x += 7;
         } else {
@@ -197,7 +197,7 @@ void func_800A9EDC(u8 idx, u8 flag) {
     s32 y;
     s8 i;
 
-    D_801416E0(0xFF, 0xFF, 0xFF);
+    svcDraw2DSetColor(0xFF, 0xFF, 0xFF);
     if (flag == 0) {
         x = 0xCB;
         y = 0x23;
@@ -208,8 +208,8 @@ void func_800A9EDC(u8 idx, u8 flag) {
             y = 0x23;
         }
     }
-    D_801416DC(1, 1, x, y, 2);
-    D_801416E0(0xFF, 0, 0);
+    svcFontDrawChar(1, 1, x, y, 2);
+    svcDraw2DSetColor(0xFF, 0, 0);
     sprintf(buf, D_80100A90, Car_Get((&D_800F3B40)[idx])->unk4B0);
     if (flag == 0) {
         x = 0x11E;
@@ -223,7 +223,7 @@ void func_800A9EDC(u8 idx, u8 flag) {
     }
     i = strlen(buf) - 1;
     for (c = &buf[i]; i >= 0; i--, c--) {
-        D_801416DC(1, *c, x, y, 1);
+        svcFontDrawChar(1, *c, x, y, 1);
         if (*c < '0' || *c > '9') {
             x -= 7;
         } else {
@@ -246,14 +246,14 @@ s32 func_800AA80C(u8 idx) {
     u16 y;
 
     two = D_800F3B42 == 2;
-    D_801416E0(0xFF, 0xFF, 0xFF);
+    svcDraw2DSetColor(0xFF, 0xFF, 0xFF);
     done = 0;
     if (D_800F3B34[idx] & 1) {
         func_800A93B4(idx, two);
     }
     if (D_800F3B34[idx] & 0x10) {
         p = Car_Get((&D_800F3B40)[idx]);
-        D_801416E0(0xFF, 0xFF, 0xFF);
+        svcDraw2DSetColor(0xFF, 0xFF, 0xFF);
         if (p->unk6DC != 0) {
             if ((u8)two == 0) {
                 x = 0x102;
@@ -265,7 +265,7 @@ s32 func_800AA80C(u8 idx) {
                     y = 0x46;
                 }
             }
-            D_801416DC(1, (u8)(p->unk6DC + 10), x, y, 2);
+            svcFontDrawChar(1, (u8)(p->unk6DC + 10), x, y, 2);
         }
     }
     if (D_800F3B34[idx] & 2) {
@@ -341,7 +341,7 @@ void func_800AB8AC(u8 p) {
         e3->bD = 1;
         e5->bD = 1;
     }
-    D_801416E0(0xFF, 0xFF, 0);
+    svcDraw2DSetColor(0xFF, 0xFF, 0);
     if (D_800F3934[p].blk[0].on) {
         if (!e0->bD && !e1->bD) {
             func_800AAA20(&D_800F3934[p].blk[0], e0, 2, 1);

@@ -33,7 +33,7 @@ extern u8 gLowRes;
 void func_8007863C(s32, s32, s32, s32);
 void func_800761D4(s32, s32, s32, s32, s32);
 void func_8006DFBC(void);
-void func_80066C9C(s32, s32);
+void World_SetupLod(s32, s32);
 void nuGfxDisplayOn(void);
 s32 GfxPools_Shutdown();
 extern NUScTask D_8014C1D0[];
@@ -501,7 +501,7 @@ s32 Video_SetLowRes(void) {
     func_8007863C(0, 0, 320, 240);
     func_800761D4(0, 0, 0, gScreenWidth, gScreenHeight);
     func_8006DFBC();
-    func_80066C9C(1, 1);
+    World_SetupLod(1, 1);
     nuGfxDisplayOn();
     GfxPools_Shutdown();
     return 1;
@@ -523,7 +523,7 @@ s32 Video_SetHighRes(void) {
     func_8007863C(0, 0, 640, 480);
     func_800761D4(0, 0, 0, *p, gScreenHeight);
     gLowRes = 0;
-    func_80066C9C(0, 0);
+    World_SetupLod(0, 0);
     func_8006E00C(&D_800FF7B0);
     GfxPools_Shutdown();
     nuGfxDisplayOn();

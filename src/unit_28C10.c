@@ -4,7 +4,7 @@
 #include "car.h"
 typedef struct { u8 b; u8 pad[3]; s32 w[6]; } E1C8_;
 extern E1C8_ D_800F316C[];
-extern u8 (*D_8014169C)(u8);
+extern u8 (*svcRandRange)(u8);
 extern s32 gLangText[];
 extern char D_8010080C[];
 typedef struct Lnk89_ { s32 *obj; s32 x; struct Lnk89_ *next; } Lnk89_;
@@ -20,14 +20,14 @@ extern u16 D_800F3034;
 void func_800AC6EC(u8, s32);
 void func_800B0614(u8, s32);
 void Car_ApplyPickup(u8 *arg0, u8 *arg1);
-extern void (*D_8014C0A8)(s32, s32, f32, f32);
+extern void (*audSfxPlay)(s32, s32, f32, f32);
 void func_800A8268(Lnk89_ **, s32 *);
 void *Memory_Alloc(u32 size);
 u8 *func_80089B10(u8 *);
 s32 func_80089FC4(u8 *);
 extern Evt18_ *D_800F3020;
 extern u32 D_800F3024;
-extern void (*D_80141714)(u8, s32, f32);
+extern void (*svcTrackSetEntityVisible)(u8, s32, f32);
 s32 func_800A76D8(void);
 extern Lnk89_ **D_80118470[];
 void func_800A82F8(Lnk89_ **, s32 *);
@@ -288,14 +288,14 @@ s32 func_8008AA9C(u8 *o, u8 *q) {
         if (nt->hold == 0) {
             Car_ApplyPickup(d, Car_Get(*o));
         }
-        D_80141714(q[4], 0, 0.0f);
+        svcTrackSetEntityVisible(q[4], 0, 0.0f);
         r = func_80089FC4(d);
         *(s32 *) (o + 0x6DC) = r;
         if (r == 1) {
             *(s32 *) (o + 0x6DC) = 0;
         }
         if (*(s32 *) (o + 4) & 3) {
-            D_8014C0A8(0x18, 0, 1.0f, 1.0f);
+            audSfxPlay(0x18, 0, 1.0f, 1.0f);
         }
     }
     *(s32 *) (q + 0xC) = func_800A76D8();
@@ -337,7 +337,7 @@ void func_8008AD04(void) {
     for (i = 0; i < D_800F3024; i++) {
         if (D_800F3020[i].fired == 0 && (u32) (now - D_800F3020[i].t) > 10000 && D_800F3020[i].on != 0) {
             D_800F3020[i].fired = 1;
-            D_80141714(D_800F3020[i].id, 1, 1.0f);
+            svcTrackSetEntityVisible(D_800F3020[i].id, 1, 1.0f);
         }
     }
 }
@@ -346,7 +346,7 @@ INCLUDE_ASM("asm/nonmatchings/unit_28C10", func_8008AEC0);
 
 void func_8008B9FC(u16 i, char *out) {
     if (i < 49) {
-        sprintf(out, D_8010080C, gLangText[D_800F316C[i].w[D_8014169C(D_800F316C[i].b)]]);
+        sprintf(out, D_8010080C, gLangText[D_800F316C[i].w[svcRandRange(D_800F316C[i].b)]]);
     }
 }
 

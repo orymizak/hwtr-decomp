@@ -42,16 +42,16 @@ typedef struct { u16 x; u16 y; } P2A7_;
 typedef struct { u8 a; u8 pad; P2A7_ p; P2A7_ p2; } EA7_;
 typedef struct { u8 p0[2]; u8 n; u8 p3; EA7_ *items; u8 p8[0xB]; u8 mode; } TA7_;
 void PauseUi_PlaceItem2(TA7_ *t);
-extern s32 (*D_8014169C)(s32);
+extern s32 (*svcRandRange)(s32);
 void PauseUi_PlaceItem(TA6_ *t);
-extern void (*D_801416F0)(s32);
+extern void (*svcWorldUpdate)(s32);
 extern void (*D_801416A4)(void);
 extern void (*D_801416AC)(void);
 extern void (*D_801416C8)(f32, f32, f32, f32);
-extern void (*D_8014178C)(s32, s32, s32, s32);
+extern void (*svcDraw2DBeginPrim)(s32, s32, s32, s32);
 void func_800AEB28(s32);
 void PauseUi_CenterItem2(u8 *t);
-extern s32 (*D_801416D8)(s32, u8);
+extern s32 (*svcFontGetCharWidth)(s32, u8);
 s8 func_80086F80(u8 font, u8 a, u8 b);
 void PauseUi_CenterItem(u8 *t);
 void PauseUi_BuildText(E18c_ *);
@@ -83,15 +83,15 @@ void PauseUi_CenterItem(u8 *t) {
     x = (*(s16 *)(t + 8) + *(s16 *)(t + 0xA)) / 2;
     y = *(s16 *)(t + 0xC);
     for (; i < t[2] - 1; i++) {
-        w += D_801416D8(0, (*(E0A5_ **)(t + 4))[i].a) + func_80086F80(0, (*(E0A5_ **)(t + 4))[i].a, (*(E0A5_ **)(t + 4))[i + 1].a);
+        w += svcFontGetCharWidth(0, (*(E0A5_ **)(t + 4))[i].a) + func_80086F80(0, (*(E0A5_ **)(t + 4))[i].a, (*(E0A5_ **)(t + 4))[i + 1].a);
     }
-    w += D_801416D8(0, (*(E0A5_ **)(t + 4))[i].a);
+    w += svcFontGetCharWidth(0, (*(E0A5_ **)(t + 4))[i].a);
     w /= 2;
     x -= w;
     (*(E0A5_ **)(t + 4))[0].x2 = x;
     (*(E0A5_ **)(t + 4))[0].y2 = y;
     for (i = 1; i < t[2]; i++) {
-        x += D_801416D8(0, (*(E0A5_ **)(t + 4))[i - 1].a) + func_80086F80(0, (*(E0A5_ **)(t + 4))[i - 1].a, (*(E0A5_ **)(t + 4))[i].a);
+        x += svcFontGetCharWidth(0, (*(E0A5_ **)(t + 4))[i - 1].a) + func_80086F80(0, (*(E0A5_ **)(t + 4))[i - 1].a, (*(E0A5_ **)(t + 4))[i].a);
         (*(E0A5_ **)(t + 4))[i].x2 = x;
         (*(E0A5_ **)(t + 4))[i].y2 = y;
     }
@@ -111,15 +111,15 @@ void PauseUi_CenterItem2(u8 *t) {
     x = (*(s16 *)(t + 8) + *(s16 *)(t + 0xA)) / 2;
     y = *(s16 *)(t + 0xC);
     for (; i < t[2] - 1; i++) {
-        w += D_801416D8(0, (*(E0A5_ **)(t + 4))[i].a) + func_80086F80(0, (*(E0A5_ **)(t + 4))[i].a, (*(E0A5_ **)(t + 4))[i + 1].a);
+        w += svcFontGetCharWidth(0, (*(E0A5_ **)(t + 4))[i].a) + func_80086F80(0, (*(E0A5_ **)(t + 4))[i].a, (*(E0A5_ **)(t + 4))[i + 1].a);
     }
-    w += D_801416D8(0, (*(E0A5_ **)(t + 4))[i].a);
+    w += svcFontGetCharWidth(0, (*(E0A5_ **)(t + 4))[i].a);
     w /= 2;
     x -= w;
     (*(E0A5_ **)(t + 4))[0].x2 = x;
     (*(E0A5_ **)(t + 4))[0].y2 = y;
     for (i = 1; i < t[2]; i++) {
-        x += D_801416D8(0, (*(E0A5_ **)(t + 4))[i - 1].a) + func_80086F80(0, (*(E0A5_ **)(t + 4))[i - 1].a, (*(E0A5_ **)(t + 4))[i].a);
+        x += svcFontGetCharWidth(0, (*(E0A5_ **)(t + 4))[i - 1].a) + func_80086F80(0, (*(E0A5_ **)(t + 4))[i - 1].a, (*(E0A5_ **)(t + 4))[i].a);
         (*(E0A5_ **)(t + 4))[i].x2 = x;
         (*(E0A5_ **)(t + 4))[i].y2 = y;
     }
@@ -138,8 +138,8 @@ void PauseUi_PlaceItem(TA6_ *t) {
             t->items[i].p.y = t->items[i].p2.y;
             break;
         case 2:
-            ((u16 *)&t->items[i].p)[0] = D_8014169C(320);
-            ((u16 *)&t->items[i].p)[1] = D_8014169C(240);
+            ((u16 *)&t->items[i].p)[0] = svcRandRange(320);
+            ((u16 *)&t->items[i].p)[1] = svcRandRange(240);
             break;
         }
     }
@@ -163,8 +163,8 @@ void PauseUi_PlaceItem2(TA7_ *t) {
             t->items[i].p.y = t->items[i].p2.y;
             break;
         case 2:
-            ((u16 *)&t->items[i].p)[0] = D_8014169C(320);
-            ((u16 *)&t->items[i].p)[1] = D_8014169C(240);
+            ((u16 *)&t->items[i].p)[0] = svcRandRange(320);
+            ((u16 *)&t->items[i].p)[1] = svcRandRange(240);
             break;
         }
     }
@@ -189,7 +189,7 @@ INCLUDE_ASM("asm/nonmatchings/unit_6AE90", PauseUi_StepItem);
 INCLUDE_ASM("asm/nonmatchings/unit_6AE90", PauseUi_StepItem2);
 
 extern u32 gPauseUiTime;
-extern u32 (*D_80141698)(void);
+extern u32 (*svcTimeGetMillis)(void);
 void PauseUi_StepItem(E18c_ *, f32);
 void PauseUi_StepItem2(E18c_ *, f32);
 
@@ -202,9 +202,9 @@ void PauseUi_Animate(TCB_ *t) {
 
     if (gPauseUiTime == 0) {
         dt = 0.15f;
-        gPauseUiTime = D_80141698();
+        gPauseUiTime = svcTimeGetMillis();
     } else {
-        now = D_80141698();
+        now = svcTimeGetMillis();
         d = now - gPauseUiTime;
         if (d > 100) {
             dt = 0.1f;
@@ -302,13 +302,13 @@ void PauseUi_Unload(TCB_ *t) {
     - D_801416C8(48.0f, 5000.0f, 1.0471967f, 1.3333334f) sets camera perspective:
         near=48.0f, far=5000.0f, fov=60 deg (pi/3), aspect=4:3.
     - gPauseFadeTarget is target alpha, gPauseFadeAlpha is current fade alpha (fade in by +15/frame, fade out by -1/frame).
-    - D_8014178C draws a full-screen black overlay with current alpha.
+    - svcDraw2DBeginPrim draws a full-screen black overlay with current alpha.
     */
 void PauseUi_BeginFrame(void) {
     u8 a;
     u8 b;
 
-    D_801416F0(0);
+    svcWorldUpdate(0);
     D_801416A4();
     D_801416AC();
     func_800AEB28(0);
@@ -323,7 +323,7 @@ void PauseUi_BeginFrame(void) {
             gPauseFadeAlpha = b;
         }
     }
-    D_8014178C(0, 0, 0, (u8)gPauseFadeAlpha);
+    svcDraw2DBeginPrim(0, 0, 0, (u8)gPauseFadeAlpha);
 }
 
     /* TODO (Clean version): Declare gPauseFadeTarget as u8 instead of s8 to avoid ugly byte cast `*(u8 *)&gPauseFadeTarget = 0x80`. */
