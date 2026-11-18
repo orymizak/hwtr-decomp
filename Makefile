@@ -17,7 +17,7 @@ KMC_CC  := $(KMC_DIR)/gcc
 
 # Opciones por archivo: el juego mezcla -O2 y -O0
 OPTFLAGS := -O2
-CFLAGS   := -G0 -mips3 -mgp32 -mfp32 -Iinclude
+CFLAGS   := -G0 -mips3 -mgp32 -mfp32 -Iinclude -Itools/ultralib/include
 
 $(BUILD)/src/lz.o: OPTFLAGS := -O0
 $(BUILD)/src/unit_6E0C0.o: OPTFLAGS := -O0
@@ -57,10 +57,14 @@ BINUTILS_URL := https://github.com/decompals/mips-binutils-2.6/releases/download
 
 all: verify
 
+ULTRALIB_REV := e24c836796df4bf520ff8b11a5c9d2cea3a66cbd
+
 toolchain:
 	mkdir -p $(KMC_DIR)
 	curl -fsSL $(GCC_URL) | tar -xz -C $(KMC_DIR)
 	curl -fsSL $(BINUTILS_URL) | tar -xz -C $(KMC_DIR)
+	test -d tools/ultralib || git clone https://github.com/decompals/ultralib.git tools/ultralib
+	git -C tools/ultralib checkout -q $(ULTRALIB_REV)
 
 split:
 	$(PYTHON) -m splat split $(YAML)

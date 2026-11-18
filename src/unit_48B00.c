@@ -3,7 +3,7 @@
 typedef struct Nd8_ { s32 a; struct Nd8_ *prev; struct Nd8_ *next; u16 cnt; } Nd8_;
 typedef struct { s16 a; s16 b; s32 c; s32 d; } Obj0C_;
 typedef struct { u16 size; u16 cap; u16 count; u16 pad; u8 *data; } VecA7_;
-void *memcpy(void *, const void *, u32);
+void *memcpy(void *, const void *, size_t);
 void *Memory_Alloc(s32 size);
 void *memset(void *dst, s32 value, u32 size);
 s32 Memory_Free(void *);

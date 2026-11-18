@@ -1,6 +1,6 @@
 #include "common.h"
 #include "include_asm.h"
-void *memcpy(void *dst, const void *src, u32 n);
+void *memcpy(void *dst, const void *src, size_t n);
 void *proutSprintf(void *s, const char *buf, u32 n);
 s32 _Printf(void *(*prout)(void *, const char *, u32), void *arg, const char *fmt, char *ap);
 

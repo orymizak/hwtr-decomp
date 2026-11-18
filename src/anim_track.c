@@ -236,12 +236,8 @@ s32 func_80087F2C(u32 index) {
 void func_80087F7C(s32 index, u32 t, s32 mode) {
     u32 base = (u32)D_800F3014;
     AnimTrack *track = (AnimTrack *)(index * sizeof(AnimTrack) + base);
-    
-    /* TODO (Clean version):
-    AnimTrack *track = &D_800F3014[index];
-    El uso manual de 'base' se mantiene para forzar el match del compilador SGI.
-    */
-    
+    /* TODO(match-debt): &D_800F3014[index] loads the base after the index product and adds the
+       operands the other way round; only the byte offset added to a base read first matches. */
     u32 last;
 
     if (track->seekTime == 0) {
@@ -255,12 +251,8 @@ void func_80087F7C(s32 index, u32 t, s32 mode) {
 }
 
 s32 func_80087FF4(s32 arg0, u32 arg1) {
-    return (arg1 >= 4) * 4;
-}
-    /* TODO (Clean version):
-    This can be written using a standard ternary operator for clarity:
     return (arg1 >= 4) ? 4 : 0;
-    */
+}
 
 void func_80088004(void) {
 }

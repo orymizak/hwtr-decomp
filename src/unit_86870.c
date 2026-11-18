@@ -11,7 +11,7 @@ typedef struct { s64 quot; s64 rem; } lldiv_t_;
 extern char D_800FC9F0[];
 extern char D_800FCA04[];
 lldiv_t_ lldiv(s64 num, s64 denom);
-void *memcpy(void *dst, const void *src, u32 n);
+void *memcpy(void *dst, const void *src, size_t n);
 
 
 

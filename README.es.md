@@ -25,7 +25,7 @@ copia legal de la ROM: de ella se extrae todo lo demás en tu equipo. No compart
 - Binutils MIPS:
   - macOS: `brew install mips-linux-gnu-binutils`
   - Debian/Ubuntu: `apt install binutils-mips-linux-gnu`
-- GCC 2.7.2 para MIPS y binutils 2.6, que instala `make toolchain`
+- GCC 2.7.2 para MIPS, binutils 2.6 y las cabeceras de ultralib, que instala `make toolchain`
 
 En Mac con Apple Silicon, el compilador es un binario x86_64 y necesita Rosetta:
 `softwareupdate --install-rosetta`.

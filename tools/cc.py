@@ -13,7 +13,7 @@ import os, re, struct, subprocess, sys, tempfile
 from pathlib import Path
 
 TC = "tools/gcc_2.7.2/"
-FLAGS = ["-G0", "-mips3", "-mgp32", "-mfp32", "-Iinclude"]
+FLAGS = ["-G0", "-mips3", "-mgp32", "-mfp32", "-Iinclude", "-Itools/ultralib/include"]
 REFS = Path("rodata_refs.txt")
 ROM_PATH = Path("baserom.z64")
 R = lambda v: v - 0x80060400 + 0x1000

@@ -1,19 +1,11 @@
 #ifndef COMMON_H
 #define COMMON_H
 
-typedef signed char s8;
-typedef unsigned char u8;
-typedef short s16;
-typedef unsigned short u16;
-typedef int s32;
-typedef unsigned int u32;
-typedef long long s64;
-typedef unsigned long long u64;
-typedef float f32;
-typedef double f64;
+#define _LANGUAGE_C 1
+#include <PR/ultratypes.h>
 
 #define NULL ((void *)0)
 
-void *memset(void *dst, int value, u32 size);
+void *memset(void *dst, s32 value, u32 size);
 
 #endif

@@ -34,7 +34,8 @@ The ROM rebuilds identically; the remaining code is still generated assembly.
   per file (`-O2`, `-O3` for most of libultra, `-O0` in a few places).
 - **Libraries:** libultra (SDK 2.0K/L), libc and an audio driver are separated from the game in the ROM map.
   libultra and libaudio functions were identified by compiling [ultralib](https://github.com/decompals/ultralib)
-  and comparing; ultralib is used as a reference only and is not included.
+  and comparing. ultralib is not included: `make toolchain` clones it into `tools/ultralib` and the C code
+  uses its SDK headers (`PR/ultratypes.h`, …).
 - **.rodata:** starts at ROM offset `0x9F3B0` and is split per unit in `asm/data/`. `tools/cc.py` makes the C
   code use those symbols instead of emitting duplicates.
 - **To do:** the rest of the game code and the audio driver.
@@ -55,7 +56,7 @@ The ROM rebuilds identically; the remaining code is still generated assembly.
 - MIPS binutils:
   - macOS: `brew install mips-linux-gnu-binutils`
   - Debian/Ubuntu: `apt install binutils-mips-linux-gnu`
-- GCC 2.7.2 for MIPS and binutils 2.6, installed by `make toolchain`
+- GCC 2.7.2 for MIPS, binutils 2.6 and the ultralib headers, installed by `make toolchain`
 
 On Apple Silicon Macs the compiler is an x86_64 binary and needs Rosetta:
 `softwareupdate --install-rosetta`.

@@ -13,10 +13,6 @@ typedef struct { u32 w0; u32 w1; } GfxWAA_;
 typedef union { GfxWAA_ words; s64 force; } GfxAA_;
 typedef struct { GfxAA_ *f0; GfxAA_ *f4; u8 p8[0x318]; } PoolAA_;
 typedef struct { f32 x; f32 y; f32 z; f32 vx; f32 vy; u8 type; } EntAA_;
-    /* TODO (Clean version):
-    Estructura duplicada idéntica a KeySet_ y no referenciada; en C limpio debería eliminarse. Se mantiene para el match.
-    */
-typedef struct { s32 keys[6]; u8 pad[0x54 - 0x18]; } KeySet2_;
 typedef struct { s32 keys[21]; } KeySetB_;
 typedef struct { s32 mode; s32 k[15]; u8 pad[0x54 - 0x40]; } Bind6C_;
 s32 func_8006BA98();
@@ -53,46 +49,43 @@ void func_800D7030(s32, s32);
 void func_800D66D0(PakSt_ *, s32);
 extern void func_800D6420(Pad_ *);
 extern u8 D_800F0403;
-extern u8 D_800F0390;
+extern s32 D_800F0390[];
 extern u8 D_800F03EB;
-extern s32 D_80145568;
-extern s32 D_8014556C;
-extern s32 D_80145570;
-extern s32 D_80145574;
-extern s32 D_80145578;
-extern s32 D_8014557C;
-extern s32 D_80145580;
-extern s32 D_80145584;
-extern s32 D_80145588;
-extern s32 D_8014558C;
-extern s32 D_80145590;
-extern s32 D_80145594;
-extern s32 D_801455A4;
-extern s32 D_801455B0;
+extern void *D_80145568;
+extern void *D_8014556C;
+extern void *D_80145570;
+extern void *D_80145574;
+extern void *D_80145578;
+extern void *D_8014557C;
+extern void *D_80145580;
+extern void *D_80145584;
+extern void *D_80145588;
+extern void *D_8014558C;
+extern void *D_80145590;
+extern void *D_80145594;
+extern void *D_801455A4;
+extern void *D_801455B0;
 
-s32 Memory_Free(s32);
-extern s32 D_80102208;
+s32 Memory_Free(void *);
+extern void *D_80102208[3];
 extern s32 D_800F0414;
 extern u8 D_800F03F4;
 s32 func_800D7130();
 
 INCLUDE_ASM("asm/nonmatchings/unit_0B140", func_8006A540);
 
-    /* TODO (Clean version):
-    D_80102208 se accede como arreglo mediante (&D_80102208)[i], pero fue declarada como escalar s32. En C limpio debería declararse como s32 D_80102208[3] y accederse con D_80102208[i]. Se mantiene para el match.
-    */
 s32 func_8006AA34(void) {
     s32 i;
 
     for (i = 0; i < 3; i++) {
-        Memory_Free((&D_80102208)[i]);
-        (&D_80102208)[i] = 0;
+        Memory_Free(D_80102208[i]);
+        D_80102208[i] = NULL;
     }
     return 1;
 }
 
     /* TODO (Clean version):
-    Comandos gráficos GBI (Fast3D) y verificación de crecimiento del pool de display lists expandidos manualmente con escrituras a GfxAA_ (w0/w1 en hexadecimal) y aritmética de punteros (&D_80102208)[i]. En C limpio deberían usarse las macros estándar de GBI (ej. gSPSetOtherMode, gDPSetEnvColor, etc.). Se mantiene para el match.
+    Comandos gráficos GBI (Fast3D) y verificación de crecimiento del pool de display lists expandidos manualmente con escrituras a GfxAA_ (w0/w1 en hexadecimal) y aritmética de punteros D_80102208[i]. En C limpio deberían usarse las macros estándar de GBI (ej. gSPSetOtherMode, gDPSetEnvColor, etc.). Se mantiene para el match.
     */
 s32 func_8006AA84(s32 cam, f32 *pos) {
     f32 m[3][4];
@@ -118,7 +111,7 @@ s32 func_8006AA84(s32 cam, f32 *pos) {
     { GfxAA_ *_g = (GfxAA_ *) (D_8014EC78++); _g->words.w0 = (0xEE000000); _g->words.w1 = (u32) ( 0xFFFC0000); };
     for (i = 0; i < 3; i++) {
         if ((u32) (D_8014EC78 + (7)) >= (u32) D_8014C740[D_8014C540].f4) { D_8014C740[D_8014C540].f0 = D_8014EC78; GfxPool_Grow(&D_8014C740[D_8014C540], (7)); D_8014EC78 = D_8014C740[D_8014C540].f0; };
-        { GfxAA_ *_g = (GfxAA_ *) (D_8014EC78++); _g->words.w0 = (0xFD900000); _g->words.w1 = (u32) ( (&D_80102208)[i]); };
+        { GfxAA_ *_g = (GfxAA_ *) (D_8014EC78++); _g->words.w0 = (0xFD900000); _g->words.w1 = (u32) ( D_80102208[i]); };
         { GfxAA_ *_g = (GfxAA_ *) (D_8014EC78++); _g->words.w0 = (0xF5900000); _g->words.w1 = (u32) ( 0x07000000); };
         { GfxAA_ *_g = (GfxAA_ *) (D_8014EC78++); _g->words.w0 = (0xE6000000); _g->words.w1 = (u32) ( 0); };
         { GfxAA_ *_g = (GfxAA_ *) (D_8014EC78++); _g->words.w0 = (0xF3000000); _g->words.w1 = (u32) ( 0x070FF400); };
@@ -197,52 +190,49 @@ s32 func_8006C34C(u8 *buf, u8 id);
 s32 func_8006C3D4(u8 *out, u8 ch);
 s32 func_8006C468(void);
 s32 func_8006C488(void);
-    /* TODO (Clean version):
-    Asignación de punteros a funciones a variables escalares mediante casts como (*(void * *)&D_80145568). En C limpio, las variables D_80145568..D_801455B0 deberían ser miembros de una estructura o arreglo de punteros a función. Se mantiene para el match.
-    */
 s32 func_8006B4F8(void) {
-    (*(void * *)&D_80145568) = func_8006B894;
+    D_80145568 = func_8006B894;
     D_801455A0 = func_8006B6B8;
-    (*(void * *)&D_8014556C) = func_8006BA98;
-    (*(void * *)&D_80145570) = func_8006BD78;
-    (*(void * *)&D_801455A4) = func_8006C33C;
-    (*(void * *)&D_80145574) = func_8006BDA8;
-    (*(void * *)&D_80145578) = func_8006BE34;
-    (*(void * *)&D_8014557C) = func_8006C0A0;
-    (*(void * *)&D_80145580) = func_8006C0AC;
-    (*(void * *)&D_80145584) = func_8006C0C4;
-    (*(void * *)&D_80145588) = func_8006C0EC;
-    (*(void * *)&D_801455B0) = func_8006C218;
+    D_8014556C = func_8006BA98;
+    D_80145570 = func_8006BD78;
+    D_801455A4 = func_8006C33C;
+    D_80145574 = func_8006BDA8;
+    D_80145578 = func_8006BE34;
+    D_8014557C = func_8006C0A0;
+    D_80145580 = func_8006C0AC;
+    D_80145584 = func_8006C0C4;
+    D_80145588 = func_8006C0EC;
+    D_801455B0 = func_8006C218;
     D_80145598 = func_8006C468;
     D_8014559C = func_8006C488;
-    (*(void * *)&D_8014558C) = func_8006C23C;
-    (*(void * *)&D_80145590) = func_8006C274;
-    (*(void * *)&D_80145594) = func_8006C334;
+    D_8014558C = func_8006C23C;
+    D_80145590 = func_8006C274;
+    D_80145594 = func_8006C334;
     D_801455A8 = func_8006C34C;
     D_801455AC = func_8006C3D4;
     return 1;
 }
 
     /* TODO (Clean version):
-    Se limpian variables individuales escalares en lugar de usar memset sobre una estructura de punteros. Además, D_80145584 y D_80145588 se asignan a 0 dos veces mientras que las variables void* no se limpian. Se mantiene para el match.
+    D_80145584 y D_80145588 se asignan a 0 dos veces mientras que las variables void* no se limpian. (Original behavior.)
     */
 s32 func_8006B630(void) {
-    D_80145568 = 0;
-    D_8014556C = 0;
-    D_80145570 = 0;
-    D_801455A4 = 0;
-    D_80145574 = 0;
-    D_80145578 = 0;
-    D_8014557C = 0;
-    D_80145580 = 0;
-    D_80145584 = 0;
-    D_80145588 = 0;
-    D_801455B0 = 0;
-    D_8014558C = 0;
-    D_80145590 = 0;
-    D_80145594 = 0;
-    D_80145584 = 0;
-    D_80145588 = 0;
+    D_80145568 = NULL;
+    D_8014556C = NULL;
+    D_80145570 = NULL;
+    D_801455A4 = NULL;
+    D_80145574 = NULL;
+    D_80145578 = NULL;
+    D_8014557C = NULL;
+    D_80145580 = NULL;
+    D_80145584 = NULL;
+    D_80145588 = NULL;
+    D_801455B0 = NULL;
+    D_8014558C = NULL;
+    D_80145590 = NULL;
+    D_80145594 = NULL;
+    D_80145584 = NULL;
+    D_80145588 = NULL;
     return 1;
 }
 
@@ -461,11 +451,8 @@ u8 func_8006C0A0(void) {
     return D_800F03EB;
 }
 
-    /* TODO (Clean version):
-    Aritmética manual de punteros con cast (*(s32 *)(&D_800F0390 + ((arg0 & 0xFF) * 4))) sobre una variable u8. En C limpio debería declararse extern s32 D_800F0390[] y accederse directamente como D_800F0390[(u8)arg0]. Se mantiene para el match.
-    */
 s32 func_8006C0AC(s32 arg0) {
-    return *(s32 *)(&D_800F0390 + ((arg0 & 0xFF) * 4));
+    return D_800F0390[(u8)arg0];
 }
 
     /* TODO (Clean version):
