@@ -4,18 +4,13 @@
 #include "math.h"
 #include "include_asm.h"
 typedef struct { u8 p0[4]; u16 *unk4; } BufD_;
-typedef struct { u32 w0; u32 w1; } GfxA_;
-typedef struct { u8 p0[0x34]; GfxA_ *unk34; } ObjA2_;
+typedef struct { u8 p0[0x34]; Gfx *unk34; } ObjA2_;
 extern s32 D_80138AA8;
 extern s32 D_8014C1A8;
 typedef struct { s32 f0; s32 f4; u8 p8[0x548]; } S_D_801455C0;
 void func_80075600(s32 arg0, s8 arg1, s8 arg2, s8 arg3);
 void func_80075640(s32 arg0, f32 arg1, f32 arg2, f32 arg3, f32 arg4);
 typedef struct { Vtx v[32]; u8 p200[0x30]; f32 r; f32 a; u8 p238; u8 mode; } Ring6D_;
-    /* TODO (Clean version):
-    Definición duplicada idéntica a S_D_801455C0 empleada para forzar el casteo en func_8006DC28. En C limpio debe eliminarse y reutilizar S_D_801455C0; se mantiene para preservar el matching binario.
-    */
-typedef struct { s32 f0; s32 f4; u8 p8[0x548]; } S_D2_;
 typedef struct { u32 t; Vec3f pos; Vec3f vel; f32 m[9]; } MvD6_;
 void func_8006D608(MvD6_ *o, u32 dt);
 f64 func_800E6E80(f64);
@@ -24,15 +19,15 @@ void func_8006D6EC(Ring6D_ *s, u32 t);
 void func_8006CF10(s32 *p, s32 dt);
 extern S_D_801455C0 D_801455C0[];
 void func_8006CA88(S_D_801455C0 *, s32, f32, u8);
-s32 func_8007F5C4(s32,s32);
+BufD_ *func_8007F5C4(s32, s32);
 s32 func_8006DD60(s32 *,s32,s32);
 extern s32 D_8014D980;
 
 s32 func_800757E8(s32);
 s32 func_8006D15C(s32 *, s32, s32);
-s32 Memory_Free(s32);
-extern s32 D_800F05E0;
-s32 func_8007F57C(s32);
+s32 Memory_Free(void *);
+extern BufD_ *D_800F05E0;
+BufD_ *func_8007F57C(s32);
 extern s32 D_800F05E4;
 
 INCLUDE_ASM("asm/nonmatchings/unit_0D1F0", func_8006C5F0);
@@ -178,15 +173,12 @@ void func_8006DB84(s32 a, f32 b, u8 c) {
 }
 
 
-    /* TODO (Clean version):
-    Casteo innecesario a la estructura duplicada S_D2_ (&((S_D2_ *)&D_801455C0)[i]). En C limpio se iteraría directamente sobre el arreglo original (ej. S_D_801455C0 *p = &D_801455C0[i];); se mantiene para el match.
-    */
 void func_8006DC28(void) {
     u32 i;
-    S_D2_ *p;
+    S_D_801455C0 *p;
 
     for (i = 0; i < 8; i++) {
-        p = &((S_D2_ *)&D_801455C0)[i];
+        p = &D_801455C0[i];
         if (p->f4 != -1) {
             func_800757E8(p->f4);
         }
@@ -202,57 +194,46 @@ void func_8006DC90(void) {
 void func_8006DCB8(void) {
     if (D_800F05E0 != 0) {
         Memory_Free(D_800F05E0);
-        D_800F05E0 = 0;
+        D_800F05E0 = NULL;
     }
 }
 
 void func_8006DCE8(s32 arg0) {
     if (D_800F05E0 != 0) {
         Memory_Free(D_800F05E0);
-        D_800F05E0 = 0;
+        D_800F05E0 = NULL;
     }
     D_800F05E0 = func_8007F57C(arg0);
 }
 
-    /* TODO (Clean version):
-    Reinterpretación forzada de la variable global D_800F05E0 mediante doble puntero (*(GfxA_ * *)&D_800F05E0). En C limpio, con D_800F05E0 correctamente tipada (o con casteo simple (GfxA_ *)D_800F05E0), se escribiría:
-    if (D_800F05E0 != NULL) {
-        *o->unk34 = *(GfxA_ *)D_800F05E0;
-    }
-    Se mantiene para el match.
-    */
 void func_8006DD34(ObjA2_ *o) {
-    if ((*(GfxA_ * *)&D_800F05E0) != 0) {
-        *o->unk34 = *(*(GfxA_ * *)&D_800F05E0);
+    if (D_800F05E0 != NULL) {
+        *o->unk34 = *(Gfx *)D_800F05E0;
     }
 }
 
 
 INCLUDE_ASM("asm/nonmatchings/unit_0D1F0", func_8006DD60);
 
-    /* TODO (Clean version):
-    Casteo forzado mediante doble puntero (*(BufD_ * *)&D_800F05E0). En C limpio bastaría con ((BufD_ *)D_800F05E0)->unk4 o tipar D_800F05E0 como puntero; se mantiene para el match.
-    */
 void func_8006DEF4(u16 *pal, s32 *idx) {
     s32 i;
-    u16 *dst = (*(BufD_ * *)&D_800F05E0)->unk4;
+    u16 *dst = D_800F05E0->unk4;
 
     for (i = 0; i < 0x400; i++) {
         *dst++ = pal[*idx++];
     }
 }
 
-    /* TODO (Clean version):
-    Múltiples artefactos de permuter para emparejar registros e instrucciones: uso explícito de 'register', casteo de puntero *(void **)&D_800F05E0, truco sin ramas con '&' bitwise en la condición ((1 != D_8014C1A8) & (D_80138AA8 != 0)), y bucle do-while con punteros incrementados manualmente. En C limpio se escribiría con condiciones lógicas estándar (&&) y un bucle for indexado (dst[i] = samples[idx[i]]); se mantiene para el match.
-    */
+/* TODO(match-debt): 'register' locals, the branchless '&' in the condition and the hand-advanced
+   do-while are needed to match; the plain for loop over dst[i] = samples[idx[i]] does not. */
 void func_8006DF34(s16 *samples) {
     register s32 i;
     register s32 *idx;
     register u16 *dst;
     register s16 v;
 
-    if (*(void **)&D_800F05E0 != NULL && D_800F05E4 != 0 && ((1 != D_8014C1A8) & (D_80138AA8 != 0))) {
-        dst = ((BufD_ *)*(void **)&D_800F05E0)->unk4;
+    if (D_800F05E0 != NULL && D_800F05E4 != 0 && ((1 != D_8014C1A8) & (D_80138AA8 != 0))) {
+        dst = D_800F05E0->unk4;
         i = 0;
         idx = &D_8014D980;
         do {
@@ -268,7 +249,7 @@ void func_8006DF34(s16 *samples) {
 void func_8006DFBC(void) {
     if (D_800F05E0 != 0) {
         Memory_Free(D_800F05E0);
-        D_800F05E0 = 0;
+        D_800F05E0 = NULL;
     }
     D_800F05E0 = func_8007F5C4(0x20, 0x20);
     D_800F05E4 = 1;
@@ -277,7 +258,7 @@ void func_8006DFBC(void) {
 void func_8006E00C(s32 arg0) {
     if (D_800F05E0 != 0) {
         Memory_Free(D_800F05E0);
-        D_800F05E0 = 0;
+        D_800F05E0 = NULL;
     }
     D_800F05E0 = func_8007F57C(arg0);
     D_800F05E4 = 0;

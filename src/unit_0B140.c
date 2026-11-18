@@ -77,9 +77,6 @@ s32 func_8006AA34(void) {
     return 1;
 }
 
-    /* TODO (Clean version):
-    Comandos gráficos GBI (Fast3D) y verificación de crecimiento del pool de display lists expandidos manualmente con escrituras a Gfx (w0/w1 en hexadecimal) y aritmética de punteros D_80102208[i]. En C limpio deberían usarse las macros estándar de GBI (ej. gSPSetOtherMode, gDPSetEnvColor, etc.). Se mantiene para el match.
-    */
 s32 func_8006AA84(s32 cam, f32 *pos) {
     f32 m[3][4];
     f32 o[3][4];
@@ -93,24 +90,16 @@ s32 func_8006AA84(s32 cam, f32 *pos) {
     m[0][0] = m[1][1] = m[2][2] = 1.0f;
     func_8006B1AC();
     GFX_RESERVE(9);
-    { Gfx *_g = (Gfx *) (D_8014EC78++); _g->words.w0 = (0xDB040004); _g->words.w1 = (u32) ( 1); };
-    { Gfx *_g = (Gfx *) (D_8014EC78++); _g->words.w0 = (0xDB04000C); _g->words.w1 = (u32) ( 1); };
-    { Gfx *_g = (Gfx *) (D_8014EC78++); _g->words.w0 = (0xDB040014); _g->words.w1 = (u32) ( 0xFFFF); };
-    { Gfx *_g = (Gfx *) (D_8014EC78++); _g->words.w0 = (0xDB04001C); _g->words.w1 = (u32) ( 0xFFFF); };
-    { Gfx *_g = (Gfx *) (D_8014EC78++); _g->words.w0 = (0xDE000000); _g->words.w1 = (u32) ( D_800F0338); };
-    { Gfx *_g = (Gfx *) (D_8014EC78++); _g->words.w0 = (0xE7000000); _g->words.w1 = (u32) ( 0); };
-    { Gfx *_g = (Gfx *) (D_8014EC78++); _g->words.w0 = (0xFA000000); _g->words.w1 = (u32) ( (D_80101E94 << 24) | (D_80101E95 << 16) | (D_80101E96 << 8) | 0xC0); };
-    { Gfx *_g = (Gfx *) (D_8014EC78++); _g->words.w0 = (0xE2001D00); _g->words.w1 = (u32) ( 4); };
-    { Gfx *_g = (Gfx *) (D_8014EC78++); _g->words.w0 = (0xEE000000); _g->words.w1 = (u32) ( 0xFFFC0000); };
+    gSPClipRatio(D_8014EC78++, FRUSTRATIO_1);
+    gSPDisplayList(D_8014EC78++, D_800F0338);
+    gDPPipeSync(D_8014EC78++);
+    gDPSetPrimColor(D_8014EC78++, 0, 0, D_80101E94, D_80101E95, D_80101E96, 0xC0);
+    gDPSetDepthSource(D_8014EC78++, G_ZS_PRIM);
+    gDPSetPrimDepth(D_8014EC78++, -4, 0);
     for (i = 0; i < 3; i++) {
         GFX_RESERVE(7);
-        { Gfx *_g = (Gfx *) (D_8014EC78++); _g->words.w0 = (0xFD900000); _g->words.w1 = (u32) ( D_80102208[i]); };
-        { Gfx *_g = (Gfx *) (D_8014EC78++); _g->words.w0 = (0xF5900000); _g->words.w1 = (u32) ( 0x07000000); };
-        { Gfx *_g = (Gfx *) (D_8014EC78++); _g->words.w0 = (0xE6000000); _g->words.w1 = (u32) ( 0); };
-        { Gfx *_g = (Gfx *) (D_8014EC78++); _g->words.w0 = (0xF3000000); _g->words.w1 = (u32) ( 0x070FF400); };
-        { Gfx *_g = (Gfx *) (D_8014EC78++); _g->words.w0 = (0xE7000000); _g->words.w1 = (u32) ( 0); };
-        { Gfx *_g = (Gfx *) (D_8014EC78++); _g->words.w0 = (0xF5800400); _g->words.w1 = (u32) ( 0); };
-        { Gfx *_g = (Gfx *) (D_8014EC78++); _g->words.w0 = (0xF2000000); _g->words.w1 = (u32) ( 0x0007C07C); };
+        gDPLoadTextureBlock_4b(D_8014EC78++, D_80102208[i], G_IM_FMT_I, 32, 32, 0, G_TX_WRAP | G_TX_NOMIRROR,
+                               G_TX_WRAP | G_TX_NOMIRROR, G_TX_NOMASK, G_TX_NOMASK, G_TX_NOLOD, G_TX_NOLOD);
         for (j = 0, e = D_80101EA8; j < D_80101E90; e++, j++) {
             if (e->type == i) {
                 d[0] = pos[0] - e->x;
@@ -125,21 +114,18 @@ s32 func_8006AA84(s32 cam, f32 *pos) {
                     o[2][3] *= D_800F02D0;
                     mtx = func_80070BA4(o);
                     GFX_RESERVE(2);
-                    { Gfx *_g = (Gfx *) (D_8014EC78++); _g->words.w0 = (0xDA380003); _g->words.w1 = (u32) ( mtx); };
-                    { Gfx *_g = (Gfx *) (D_8014EC78++); _g->words.w0 = (0xDE000000); _g->words.w1 = (u32) ( D_800F0318); };
+                    gSPMatrix(D_8014EC78++, mtx, G_MTX_MODELVIEW | G_MTX_LOAD | G_MTX_NOPUSH);
+                    gSPDisplayList(D_8014EC78++, D_800F0318);
                     n += 2;
                 }
             }
         }
     }
     GFX_RESERVE(7);
-    { Gfx *_g = (Gfx *) (D_8014EC78++); _g->words.w0 = (0xDB040004); _g->words.w1 = (u32) ( 3); };
-    { Gfx *_g = (Gfx *) (D_8014EC78++); _g->words.w0 = (0xDB04000C); _g->words.w1 = (u32) ( 3); };
-    { Gfx *_g = (Gfx *) (D_8014EC78++); _g->words.w0 = (0xDB040014); _g->words.w1 = (u32) ( 0xFFFD); };
-    { Gfx *_g = (Gfx *) (D_8014EC78++); _g->words.w0 = (0xDB04001C); _g->words.w1 = (u32) ( 0xFFFD); };
-    { Gfx *_g = (Gfx *) (D_8014EC78++); _g->words.w0 = (0xE7000000); _g->words.w1 = (u32) ( 0); };
-    { Gfx *_g = (Gfx *) (D_8014EC78++); _g->words.w0 = (0xE3001801); _g->words.w1 = (u32) ( 0); };
-    { Gfx *_g = (Gfx *) (D_8014EC78++); _g->words.w0 = (0xE2001D00); _g->words.w1 = (u32) ( 0); };
+    gSPClipRatio(D_8014EC78++, FRUSTRATIO_3);
+    gDPPipeSync(D_8014EC78++);
+    gDPSetColorDither(D_8014EC78++, G_CD_MAGICSQ);
+    gDPSetDepthSource(D_8014EC78++, G_ZS_PIXEL);
     return n;
 }
 

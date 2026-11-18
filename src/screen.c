@@ -178,8 +178,8 @@ s32 func_800784F0(void) {
     for readability and platform maintenance.
     */
     GFX_RESERVE(2);
-    { Gfx *_g = (Gfx *) (D_8014EC78++); _g->words.w0 = ((u32) (((u32) ( 0xE9) & ((0x01 << (8)) - 1)) << (24))); _g->words.w1 = 0; };
-    { Gfx *_g = (Gfx *) (D_8014EC78++); _g->words.w0 = ((u32) (((u32) ( 0xDF) & ((0x01 << (8)) - 1)) << (24))); _g->words.w1 = 0; };
+    gDPFullSync(D_8014EC78++);
+    gSPEndDisplayList(D_8014EC78++);
     GfxPools_Swap(0);
     D_800F20F8 = 1;
     D_800F20F4 = 0;
@@ -220,11 +220,7 @@ void func_80078684(Mtx34f *m) {
     t = *m;
     D_800F216C[0] = func_80070BA4(&t);
     GFX_RESERVE(1);
-    {
-        Gfx *_g = (Gfx *) (D_8014EC78++);
-        _g->words.w0 = 0xDA380003;
-        _g->words.w1 = D_800F216C[0] - 0x80000000;
-    }
+    gSPMatrix(D_8014EC78++, D_800F216C[0] - 0x80000000, G_MTX_MODELVIEW | G_MTX_LOAD | G_MTX_NOPUSH);
 }
 
     /* TODO (Clean version):

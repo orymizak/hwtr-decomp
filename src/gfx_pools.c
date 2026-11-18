@@ -52,8 +52,7 @@ void GfxPool_Grow(GfxPool *pool, u32 required) {
     }
     chunk = Memory_Alloc((size + 1) * sizeof(Gfx));
     cur = pool->ptr;
-    cur->words.w0 = G_ENDDL << 24;
-    cur->words.w1 = 0;
+    gSPEndDisplayList(cur);
     if (chunk == NULL) {
         pool->ptr = pool->chunks[pool->chunkCount - 1];
     } else {
@@ -88,14 +87,9 @@ void GfxPool_Submit(GfxPool *pool, s32 arg) {
     u32 i;
 
     for (i = 0; i < pool->chunkCount; i++) {
-        Gfx *_g = g++;
-
-        _g->words.w0 = G_DL << 24;
-        _g->words.w1 = (u32)pool->chunks[i] - 0x80000000; /* K0 to physical */
+        gSPDisplayList(g++, (u32)pool->chunks[i] - 0x80000000); /* K0 to physical */
     }
-    g->words.w0 = G_ENDDL << 24;
-    g->words.w1 = 0;
-    g++;
+    gSPEndDisplayList(g++);
     func_8006FA7C(pool->head, (g - pool->head) * sizeof(Gfx), 0, arg);
 }
 

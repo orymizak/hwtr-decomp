@@ -160,7 +160,7 @@ void func_8007C434(PoolPC4_ *pool, f32 (*m)[4]) {
         cur = NULL;
         changed = 0;
         last = NULL;
-        { Gfx *_g = (Gfx *) (D_8014EC78++); _g->words.w0 = (0xE7000000); _g->words.w1 = (u32) ( 0); };
+        gDPPipeSync(D_8014EC78++);
         for (i = pool->tail; ; i++) {
             if (i == pool->cap) {
                 i = 0;
@@ -252,8 +252,8 @@ void func_8007C434(PoolPC4_ *pool, f32 (*m)[4]) {
             }
             mtx = func_80070BA4(b);
             GFX_RESERVE(14);
-            { Gfx *_g = (Gfx *) (D_8014EC78++); _g->words.w0 = (0xDA380003); _g->words.w1 = (u32) ( mtx - 0x80000000); };
-            { Gfx *_g = (Gfx *) (D_8014EC78++); _g->words.w0 = (0xE7000000); _g->words.w1 = (u32) ( 0); };
+            gSPMatrix(D_8014EC78++, mtx - 0x80000000, G_MTX_MODELVIEW | G_MTX_LOAD | G_MTX_NOPUSH);
+            gDPPipeSync(D_8014EC78++);
             if (!(p->flags & 0x80)) {
                 k = p->kind;
                 tex = D_801380C8[k];
@@ -290,17 +290,17 @@ void func_8007C434(PoolPC4_ *pool, f32 (*m)[4]) {
             }
             if (last != dl) {
                 last = dl;
-                { Gfx *_g = (Gfx *) (D_8014EC78++); _g->words.w0 = (0xDE000000); _g->words.w1 = (u32) ( (u32) last - 0x80000000); };
+                gSPDisplayList(D_8014EC78++, (u32) last - 0x80000000);
             }
-            { Gfx *_g = (Gfx *) (D_8014EC78++); _g->words.w0 = (0xE7000000); _g->words.w1 = (u32) ( 0); };
-            { Gfx *_g = (Gfx *) (D_8014EC78++); _g->words.w0 = (0xFA000000); _g->words.w1 = (u32) ( (p->r << 24) | (p->g << 16) | (p->b << 8) | (p->h6C >> 8)); };
+            gDPPipeSync(D_8014EC78++);
+            gDPSetPrimColor(D_8014EC78++, 0, 0, p->r, p->g, p->b, p->h6C >> 8);
             if (p->flags & 2) {
                 GfxPools_ReserveVtx(4);
                 /* TODO (Clean version):
                 Copia en bloque de vértices mediante casteo forzado a structs temporales (Vtx4C4_ y Vtx3C4_) de 64 y 48 bytes directamente desde la partícula o plantilla en lugar de usar un array de Vtx o memcpy. Se mantiene para el match.
                 */
                 *(Vtx4C4_ *) D_8014445C = *(Vtx4C4_ *) p;
-                { Gfx *_g = (Gfx *) (D_8014EC78++); _g->words.w0 = (0x01004008); _g->words.w1 = (u32) ( (u32) D_8014445C - 0x80000000); };
+                gSPVertex(D_8014EC78++, (u32) D_8014445C - 0x80000000, 4, 0);
                 D_8014445C += 4;
             } else if (p->flags & 0x20) {
                 GfxPools_ReserveVtx(3);
@@ -322,13 +322,13 @@ void func_8007C434(PoolPC4_ *pool, f32 (*m)[4]) {
                 D_8014445C[2].v.cn[1] = 0;
                 D_8014445C[2].v.cn[2] = 0;
                 D_8014445C[2].v.cn[3] = p->h6C >> 8;
-                { Gfx *_g = (Gfx *) (D_8014EC78++); _g->words.w0 = (0x01003006); _g->words.w1 = (u32) ( (u32) D_8014445C - 0x80000000); };
+                gSPVertex(D_8014EC78++, (u32) D_8014445C - 0x80000000, 3, 0);
                 D_8014445C += 3;
             }
-            { Gfx *_g = (Gfx *) (D_8014EC78++); _g->words.w0 = (0xDE000000); _g->words.w1 = (u32) ( (u32) dl2 - 0x80000000); };
+            gSPDisplayList(D_8014EC78++, (u32) dl2 - 0x80000000);
         }
         GFX_RESERVE(1);
-        { Gfx *_g = (Gfx *) (D_8014EC78++); _g->words.w0 = (0xE7000000); _g->words.w1 = (u32) ( 0); };
+        gDPPipeSync(D_8014EC78++);
     }
 }
 
