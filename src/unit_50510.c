@@ -33,7 +33,7 @@ void Memory_Free(void *);
 extern u8 D_80123D28[];
 extern u8 D_80123D24[];
 extern s32 D_80138098[];
-extern s32 (*D_80140FE8[])(s32);
+extern s32 (*sysPakOpen[])(s32);
 extern s32 (*sysTimeGetMillis)(void);
 void func_800B2440(u8 *, f32);
 void func_800B2540(u8 *, f32);
@@ -45,7 +45,7 @@ s32 func_800C8EE4(s32, u8, u8);
 s32 func_800C902C(s32, u8);
 void MenuText_ResetPos(u8 *t);
 extern u32 D_80123D10[];
-extern u32 (*D_80140FEC)(u32);
+extern u32 (*sysPakGetState)(u32);
 s8 NameList_Add(char *s);
 extern E140_ D_80122900[][4];
 extern void (*sysWorldLoad)(u8, s32);
@@ -83,8 +83,8 @@ s32 func_800AF910(void) {
         D_80123D00[i] = 0;
     }
     for (i = 0; i < 4; i++) {
-        D_80140FE8[0](i);
-        s = D_80140FE8[1](i);
+        sysPakOpen[0](i);
+        s = sysPakOpen[1](i);
         D_80123D10[i] = s;
         if (s != 4) {
             D_80123D24[i] = 1;
@@ -112,7 +112,7 @@ s32 func_800AFB74(void) {
     return 1;
 }
 
-s32 func_800AFB7C(u32 i) {
+s32 Pak_GetStatus(u32 i) {
     u32 s;
 
     if (i >= 4) {
@@ -121,7 +121,7 @@ s32 func_800AFB7C(u32 i) {
     if (D_80123D10[i] & 0x40) {
         return 8;
     }
-    s = D_80140FEC(i);
+    s = sysPakGetState(i);
     if (s == 0) {
         return 0;
     } else if (s & 2) {
@@ -167,7 +167,7 @@ s32 func_800AFC40(u32 i) {
         sum += *p++;
     }
     *(u32 *)(buf + 0xD90) = sum;
-    ok = ((u8 (*)(u32, u8 *))D_80140FE8[3])(i, buf);
+    ok = ((u8 (*)(u32, u8 *))sysPakOpen[3])(i, buf);
     Memory_Free(buf);
     if (ok) {
         D_80123D10[i] &= ~4;
@@ -210,8 +210,8 @@ s32 func_800B0024(void) {
                 sum += *c++;
             }
             *(s32 *)(buf + 0xD90) = sum;
-            if (((s32 (*)(s32, u8 *))D_80140FE8[3])(i, buf) == 0) {
-                D_80123D10[i] = ((u32 (*)(u32))D_80140FE8[1])(i);
+            if (((s32 (*)(s32, u8 *))sysPakOpen[3])(i, buf) == 0) {
+                D_80123D10[i] = ((u32 (*)(u32))sysPakOpen[1])(i);
                 Memory_Free(buf);
                 return 0;
             }
@@ -240,7 +240,7 @@ void *func_800B02E4(s32 arg0) {
     return (arg0 * 0x88C) + &D_801206D0;
 }
 
-E140_ *func_800B0310(u32 i, u32 j) {
+E140_ *SaveSlot_Get(u32 i, u32 j) {
     if (i >= 4 || j >= (u32)D_80123D00[i]) {
         return NULL;
     }
@@ -280,7 +280,7 @@ s32 func_800B042C(u32 i) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B0454);
 
-s32 func_800B0548(u32 i, u32 j) {
+s32 SaveSlot_Delete(u32 i, u32 j) {
     u32 k;
 
     if (i >= 4 || j >= (u32)D_80123D00[i]) {

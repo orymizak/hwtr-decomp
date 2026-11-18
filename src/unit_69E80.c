@@ -176,7 +176,7 @@ void func_800C9DA0(s32 i) {
     }
 }
 
-s32 func_800C9E70(void) {
+s32 Tuning_Load(void) {
     char buf[80];
 
     sprintf(buf, D_80101080);

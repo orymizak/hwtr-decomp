@@ -275,7 +275,7 @@ void func_800D7030(s32 port, s32 arg1);
 u8 func_8006C4BC(u8 port);
 void nuContPakFileOpenJis(PakHandle *handle, const char *name, const char *ext, s32 create, s32 size);
 void nuContPakFileReadWrite(PakHandle *handle, s32 offset, s32 size, void *buffer, s32 write);
-s32 func_8006E578(s32 port);
+s32 Pak_Open(s32 port);
 s32 File_LoadLZAsync(s32 index, void *dst, s32 slot);
 s32 File_FinishLZAsync(s32 slot);
 void Rom_ReadAsync(u32 romAddr, void *dst, u32 size, AsyncRead *read);
@@ -447,7 +447,7 @@ const char sPakStatusFormat[] = "%d\n";
 const char sPakGameName[16] = "Hot Wheels";
 const char sPakExtName[8] = "";
 
-s32 func_8006E578(s32 port) {
+s32 Pak_Open(s32 port) {
     PakHandle *handle;
 
     D_800F1C98[port] = 1;
@@ -533,7 +533,7 @@ s32 func_8006E578(s32 port) {
     return 0;
 }
 
-s32 func_8006E8A4(s32 port) {
+s32 Pak_GetState(s32 port) {
     PakHandle *handle;
 
     if (D_800F1C98[port]) {
@@ -674,7 +674,7 @@ s32 Save_Write(s32 port, SaveBlock *src) {
     */
 }
 
-s32 func_8006EDD4(s32 port) {
+s32 Pak_Repair(s32 port) {
     PakHandle *handle;
 
     D_800F1C98[port] = 0;
@@ -684,7 +684,7 @@ s32 func_8006EDD4(s32 port) {
     }
     nuContPakRepairId(handle);
     if (handle->status == 0) {
-        return func_8006E578(port) != 10;
+        return Pak_Open(port) != 10;
     }
     return 0;
 }

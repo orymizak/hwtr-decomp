@@ -24,7 +24,7 @@ extern void (*sysCarInfoLoad)(char *, void *, void *);
 extern void (*D_80140FD8)(void);
 void func_800C46C4(void);
 extern void (*D_80141024)(s32);
-extern u8 (*D_80140FFC)(u8);
+extern u8 (*sysPakRepair)(u8);
 extern s32 D_80124CE4;
 extern s32 D_80124CE8;
 extern s32 D_80124CEC;
@@ -157,7 +157,7 @@ void Menu_InitViewMtx(f32 (*m)[4]);
 extern void (*sysCameraApply)(f32 (*)[4]);
 extern u8 D_800F648F;
 extern u8 D_800F648E;
-void func_800C4890(void);
+void HighScores_PickRandom(void);
 extern u8 D_80100BD8;
 void func_800B4DF8(s32 arg0);
 s32 Car_IsUnlocked(u8 i, s32 p);
@@ -328,7 +328,7 @@ extern s16 D_800F610C[];
 extern s16 D_800F6170[];
 extern u8 gRegisterKey;
 void func_800B3C18(u8 i);
-u8 func_80086D50(s32);
+u8 Keyboard_LoadCharset(s32);
 extern u8 D_80100FDC;
 extern u8 D_801240D6;
 extern s8 D_801240D7;
@@ -338,11 +338,11 @@ extern s8 D_801240DD;
 extern s8 D_801240DE;
 extern s8 D_800F610A;
 extern void *D_80124CE0;
-void * func_800B0310(u32, u32);
+void * SaveSlot_Get(u32, u32);
 extern s32 D_80124150;
 extern s32 D_80124154;
 extern void *D_800F5F6C;
-extern u8 D_801240C0;
+extern u8 gKeyboardText;
 extern u8 D_800F64A4;
 extern s8 D_80124106;
 extern s8 D_80124105;
@@ -369,7 +369,7 @@ extern u8 D_80124C8C;
 void Menu_StartDim(void);
 void Menu_StartFadeOut(void);
 void Menu_StartFadeIn(void);
-s32 func_800C9E70(void);
+s32 Tuning_Load(void);
 extern s8 gMenuMusicStarted;
 s32 func_8008D4B8(u32);
 extern s8 gMenuSong;
@@ -402,7 +402,7 @@ s32 Menu_LayoutTexts(s32);
 extern s32 D_800F5F18;
 extern s32 D_800F5F1C;
 extern s32 (*D_8014C0B4)();
-extern s8 D_80124C73;
+extern s8 gMusicFadeMode;
 extern s32 D_800F6468;
 extern s32 (*sysTimeGetMillis)();
 s32 func_800B2A84();
@@ -478,10 +478,10 @@ extern s32 D_800F5F58;
 extern s32 (*D_801455B0)(s32);
 extern s32 D_800F5F5C;
 s32 Menu_HandlePad2(s32);
-s32 func_800AFB7C(u8);
-extern u8 D_800F6420;
+s32 Pak_GetStatus(u8);
+extern u8 gLoadPakP1;
 extern u8 gLoadSlotP1;
-extern u8 D_800F6421;
+extern u8 gLoadPakP2;
 extern u8 gLoadSlotP2;
 extern s32 D_800F5F64;
 extern s32 D_800F5F68;
@@ -493,7 +493,7 @@ extern u8 D_801240B5;
 extern u8 gLoadPlayer;
 extern u8 D_801240B7;
 s32 func_800B0024();
-s32 func_800B0548(u8, s32);
+s32 SaveSlot_Delete(u8, s32);
 extern s32 D_800F5F7C;
 extern s32 D_800F5F78;
 extern s32 D_800F5F80;
@@ -1476,12 +1476,12 @@ void PakRepairFailed_Enter(void) {
 }
 
 
-void func_800B7304(void) {
+void PakDialog_RepairDamaged(void) {
     u8 i;
 
     for (i = 0; i < 4; i++) {
-        if (func_800AFB7C(i) == 4) {
-            if (D_80140FFC(i) != 0) {
+        if (Pak_GetStatus(i) == 4) {
+            if (sysPakRepair(i) != 0) {
                 Fsm_Trigger(&gMenuFsm, 0x29);
             } else {
                 Fsm_Trigger(&gMenuFsm, 0x2A);
@@ -1524,7 +1524,7 @@ void func_800B7494(void) {
     first = 0xFF;
     found = 0;
     for (i = 0; (u8) i < 4; i++) {
-        st[(u8) i] = func_800AFB7C(i);
+        st[(u8) i] = Pak_GetStatus(i);
         if (!(u8) found && st[(u8) i] != 1) {
             first = i;
             found = 1;
@@ -1629,7 +1629,7 @@ void func_800B783C(void) {
     found = 0;
     slot = 0;
     for (i = 0; i < 4; i++) {
-        if (func_800AFB7C(i) == 3) {
+        if (Pak_GetStatus(i) == 3) {
             found = func_800AFC40(i);
             slot = i;
             break;
@@ -1646,8 +1646,8 @@ void func_800B783C(void) {
     func_800B0454(slot, &buf);
     Profile_InitDefault(&buf, 1);
     func_800B0454(slot, &buf);
-    D_80124148 = (s32)func_800B0310(slot, 0);
-    p = func_800B0310(slot, 1);
+    D_80124148 = (s32)SaveSlot_Get(slot, 0);
+    p = SaveSlot_Get(slot, 1);
     *(s32 *)(D_800F641C + 0x884) = *(s32 *)(D_80124148 + 4);
     D_8012414C = (s32)p;
     *(s32 *)(D_800F641C + 0x888) = ((s32 *)p)[1];
@@ -1661,13 +1661,13 @@ void func_800B7994(void) {
     u8 i;
 
     for (i = 0; i < 4; i++) {
-        if (func_800AFB7C(i) != 0 && func_800AFB7C(i) != 1) {
+        if (Pak_GetStatus(i) != 0 && Pak_GetStatus(i) != 1) {
             found = i;
             break;
         }
     }
     D_80124C70 = found + 1;
-    if (found != 0xFF && func_800AFB7C(i) == 7) {
+    if (found != 0xFF && Pak_GetStatus(i) == 7) {
         Fsm_Trigger(&gMenuFsm, 0x24);
     } else {
         Fsm_Trigger(&gMenuFsm, 0x2C);
@@ -1740,7 +1740,7 @@ s32 func_800B7D60(void) {
     u8 i;
 
     for (i = 0; i < 4; i++) {
-        if (func_800AFB7C(i) == 2) {
+        if (Pak_GetStatus(i) == 2) {
             return 1;
         }
     }
@@ -1982,18 +1982,18 @@ void Music_StopMenuTrack(void) {
     D_8014C0B4();
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800B8470);
+INCLUDE_ASM("asm/nonmatchings/unit_53B30", Music_UpdateVolumeFade);
 
-void func_800B8520(void) {
-    D_80124C73 = 0;
+void Music_FadeOut(void) {
+    gMusicFadeMode = 0;
 }
 
-void func_800B852C(void) {
-    D_80124C73 = 1;
+void Music_FadeIn(void) {
+    gMusicFadeMode = 1;
 }
 
-void func_800B853C(void) {
-    D_80124C73 = 2;
+void Music_FadeToHalf(void) {
+    gMusicFadeMode = 2;
 }
 
 void Menu_ResetAttractTimer(void) {
@@ -2061,8 +2061,8 @@ void Boot_LoadLanguage(void) {
     }
 }
 
-void func_800B877C(void) {
-    if (!(func_800C9E70() & 0xFF)) {
+void Boot_LoadTuning(void) {
+    if (!(Tuning_Load() & 0xFF)) {
         Fsm_Trigger((s32) &gMenuFsm, 0x12);
     }
 }
@@ -2071,7 +2071,7 @@ void func_800B87B4(void) {
     func_80086F78();
 }
 
-void func_800B87D0(void) {
+void Boot_Nop(void) {
 
 }
 
@@ -2175,17 +2175,17 @@ void func_800B8C34(void) {
     Menu_EndFrame();
 }
 
-void func_800B8C84(void) {
+void BootScreen_Enter(void) {
     Menu_StartEnter(gMenuObjs[0]);
 }
 
-void func_800B8CA8(void) {
+void BootScreen_Draw(void) {
     Menu_SetupCamera();
     Menu_Draw(gMenuObjs[0], -1, 0, -1, -1, -1, -1, 0);
     Menu_EndFrame();
 }
 
-void func_800B8CF8(void) {
+void BootScreen_Input(void) {
     Menu_HandlePad1(0x50);
 }
 
@@ -4746,11 +4746,11 @@ void func_800C1DB0(void) {
     Menu_StartFadeIn();
 }
 
-void func_800C1DCC(void) {
+void Keyboard_ClearText(void) {
     u8 i;
 
     for (i = 0; i < 20; i++) {
-        (&D_801240C0)[i] = 0;
+        (&gKeyboardText)[i] = 0;
     }
 }
 
@@ -4758,35 +4758,35 @@ INCLUDE_ASM("asm/nonmatchings/unit_53B30", LoadGame_Enter);
 
 INCLUDE_ASM("asm/nonmatchings/unit_53B30", LoadGame_SetupTexts);
 
-void func_800C245C(void) {
+void LoadGame_PrevPakP1(void) {
     if (gLoadSlotP1 == 0) {
         do {
-            D_800F6420 = (D_800F6420 - 1) & 3;
-        } while (func_800AFB7C(D_800F6420) != 0);
+            gLoadPakP1 = (gLoadPakP1 - 1) & 3;
+        } while (Pak_GetStatus(gLoadPakP1) != 0);
     }
 }
 
-void func_800C24A0(void) {
+void LoadGame_NextPakP1(void) {
     if (gLoadSlotP1 == 0) {
         do {
-            D_800F6420 = (D_800F6420 + 1) & 3;
-        } while (func_800AFB7C(D_800F6420) != 0);
+            gLoadPakP1 = (gLoadPakP1 + 1) & 3;
+        } while (Pak_GetStatus(gLoadPakP1) != 0);
     }
 }
 
-void func_800C24E4(void) {
+void LoadGame_PrevPakP2(void) {
     if (gLoadSlotP2 == 0 && gNumPlayers == 2) {
         do {
-            D_800F6421 = (D_800F6421 - 1) & 3;
-        } while (func_800AFB7C(D_800F6421) != 0);
+            gLoadPakP2 = (gLoadPakP2 - 1) & 3;
+        } while (Pak_GetStatus(gLoadPakP2) != 0);
     }
 }
 
-void func_800C253C(void) {
+void LoadGame_NextPakP2(void) {
     if (gLoadSlotP2 == 0 && gNumPlayers == 2) {
         do {
-            D_800F6421 = (D_800F6421 + 1) & 3;
-        } while (func_800AFB7C(D_800F6421) != 0);
+            gLoadPakP2 = (gLoadPakP2 + 1) & 3;
+        } while (Pak_GetStatus(gLoadPakP2) != 0);
     }
 }
 
@@ -4852,7 +4852,7 @@ void LoadGame_MoveDownP2(void) {
     }
 }
 
-void func_800C280C(void) {
+void LoadConfirm_Input(void) {
     u32 screen;
 
     screen = 0x31;
@@ -4866,17 +4866,17 @@ void func_800C280C(void) {
     Menu_HandlePad2(screen);
 }
 
-void func_800C285C(void) {
+void LoadConfirm_MoveTop(void) {
     D_801240B3 = 0;
 }
 
-void func_800C2868(void) {
+void LoadConfirm_MoveBottom(void) {
     D_801240B3 = 1;
 }
 
-void func_800C2878(void) {
+void LoadConfirm_Select(void) {
     if ((*(u8 *)&D_801240B3) == 0) {
-        func_800C1DCC();
+        Keyboard_ClearText();
         Fsm_Trigger(&gMenuFsm, 0x6E);
     } else {
         Fsm_Trigger(&gMenuFsm, 0x6F);
@@ -4917,7 +4917,7 @@ void LoadGame_SelectP1(void) {
 
     if (n == 0) {
         Fsm_Trigger(&gMenuFsm, 0x69);
-    } else if (func_800B042C(D_800F6420) < n) {
+    } else if (func_800B042C(gLoadPakP1) < n) {
         gLoadPlayer = 0;
         Fsm_Trigger(&gMenuFsm, 0x6C);
     } else {
@@ -4940,7 +4940,7 @@ void LoadGame_SelectP2(void) {
         Fsm_Trigger(&gMenuFsm, 0x6A);
     } else if (n == 0) {
         Fsm_Trigger(&gMenuFsm, 0x69);
-    } else if (func_800B042C(D_800F6421) < n) {
+    } else if (func_800B042C(gLoadPakP2) < n) {
         gLoadPlayer = 1;
         Fsm_Trigger(&gMenuFsm, 0x6C);
     } else {
@@ -4950,26 +4950,26 @@ void LoadGame_SelectP2(void) {
 }
 
 
-void func_800C2A8C(void) {
+void LoadOptions_Open(void) {
     Menu_StartDim();
     D_801240B4 = 1;
 }
 
-void func_800C2AB4(void) {
+void DeleteConfirm_Open(void) {
     Menu_StartDim();
     D_801240B6 = 1;
 }
 
-void func_800C2ADC(void) {
+void LoadConfirm_Open(void) {
     Menu_StartDim();
     D_801240B2 = 1;
 }
 
 void func_800C2B04(void) {
     if (gLoadPlayer == 0) {
-        D_80124150 = (*(s32 *)((u8 *)(func_800B0310((u32) D_800F6420, gLoadSlotP1 - 1)) + 0x4));
+        D_80124150 = (*(s32 *)((u8 *)(SaveSlot_Get((u32) gLoadPakP1, gLoadSlotP1 - 1)) + 0x4));
     } else {
-        D_80124154 = (*(s32 *)((u8 *)(func_800B0310((u32) D_800F6421, gLoadSlotP2 - 1)) + 0x4));
+        D_80124154 = (*(s32 *)((u8 *)(SaveSlot_Get((u32) gLoadPakP2, gLoadSlotP2 - 1)) + 0x4));
     }
     Menu_Advance();
 }
@@ -4987,7 +4987,7 @@ void LoadGame_LeaveFrame(void) {
     Menu_Nop(D_800F5F68);
 }
 
-void func_800C2F0C(void) {
+void LoadOptions_Input(void) {
     s32 base;
     s32 screen;
 
@@ -5003,19 +5003,19 @@ void func_800C2F0C(void) {
     Menu_HandlePad2(screen);
 }
 
-void func_800C2F6C(void) {
+void LoadOptions_MoveUp(void) {
     if (D_801240B5 != 0) {
         D_801240B5 -= 1;
     }
 }
 
-void func_800C2F8C(void) {
+void LoadOptions_MoveDown(void) {
     if ((u8) D_801240B5 < 2U) {
         D_801240B5 += 1;
     }
 }
 
-void func_800C2FB0(void) {
+void LoadOptions_Select(void) {
     D_80141024(0xFF);
     switch (D_801240B5) {
         case 0:
@@ -5034,21 +5034,21 @@ void func_800C2FB0(void) {
 }
 
 
-void func_800C3054(void) {
+void LoadGame_CopyEntryName(void) {
     u8 pak;
     u8 entry;
     void *rec;
 
     if (gLoadPlayer == 0) {
         entry = gLoadSlotP1;
-        pak = D_800F6420;
+        pak = gLoadPakP1;
     } else {
         entry = gLoadSlotP2;
-        pak = D_800F6421;
+        pak = gLoadPakP2;
     }
-    rec = func_800B0310((u32) pak, entry - 1);
+    rec = SaveSlot_Get((u32) pak, entry - 1);
     D_80124CE0 = rec;
-    strcpy(&D_801240C0, rec + 8);
+    strcpy(&gKeyboardText, rec + 8);
     D_800F610A = 1;
 }
 
@@ -5063,7 +5063,7 @@ void func_800C30C4(void) {
 
 void func_800C3108(void) {
     DEBUG_NOP();
-    strcpy(*(s32 *)&D_80124CE0 + 8, &D_801240C0);
+    strcpy(*(s32 *)&D_80124CE0 + 8, &gKeyboardText);
     if (func_800B0024() & 0xFF) {
         Menu_Advance();
         return;
@@ -5071,15 +5071,15 @@ void func_800C3108(void) {
     Fsm_Trigger((s32)&gMenuFsm, 0x68);
 }
 
-void func_800C3168(void) {
+void DeleteConfirm_MoveTop(void) {
     (*(s8 *)&D_801240B7) = 0;
 }
 
-void func_800C3174(void) {
+void DeleteConfirm_MoveBottom(void) {
     (*(s8 *)&D_801240B7) = 1;
 }
 
-void func_800C3184(void) {
+void DeleteConfirm_Input(void) {
     s32 screen;
 
     screen = 0x31;
@@ -5102,37 +5102,37 @@ void func_800C31D4(void) {
 }
 
 
-void func_800C3218(void) {
+void LoadGame_DeleteSelected(void) {
     u8 pak;
     u8 entry;
 
     if (gLoadPlayer == 0) {
         entry = gLoadSlotP1;
-        pak = D_800F6420;
+        pak = gLoadPakP1;
     } else {
         entry = gLoadSlotP2;
-        pak = D_800F6421;
+        pak = gLoadPakP2;
     }
-    func_800B0548(pak, entry - 1);
+    SaveSlot_Delete(pak, entry - 1);
     func_800B0024();
 }
 
-void func_800C326C(void) {
+void Keyboard_OpenPlayerName(void) {
     s32 player;
     u8 n;
 
-    n = func_80086D50((s32)&D_80100FDC);
+    n = Keyboard_LoadCharset((s32)&D_80100FDC);
     D_801240D6 = n;
     if (!n) {
         Fsm_Trigger((s32)&gMenuFsm, 0x12);
     }
-    func_800C1DCC();
+    Keyboard_ClearText();
     if (gLoadPlayer == 0) {
         player = D_80124148;
     } else {
         player = D_8012414C;
     }
-    strcpy(&D_801240C0, player + 8);
+    strcpy(&gKeyboardText, player + 8);
     D_801240D7 = 10;
     D_801240D8 = 0;
     D_801240DD = D_801240D6 + 1;
@@ -5141,10 +5141,10 @@ void func_800C326C(void) {
     D_801240D6 += 3;
 }
 
-void func_800C3338(void) {
+void Keyboard_OpenKeepText(void) {
     u8 n;
 
-    n = func_80086D50((s32)&D_80100FDC);
+    n = Keyboard_LoadCharset((s32)&D_80100FDC);
     D_801240D6 = n;
     if (!n) {
         Fsm_Trigger((s32)&gMenuFsm, 0x12);
@@ -5157,15 +5157,15 @@ void func_800C3338(void) {
     D_801240D6 += 3;
 }
 
-void func_800C33CC(void) {
+void Keyboard_OpenPassword(void) {
     u8 n;
 
-    n = func_80086D50((s32)&D_80100FE4);
+    n = Keyboard_LoadCharset((s32)&D_80100FE4);
     D_801240D6 = n;
     if (!n) {
         Fsm_Trigger((s32)&gMenuFsm, 0x12);
     }
-    func_800C1DCC();
+    Keyboard_ClearText();
     D_801240D7 = 20;
     D_801240D8 = 3;
     *(u8 *)&D_801240DD = 0xFF;
@@ -5174,15 +5174,15 @@ void func_800C33CC(void) {
     D_801240D6 += 2;
 }
 
-void func_800C3468(void) {
+void Keyboard_OpenNewName(void) {
     u8 n;
 
-    n = func_80086D50((s32)&D_80100FDC);
+    n = Keyboard_LoadCharset((s32)&D_80100FDC);
     D_801240D6 = n;
     if (!n) {
         Fsm_Trigger((s32)&gMenuFsm, 0x12);
     }
-    func_800C1DCC();
+    Keyboard_ClearText();
     D_801240D7 = 10;
     D_801240D8 = 1;
     D_801240DD = D_801240D6 + 1;
@@ -5196,12 +5196,12 @@ void func_800C3504(void) {
     u8 i;
 
     for (i = 0; i < 10; i++) {
-        if ((&D_801240C0)[i] != 0x20) {
+        if ((&gKeyboardText)[i] != 0x20) {
             r = i;
         }
     }
     if (r < 8) {
-        (&D_801240C0)[r + 1] = 0;
+        (&gKeyboardText)[r + 1] = 0;
     }
 }
 
@@ -5239,7 +5239,7 @@ void func_800C3954(void) {
             } else {
                 p = D_8012414C;
             }
-            strcpy((s32 *)(p + 8), (s32)&D_801240C0);
+            strcpy((s32 *)(p + 8), (s32)&gKeyboardText);
             Fsm_Trigger(&gMenuFsm, 0x75);
             break;
         case 1:
@@ -5248,15 +5248,15 @@ void func_800C3954(void) {
                 l.w14 |= ((E140b_ *)D_80124148)->w14;
                 l.w18 |= ((E140b_ *)D_80124148)->w18;
                 l.w1C |= ((E140b_ *)D_80124148)->w1C;
-                strcpy((s32 *)l.name, (s32)&D_801240C0);
-                func_800B0454(D_800F6420, &l);
+                strcpy((s32 *)l.name, (s32)&gKeyboardText);
+                func_800B0454(gLoadPakP1, &l);
             } else {
                 Profile_InitDefault(&l, 0);
                 l.w14 |= ((E140b_ *)D_8012414C)->w14;
                 l.w18 |= ((E140b_ *)D_8012414C)->w18;
                 l.w1C |= ((E140b_ *)D_8012414C)->w1C;
-                strcpy((s32 *)l.name, (s32)&D_801240C0);
-                func_800B0454(D_800F6421, &l);
+                strcpy((s32 *)l.name, (s32)&gKeyboardText);
+                func_800B0454(gLoadPakP2, &l);
             }
             if ((u8)func_800B0024() != 0) {
                 Fsm_Trigger(&gMenuFsm, 0x76);
@@ -5399,7 +5399,7 @@ void Register_Leave(void) {
 void Register_Confirm(void) {
     s32 buf[6];
 
-    if (func_800B0F94(&D_801240C0, gLoadPlayer == 0 ? D_80124148 : D_8012414C) == 0) {
+    if (func_800B0F94(&gKeyboardText, gLoadPlayer == 0 ? D_80124148 : D_8012414C) == 0) {
         if (gLoadPlayer == 0) {
             func_800B0F74(D_80124148, buf);
             strcpy((s32 *)&D_800F6424, (s32)buf);
@@ -5478,7 +5478,7 @@ void func_800C46C4(void) {
 }
 
 extern u8 D_80101000;
-extern u8 D_80124100;
+extern u8 gHighScoresCategory;
 extern u8 D_80124101;
 extern u8 D_80124102;
 extern ObjG1_ D_800F6388;
@@ -5492,7 +5492,7 @@ void HighScores_Enter(void) {
     D_80124103 = 0;
     D_80124104 = 0;
     gHighScoresPage = 0;
-    D_80124100 = 0;
+    gHighScoresCategory = 0;
     D_80124101 = 0;
     D_80124102 = 0;
     func_800C46C4();
@@ -5521,11 +5521,11 @@ void func_800C4860(void) {
     }
 }
 
-void func_800C4890(void) {
+void HighScores_PickRandom(void) {
     s32 t;
 
-    D_80124100 = sysRandRange(3);
-    t = D_80124100;
+    gHighScoresCategory = sysRandRange(3);
+    t = gHighScoresCategory;
     if (t >= 0) {
         if (t < 2) {
             do {
@@ -5537,22 +5537,22 @@ void func_800C4890(void) {
     } while (!Cup_IsUnlocked(D_80124102 = sysRandRange(3)));
 }
 
-void func_800C4930(void) {
+void HighScores_StartAutoCycle(void) {
     if (D_80124103 == 0) {
-        func_800C4890();
+        HighScores_PickRandom();
         D_80124103 = 1;
         (*(s8 *)&D_80124104) = 0;
     }
 }
 
-void func_800C496C(void) {
+void HighScores_StopAutoCycle(void) {
     (*(s8 *)&D_80124103) = 0;
 }
 
-void func_800C4978(void) {
+void HighScores_AutoCycle(void) {
     if (D_80124103 != 0) {
         if (++D_80124104 >= 20) {
-            func_800C4890();
+            HighScores_PickRandom();
             D_80124104 = 0;
         }
     }
@@ -5572,23 +5572,23 @@ void HighScores_PageRight(void) {
     func_800C46C4();
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800C4A34);
+INCLUDE_ASM("asm/nonmatchings/unit_53B30", HighScores_PrevCategory);
 
 /* Moves the cursor of menu page gHighScoresPage to the next selectable entry, wrapping around. */
-void func_800C4BA4(void) {
+void HighScores_NextCategory(void) {
     s32 m;
 
     switch (gHighScoresPage) {
         case 0:
-            if (D_80124100 < 2) {
-                D_80124100++;
+            if (gHighScoresCategory < 2) {
+                gHighScoresCategory++;
             } else {
-                D_80124100 = 0;
+                gHighScoresCategory = 0;
             }
             break;
         case 1:
             /* TODO(match-debt): the redundant m >= 0 test on a u8 is needed for the bltz/slti pair. */
-            m = D_80124100;
+            m = gHighScoresCategory;
             if (m >= 0) {
                 if (m < 2) {
                     do {

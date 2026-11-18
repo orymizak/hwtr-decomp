@@ -9,7 +9,7 @@ extern u8 D_80116870[];
 
 
 
-u8 func_80086D50(char *name) {
+u8 Keyboard_LoadCharset(char *name) {
     char buf[0x100];
     s32 size;
     u32 n;
