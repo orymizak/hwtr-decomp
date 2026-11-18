@@ -23,7 +23,7 @@ extern s32 D_801279A4;
 extern OSIoMesg *D_8012799C;
 extern AudDmaBuffer *D_80127998;
 extern void *D_801279A0;
-void *func_800D23FC(s32);
+void *SndHeap_Alloc(s32);
 void func_800D2450(void *, u8, s32);
 s32 *func_800D1D24(void);
 /* Sets up the ROM DMA cache: n buffers of size bytes in a doubly linked free list, plus the PI
@@ -32,17 +32,17 @@ void *func_800D1AE0(s32 n, s32 size) {
     s32 i;
 
     D_801279C8 = osCartRomInit();
-    D_8012799C = func_800D23FC(n * 48);
-    D_801279A0 = func_800D23FC(n * 8);
-    D_80127998 = func_800D23FC(n * 20);
+    D_8012799C = SndHeap_Alloc(n * 48);
+    D_801279A0 = SndHeap_Alloc(n * 8);
+    D_80127998 = SndHeap_Alloc(n * 20);
     func_800D2450(D_80127998, 0, n * 20);
     for (i = 0; i < n - 1; i++) {
         D_80127998[i].next = &D_80127998[i] + 1;
         D_80127998[i].next->prev = &D_80127998[i];
-        D_80127998[i].ptr = (s32)func_800D23FC(size);
+        D_80127998[i].ptr = (s32)SndHeap_Alloc(size);
         D_80127998[i].addr = -1;
     }
-    D_80127998[i].ptr = (s32)func_800D23FC(size);
+    D_80127998[i].ptr = (s32)SndHeap_Alloc(size);
     D_80127998[i].addr = -1;
     D_801279A4 = size;
     D_801279A8 = 0;

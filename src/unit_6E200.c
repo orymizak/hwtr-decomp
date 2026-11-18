@@ -6,7 +6,7 @@ extern OSScTask D_80138AB8; /* audio RSP task */
 extern u8 D_8014D304[];
 extern u8 D_800FABA1;
 extern void (*D_800FABA4)(s32, u8);
-s32 func_800CDB5C(s32);
+s32 Snd_Init(s32);
 s32 func_800CE95C(void *);
 extern u8 D_800E7AA0;
 extern u8 D_800E7B70;
@@ -38,7 +38,7 @@ void func_800CD600(s32 arg0) {
     D_80138AB8.list.t.yield_data_ptr = NULL;
     D_80138AB8.list.t.yield_data_size = 0;
     func_800CE95C(&D_800FABA8);
-    func_800CDB5C(arg0);
+    Snd_Init(arg0);
 }
 
 void func_800CD6C4(void) {

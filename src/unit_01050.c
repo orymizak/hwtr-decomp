@@ -2,7 +2,7 @@
 #include "ultra64.h"
 #include "include_asm.h"
 #include "car.h"
-void func_800CE480(s32, s32);
+void Snd_SetVolume(s32, s32);
 void *Memory_Alloc(s32);
 extern void *D_80101E70;
 extern u8 D_80138AB0;
@@ -13,7 +13,7 @@ void func_80078980(s32);
 typedef struct Node64_ { u8 pad[0xC]; f32 v; u8 pad2[4]; struct Node64_ *next; u8 pad3[2]; u8 id; } Node64_;
 extern Node64_ *D_800F0100;
 void nuPiReadRom(u32 devAddr, void *dram, u32 size);
-void func_800CE6D4(void *data, s32 a);
+void Snd_LoadWaveBank(void *data, s32 a);
 typedef struct { s32 a; s32 b; s32 c; } Vec3J_;
 extern Vec3J_ D_800EFF14;
 typedef struct { s32 a; s32 b; s32 c; } Vec3I_;
@@ -52,12 +52,12 @@ extern s32 D_800EFC64;
 extern Vec3f D_800FE7B8;
 extern u8 D_800F01B0;
 extern f64 D_800FE848;
-void func_800CE810(s32);
+void Snd_SelectFx(s32);
 extern Snd29_ D_800EFF38[];
-void func_800CE4E0(s32, s32);
+void Snd_SetPan(s32, s32);
 extern Slot_ D_800EFF7C[];
 extern u8 D_800F0104;
-s32 func_800CE550(s32 id, f32 val);
+s32 Snd_SetPitch(s32 id, f32 val);
 extern s32 D_800F01A0;
 extern s32 D_800F01A4;
 extern s32 D_800EFC94[];
@@ -95,7 +95,7 @@ extern s32 D_8014C130;
 extern s32 D_8014C144;
 extern s32 D_8014C150;
 extern S_D_800EFC78 D_800EFC78[];
-s32 func_800CD8CC(s32, s32,s32,s32, s32);
+s32 Snd_Play(s32, s32,s32,s32, s32);
 extern s32 D_800EFC68;
 extern f32 D_800EFC6C;
 extern u8 D_800EFF60;
@@ -106,11 +106,11 @@ extern u8 D_800EFF44;
 extern u8 D_800EFF58;
 extern u8 D_800EFF40;
 extern u8 D_800EFF50;
-s32 func_800CE228(s32,s32);
+s32 Snd_FadeOutAll(s32,s32);
 s32 func_8006495C(void);
-s32 func_800CDDE4(s32, s32);
-s32 func_800CE374(s32,s32);
-s32 func_800CE428(s32);
+s32 Snd_SetMasterVolume(s32, s32);
+s32 Snd_Stop(s32,s32);
+s32 Snd_IsPlaying(s32);
 extern s32 D_800F01A8;
 extern s32 D_800F01AC;
 extern f64 D_800FE8A8;
@@ -695,28 +695,28 @@ s32 Sfx_Play(u32 id, s32 mode, f32 vol, f32 pitch) {
     }
     switch (id) {
         case 0x1:
-            if (func_800CE428(D_800F01A0) == 0) {
-                h = func_800CD8CC(snd, v, 0x80, 0, pri);
-                func_800CE550(h, pitch);
+            if (Snd_IsPlaying(D_800F01A0) == 0) {
+                h = Snd_Play(snd, v, 0x80, 0, pri);
+                Snd_SetPitch(h, pitch);
                 D_800F01A0 = h;
             }
             return 1;
         case 0xD:
-            if (func_800CE428(D_800F01A4) == 0) {
-                h = func_800CD8CC(snd, v, 0x80, 0, pri);
-                func_800CE550(h, pitch);
+            if (Snd_IsPlaying(D_800F01A4) == 0) {
+                h = Snd_Play(snd, v, 0x80, 0, pri);
+                Snd_SetPitch(h, pitch);
                 D_800F01A4 = h;
             }
             return 1;
         case 0x36:
         case 0x38:
-            D_800F01AC = func_800CD8CC(snd, v, 0x80, 1, pri);
+            D_800F01AC = Snd_Play(snd, v, 0x80, 1, pri);
             return 1;
         case 0x37:
-            D_800F01A8 = func_800CD8CC(snd, v, 0x80, 1, pri);
+            D_800F01A8 = Snd_Play(snd, v, 0x80, 1, pri);
             return 1;
         default:
-            func_800CE550(func_800CD8CC(snd, v, 0x80, 0, pri), pitch);
+            Snd_SetPitch(Snd_Play(snd, v, 0x80, 0, pri), pitch);
             return 1;
     }
 }
@@ -727,11 +727,11 @@ s32 Music_PlayTrack(u32 track) {
 
     song = D_800EFC78[track].f0;
     vol = 128.0f * D_800EFC6C;
-    if (func_800CE428(D_800EFC68) != 0) {
-        func_800CE374(D_800EFC68, 0);
+    if (Snd_IsPlaying(D_800EFC68) != 0) {
+        Snd_Stop(D_800EFC68, 0);
         D_800EFC68 = 0;
     }
-    D_800EFC68 = func_800CD8CC(song, vol, 0x80, 0, 0xFF);
+    D_800EFC68 = Snd_Play(song, vol, 0x80, 0, 0xFF);
     *(s8 *)&D_800F0105 = track;
     return 1;
 }
@@ -739,8 +739,8 @@ s32 Music_PlayTrack(u32 track) {
 s32 Music_Stop(void) {
     s32 *p = &D_800EFC68;
 
-    if (func_800CE428(*p) != 0) {
-        func_800CE374(*p, 0);
+    if (Snd_IsPlaying(*p) != 0) {
+        Snd_Stop(*p, 0);
         *p = 0;
     }
     return 1;
@@ -767,7 +767,7 @@ s32 func_80061B94(s32 kind) {
         break;
     }
     if (snd != 0) {
-        return func_800CD8CC(snd, vol, 0x80, 0, 0x70);
+        return Snd_Play(snd, vol, 0x80, 0, 0x70);
     }
 }
 
@@ -791,12 +791,12 @@ s32 func_80062950(void) {
 
     n = (*(Nd29_ * *)&D_800F0100);
     i = 0;
-    p1 = func_800CE428(D_800EFF38[i].h[1]);
-    p0 = func_800CE428(D_800EFF38[i].h[0]);
-    p2 = func_800CE428(D_800EFF38[i].h[2]);
-    p3 = func_800CE428(D_800EFF38[i].h[3]);
-    p4 = func_800CE428(D_800EFF38[i].h[4]);
-    p5 = func_800CE428(D_800EFF38[i].h[5]);
+    p1 = Snd_IsPlaying(D_800EFF38[i].h[1]);
+    p0 = Snd_IsPlaying(D_800EFF38[i].h[0]);
+    p2 = Snd_IsPlaying(D_800EFF38[i].h[2]);
+    p3 = Snd_IsPlaying(D_800EFF38[i].h[3]);
+    p4 = Snd_IsPlaying(D_800EFF38[i].h[4]);
+    p5 = Snd_IsPlaying(D_800EFF38[i].h[5]);
     if (p0 || p2 || p3 || p4 || p5 || p1) {
         vol = gSfxVolume;
         x = D_800EFF38[i].f1C;
@@ -812,9 +812,9 @@ s32 func_80062950(void) {
             if (v == 0) {
                 v = 1;
             }
-            func_800CE480(D_800EFF38[i].h[1], v);
-            func_800CE4E0(D_800EFF38[i].h[1], pan);
-            func_800CE550(D_800EFF38[i].h[1], pitch);
+            Snd_SetVolume(D_800EFF38[i].h[1], v);
+            Snd_SetPan(D_800EFF38[i].h[1], pan);
+            Snd_SetPitch(D_800EFF38[i].h[1], pitch);
         }
         if (p0) {
             pitch = (D_800EFF38[i].rpm - 1000.0f) * 0.0021818182f + -17.0f;
@@ -826,54 +826,54 @@ s32 func_80062950(void) {
             if (v == 0) {
                 v = 1;
             }
-            func_800CE480(D_800EFF38[i].h[0], v);
-            func_800CE4E0(D_800EFF38[i].h[0], pan);
-            func_800CE550(D_800EFF38[i].h[0], pitch);
+            Snd_SetVolume(D_800EFF38[i].h[0], v);
+            Snd_SetPan(D_800EFF38[i].h[0], pan);
+            Snd_SetPitch(D_800EFF38[i].h[0], pitch);
         }
         if (p2) {
             v = D_800EFF38[i].f20 * 128.0f * vol;
             if (v == 0) {
                 v = 1;
             }
-            func_800CE480(D_800EFF38[i].h[2], v);
-            func_800CE4E0(D_800EFF38[i].h[2], pan);
-            func_800CE550(D_800EFF38[i].h[2], zero);
+            Snd_SetVolume(D_800EFF38[i].h[2], v);
+            Snd_SetPan(D_800EFF38[i].h[2], pan);
+            Snd_SetPitch(D_800EFF38[i].h[2], zero);
         }
         if (p3) {
             v = D_800EFF38[i].f24 * 128.0f * vol;
             if (v == 0) {
                 v = 1;
             }
-            func_800CE480(D_800EFF38[i].h[3], v);
-            func_800CE4E0(D_800EFF38[i].h[3], pan);
-            func_800CE550(D_800EFF38[i].h[3], zero);
+            Snd_SetVolume(D_800EFF38[i].h[3], v);
+            Snd_SetPan(D_800EFF38[i].h[3], pan);
+            Snd_SetPitch(D_800EFF38[i].h[3], zero);
         }
         if (p4) {
             v = vol * 128.0f;
             if (v == 0) {
                 v = 1;
             }
-            func_800CE480(D_800EFF38[i].h[4], v);
-            func_800CE4E0(D_800EFF38[i].h[4], pan);
-            func_800CE550(D_800EFF38[i].h[4], zero);
+            Snd_SetVolume(D_800EFF38[i].h[4], v);
+            Snd_SetPan(D_800EFF38[i].h[4], pan);
+            Snd_SetPitch(D_800EFF38[i].h[4], zero);
         }
         if (p5) {
             v = D_800EFF38[i].f28 * 128.0f * vol;
             if (v == 0) {
                 v = 1;
             }
-            func_800CE480(D_800EFF38[i].h[5], v);
-            func_800CE4E0(D_800EFF38[i].h[5], pan);
-            func_800CE550(D_800EFF38[i].h[5], zero);
+            Snd_SetVolume(D_800EFF38[i].h[5], v);
+            Snd_SetPan(D_800EFF38[i].h[5], pan);
+            Snd_SetPitch(D_800EFF38[i].h[5], zero);
         }
     }
     i++;
-    p1 = func_800CE428(D_800EFF38[i].h[1]);
-    p0 = func_800CE428(D_800EFF38[i].h[0]);
-    p2 = func_800CE428(D_800EFF38[i].h[2]);
-    p3 = func_800CE428(D_800EFF38[i].h[3]);
-    p4 = func_800CE428(D_800EFF38[i].h[4]);
-    p5 = func_800CE428(D_800EFF38[i].h[5]);
+    p1 = Snd_IsPlaying(D_800EFF38[i].h[1]);
+    p0 = Snd_IsPlaying(D_800EFF38[i].h[0]);
+    p2 = Snd_IsPlaying(D_800EFF38[i].h[2]);
+    p3 = Snd_IsPlaying(D_800EFF38[i].h[3]);
+    p4 = Snd_IsPlaying(D_800EFF38[i].h[4]);
+    p5 = Snd_IsPlaying(D_800EFF38[i].h[5]);
     if (p0 || p2 || p3 || p4 || p5 || p1) {
         vol = gSfxVolume;
         x = D_800EFF38[i].f1C;
@@ -889,9 +889,9 @@ s32 func_80062950(void) {
             if (v == 0) {
                 v = 1;
             }
-            func_800CE480(D_800EFF38[i].h[1], v);
-            func_800CE4E0(D_800EFF38[i].h[1], pan);
-            func_800CE550(D_800EFF38[i].h[1], pitch);
+            Snd_SetVolume(D_800EFF38[i].h[1], v);
+            Snd_SetPan(D_800EFF38[i].h[1], pan);
+            Snd_SetPitch(D_800EFF38[i].h[1], pitch);
         }
         if (p0) {
             if (D_800EFF38[i].b44 != 14) {
@@ -907,50 +907,50 @@ s32 func_80062950(void) {
             if (v == 0) {
                 v = 1;
             }
-            func_800CE480(D_800EFF38[i].h[0], v);
-            func_800CE4E0(D_800EFF38[i].h[0], pan);
-            func_800CE550(D_800EFF38[i].h[0], pitch);
+            Snd_SetVolume(D_800EFF38[i].h[0], v);
+            Snd_SetPan(D_800EFF38[i].h[0], pan);
+            Snd_SetPitch(D_800EFF38[i].h[0], pitch);
         }
         if (p2) {
             v = D_800EFF38[i].f20 * 128.0f * vol;
             if (v == 0) {
                 v = 1;
             }
-            func_800CE480(D_800EFF38[i].h[2], v);
-            func_800CE4E0(D_800EFF38[i].h[2], pan);
-            func_800CE550(D_800EFF38[i].h[2], zero);
+            Snd_SetVolume(D_800EFF38[i].h[2], v);
+            Snd_SetPan(D_800EFF38[i].h[2], pan);
+            Snd_SetPitch(D_800EFF38[i].h[2], zero);
         }
         if (p3) {
             v = D_800EFF38[i].f24 * 128.0f * vol;
             if (v == 0) {
                 v = 1;
             }
-            func_800CE480(D_800EFF38[i].h[3], v);
-            func_800CE4E0(D_800EFF38[i].h[3], pan);
-            func_800CE550(D_800EFF38[i].h[3], zero);
+            Snd_SetVolume(D_800EFF38[i].h[3], v);
+            Snd_SetPan(D_800EFF38[i].h[3], pan);
+            Snd_SetPitch(D_800EFF38[i].h[3], zero);
         }
         if (p4) {
             v = vol * 128.0f;
             if (v == 0) {
                 v = 1;
             }
-            func_800CE480(D_800EFF38[i].h[4], v);
-            func_800CE4E0(D_800EFF38[i].h[4], pan);
-            func_800CE550(D_800EFF38[i].h[4], zero);
+            Snd_SetVolume(D_800EFF38[i].h[4], v);
+            Snd_SetPan(D_800EFF38[i].h[4], pan);
+            Snd_SetPitch(D_800EFF38[i].h[4], zero);
         }
         if (p5) {
             v = D_800EFF38[i].f28 * 128.0f * vol;
             if (v == 0) {
                 v = 1;
             }
-            func_800CE480(D_800EFF38[i].h[5], v);
-            func_800CE4E0(D_800EFF38[i].h[5], pan);
-            func_800CE550(D_800EFF38[i].h[5], zero);
+            Snd_SetVolume(D_800EFF38[i].h[5], v);
+            Snd_SetPan(D_800EFF38[i].h[5], pan);
+            Snd_SetPitch(D_800EFF38[i].h[5], zero);
         }
     }
     while (n != NULL) {
         if (n->h != 0) {
-            func_800CE374(n->h, 1);
+            Snd_Stop(n->h, 1);
             n->h = 0;
         }
         n = n->next;
@@ -992,7 +992,7 @@ s32 func_800635AC(s32 a, f32 v) {
     s16 ok = 1;
 
     if ((v == D_800FE848) != f) {
-        func_800CE810(v == 1.0f ? 5 : 2);
+        Snd_SelectFx(v == 1.0f ? 5 : 2);
         if ((u8)ok) {
             D_800F01B0 = D_800F01B0 == 0;
         }
@@ -1004,12 +1004,12 @@ INCLUDE_ASM("asm/nonmatchings/unit_01050", func_8006365C);
 
 s32 func_80063938(u8 i) {
     D_800EFF38[i].p46[2] = 0;
-    if (func_800CE428(D_800EFF38[i].h[0]) != 0) {
-        func_800CE374(D_800EFF38[i].h[0], 0);
+    if (Snd_IsPlaying(D_800EFF38[i].h[0]) != 0) {
+        Snd_Stop(D_800EFF38[i].h[0], 0);
         D_800EFF38[i].h[0] = 0;
     }
-    if (func_800CE428(D_800EFF38[i].h[1]) != 0) {
-        func_800CE374(D_800EFF38[i].h[1], 0);
+    if (Snd_IsPlaying(D_800EFF38[i].h[1]) != 0) {
+        Snd_Stop(D_800EFF38[i].h[1], 0);
         D_800EFF38[i].h[1] = 0;
     }
     return 1;
@@ -1033,8 +1033,8 @@ s32 func_80063A18(u8 car, f32 v) {
 INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80063AC0);
 
 s32 func_80063C18(u8 car) {
-    if (func_800CE428(D_800EFF38[car].h[2]) != 0) {
-        func_800CE374(D_800EFF38[car].h[2], 0);
+    if (Snd_IsPlaying(D_800EFF38[car].h[2]) != 0) {
+        Snd_Stop(D_800EFF38[car].h[2], 0);
         D_800EFF38[car].h[2] = 0;
     }
     return 1;
@@ -1048,8 +1048,8 @@ s32 func_80063C88(s32 arg0, s32 arg1) {
 INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80063CB4);
 
 s32 func_80063E0C(u8 car) {
-    if (func_800CE428(D_800EFF38[car].h[3]) != 0) {
-        func_800CE374(D_800EFF38[car].h[3], 0);
+    if (Snd_IsPlaying(D_800EFF38[car].h[3]) != 0) {
+        Snd_Stop(D_800EFF38[car].h[3], 0);
         D_800EFF38[car].h[3] = 0;
     }
     return 1;
@@ -1079,22 +1079,22 @@ s32 func_80063EA8(u8 i, s32 k, f32 lvl) {
     vol = func_80064988(pos) * gSfxVolume;
     pan = func_80064B58(pos);
     pitch = func_800649F8(pos, (u8 *)D_800EFC94 + 0x2DC + off);
-    busy = func_800CE428(*(s32 *)(&D_800EFF48 + off));
+    busy = Snd_IsPlaying(*(s32 *)(&D_800EFF48 + off));
     v = lvl * 128.0f * vol;
     if (v == 0) {
         v = 1;
     }
     if (busy == 0) {
-        *(s32 *)(&D_800EFF48 + off) = func_800CD8CC(snd, v, pan, 0, 0x40);
-        func_800CE550(*(s32 *)(&D_800EFF48 + off), pitch);
+        *(s32 *)(&D_800EFF48 + off) = Snd_Play(snd, v, pan, 0, 0x40);
+        Snd_SetPitch(*(s32 *)(&D_800EFF48 + off), pitch);
         return 1;
     }
     return 0;
 }
 
 s32 func_80063FE8(u8 car) {
-    if (func_800CE428(D_800EFF38[car].h[4]) != 0) {
-        func_800CE374(D_800EFF38[car].h[4], 0);
+    if (Snd_IsPlaying(D_800EFF38[car].h[4]) != 0) {
+        Snd_Stop(D_800EFF38[car].h[4], 0);
         D_800EFF38[car].h[4] = 0;
     }
     return 1;
@@ -1119,22 +1119,22 @@ s32 func_80064058(u8 i, s32 k) {
     vol = func_80064988(pos) * gSfxVolume;
     pan = func_80064B58(pos);
     pitch = func_800649F8(pos, (u8 *)D_800EFC94 + 0x2DC + off);
-    busy = func_800CE428(*(s32 *)(&D_800EFF4C + off));
+    busy = Snd_IsPlaying(*(s32 *)(&D_800EFF4C + off));
     v = *(f32 *)(&D_800EFF60 + off) * 128.0f * vol;
     if (v == 0) {
         v = 1;
     }
     if (busy == 0) {
-        *(s32 *)(&D_800EFF4C + off) = func_800CD8CC(snd, v, pan, 0, 0x40);
-        func_800CE550(*(s32 *)(&D_800EFF4C + off), pitch);
+        *(s32 *)(&D_800EFF4C + off) = Snd_Play(snd, v, pan, 0, 0x40);
+        Snd_SetPitch(*(s32 *)(&D_800EFF4C + off), pitch);
         return 1;
     }
     return 0;
 }
 
 s32 func_80064194(u8 car) {
-    if (func_800CE428(D_800EFF38[car].h[5]) != 0) {
-        func_800CE374(D_800EFF38[car].h[5], 0);
+    if (Snd_IsPlaying(D_800EFF38[car].h[5]) != 0) {
+        Snd_Stop(D_800EFF38[car].h[5], 0);
         D_800EFF38[car].h[5] = 0;
     }
     return 1;
@@ -1210,8 +1210,8 @@ s32 func_800645BC(u8 id) {
         return 0;
     }
     p->pad3[1] = 0;
-    if (func_800CE428(*(s32 *)p->pad2) != 0) {
-        func_800CE374(*(s32 *)p->pad2, 0);
+    if (Snd_IsPlaying(*(s32 *)p->pad2) != 0) {
+        Snd_Stop(*(s32 *)p->pad2, 0);
         *(s32 *)p->pad2 = 0;
     }
     return 1;
@@ -1239,8 +1239,8 @@ void Audio_SetMusicVolume(u8 v) {
     f32 *p = &D_800EFC6C;
 
     *p = v / 255.0;
-    if (func_800CE428(D_800EFC68) != 0) {
-        func_800CE480(D_800EFC68, *p * 128.0f);
+    if (Snd_IsPlaying(D_800EFC68) != 0) {
+        Snd_SetVolume(D_800EFC68, *p * 128.0f);
     }
 }
 
@@ -1269,21 +1269,21 @@ u8 Audio_GetVoiceVolume(void) {
 
 
 void func_80064884(u8 vol) {
-    func_800CDDE4(1, (f32)(vol / D_800FE8A8) * 32767.0f);
+    Snd_SetMasterVolume(1, (f32)(vol / D_800FE8A8) * 32767.0f);
     if (vol == 0) {
-        if (D_800F01A8 != 0 && func_800CE428(D_800F01A8) != 0) {
-            func_800CE374(D_800F01A8, 0);
+        if (D_800F01A8 != 0 && Snd_IsPlaying(D_800F01A8) != 0) {
+            Snd_Stop(D_800F01A8, 0);
             D_800F01A8 = 0;
         }
-        if (D_800F01AC != 0 && func_800CE428(D_800F01AC) != 0) {
-            func_800CE374(D_800F01AC, 0);
+        if (D_800F01AC != 0 && Snd_IsPlaying(D_800F01AC) != 0) {
+            Snd_Stop(D_800F01AC, 0);
             D_800F01AC = 0;
         }
     }
 }
 
 s32 func_8006495C(void) {
-    func_800CE228(1, 1);
+    Snd_FadeOutAll(1, 1);
     return 1;
 }
 
@@ -1368,7 +1368,7 @@ f32 func_80064E68(Vec3f *a, Vec3f *b) {
 
 void func_80064EA4(u32 devAddr, u32 size, s32 a) {
     nuPiReadRom(devAddr, (void *)0x80010400, size);
-    func_800CE6D4((void *)0x80010400, a);
+    Snd_LoadWaveBank((void *)0x80010400, a);
 }
 
 
@@ -1376,7 +1376,7 @@ void func_80064EE8(u32 a, u32 sizeA, u32 b, u32 sizeB) {
     nuPiReadRom(a, (void *)0x80010400, sizeA);
     D_80101E70 = Memory_Alloc(sizeB);
     nuPiReadRom(b, D_80101E70, sizeB);
-    func_800CE6D4((void *)0x80010400, (s32)D_80101E70);
+    Snd_LoadWaveBank((void *)0x80010400, (s32)D_80101E70);
 }
 
 
@@ -1386,5 +1386,5 @@ void func_80064F5C(s32 arg0, u32 arg1) {
 
 void func_80064F84(s32 arg0, u32 arg1) {
     nuPiReadRom(arg0, 0x80000400, (arg1 & 1) + arg1);
-    func_800CE89C((void *)0x80000400);
+    Snd_LoadSfxBank((void *)0x80000400);
 }

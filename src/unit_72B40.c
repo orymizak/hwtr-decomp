@@ -12,19 +12,19 @@ typedef struct {
     /* 0x48 */ OSMesg taskMsgBuf[4];
 } AudClient; /* size = 0x58 */
 typedef struct { void *data; u32 size; void *ucode; void *ucode_data; } AudInfoT_;
-void *func_800D23FC(s32 size);
+void *SndHeap_Alloc(s32 size);
 extern AudClient *D_801279D4;
 
 extern OSSched *D_801279D0;
 
-void func_800D1F40(OSSched *sc) {
+void Snd_SetScheduler(OSSched *sc) {
     D_801279D0 = sc;
 }
 
 void func_800D1F4C(void) {
     AudClient *c;
 
-    c = func_800D23FC(sizeof(AudClient));
+    c = SndHeap_Alloc(sizeof(AudClient));
     D_801279D4 = c;
     osCreateMesgQueue(&c->msgQ, c->msgBuf, 4);
     osCreateMesgQueue(&D_801279D4->taskMsgQ, D_801279D4->taskMsgBuf, 4);

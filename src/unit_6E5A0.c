@@ -1,13 +1,13 @@
 #include "common.h"
 #include "include_asm.h"
-s32 func_800D242C();
-s32 func_800CD9EC(void);
-void *func_800D2444();
+s32 SndHeap_GetUsed();
+s32 Snd_GetUsedMem(void);
+void *SndHeap_Get();
 
-s32 func_800D23FC();
+s32 SndHeap_Alloc();
 
-void func_800CD9A0(void) {
-    func_800D23FC();
+void Snd_Alloc(void) {
+    SndHeap_Alloc();
 }
 
     /* TODO (Clean version):
@@ -15,16 +15,16 @@ void func_800CD9A0(void) {
     typedef struct {
         u8 pad00[8];
         s32 unk08;
-    } ContextHeader; // Adapt type name according to func_800D2444 definition
-    ContextHeader *s = func_800D2444();
-    return s->unk08 - func_800CD9EC();
+    } ContextHeader; // Adapt type name according to SndHeap_Get definition
+    ContextHeader *s = SndHeap_Get();
+    return s->unk08 - Snd_GetUsedMem();
     */
-s32 func_800CD9BC(void) {
-    u8 *s = func_800D2444();
+s32 Snd_GetFreeMem(void) {
+    u8 *s = SndHeap_Get();
 
-    return *(s32 *)(s + 8) - func_800CD9EC();
+    return *(s32 *)(s + 8) - Snd_GetUsedMem();
 }
 
-s32 func_800CD9EC(void) {
-    return func_800D242C();
+s32 Snd_GetUsedMem(void) {
+    return SndHeap_GetUsed();
 }

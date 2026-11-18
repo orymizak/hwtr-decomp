@@ -23,18 +23,18 @@ typedef struct { u8 p0[0x44]; s32 unk44; s32 unk48; u8 p4C[0x2C]; void *unk78; u
 typedef struct { u8 p0[0x7C]; s32 unk7C; } SeqY2_;
 typedef struct { s32 unk0; u8 p4[0x70]; s32 unk74; u8 p78[0x24]; s16 unk9C; u8 p9E[0xA]; s16 unkA8; u8 pAA[0x92]; } VoiceZ_;
 typedef struct { u8 p0[0x74]; s32 unk74; s32 unk78; u8 p7C[0x1C]; s16 unk98; u8 p9A[2]; s16 unk9C; } SeqZ_;
-extern s32 D_80127944;
+extern s32 gSndFrameRate;
 typedef struct { u8 p0[0xC]; s32 unkC; u8 p10[4]; s32 unk14; u8 p18[0x20]; u8 *unk38; u8 p3C[0x66]; u16 unkA2; u8 pA4[0x18]; u8 unkBC; } SeqP_;
 typedef struct { u8 p0[0xC]; s32 unkC; u8 p10[0x84]; s32 unk94; u8 p98[0x25]; u8 unkBD; u8 pBE[0x16]; u8 unkD4; u8 pD5[4]; u8 unkD9; u8 unkDA; } SeqO_;
 typedef struct { u8 p0[0x10]; s32 unk10; u8 p14[4]; struct { s32 a; s32 b; } entries[1]; } BankG_;
 typedef struct { u8 p0[4]; s32 unk4; u8 p8[0x3C]; s32 unk44; s32 unk48; u8 p4C[0x2C]; BankG_ *unk78; s32 unk7C; s32 unk80; u8 p84[0x1A]; s16 unk9E; u8 pA0[6]; s16 unkA6; u8 pA8[8]; s16 unkB0; u8 pB2[0x8A]; } VoiceG_;
-extern VoiceG_ *D_80127940;
-extern s32 D_80127950;
-void func_800D0058(VoiceG_ *v);
+extern VoiceG_ *gSndSfxVoices;
+extern s32 gSndNextHandle;
+void SndVoice_Reset(VoiceG_ *v);
 typedef struct { u8 p0[0x24]; f32 unk24; u8 p28[0xC]; s32 unk34; s32 unk38; u8 p3C[0x30]; f32 unk6C; f32 unk70; u8 p74[0x2E]; u16 unkA2; u16 unkA4; u8 pA6[0x16]; u8 unkBC; u8 pBD[0x1E]; u8 unkDB; u8 pDC[4]; u8 *unkE0[4]; s32 unkF0[4]; s32 unk100[4]; u16 unk110[4]; u16 unk118[4]; u8 unk120[4]; u8 unk124[4]; f32 unk128[4]; } SeqN_;
 typedef struct { u8 b[8]; } AudMsgE_;
-void func_800D247C(void *dst, void *src, s32 n);
-s32 func_800CEB34(AudMsgE_ *msg);
+void Snd_MemMove(void *dst, void *src, s32 n);
+s32 SndMsg_Post(AudMsgE_ *msg);
 typedef struct { s32 unk0; u8 p4[0x40]; s32 unk44; u8 p48[0x50]; s16 unk98; u8 p9A[2]; s16 unk9C; u8 p9E[0xA]; u16 unkA8; u8 pAA[0x92]; } VoiceC_;
 typedef struct { s32 unk0; u8 p4[0x40]; s32 unk44; u8 p48[0x83]; u8 unkCB; u8 unkCC; u8 pCD[0x6F]; } VoiceB_;
 typedef struct { u8 p0[0x20]; s32 unk20; } ObjA_;
@@ -49,7 +49,7 @@ typedef struct { s32 unk0; u8 p4[0x40]; s32 unk44; u8 p48[0x56]; s16 unk9E; u8 p
 typedef struct { s32 unk0; u8 p4[0x40]; s32 unk44; u8 p48[0x34]; s32 unk7C; u8 p80[0xBC]; } Voice4_;
 typedef struct { u8 p0[0x30]; f32 unk30; u8 p34[0x5C]; f32 unk90; } SeqG_;
 typedef struct { s32 unk0; u8 p4[0x40]; s32 unk44; u8 p48[0xF4]; } Voice_;
-extern s32 D_80127934;
+extern s32 gSndNumVoices;
 typedef struct { u8 p0[0xBD]; u8 unkBD; } SeqF_;
 typedef struct { u8 p0[0xBC]; u8 unkBC; } SeqE_;
 typedef struct { u8 p0[0xB9]; u8 unkB9; } SeqD_;
@@ -60,19 +60,19 @@ typedef struct { u8 p0[0xAC]; u16 unkAC; } SeqB_;
 typedef struct { u8 p0[0xAE]; u16 unkAE; } SeqA_;
 typedef struct { u8 p0[0xCE]; u8 unkCE; u8 unkCF; u8 pD0[8]; u8 unkD8; } SeqChan3_;
 typedef struct { u8 p0[0xB2]; u16 unkB2; u16 unkB4; } SeqChan2_;
-extern s32 D_80127964;
-void func_800CE7E8(s32 arg);
+extern s32 gSndFxPreset;
+void Snd_Resume(s32 arg);
 typedef struct { u8 type; u8 pad[3]; s32 arg; } AudMsg_;
 typedef struct { u8 p0[0x2C]; f32 unk2C; u8 p30[0x20]; f32 unk50; u8 p54[0x64]; u8 unkB8; } SeqChan_;
-extern s32 D_800FAE80;
-extern u8 D_800FAE84;
-s32 func_800D0444(BankG_ *b, s32 idx, s32 a2, s32 a3, s32 prio);
+extern s32 gSndFxPresetCount;
+extern u8 gSndFxPresets;
+s32 SndVoice_PlaySfx(BankG_ *b, s32 idx, s32 a2, s32 a3, s32 prio);
 typedef struct { s32 a; s32 b; } Ent89_;
 typedef struct { s32 n; u8 p4[8]; s32 flags; s32 unk10; s32 unk14; Ent89_ e[1]; } Bank89_;
 typedef struct { u8 p0[0x58]; f32 unk58; f32 unk5C; f32 unk60; s32 unk64; u8 p68[0x57]; u8 unkBF; u8 unkC0; u8 unkC1; u8 unkC2; u8 pC3[3]; u8 unkC6; u8 unkC7; u8 unkC8; } SeqE9_;
 typedef struct { u8 p0[0xC]; u32 unkC; u8 p10[0x30]; u32 unk40; u8 p44[0x10]; u32 unk54; f32 unk58; f32 unk5C; f32 unk60; u32 unk64; u8 p68[0x57]; u8 unkBF; u8 unkC0; u8 unkC1; u8 unkC2; u8 unkC3; u8 unkC4; u8 unkC5; u8 unkC6; u8 unkC7; u8 unkC8; u8 pC9[4]; u8 unkCD; } SeqEnvR_;
-void func_800D15B8();
-extern void *D_8012793C;
+void SndFx_Alloc();
+extern void *gSndVoices;
 extern u8 D_800FACF8;
 extern s32 D_800FB170;
 extern void *n_syn;
@@ -82,33 +82,33 @@ typedef struct { u8 p0[0x14]; s32 unk14; s32 unk18; SynPV_ **unk1C; s32 unk20; s
 typedef struct { u8 p0[4]; void *unk4; } SynFX_;
 typedef struct { s32 unk0; s32 unk4; s32 unk8; s32 unkC; s32 unk10; s32 unk14; s32 unk18; s32 unk1C; s32 unk20; s32 unk24; void *unk28; SynQ_ *unk2C; SynFX_ *unk30; SynMB_ *unk34; s32 unk38; u8 p3C[4]; s32 unk40; s32 unk44; s32 unk48; s32 unk4C; } SynD_;
 typedef struct { u8 p0[4]; s32 unk4; s32 unk8; u8 pC[4]; s32 unk10; void *unk14; s32 unk18; u8 unk1C; u8 p1D[3]; void *unk20; } SynC_;
-void func_800D12F8(SynC_ *c);
+void SndSyn_New(SynC_ *c);
 extern s32 D_8014C6D0;
-extern s32 D_80127960;
-s32 func_800CFE2C();
-extern s32 D_8012795C;
+extern s32 gSndSeqFxControl;
+s32 SndWave_Relocate();
+extern s32 gSndDefWaveBank;
 
 extern s16 D_8012794C;
 extern s16 D_8012794E;
-s32 func_800D05EC();
-extern void *D_80127958;
-extern s32 D_80127968;
-extern s32 D_8012796C;
+s32 SndSong_Start();
+extern void *gSndCurWaveBank;
+extern s32 gSndSfxBank;
+extern s32 gSndSfxBankOnce;
 extern s32 D_800FAEAC;
-extern s32 D_80127970;
-s32 func_800D23FC(s32);
-extern s32 D_80127974;
-extern s32 D_80127978;
-extern s32 D_8012797C;
-extern s32 D_80127980;
+extern s32 gSndMarkerCallback;
+s32 SndHeap_Alloc(s32);
+extern s32 gSndMsgRead;
+extern s32 gSndMsgWrite;
+extern s32 gSndMsgCount;
+extern s32 gSndMsgQueue;
 s32 n_alSynStartVoice(s32, s32);
 s32 n_alSynStopVoice(s32);
-extern s32 D_80127938;
-extern s32 D_80127948;
-extern s32 D_80127954;
+extern s32 gSndPVoices;
+extern s32 gSndTickUsec;
+extern s32 gSndRandSeed;
 extern f64 D_801016A0;
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CDA10);
+INCLUDE_ASM("asm/nonmatchings/unit_6E610", SndCmd_SetEnvelopePreset);
 
 typedef struct { s32 unk0; s32 unk4; s32 unk8; s32 unkC; s32 unk10; s32 unk14; s32 unk18; s32 unk1C; s32 unk20; s32 unk24; u8 p28[0x18]; s32 unk40; } AudCfgB_;
 typedef struct { u8 p0[0xC9]; u8 unkC9; u8 pCA[0x72]; } VoiceIB_;
@@ -119,79 +119,79 @@ extern s32 D_80145564;
 extern s32 D_80127920;
 extern s32 *D_80127924;
 extern void *D_80127928;
-void func_800D23B0(s32, s32);
-void func_800D1F40(s32);
-void func_800CEA50(s32 arg0);
-void func_800CE6D4(s32 arg0);
-void func_800CE89C(u8 *base);
-void func_800D20F0(void *, s32, s32);
-void func_800CDDE4(s32 arg0, s16 arg1);
+void SndHeap_Init(s32, s32);
+void Snd_SetScheduler(s32);
+void SndMsg_InitQueue(s32 arg0);
+void Snd_LoadWaveBank(s32 arg0);
+void Snd_LoadSfxBank(u8 *base);
+void Snd_CreateManager(void *, s32, s32);
+void Snd_SetMasterVolume(s32 arg0, s16 arg1);
 void n_alSynAddPlayer(void *);
 void n_alSynAllocVoice(s32, void *);
-void func_800D242C(void);
-s32 func_800CEBCC(void);
+void SndHeap_GetUsed(void);
+s32 Snd_Update(void);
 
     /* TODO (Clean version): audioDriverInit(AudCfg *cfg):
     Initializes sound driver voice channels, sequence players, and message queue.
     - PAL (50Hz) vs NTSC (60Hz) tick interval: 1,000,000 / framerate (microseconds per tick).
     - Allocates voice structures (count * sizeof(AudioVoice), where sizeof(AudioVoice) == 0x13C).
-    - Initializes ring buffer D_80127980 for asynchronous audio event dispatch.
+    - Initializes ring buffer gSndMsgQueue for asynchronous audio event dispatch.
     */
-void func_800CDB5C(AudCfgB_ *c) {
+void Snd_Init(AudCfgB_ *c) {
     s32 i;
     AudMsgB_ msg;
     s32 *q;
 
     D_80138144 = c->unk40;
     D_80145564 = c->unk0;
-    D_80127934 = c->unk4 + 4;
+    gSndNumVoices = c->unk4 + 4;
     if (osTvType == 0) {
-        D_80127944 = 50;
+        gSndFrameRate = 50;
     } else {
-        D_80127944 = 60;
+        gSndFrameRate = 60;
     }
-    D_80127948 = 1000000 / D_80127944;
-    func_800D23B0(c->unk10, c->unk14);
-    func_800D1F40(c->unk8);
-    D_80127938 = func_800D23FC((D_80127934 - 4) * 0x1C);
-    D_8012793C = (void *)func_800D23FC(D_80127934 * 0x13C);
-    D_80127940 = (VoiceG_ *)&((VoiceIB_ *)D_8012793C)[4];
-    func_800CEA50(c->unk24);
-    D_80127958 = 0;
-    D_8012795C = 0;
+    gSndTickUsec = 1000000 / gSndFrameRate;
+    SndHeap_Init(c->unk10, c->unk14);
+    Snd_SetScheduler(c->unk8);
+    gSndPVoices = SndHeap_Alloc((gSndNumVoices - 4) * 0x1C);
+    gSndVoices = (void *)SndHeap_Alloc(gSndNumVoices * 0x13C);
+    gSndSfxVoices = (VoiceG_ *)&((VoiceIB_ *)gSndVoices)[4];
+    SndMsg_InitQueue(c->unk24);
+    gSndCurWaveBank = 0;
+    gSndDefWaveBank = 0;
     if (c->unk18 != 0 && c->unk1C != 0) {
-        ((void (*)(s32, s32))func_800CE6D4)(c->unk18, c->unk1C);
+        ((void (*)(s32, s32))Snd_LoadWaveBank)(c->unk18, c->unk1C);
     }
-    D_8012796C = 0;
-    D_80127968 = 0;
+    gSndSfxBankOnce = 0;
+    gSndSfxBank = 0;
     if (c->unk20 != 0) {
-        func_800CE89C((u8 *)c->unk20);
+        Snd_LoadSfxBank((u8 *)c->unk20);
     }
-    D_80127970 = 0;
-    D_80127964 = 2;
-    func_800D20F0(c, D_80127944, 2);
-    func_800CDDE4(3, 0x7FFF);
-    D_80127950 = 1;
-    D_80127954 = 0x12345678;
+    gSndMarkerCallback = 0;
+    gSndFxPreset = 2;
+    Snd_CreateManager(c, gSndFrameRate, 2);
+    Snd_SetMasterVolume(3, 0x7FFF);
+    gSndNextHandle = 1;
+    gSndRandSeed = 0x12345678;
     q = &D_80127920;
     *q = 0;
-    D_80127928 = func_800CEBCC;
+    D_80127928 = Snd_Update;
     D_80127924 = q;
     n_alSynAddPlayer(q);
-    for (i = 0; i < D_80127934; i++) {
-        ((VoiceIB_ *)D_8012793C)[i].unkC9 = 0;
-        func_800D0058((VoiceG_ *)&((VoiceIB_ *)D_8012793C)[i]);
+    for (i = 0; i < gSndNumVoices; i++) {
+        ((VoiceIB_ *)gSndVoices)[i].unkC9 = 0;
+        SndVoice_Reset((VoiceG_ *)&((VoiceIB_ *)gSndVoices)[i]);
         msg.c = 0;
         msg.a = c->unkC;
         msg.b = 0;
         if (i >= 4) {
-            n_alSynAllocVoice(D_80127938 + (i - 4) * 0x1C, &msg);
+            n_alSynAllocVoice(gSndPVoices + (i - 4) * 0x1C, &msg);
         }
     }
-    func_800D242C();
+    SndHeap_GetUsed();
 }
 
-void func_800CDDE4(s32 arg0, s16 arg1) {
+void Snd_SetMasterVolume(s32 arg0, s16 arg1) {
     if (arg0 & 1) {
         D_8012794C = arg1;
     }
@@ -200,39 +200,39 @@ void func_800CDDE4(s32 arg0, s16 arg1) {
     }
 }
 
-s32 func_800CDE10(void) {
+s32 Snd_PlaySong(void) {
     s32 h;
 
-    h = func_800D05EC();
-    func_800CE7E8(h);
+    h = SndSong_Start();
+    Snd_Resume(h);
     return h;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CDE40);
+INCLUDE_ASM("asm/nonmatchings/unit_6E610", Snd_PlaySongAtMarker);
 
-s32 func_800CE090(s32 id) {
+s32 Snd_PlaySfxDefault(s32 id) {
     s32 bank;
     s32 h;
 
-    bank = D_8012796C;
+    bank = gSndSfxBankOnce;
     if (bank == 0) {
-        bank = D_80127968;
+        bank = gSndSfxBank;
         if (bank == 0) {
-            D_80127958 = 0;
+            gSndCurWaveBank = 0;
             return 0;
         }
     } else {
-        D_8012796C = 0;
+        gSndSfxBankOnce = 0;
     }
-    if (D_80127958 == 0) {
-        D_80127958 = (void *)((SeqPl6_ *)bank)->unk10;
+    if (gSndCurWaveBank == 0) {
+        gSndCurWaveBank = (void *)((SeqPl6_ *)bank)->unk10;
     }
-    h = func_800D0444((BankG_ *)bank, id, 0x80, 0x80, -1);
-    D_80127958 = 0;
+    h = SndVoice_PlaySfx((BankG_ *)bank, id, 0x80, 0x80, -1);
+    gSndCurWaveBank = 0;
     return h;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CE110);
+INCLUDE_ASM("asm/nonmatchings/unit_6E610", Snd_StartSound);
 
     /* TODO (Clean version): Voice fade-out / release helper:
     v->unk78 != NULL distinguishes sound effect voices (SFX) from music sequencer voices (BGM).
@@ -242,7 +242,7 @@ INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CE110);
             continue;
         }
     */
-void func_800CE228(s32 flags, s32 val) {
+void Snd_FadeOutAll(s32 flags, s32 val) {
     s32 i;
     s32 rate;
     VoiceW_ *v;
@@ -251,8 +251,8 @@ void func_800CE228(s32 flags, s32 val) {
     if (val == 0) {
         rate = 1;
     }
-    v = *(VoiceW_ **)&D_8012793C;
-    for (i = 0; i < D_80127934; i++, v++) {
+    v = *(VoiceW_ **)&gSndVoices;
+    for (i = 0; i < gSndNumVoices; i++, v++) {
         if (!((v->unk78 != 0) ? (flags & 1) : (flags & 2))) {
             continue;
         }
@@ -273,14 +273,14 @@ void func_800CE228(s32 flags, s32 val) {
     }
 }
 
-s32 func_800CE2F4(s32 flags) {
+s32 Snd_CountActive(s32 flags) {
     s32 i;
     s32 n;
     VoiceW_ *v;
 
     n = 0;
-    v = *(VoiceW_ **)&D_8012793C;
-    for (i = 0; i < D_80127934; i++, v++) {
+    v = *(VoiceW_ **)&gSndVoices;
+    for (i = 0; i < gSndNumVoices; i++, v++) {
         if (v->unk4 == 0) {
             continue;
         }
@@ -291,7 +291,7 @@ s32 func_800CE2F4(s32 flags) {
     return n;
 }
 
-s32 func_800CE374(s32 id, s32 val) {
+s32 Snd_Stop(s32 id, s32 val) {
     s32 i;
     s32 n;
     s32 rate;
@@ -305,8 +305,8 @@ s32 func_800CE374(s32 id, s32 val) {
         rate = 1;
     }
     i = 0;
-    v = *(VoiceX_ **)&D_8012793C;
-    for (n = 0; i < D_80127934; i++, v++) {
+    v = *(VoiceX_ **)&gSndVoices;
+    for (n = 0; i < gSndNumVoices; i++, v++) {
         if (v->unk44 == id && v->unk10 == -1) {
             if (v->unk0 & 1) {
                 v->unk1C = 1;
@@ -322,7 +322,7 @@ s32 func_800CE374(s32 id, s32 val) {
     return n;
 }
 
-s32 func_800CE428(s32 id) {
+s32 Snd_IsPlaying(s32 id) {
     s32 i;
     Voice_ *v;
     s32 n;
@@ -331,14 +331,14 @@ s32 func_800CE428(s32 id) {
         return 0;
     }
     i = 0;
-    v = *(Voice_ **)&D_8012793C;
-    for (n = 0; i < D_80127934; i++, v++) {
+    v = *(Voice_ **)&gSndVoices;
+    for (n = 0; i < gSndNumVoices; i++, v++) {
         n += (v->unk44 == id);
     }
     return n;
 }
 
-s32 func_800CE480(s32 id, s16 val) {
+s32 Snd_SetVolume(s32 id, s16 val) {
     s32 i;
     s32 n;
     Voice5_ *v;
@@ -347,8 +347,8 @@ s32 func_800CE480(s32 id, s16 val) {
         return 0;
     }
     i = 0;
-    v = (*(Voice5_ * *)&D_8012793C);
-    for (n = 0; i < D_80127934; i++, v++) {
+    v = (*(Voice5_ * *)&gSndVoices);
+    for (n = 0; i < gSndNumVoices; i++, v++) {
         if (v->unk44 == id) {
             v->unk9E = val;
             n++;
@@ -357,7 +357,7 @@ s32 func_800CE480(s32 id, s16 val) {
     return n;
 }
 
-s32 func_800CE4E0(s32 id, s16 val) {
+s32 Snd_SetPan(s32 id, s16 val) {
     s32 i;
     s32 n;
     Voice7_ *v;
@@ -366,8 +366,8 @@ s32 func_800CE4E0(s32 id, s16 val) {
         return 0;
     }
     i = 0;
-    v = (*(Voice7_ * *)&D_8012793C);
-    for (n = 0; i < D_80127934; i++, v++) {
+    v = (*(Voice7_ * *)&gSndVoices);
+    for (n = 0; i < gSndNumVoices; i++, v++) {
         if (v->unk44 == id) {
             n++;
             v->unkB0 = val;
@@ -378,7 +378,7 @@ s32 func_800CE4E0(s32 id, s16 val) {
 }
 
 
-s32 func_800CE550(s32 id, f32 val) {
+s32 Snd_SetPitch(s32 id, f32 val) {
     s32 i;
     s32 n;
     Voice8_ *v;
@@ -387,8 +387,8 @@ s32 func_800CE550(s32 id, f32 val) {
         return 0;
     }
     i = 0;
-    v = (*(Voice8_ * *)&D_8012793C);
-    for (n = 0; i < D_80127934; i++, v++) {
+    v = (*(Voice8_ * *)&gSndVoices);
+    for (n = 0; i < gSndNumVoices; i++, v++) {
         if (v->unk44 == id) {
             v->unk30 = val + v->unk90;
             n++;
@@ -398,7 +398,7 @@ s32 func_800CE550(s32 id, f32 val) {
 }
 
 
-s32 func_800CE5C0(s32 id, s32 val) {
+s32 Snd_SetTempoScale(s32 id, s32 val) {
     s32 i;
     s32 n;
     VoiceC_ *v;
@@ -412,8 +412,8 @@ s32 func_800CE5C0(s32 id, s32 val) {
         val = 256;
     }
     i = 0;
-    v = (*(VoiceC_ * *)&D_8012793C);
-    for (n = 0; i < D_80127934; i++, v++) {
+    v = (*(VoiceC_ * *)&gSndVoices);
+    for (n = 0; i < gSndNumVoices; i++, v++) {
         if (v->unk44 == id) {
             n++;
             v->unk98 = val;
@@ -424,7 +424,7 @@ s32 func_800CE5C0(s32 id, s32 val) {
 }
 
 
-s32 func_800CE64C(s32 id, s32 val) {
+s32 Snd_SetFxMix(s32 id, s32 val) {
     s32 i;
     s32 n;
     VoiceB_ *v;
@@ -438,8 +438,8 @@ s32 func_800CE64C(s32 id, s32 val) {
         val = 127;
     }
     i = 0;
-    v = (*(VoiceB_ * *)&D_8012793C);
-    for (n = 0; i < D_80127934; i++, v++) {
+    v = (*(VoiceB_ * *)&gSndVoices);
+    for (n = 0; i < gSndNumVoices; i++, v++) {
         if (v->unk44 == id) {
             n++;
             v->unkCB = val;
@@ -450,39 +450,39 @@ s32 func_800CE64C(s32 id, s32 val) {
 }
 
 
-void func_800CE6D4(s32 arg0) {
-    func_800CFE2C();
-    if (D_8012795C == 0) {
-        D_8012795C = arg0;
+void Snd_LoadWaveBank(s32 arg0) {
+    SndWave_Relocate();
+    if (gSndDefWaveBank == 0) {
+        gSndDefWaveBank = arg0;
     }
 }
 
-void *func_800CE710(SeqPl6_ *pl) {
+void *Snd_UseWaveBank(SeqPl6_ *pl) {
     if (pl != NULL && pl->unk10 < 0) {
-        D_80127958 = pl;
+        gSndCurWaveBank = pl;
     }
-    return D_80127958;
+    return gSndCurWaveBank;
 }
 
-void func_800CE738(SeqPl6_ *pl) {
+void Snd_SetDefaultWaveBank(SeqPl6_ *pl) {
     if (pl != NULL && pl->unk10 < 0) {
-        D_8012795C = (s32)pl;
+        gSndDefWaveBank = (s32)pl;
     }
 }
 
-s32 func_800CE75C(void) {
-    return D_8012795C;
+s32 Snd_GetDefaultWaveBank(void) {
+    return gSndDefWaveBank;
 }
 
-s32 func_800CE768(s32 id) {
+s32 Snd_GetTag(s32 id) {
     s32 i;
     Voice4_ *v;
 
     if (id == 0) {
         return 0;
     }
-    v = (*(Voice4_ * *)&D_8012793C);
-    for (i = 0; i < D_80127934; i++, v++) {
+    v = (*(Voice4_ * *)&gSndVoices);
+    for (i = 0; i < gSndNumVoices; i++, v++) {
         if (v->unk44 == id) {
             return v->unk7C;
         }
@@ -491,49 +491,49 @@ s32 func_800CE768(s32 id) {
 }
 
 
-void func_800CE7C4(s32 arg) {
+void Snd_Pause(s32 arg) {
     AudMsg_ msg;
     msg.type = 0;
     msg.arg = arg;
-    func_800CEB34(&msg);
+    SndMsg_Post(&msg);
 }
 
 
-void func_800CE7E8(s32 arg) {
+void Snd_Resume(s32 arg) {
     AudMsg_ msg;
     msg.type = 1;
     msg.arg = arg;
-    func_800CEB34(&msg);
+    SndMsg_Post(&msg);
 }
 
 
-void func_800CE810(s32 arg) {
+void Snd_SelectFx(s32 arg) {
     AudMsg_ msg;
     msg.type = 2;
     msg.arg = arg;
-    D_80127964 = arg;
-    func_800CEB34(&msg);
+    gSndFxPreset = arg;
+    SndMsg_Post(&msg);
 }
 
 
-s32 func_800CE840(s32 a) {
+s32 Snd_SetSeqFxControl(s32 a) {
     struct { u8 type; u8 p[3]; s32 val; } m;
     s32 r;
 
     r = 1;
     if (a == 0) {
         m.type = 2;
-        m.val = D_80127964;
-        D_80127964 = m.val;
-        r = func_800CEB34((AudMsgE_ *)&m);
+        m.val = gSndFxPreset;
+        gSndFxPreset = m.val;
+        r = SndMsg_Post((AudMsgE_ *)&m);
     }
     if (r != 0) {
-        D_80127960 = a;
+        gSndSeqFxControl = a;
     }
     return r;
 }
 
-void func_800CE89C(u8 *base) {
+void Snd_LoadSfxBank(u8 *base) {
     s32 i;
     Bank89_ *b;
 
@@ -541,8 +541,8 @@ void func_800CE89C(u8 *base) {
     if (b->flags & 1) {
         return;
     }
-    if (D_80127968 == 0) {
-        D_80127968 = (s32)base;
+    if (gSndSfxBank == 0) {
+        gSndSfxBank = (s32)base;
     }
     b->flags = 1;
     b->unk10 = 0;
@@ -557,23 +557,23 @@ s32 func_800CE920(SeqPl6_ *pl) {
     return pl->unk4;
 }
 
-void func_800CE928(s32 arg0) {
-    D_80127968 = arg0;
+void Snd_SetSfxBank(s32 arg0) {
+    gSndSfxBank = arg0;
 }
 
-void func_800CE934(s32 arg0) {
-    D_8012796C = arg0;
+void Snd_SetSfxBankOnce(s32 arg0) {
+    gSndSfxBankOnce = arg0;
 }
 
-s32 func_800CE940(void) {
-    return D_80127968;
+s32 Snd_GetSfxBank(void) {
+    return gSndSfxBank;
 }
 
-void func_800CE94C(SeqPl6_ *pl, s32 v) {
+void SndBank_SetWaveBank(SeqPl6_ *pl, s32 v) {
     pl->unk10 = v;
 }
 
-s32 func_800CE954(SeqPl6_ *pl) {
+s32 SndBank_GetWaveBank(SeqPl6_ *pl) {
     return pl->unk10;
 }
 
@@ -590,8 +590,8 @@ s32 func_800CE9CC(s32 id) {
     if (id == 0) {
         return 0;
     }
-    v = (*(Voice9_ * *)&D_8012793C);
-    for (i = 0; i < D_80127934; i++, v++) {
+    v = (*(Voice9_ * *)&gSndVoices);
+    for (i = 0; i < gSndNumVoices; i++, v++) {
         if (v->unk44 == id) {
             if (v->unk74 != 0) {
                 return v->unk74->unk20;
@@ -603,71 +603,71 @@ s32 func_800CE9CC(s32 id) {
 }
 
 
-void func_800CEA44(s32 arg0) {
-    D_80127970 = arg0;
+void Snd_SetMarkerCallback(s32 arg0) {
+    gSndMarkerCallback = arg0;
 }
 
-void func_800CEA50(s32 n) {
+void SndMsg_InitQueue(s32 n) {
     if (n < 0x40) {
         n = 0x40;
     } else if (n > 0x400) {
         n = 0x400;
     }
-    D_80127980 = func_800D23FC(n * 8);
-    D_8012797C = n;
-    D_80127978 = 0;
-    D_80127974 = 0;
+    gSndMsgQueue = SndHeap_Alloc(n * 8);
+    gSndMsgCount = n;
+    gSndMsgWrite = 0;
+    gSndMsgRead = 0;
 }
 
-void func_800CEAB4(AudMsg_ *msg) {
+void SndMsg_Dispatch(AudMsg_ *msg) {
     switch (msg->type) {
     case 0:
-        func_800D0858(msg->arg, -2, 1);
+        SndVoice_SetFlags(msg->arg, -2, 1);
         return;
     case 1:
-        func_800D0858(msg->arg, -2, 0);
+        SndVoice_SetFlags(msg->arg, -2, 0);
         return;
     case 2:
-        func_800D1A80(msg->arg);
+        SndFx_SelectPreset(msg->arg);
         return;
     }
 }
 
-s32 func_800CEB34(AudMsgE_ *msg) {
-    s32 next = (D_80127978 + 1) % D_8012797C;
+s32 SndMsg_Post(AudMsgE_ *msg) {
+    s32 next = (gSndMsgWrite + 1) % gSndMsgCount;
 
-    if (next == D_80127974) {
+    if (next == gSndMsgRead) {
         return 0;
     }
-    func_800D247C(&(*(AudMsgE_ * *)&D_80127980)[D_80127978], msg, 8);
-    D_80127978 = next;
+    Snd_MemMove(&(*(AudMsgE_ * *)&gSndMsgQueue)[gSndMsgWrite], msg, 8);
+    gSndMsgWrite = next;
     return 1;
 }
 
 
 typedef struct { s32 unk0; s32 unk4; s32 unk8; u32 unkC; s32 unk10; s32 unk14; s32 unk18; u8 p1C[0x14]; f32 unk30; s32 unk34; s32 unk38; u32 unk3C; u32 unk40; s32 unk44; u8 p48[0x2C]; s32 unk74; s32 unk78; u8 p7C[0x18]; s32 unk94; u8 p98[2]; u16 unk9A; u16 unk9C; u8 p9E[0xC]; u16 unkAA; u8 pAC[0x17]; u8 unkC3; u8 pC4[5]; u8 unkC9; u8 pCA[4]; u8 unkCE; u8 pCF[5]; u8 unkD4; u8 unkD5; u8 pD6[0x66]; } VoiceEB_;
-void func_800CEEBC(void *arg0, s32 arg1);
-void func_800CFB84(void *arg0);
-void func_800CF754(SeqEnvR_ *s);
-void func_800CF94C(SeqO_ *s);
-f32 func_800CFA5C(SeqChan6_ *c);
-f32 func_800CFA04(SeqChan6_ *c);
-void func_800CFAC0(SeqP_ *s);
-void func_800CF5D8(void *arg0, s32 arg1, f32 arg2);
-void func_800CF484(void *arg0, s32 arg1);
-s32 func_800CEBCC(void) {
+void SndVoice_ProcessEvents(void *arg0, s32 arg1);
+void SndPitchCurve_Update(void *arg0);
+void SndEnv_Update(SeqEnvR_ *s);
+void SndAutoPan_Update(SeqO_ *s);
+f32 SndVibrato_Update(SeqChan6_ *c);
+f32 SndTrill_Update(SeqChan6_ *c);
+void SndVolCurve_Update(SeqP_ *s);
+void SndVoice_UpdatePitch(void *arg0, s32 arg1, f32 arg2);
+void SndVoice_UpdateVolPan(void *arg0, s32 arg1);
+s32 Snd_Update(void) {
     s32 i;
     VoiceEB_ *v;
     f32 f;
 
-    while (D_80127974 != D_80127978) {
-        func_800CEAB4((void *)(D_80127980 + D_80127974 * 8));
-        D_80127974++;
-        if (D_80127974 == D_8012797C) {
-            D_80127974 = 0;
+    while (gSndMsgRead != gSndMsgWrite) {
+        SndMsg_Dispatch((void *)(gSndMsgQueue + gSndMsgRead * 8));
+        gSndMsgRead++;
+        if (gSndMsgRead == gSndMsgCount) {
+            gSndMsgRead = 0;
         }
     }
-    for (i = -4, v = (VoiceEB_ *)D_8012793C; i < D_80127934 - 4; i++, v++) {
+    for (i = -4, v = (VoiceEB_ *)gSndVoices; i < gSndNumVoices - 4; i++, v++) {
         if (v->unk4 == 0) {
             continue;
         }
@@ -675,7 +675,7 @@ s32 func_800CEBCC(void) {
             continue;
         }
         if (v->unk8 != 0) {
-            func_800CF408(v, i);
+            SndVoice_KeyOn(v, i);
         }
         v->unkC += v->unk9C;
         if (v->unk9A != 0x7FFF) {
@@ -683,17 +683,17 @@ s32 func_800CEBCC(void) {
                 if (v->unk4 == 0) {
                     break;
                 }
-                func_800CEEBC(v, i);
+                SndVoice_ProcessEvents(v, i);
             }
             if (v->unk4 == 0) {
                 continue;
             }
         }
         if (v->unk38 != 0 && (s32)(v->unk14 - v->unkC) < 0) {
-            func_800CFAC0((SeqP_ *)v);
+            SndVolCurve_Update((SeqP_ *)v);
         }
         if (v->unk34 != 0 && (s32)(v->unk18 - v->unkC) < 0) {
-            func_800CFB84(v);
+            SndPitchCurve_Update(v);
         }
         if (v->unk10 != -1 && --v->unk10 == -1) {
             v->unk38 = 0;
@@ -705,50 +705,50 @@ s32 func_800CEBCC(void) {
             v->unk4 = 0;
             if (v->unkC9 != 0) {
                 v->unkC9 = 0;
-                n_alSynStopVoice(D_80127938 + i * 0x1C);
+                n_alSynStopVoice(gSndPVoices + i * 0x1C);
             }
         }
         if (v->unkC9 != 0) {
             if (v->unkC3 != 0) {
-                func_800CF754((SeqEnvR_ *)v);
+                SndEnv_Update((SeqEnvR_ *)v);
             }
             if (v->unkD4 != 0 && (s32)(v->unk94 - v->unkC) < 0) {
-                func_800CF94C((SeqO_ *)v);
+                SndAutoPan_Update((SeqO_ *)v);
             }
             f = v->unk30;
             if (v->unkD5 != 0) {
-                f += func_800CFA5C((SeqChan6_ *)v);
+                f += SndVibrato_Update((SeqChan6_ *)v);
             }
             if (v->unkCE != 0) {
-                f += func_800CFA04((SeqChan6_ *)v);
+                f += SndTrill_Update((SeqChan6_ *)v);
             }
             if (v->unk8 == 0) {
-                func_800CF5D8(v, i, f);
-                func_800CF484(v, i);
+                SndVoice_UpdatePitch(v, i, f);
+                SndVoice_UpdateVolPan(v, i);
             }
         }
         v->unkAA = (v->unkC - v->unk40) >> 8;
     }
-    return D_80127948;
+    return gSndTickUsec;
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CEEBC);
+INCLUDE_ASM("asm/nonmatchings/unit_6E610", SndVoice_ProcessEvents);
 
-void func_800CF408(SeqChan6_ *c, s32 i) {
+void SndVoice_KeyOn(SeqChan6_ *c, s32 i) {
     if (c->unkC9 != 0) {
-        n_alSynStopVoice(D_80127938 + i * 0x1C);
+        n_alSynStopVoice(gSndPVoices + i * 0x1C);
     }
     c->unkC9 = 1;
-    n_alSynStartVoice(D_80127938 + i * 0x1C, c->unk8);
+    n_alSynStartVoice(gSndPVoices + i * 0x1C, c->unk8);
     c->unk8 = 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CF484);
+INCLUDE_ASM("asm/nonmatchings/unit_6E610", SndVoice_UpdateVolPan);
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CF5D8);
+INCLUDE_ASM("asm/nonmatchings/unit_6E610", SndVoice_UpdatePitch);
 
-void func_800CF6E4(SeqK_ *s) {
+void SndEnv_Start(SeqK_ *s) {
     if (s->unk9A != 0x7FFF) {
         if (s->unkB2 != 0) {
             s->unk54 = s->unk40 + (s->unkB2 << 8);
@@ -764,7 +764,7 @@ void func_800CF6E4(SeqK_ *s) {
 }
 
 
-void func_800CF754(SeqEnvR_ *s) {
+void SndEnv_Update(SeqEnvR_ *s) {
     s32 t;
 
     if ((s32)(s->unk54 - s->unkC) < 0 && s->unkC3 < 4) {
@@ -806,13 +806,13 @@ void func_800CF754(SeqEnvR_ *s) {
     }
 }
 
-void func_800CF930(SeqChan6_ *c) {
+void SndAutoPan_Reset(SeqChan6_ *c) {
     c->unkD9 = 0;
     c->unk94 = c->unk40;
     c->unkDA = c->unkBD & 0x40;
 }
 
-void func_800CF94C(SeqO_ *s) {
+void SndAutoPan_Update(SeqO_ *s) {
     u32 t;
 
     do {
@@ -841,7 +841,7 @@ void func_800CF94C(SeqO_ *s) {
 }
 
 
-f32 func_800CFA04(SeqChan6_ *c) {
+f32 SndTrill_Update(SeqChan6_ *c) {
     if (--c->unkD0 == 0) {
         if (c->unkD1 == 0) {
             c->unkD1 = c->unkD8;
@@ -860,7 +860,7 @@ f32 func_800CFA04(SeqChan6_ *c) {
     which happens to be the float return register, so $f0 was returned by caller convention:
         return c->unk68 = sinf(t * c->unkDC) * c->unk20;
     */
-f32 func_800CFA5C(SeqChan6_ *c) {
+f32 SndVibrato_Update(SeqChan6_ *c) {
     s32 t = c->unkAA - c->unkB6;
 
     if (t <= 0) {
@@ -870,7 +870,7 @@ f32 func_800CFA5C(SeqChan6_ *c) {
     c->unk68 = sinf(t * c->unkDC) * c->unk20;
 }
 
-void func_800CFAC0(SeqP_ *s) {
+void SndVolCurve_Update(SeqP_ *s) {
     u8 b;
     u16 v;
 
@@ -897,7 +897,7 @@ void func_800CFAC0(SeqP_ *s) {
     } while (s->unk14 - s->unkC < 0);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CFB84);
+INCLUDE_ASM("asm/nonmatchings/unit_6E610", SndPitchCurve_Update);
 
     /* TODO (Clean version):
     Computes 2.0f^x (exp2f(x)) using degree-6 Taylor series polynomial expansion:
@@ -911,7 +911,7 @@ INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CFB84);
         c6 = 0.000154035303934   ((ln 2)^6 / 720)
     Negative values evaluate 1.0 / exp2(abs(x)). Unused variables x3, x5, x6 can be removed.
     */
-f32 func_800CFC98(f32 x) {
+f32 Snd_Exp2(f32 x) {
     f32 x2;
     f32 x4;
     f32 x3;
@@ -934,7 +934,7 @@ f32 func_800CFC98(f32 x) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CFE2C);
+INCLUDE_ASM("asm/nonmatchings/unit_6E610", SndWave_Relocate);
 
     /* TODO (Clean version):
     Implements a 32-bit Linear Feedback Shift Register (LFSR) pseudo-random number generator,
@@ -950,7 +950,7 @@ INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CFE2C);
             return (s32)((f32)range * ((f32)(u32)lfsrState / 4294967296.0f));
         }
     */
-s32 func_800CFFC4(s32 range) {
+s32 Snd_Random(s32 range) {
     s32 next;
     s32 tap;
     s32 feedback;
@@ -958,23 +958,23 @@ s32 func_800CFFC4(s32 range) {
 
     i = 0;
     do {
-        next = D_80127954 * 2;
-        tap = D_80127954 & 0x48000000;
+        next = gSndRandSeed * 2;
+        tap = gSndRandSeed & 0x48000000;
         feedback = (tap == 0x48000000) | (tap == 0x08000000);
-        D_80127954 = next;
+        gSndRandSeed = next;
         i++;
         if (feedback) {
-            D_80127954 = next | 1;
+            gSndRandSeed = next | 1;
         }
     } while (i < 8);
-    return (f32)range * ((f32)D_80127954 / 65536.0f / 65536.0f);
+    return (f32)range * ((f32)gSndRandSeed / 65536.0f / 65536.0f);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800D0058);
+INCLUDE_ASM("asm/nonmatchings/unit_6E610", SndVoice_Reset);
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800D0194);
+INCLUDE_ASM("asm/nonmatchings/unit_6E610", SndVoice_Alloc);
 
-void func_800D035C(void *arg0, s32 arg1, s32 arg2) {
+void Snd_RelocatePtrs(void *arg0, s32 arg1, s32 arg2) {
     s32 *p = arg0;
     s32 i;
 
@@ -985,15 +985,15 @@ void func_800D035C(void *arg0, s32 arg1, s32 arg2) {
     }
 }
 
-inline s32 func_800D0394(VoiceG_ *v, BankG_ *b, s32 idx, s32 a3, s32 a4, s32 a5) {
-    func_800D0058(v);
+inline s32 SndVoice_Setup(VoiceG_ *v, BankG_ *b, s32 idx, s32 a3, s32 a4, s32 a5) {
+    SndVoice_Reset(v);
     v->unkA6 = idx;
     v->unk78 = b;
     v->unk9E = a3;
     v->unkB0 = a4;
-    v->unk44 = D_80127950;
+    v->unk44 = gSndNextHandle;
     v->unk48 = a5;
-    D_80127950++;
+    gSndNextHandle++;
     if (b->unk10 != 0) {
         v->unk7C = b->unk10;
     }
@@ -1001,7 +1001,7 @@ inline s32 func_800D0394(VoiceG_ *v, BankG_ *b, s32 idx, s32 a3, s32 a4, s32 a5)
     return v->unk44;
 }
 
-s32 func_800D0444(BankG_ *b, s32 idx, s32 a2, s32 a3, s32 prio) {
+s32 SndVoice_PlaySfx(BankG_ *b, s32 idx, s32 a2, s32 a3, s32 prio) {
     s32 i;
     VoiceG_ *v;
     VoiceG_ *bv;
@@ -1011,9 +1011,9 @@ s32 func_800D0444(BankG_ *b, s32 idx, s32 a2, s32 a3, s32 prio) {
         prio = b->entries[idx].b;
     }
     best = prio + 1;
-    for (i = 4, v = D_80127940; i < D_80127934; i++, v++) {
+    for (i = 4, v = gSndSfxVoices; i < gSndNumVoices; i++, v++) {
         if (v->unk4 == 0) {
-            return func_800D0394(v, b, idx, a2, a3, prio);
+            return SndVoice_Setup(v, b, idx, a2, a3, prio);
         }
         if (v->unk78 != 0 && v->unk48 < best) {
             best = v->unk48;
@@ -1021,18 +1021,18 @@ s32 func_800D0444(BankG_ *b, s32 idx, s32 a2, s32 a3, s32 prio) {
         }
     }
     if (best < prio) {
-        return func_800D0394(bv, b, idx, a2, a3, prio);
+        return SndVoice_Setup(bv, b, idx, a2, a3, prio);
     }
     return 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800D05EC);
+INCLUDE_ASM("asm/nonmatchings/unit_6E610", SndSong_Start);
 
-void func_800D0858(s32 id, s32 mask, s32 bits) {
+void SndVoice_SetFlags(s32 id, s32 mask, s32 bits) {
     s32 i;
-    Voice_ *v = (*(Voice_ * *)&D_8012793C);
+    Voice_ *v = (*(Voice_ * *)&gSndVoices);
 
-    for (i = 0; i < D_80127934; i++, v++) {
+    for (i = 0; i < gSndNumVoices; i++, v++) {
         if (v->unk44 == id) {
             v->unk0 = (v->unk0 & mask) | bits;
         }
@@ -1040,7 +1040,7 @@ void func_800D0858(s32 id, s32 mask, s32 bits) {
 }
 
 
-s32 func_800D08AC(SeqChan6_ *c) {
+s32 SndCmd_End(SeqChan6_ *c) {
     c->unk38 = 0;
     c->unk34 = 0;
     c->unk74 = 0;
@@ -1050,7 +1050,7 @@ s32 func_800D08AC(SeqChan6_ *c) {
     return 0;
 }
 
-u8 *func_800D08CC(SeqA_ *s, u8 *p) {
+u8 *SndCmd_Op81(SeqA_ *s, u8 *p) {
     s32 v = *p++;
     if (v & 0x80) {
         v = *p++ | ((v & 0x7F) << 8);
@@ -1060,7 +1060,7 @@ u8 *func_800D08CC(SeqA_ *s, u8 *p) {
 }
 
 
-u8 *func_800D08FC(SeqChan_ *s, u8 *p) {
+u8 *SndCmd_Op82(SeqChan_ *s, u8 *p) {
     u8 v = *p++;
     s->unkB8 = v;
     if (v) {
@@ -1070,12 +1070,12 @@ u8 *func_800D08FC(SeqChan_ *s, u8 *p) {
 }
 
 
-s32 func_800D091C(SeqChan6_ *c, s32 ptr) {
+s32 SndCmd_Op83(SeqChan6_ *c, s32 ptr) {
     c->unkB8 = 0;
     return ptr;
 }
 
-u8 *func_800D0928(SeqE9_ *s, u8 *p) {
+u8 *SndCmd_SetEnvelope(SeqE9_ *s, u8 *p) {
     u8 n;
     u8 c;
 
@@ -1102,8 +1102,8 @@ u8 *func_800D0928(SeqE9_ *s, u8 *p) {
     return p;
 }
 
-u8 *func_800D0A50(SeqZ_ *s, u8 *p) {
-    s32 tempo = ((*p * 0x6000) / 120) / D_80127944;
+u8 *SndCmd_SetTempo(SeqZ_ *s, u8 *p) {
+    s32 tempo = ((*p * 0x6000) / 120) / gSndFrameRate;
     s32 scaled;
     s32 i;
     VoiceZ_ *v;
@@ -1113,8 +1113,8 @@ u8 *func_800D0A50(SeqZ_ *s, u8 *p) {
     if (s->unk78 != 0) {
         s->unk9C = tempo;
     } else {
-        v = (*(VoiceZ_ * *)&D_8012793C);
-        for (i = 0; i < D_80127934; i++, v++) {
+        v = (*(VoiceZ_ * *)&gSndVoices);
+        for (i = 0; i < gSndNumVoices; i++, v++) {
             if (v->unk74 == s->unk74) {
                 v->unkA8 = tempo;
                 v->unk9C = scaled;
@@ -1124,7 +1124,7 @@ u8 *func_800D0A50(SeqZ_ *s, u8 *p) {
     return p;
 }
 
-u8 *func_800D0B34(SeqChan6_ *c, u8 *ptr) {
+u8 *SndCmd_SetReleaseLead(SeqChan6_ *c, u8 *ptr) {
     s16 v = *ptr;
 
     c->unkB2 = 0;
@@ -1132,7 +1132,7 @@ u8 *func_800D0B34(SeqChan6_ *c, u8 *ptr) {
     return ptr + 1;
 }
 
-u8 *func_800D0B48(SeqChan2_ *s, u8 *p) {
+u8 *SndCmd_SetReleaseTime(SeqChan2_ *s, u8 *p) {
     s32 hi = *p++;
     s32 lo = *p++;
     s->unkB4 = 0;
@@ -1141,7 +1141,7 @@ u8 *func_800D0B48(SeqChan2_ *s, u8 *p) {
 }
 
 
-u8 *func_800D0B6C(SeqJ_ *s, u8 *p) {
+u8 *SndCmd_VibratoOn(SeqJ_ *s, u8 *p) {
     s->unkB6 = *p++;
     s->unkD5 = *p++;
     s->unk20 = (f32)*p / 50.0;
@@ -1149,7 +1149,7 @@ u8 *func_800D0B6C(SeqJ_ *s, u8 *p) {
     return p + 1;
 }
 
-u8 *func_800D0BDC(SeqJ_ *s, u8 *p) {
+u8 *SndCmd_VibratoOnNeg(SeqJ_ *s, u8 *p) {
     f32 a;
     f32 b;
 
@@ -1162,13 +1162,13 @@ u8 *func_800D0BDC(SeqJ_ *s, u8 *p) {
     return p;
 }
 
-s32 func_800D0C50(SeqChan6_ *c, s32 ptr) {
+s32 SndCmd_VibratoOff(SeqChan6_ *c, s32 ptr) {
     c->unkD5 = 0;
     c->unk68 = 0;
     return ptr;
 }
 
-u8 *func_800D0C60(SeqB_ *s, u8 *p) {
+u8 *SndCmd_Op8B(SeqB_ *s, u8 *p) {
     s32 v = *p++;
     if (v >= 0x80) {
         v &= 0x7F;
@@ -1180,22 +1180,22 @@ u8 *func_800D0C60(SeqB_ *s, u8 *p) {
 }
 
 
-s32 func_800D0C90(SeqChan6_ *c, s32 ptr) {
+s32 SndCmd_Op8C(SeqChan6_ *c, s32 ptr) {
     c->unkB7 = 1;
     return ptr;
 }
 
-u8 *func_800D0CA0(SeqChan6_ *c, u8 *ptr) {
+u8 *SndCmd_SetTranspose(SeqChan6_ *c, u8 *ptr) {
     c->unkB9 = *ptr;
     return ptr + 1;
 }
 
-s32 func_800D0CB0(SeqChan6_ *c, s32 ptr) {
+s32 SndCmd_IgnoreTranspose(SeqChan6_ *c, s32 ptr) {
     c->unkBA = 1;
     return ptr;
 }
 
-u8 *func_800D0CC0(SeqG_ *s, u8 *p) {
+u8 *SndCmd_SetFineTune(SeqG_ *s, u8 *p) {
     s32 v = *p++;
     f32 f;
 
@@ -1208,27 +1208,27 @@ u8 *func_800D0CC0(SeqG_ *s, u8 *p) {
     return p;
 }
 
-s32 func_800D0D18(SeqChan6_ *c, s32 ptr) {
+s32 SndCmd_Op91(SeqChan6_ *c, s32 ptr) {
     c->unkD6 = 1;
     return ptr;
 }
 
-s32 func_800D0D28(SeqChan6_ *c, s32 ptr) {
+s32 SndCmd_Op92(SeqChan6_ *c, s32 ptr) {
     c->unkD6 = 0;
     return ptr;
 }
 
-s32 func_800D0D34(SeqChan6_ *c, s32 ptr) {
+s32 SndCmd_Op93(SeqChan6_ *c, s32 ptr) {
     c->unkD7 = 1;
     return ptr;
 }
 
-s32 func_800D0D44(SeqChan6_ *c, s32 ptr) {
+s32 SndCmd_Op94(SeqChan6_ *c, s32 ptr) {
     c->unkD7 = 0;
     return ptr;
 }
 
-u8 *func_800D0D50(SeqH_ *s, u8 *p) {
+u8 *SndCmd_LoopStart(SeqH_ *s, u8 *p) {
     s32 i = s->unkDB;
 
     s->unk120[i] = *p++;
@@ -1243,7 +1243,7 @@ u8 *func_800D0D50(SeqH_ *s, u8 *p) {
     return p;
 }
 
-u8 *func_800D0DBC(SeqN_ *s, u8 *p) {
+u8 *SndCmd_LoopEnd(SeqN_ *s, u8 *p) {
     s32 i = s->unkDB - 1;
 
     if (s->unk120[i] != 0xFF) {
@@ -1265,29 +1265,29 @@ u8 *func_800D0DBC(SeqN_ *s, u8 *p) {
     return p;
 }
 
-u8 *func_800D0E58(SeqChan3_ *s, u8 *p) {
+u8 *SndCmd_TrillOn(SeqChan3_ *s, u8 *p) {
     s->unkD8 = *p++;
     s->unkCE = *p++;
     s->unkCF = *p;
     return p + 1;
 }
 
-s32 func_800D0E80(SeqChan6_ *c, s32 ptr) {
+s32 SndCmd_TrillOff(SeqChan6_ *c, s32 ptr) {
     c->unkCE = 0;
     return ptr;
 }
 
-s32 func_800D0E8C(SeqChan6_ *c, s32 ptr) {
+s32 SndCmd_Op99(SeqChan6_ *c, s32 ptr) {
     c->unkD2 = 1;
     return ptr;
 }
 
-s32 func_800D0E9C(SeqChan6_ *c, s32 ptr) {
+s32 SndCmd_Op9A(SeqChan6_ *c, s32 ptr) {
     c->unkD2 = 0;
     return ptr;
 }
 
-u8 *func_800D0EA8(SeqChan6_ *c, u8 *ptr) {
+u8 *SndCmd_Op9B(SeqChan6_ *c, u8 *ptr) {
     u8 v = *ptr;
 
     c->unkD2 = 0;
@@ -1295,16 +1295,16 @@ u8 *func_800D0EA8(SeqChan6_ *c, u8 *ptr) {
     return ptr + 1;
 }
 
-u8 *func_800D0EBC(SeqChan6_ *c, u8 *ptr) {
+u8 *SndCmd_SetPan(SeqChan6_ *c, u8 *ptr) {
     c->unkBD = *ptr >> 1;
     return ptr + 1;
 }
 
-s32 func_800D0ED0(s32 arg0, s32 arg1) {
+s32 SndCmd_Skip2(s32 arg0, s32 arg1) {
     return arg1 + 2;
 }
 
-u8 *func_800D0ED8(SeqC_ *s, u8 *p) {
+u8 *SndCmd_SetPatch(SeqC_ *s, u8 *p) {
     s32 v = *p++;
     if (v >= 0x80) {
         v &= 0x7F;
@@ -1316,48 +1316,48 @@ u8 *func_800D0ED8(SeqC_ *s, u8 *p) {
 }
 
 
-s32 func_800D0F20(SeqChan6_ *c, s32 ptr) {
+s32 SndCmd_ClearPatch(SeqChan6_ *c, s32 ptr) {
     c->unk84 = 0;
     return ptr;
 }
 
-s32 func_800D0F2C(s32 arg0, s32 arg1) {
+s32 SndCmd_Skip1(s32 arg0, s32 arg1) {
     return arg1 + 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800D0F34);
+INCLUDE_ASM("asm/nonmatchings/unit_6E610", SndCmd_SetCurves);
 
-u8 *func_800D0FA4(SeqChan6_ *c, u8 *ptr) {
+u8 *SndCmd_SetFxMix(SeqChan6_ *c, u8 *ptr) {
     c->unkCA = *ptr;
     return ptr + 1;
 }
 
-u8 *func_800D0FB4(SeqD_ *s, u8 *p) {
-    s->unkB9 = func_800CFFC4(*p++);
+u8 *SndCmd_RandomTranspose(SeqD_ *s, u8 *p) {
+    s->unkB9 = Snd_Random(*p++);
     s->unkB9 += *p++;
     return p;
 }
 
-u8 *func_800D1004(SeqE_ *s, u8 *p) {
-    s->unkBC = func_800CFFC4(*p++);
+u8 *SndCmd_RandomVolume(SeqE_ *s, u8 *p) {
+    s->unkBC = Snd_Random(*p++);
     s->unkBC += *p++;
     return p;
 }
 
 
-u8 *func_800D1054(SeqF_ *s, u8 *p) {
-    s->unkBD = func_800CFFC4(*p++);
+u8 *SndCmd_RandomPan(SeqF_ *s, u8 *p) {
+    s->unkBD = Snd_Random(*p++);
     s->unkBD += *p++;
     return p;
 }
 
 
-u8 *func_800D10A4(SeqChan6_ *c, u8 *ptr) {
+u8 *SndCmd_SetVolume(SeqChan6_ *c, u8 *ptr) {
     c->unkBC = *ptr;
     return ptr + 1;
 }
 
-u8 *func_800D10B4(SeqY_ *s, u8 *p) {
+u8 *SndCmd_PlaySfx(SeqY_ *s, u8 *p) {
     s32 v = *p++;
     s32 id;
     s32 i;
@@ -1367,11 +1367,11 @@ u8 *func_800D10B4(SeqY_ *s, u8 *p) {
         v = ((v & 0x7F) << 8) + *p++;
     }
     s->unk48++;
-    id = func_800D0444(s->unk78, v, s->unk9E, s->unkB0, s->unk48);
+    id = SndVoice_PlaySfx(s->unk78, v, s->unk9E, s->unkB0, s->unk48);
     s->unk48--;
     if (id != 0) {
-        vc = (*(VoiceY_ * *)&D_8012793C);
-        for (i = 0; i < D_80127934; i++, vc++) {
+        vc = (*(VoiceY_ * *)&gSndVoices);
+        for (i = 0; i < gSndNumVoices; i++, vc++) {
             if (vc->unk44 == id) {
                 vc->unk44 = s->unk44;
                 vc->unk7C = ((SeqY2_ *)s)->unk7C;
@@ -1381,7 +1381,7 @@ u8 *func_800D10B4(SeqY_ *s, u8 *p) {
     return p;
 }
 
-u8 *func_800D1184(SeqChan6_ *c, u8 *ptr) {
+u8 *SndCmd_SetBendRange(SeqChan6_ *c, u8 *ptr) {
     f32 v;
 
     v = (f32)*ptr * D_801016A0;
@@ -1390,41 +1390,41 @@ u8 *func_800D1184(SeqChan6_ *c, u8 *ptr) {
     return ptr + 1;
 }
 
-u8 *func_800D11C0(SeqChan6_ *c, u8 *ptr) {
+u8 *SndCmd_SetAutoPanRate(SeqChan6_ *c, u8 *ptr) {
     c->unkD4 = *ptr;
     return ptr + 1;
 }
 
-u8 *func_800D11D0(s32 arg0, u8 *ptr) {
+u8 *SndCmd_SelectFx(s32 arg0, u8 *ptr) {
     u8 v = *ptr++;
 
-    if (D_80127960 == 1) {
-        func_800D1A80(v);
+    if (gSndSeqFxControl == 1) {
+        SndFx_SelectPreset(v);
     }
     return ptr;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800D1214);
+INCLUDE_ASM("asm/nonmatchings/unit_6E610", SndCmd_Marker);
 
-s32 func_800D1284(SeqChan6_ *c, s32 ptr) {
+s32 SndCmd_OpAC(SeqChan6_ *c, s32 ptr) {
     c->unkAC = 0;
     return ptr;
 }
 
-void func_800D1290(s32 arg0, s32 arg1) {
+void SndSyn_Init(s32 arg0, s32 arg1) {
     if (D_800FB170 == 0) {
         D_800FB170 = arg0;
         if (n_syn == 0) {
-            func_800D19E0(arg1);
+            SndFx_UseCustomConfig(arg1);
             D_8014C6D0 = D_800FB170;
             n_syn = (void *)D_800FB170;
-            func_800D12F8((SynC_ *)arg1);
+            SndSyn_New((SynC_ *)arg1);
         }
     }
 }
 
 void _n_initPVoice(void *, s32, void *);
-s32 func_800D1568(s32 arg0);
+s32 SndFx_Create(s32 arg0);
 void n_alFxPull(void);
 void n_alAuxBusPull(void);
 
@@ -1441,7 +1441,7 @@ void n_alAuxBusPull(void);
         }
     Replace SynD_, SynMB_, SynFX_, SynPV_, SynC_ with standard libultra ALSynth types.
     */
-void func_800D12F8(SynC_ *c) {
+void SndSyn_New(SynC_ *c) {
     void *hp = c->unk14;
     s32 i;
     SynPV_ *pv;
@@ -1462,7 +1462,7 @@ void func_800D12F8(SynC_ *c) {
     ((SynD_ *)n_syn)->unk34->unk1C = (SynPV_ **)alHeapDBAlloc(0, 0, hp, c->unk4, 4);
     ((SynD_ *)n_syn)->unk30 = (SynFX_ *)alHeapDBAlloc(0, 0, hp, 1, 0x14);
     if (c->unk1C != 0) {
-        ((SynD_ *)n_syn)->unk34->unk20 = ((s32 (*)(s32, SynC_ *, void *))func_800D1568)(0, c, hp);
+        ((SynD_ *)n_syn)->unk34->unk20 = ((s32 (*)(s32, SynC_ *, void *))SndFx_Create)(0, c, hp);
         ((SynD_ *)n_syn)->unk30->unk4 = n_alFxPull;
     } else {
         ((SynD_ *)n_syn)->unk30->unk4 = n_alAuxBusPull;
@@ -1489,10 +1489,10 @@ void func_800D12F8(SynC_ *c) {
     ((SynD_ *)n_syn)->unk28 = hp;
 }
 
-s32 func_800D1568(s32 arg0) {
+s32 SndFx_Create(s32 arg0) {
     s32 i = (s16)arg0;
 
-    func_800D15B8(&((SynD_ *)n_syn)->unk34->unk24[i]);
+    SndFx_Alloc(&((SynD_ *)n_syn)->unk34->unk24[i]);
     return ((SynD_ *)n_syn)->unk34->unk24[i];
 }
 
@@ -1505,62 +1505,62 @@ extern s32 D_8014C6EC;
 extern s32 D_8014C6F0;
 extern s32 D_8014C6F4;
 
-void func_800D15B8(s32 *rp, u8 *c, void *hp) {
+void SndFx_Alloc(s32 *rp, u8 *c, void *hp) {
     s32 r;
 
     r = alHeapDBAlloc(0, 0, hp, 1, 0x2C);
     *rp = r;
     *(void **)(r + 0x28) = alFxParamHdl;
-    D_8014C6E0 = alHeapDBAlloc(0, 0, hp, func_800D19F8(), 0x28);
-    D_8014C6E4 = alHeapDBAlloc(0, 0, hp, func_800D1A3C(), 2);
+    D_8014C6E0 = alHeapDBAlloc(0, 0, hp, SndFx_MaxSections(), 0x28);
+    D_8014C6E4 = alHeapDBAlloc(0, 0, hp, SndFx_MaxLength(), 2);
     D_8014C6E8 = alHeapDBAlloc(0, 0, hp, 1, 0x34);
     D_8014C6EC = alHeapDBAlloc(0, 0, hp, 1, 0x20);
     D_8014C6F0 = alHeapDBAlloc(0, 0, hp, 1, 0x30);
     D_8014C6F4 = alHeapDBAlloc(0, 0, hp, 1, 8);
-    func_800D1700(*(s32 *)(c + 0x20));
+    SndFx_SetParams(*(s32 *)(c + 0x20));
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800D1700);
+INCLUDE_ASM("asm/nonmatchings/unit_6E610", SndFx_SetParams);
 
-void func_800D19E0(SynC_ *c) {
+void SndFx_UseCustomConfig(SynC_ *c) {
     c->unk1C = 6;
     c->unk20 = &D_800FACF8;
 }
 
-s32 func_800D19F8(void) {
+s32 SndFx_MaxSections(void) {
     s32 i;
     s32 max = 0;
 
-    for (i = 0; ((Entry_ * *)&D_800FAE84)[i] != 0; i++) {
-        if (max < ((Entry_ * *)&D_800FAE84)[i]->unk0) {
-            max = ((Entry_ * *)&D_800FAE84)[i]->unk0;
+    for (i = 0; ((Entry_ * *)&gSndFxPresets)[i] != 0; i++) {
+        if (max < ((Entry_ * *)&gSndFxPresets)[i]->unk0) {
+            max = ((Entry_ * *)&gSndFxPresets)[i]->unk0;
         }
     }
     return max;
 }
 
 
-s32 func_800D1A3C(void) {
+s32 SndFx_MaxLength(void) {
     s32 i;
     s32 max = 0;
 
-    for (i = 0; ((Entry_ * *)&D_800FAE84)[i] != 0; i++) {
-        if (max < ((Entry_ * *)&D_800FAE84)[i]->unk4) {
-            max = ((Entry_ * *)&D_800FAE84)[i]->unk4;
+    for (i = 0; ((Entry_ * *)&gSndFxPresets)[i] != 0; i++) {
+        if (max < ((Entry_ * *)&gSndFxPresets)[i]->unk4) {
+            max = ((Entry_ * *)&gSndFxPresets)[i]->unk4;
         }
     }
     return max;
 }
 
 
-s32 func_800D1A80(s32 arg0) {
+s32 SndFx_SelectPreset(s32 arg0) {
     SynMB_ *mb;
 
-    if (arg0 >= D_800FAE80) {
+    if (arg0 >= gSndFxPresetCount) {
         return 1;
     } else {
-        func_800D1700(((s32 *)&D_800FAE84)[arg0]);
+        SndFx_SetParams(((s32 *)&gSndFxPresets)[arg0]);
         mb = ((SynD_ *)D_8014C6D0)->unk34;
         alFxParam(mb->unk20, 1, (s32)mb);
         return 0;

@@ -10,20 +10,20 @@ extern s32 D_80127BB4;
 extern s32 D_80127BB8;
 extern u32 D_80127BBC;
 
-void func_800D23B0(s32 arg0, s32 arg1) {
+void SndHeap_Init(s32 arg0, s32 arg1) {
     func_800D2450((void *) arg0, 0U, arg1);
     alHeapInit(&(*(u8 *)&D_80127BA0), (u32) arg0, (u32) arg1);
 }
 
-void func_800D23FC(s32 arg0) {
+void SndHeap_Alloc(s32 arg0) {
     alHeapDBAlloc(0, 0, &(*(u8 *)&D_80127BA0), 1, arg0);
 }
 
-s32 func_800D242C(void) {
+s32 SndHeap_GetUsed(void) {
     return D_80127BA4 - D_80127BA0;
 }
 
-s32 *func_800D2444(void) {
+s32 *SndHeap_Get(void) {
     return &D_80127BA0;
 }
 
@@ -37,7 +37,7 @@ void func_800D2450(void *arg0, u8 arg1, s32 arg2) {
     }
 }
 
-void func_800D247C(u8 *dst, u8 *src, s32 n) {
+void Snd_MemMove(u8 *dst, u8 *src, s32 n) {
     if (src < dst) {
         dst += n;
         src += n;

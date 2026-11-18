@@ -1,12 +1,12 @@
 #include "common.h"
 #include "include_asm.h"
-s32 func_800CE228(s32,s32);
+s32 Snd_FadeOutAll(s32,s32);
 s32 nuScRemoveClient(void *);
 extern s8 D_800FABA0;
 extern u8 D_80144450;
 
     /* TODO (Clean version):
-    nuScRemoveClient is osScRemoveClient(&sc, &audioClient) and func_800CE228 triggers voice fadeout:
+    nuScRemoveClient is osScRemoveClient(&sc, &audioClient) and Snd_FadeOutAll triggers voice fadeout:
     void audioHandleEvent(s16 eventType, s32 param) {
         switch (eventType) {
         case AUDIO_EVENT_STOP_ALL: // 2
@@ -26,8 +26,8 @@ extern u8 D_80144450;
     void func_800CD930(s16 arg0, s32 arg1) {
     switch (arg0) {
     case 2:
-        func_800CE228(2, 0x19);
-        func_800CE228(1, 0x19);
+        Snd_FadeOutAll(2, 0x19);
+        Snd_FadeOutAll(1, 0x19);
         return;
     case 1:
         if (arg1 == 0x1C) {
