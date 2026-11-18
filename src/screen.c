@@ -112,7 +112,8 @@ void Screen_SetClearColor(u8 arg0, u8 arg1, u8 arg2) {
     D_800F2100 = arg2;
 }
 
-    /* TODO (Clean version):
+    /* TODO (Clean version): [evaluated 2026-11-18: 255.0f changes the ROM; the original divides
+    in double precision]
     The alpha scaling calculation `alpha / 255.0` uses a double-precision float literal by default. 
     It should be explicitly typed as a single-precision float (`alpha / 255.0f`) to avoid 
     unnecessary type-promotion overhead on MIPS hardware.
@@ -126,7 +127,8 @@ void Screen_SetBgAlpha(u8 alpha) {
     }
 }
 
-    /* TODO (Clean version):
+    /* TODO (Clean version): [evaluated 2026-11-18: design note on the original allocation;
+    no code change possible while matching]
     Allocating a large fixed-size background buffer (`SCREEN_BG_BUFFER_SIZE` / ~300 KB) 
     dynamically on demand can lead to heap fragmentation if done repeatedly. 
     It should ideally be allocated once during system startup or managed via a dedicated 
@@ -172,11 +174,6 @@ s32 Screen_FlushFrame(void) {
     SortQueue_Flush();
     SortQueue_Swap();
 
-    /* TODO (Clean version):
-    Manually injecting raw display list commands and bit-shifting macros (`0xE9`, `0xDF`) 
-    inline should be wrapped in clean SDK macro wrappers like `gDPNoOp` or `gSPEndDisplayList()` 
-    for readability and platform maintenance.
-    */
     GFX_RESERVE(2);
     gDPFullSync(gDisplayListHead++);
     gSPEndDisplayList(gDisplayListHead++);
@@ -209,7 +206,8 @@ void Screen_SetViewport(s16 x, s16 y, s16 width, s16 height) {
 
 extern Mtx34f D_800F2138;
 s32 Mtx_New(Mtx34f *);
-    /* TODO (Clean version):
+    /* TODO (Clean version): [evaluated 2026-11-18: the address now uses OS_K0_TO_PHYSICAL; a
+    separate helper function would add code to the ROM]
     Passing model-view matrices through custom transformation pipelines (`Mtx_New`) 
     and manually writing low-level display list commands with hardware offsets (`0xDA380003`) 
     should be encapsulated into a clean matrix stack helper (e.g., `Matrix_LoadModelView(...)`).
@@ -223,22 +221,16 @@ void Camera_Apply(Mtx34f *m) {
     gSPMatrix(gDisplayListHead++, D_800F216C[0] - 0x80000000, G_MTX_MODELVIEW | G_MTX_LOAD | G_MTX_NOPUSH);
 }
 
-    /* TODO (Clean version):
-    Magic aspect ratio or viewport scaling multipliers (`1.04`) 
-    should be defined using descriptive configuration constants:
-    #define VIEWPORT_SCALE_X_FACTOR 1.04f
-    */
-void Camera_SetPerspective(f32 arg0, f32 arg1, f32 arg2, f32 arg3) {
-    Camera_SetProjection(arg0, arg1, arg2 * 1.04, arg3);
+/* Projection scale factors (double literals, as in the original arithmetic). */
+#define CAM_FOV_SCALE 1.04      /* every perspective */
+#define CAM_RACE_FAR_SCALE 1.2  /* race view: farther clip plane */
+#define CAM_RACE_FOV_SCALE 1.15 /* race view: wider field of view */
+void Camera_SetPerspective(f32 near, f32 far, f32 fov, f32 aspect) {
+    Camera_SetProjection(near, far, fov * CAM_FOV_SCALE, aspect);
 }
 
-    /* TODO (Clean version):
-    Magic aspect ratio or viewport scaling multipliers (`1.2`, `1.15`) 
-    should be defined using descriptive configuration constants:
-    #define VIEWPORT_SCALE_Y_FACTOR 1.2f
-    */
-void Camera_SetPerspectiveRace(f32 arg0, f32 arg1, f32 arg2, f32 arg3) {
-    Camera_SetProjection(arg0, arg1 * 1.2, arg2 * 1.15, arg3);
+void Camera_SetPerspectiveRace(f32 near, f32 far, f32 fov, f32 aspect) {
+    Camera_SetProjection(near, far * CAM_RACE_FAR_SCALE, fov * CAM_RACE_FOV_SCALE, aspect);
 }
 
 void Camera_SetProjection(f32 arg0, f32 arg1, f32 arg2, f32 arg3) {

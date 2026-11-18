@@ -1,5 +1,6 @@
 #include "common.h"
 #include "gfx.h"
+#include "PR/os_convert.h"
 #include "include_asm.h"
 
 
@@ -56,7 +57,8 @@ void GfxPool_Grow(GfxPool *pool, u32 required) {
     if (chunk == NULL) {
         pool->ptr = pool->chunks[pool->chunkCount - 1];
     } else {
-        /* TODO (Clean version):
+        /* TODO (Clean version): [evaluated 2026-11-18: design note on the original fallback; no
+        change possible while matching]
         When allocation fails (`chunk == NULL`), the pool falls back by resetting 
         the pointer to the last valid chunk. A clean implementation should handle 
         out-of-memory errors gracefully using explicit error codes or panic handlers 
@@ -87,7 +89,7 @@ void GfxPool_Submit(GfxPool *pool, s32 arg) {
     u32 i;
 
     for (i = 0; i < pool->chunkCount; i++) {
-        gSPDisplayList(g++, (u32)pool->chunks[i] - 0x80000000); /* K0 to physical */
+        gSPDisplayList(g++, OS_K0_TO_PHYSICAL(pool->chunks[i]));
     }
     gSPEndDisplayList(g++);
     Gfx_SendTask(pool->head, (g - pool->head) * sizeof(Gfx), 0, arg);
@@ -121,14 +123,8 @@ inline void VtxPool_Reserve(VtxPool *pool, u32 required) {
             pool->chunkCount++;
             pool->chunks[pool->chunkCount] = NULL;
             pool->ptr = chunk;
-            pool->end = (Vtx *)((u8 *)chunk + bytes);
+            pool->end = chunk + size;
         }
-        /* TODO (Clean version):
-        Casting chunks to `u8*` for byte-level pointer arithmetic when setting `pool->end` 
-        can be simplified using direct pointer addition, since `Vtx` has a fixed size 
-        known at compile time:
-        `pool->end = chunk + size;` (matching the pattern used in `GfxPool_Grow`).
-        */
     }
 }
 
@@ -201,7 +197,8 @@ void GfxPools_Shutdown(void) {
     Screen_FlushFrame();
     Gfx_WaitTasks();
     GfxPool_Reset(&gGfxPools[0]);
-    /* TODO (Clean version):
+    /* TODO (Clean version): [evaluated 2026-11-18: both calls are in the ROM; removing one
+    changes it]
     The function `Gfx_WaitTasks()` is called twice consecutively around `Screen_FlushFrame()`. 
     This redundancy is likely a legacy artifact of hardware state synchronization 
     or pipeline flushing, but could be cleaned up into a single pre/post sequence if safe.

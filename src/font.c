@@ -1,12 +1,16 @@
 #include "common.h"
 #include "include_asm.h"
-typedef struct { u8 width; u8 height; u8 format; u8 unk03; u32 data; } GlyphFL_;
-typedef struct { u8 glyphIndex[0x100]; GlyphFL_ *glyphs[0x100]; u8 glyphData[1]; } FontFL_;
 extern char D_800FF790[];
-extern s32 D_801415E0[];
 
 #define FONT_NO_GLYPH 0xFF
 #define FONT_SPACE 0x2E
+
+/* Virtual UI space: 1000x1000 units centred on (500, 500), y up, mapped to 90% x 95% of
+   the screen. Double literals as in the original arithmetic. */
+#define UI_SIZE 1000.0
+#define UI_CENTER 500.0f
+#define UI_SCALE_X 0.9
+#define UI_SCALE_Y 0.95
 
 typedef struct {
     /* 0x00 */ u8 width;
@@ -54,8 +58,8 @@ s32 Font_Init(void) {
 
 s32 Font_Load(u8 id, char *name) {
     char buf[0x40];
-    FontFL_ *f;
-    GlyphFL_ *g;
+    Font *f;
+    Glyph *g;
     u32 n;
     u32 i;
 
@@ -63,8 +67,8 @@ s32 Font_Load(u8 id, char *name) {
     strcat(buf, D_800FF790);
     f = Memory_Alloc(File_GetSize(buf));
     File_Load(buf, f);
-    D_801415E0[id] = (s32)f;
-    g = (GlyphFL_ *)f->glyphData;
+    D_801415C0.fonts[id] = f;
+    g = (Glyph *)f->glyphData;
     n = 0;
     for (i = 0; i < 0x100; i++) {
         n += f->glyphIndex[i] != 0xFF;
@@ -73,26 +77,19 @@ s32 Font_Load(u8 id, char *name) {
         Texture_Relocate(g);
         f->glyphs[i] = g;
         if (g->format == 0) {
-            g = (GlyphFL_ *)(g->data + g->width * g->height * 2);
+            g = (Glyph *)(g->data + g->width * g->height * 2);
         } else {
-            g = (GlyphFL_ *)(g->data + g->width * g->height);
+            g = (Glyph *)(g->data + g->width * g->height);
         }
-        g = (GlyphFL_ *)(((u32)g + 7) & ~7);
+        g = (Glyph *)(((u32)g + 7) & ~7);
     }
     return 1;
-    /* TODO (Clean version):
-    Duplicate struct definitions (`GlyphFL_` / `FontFL_` vs `Glyph` / `Font`) 
-    are used here because file-loading structures often contain flat layout 
-    differences compared to active runtime structures. Unifying them into a 
-    single robust asset loader struct with explicit alignment macros would 
-    improve maintainability.
-    */
 }
 
 s32 Font_Free(u8 id) {
-    if (D_801415E0[id] != 0) {
-        Memory_Free(D_801415E0[id]);
-        D_801415E0[id] = 0;
+    if (D_801415C0.fonts[id] != NULL) {
+        Memory_Free(D_801415C0.fonts[id]);
+        D_801415C0.fonts[id] = NULL;
     }
     return 1;
 }
@@ -124,28 +121,22 @@ s32 Font_DrawCharScaled(u8 id, u8 c, f32 x, f32 y, f32 scale) {
     u8 index;
     Glyph *glyph;
 
-    if (c != 0x2E) {
+    if (c != FONT_SPACE) {
         font = D_801415C0.fonts[id];
         index = font->glyphIndex[c];
         if (index != 0xFF) {
             glyph = font->glyphs[index];
             FONT_ASSERT(glyph != NULL);
-            x = (x - 500.0f) * gScreenWidth * 0.9 / 1000.0 + gScreenWidth / 2;
-            y = (500.0f - y) * gScreenHeight * 0.95 / 1000.0 + gScreenHeight / 2;
+            x = (x - UI_CENTER) * gScreenWidth * UI_SCALE_X / UI_SIZE + gScreenWidth / 2;
+            y = (UI_CENTER - y) * gScreenHeight * UI_SCALE_Y / UI_SIZE + gScreenHeight / 2;
             Draw2D_Begin();
             Image_DrawRGBA16Scaled(x, y, glyph->data, glyph->width, glyph->height, scale, scale);
         }
     }
     return 0;
-    /* TODO (Clean version):
-    Magic screen coordinate constants (like 500.0f, 1000.0, 0.9, 0.95) 
-    should be encapsulated into UI scaling configuration macros or viewport structs:
-    #define SCREEN_VIRTUAL_WIDTH 1000.0f
-    #define SCREEN_HALF_WIDTH (SCREEN_VIRTUAL_WIDTH / 2.0f)
-    */
 }
 
-u8 Font_DrawChar(u8 id, u8 c, s32 x, s32 y) {
+inline u8 Font_DrawChar(u8 id, u8 c, s32 x, s32 y) {
     Font *font = D_801415C0.fonts[id];
     u8 index = font->glyphIndex[c];
     Glyph *glyph;
@@ -160,20 +151,5 @@ u8 Font_DrawChar(u8 id, u8 c, s32 x, s32 y) {
 }
 
 u8 Font_DrawChar2(u8 id, u8 c, s32 x, s32 y) {
-    Font *font = D_801415C0.fonts[id];
-    u8 index = font->glyphIndex[c];
-    Glyph *glyph;
-
-    if (index != FONT_NO_GLYPH) {
-        glyph = font->glyphs[index];
-        Draw2D_Begin();
-        Image_DrawRGBA16(x, y, glyph->data, glyph->width, glyph->height);
-        return glyph->width;
-    }
-    return 0;
-    /* TODO (Clean version):
-    `Font_DrawChar2` duplicates the core logic of `Font_DrawChar` with an inverted 
-    conditional structure. They could share a single internal helper function 
-    to reduce code duplication while preserving the exported function symbols.
-    */
+    return Font_DrawChar(id, c, x, y);
 }

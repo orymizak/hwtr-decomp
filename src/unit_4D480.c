@@ -1,33 +1,8 @@
 #include "common.h"
 #include "ultra64.h"
 #include "math.h"
+#include "physics.h"
 #include "include_asm.h"
-/* Rigid body (0x118). Inertia tensors are in body space; iw is the world-space inverse. */
-typedef struct {
-    /* 0x000 */ Mtx3f inertia;
-    /* 0x024 */ Mtx3f invInertia;
-    /* 0x048 */ f32 mass;
-    /* 0x04C */ f32 im;        /* 1 / mass */
-    /* 0x050 */ f32 f50;
-    /* 0x054 */ Vec3f g;       /* gravity */
-    /* 0x060 */ Vec3f f60;
-    /* 0x06C */ Vec3f pos;
-    /* 0x078 */ Vec3f mom;     /* linear momentum */
-    /* 0x084 */ Vec3f vel;
-    /* 0x090 */ f32 speed;
-    /* 0x094 */ Mtx3f r;       /* orientation */
-    /* 0x0B8 */ Vec3f am;      /* angular momentum */
-    /* 0x0C4 */ Mtx3f iw;      /* world inverse inertia */
-    /* 0x0E8 */ Vec3f w;       /* angular velocity */
-    /* 0x0F4 */ f32 wlen;
-    /* 0x0F8 */ Vec3f f;       /* accumulated force */
-    /* 0x104 */ Vec3f t;       /* accumulated torque */
-    /* 0x110 */ u8 frozen;
-    /* 0x111 */ u8 pad111[3];
-    /* 0x114 */ s32 x114;
-} RigidBody;
-/* Collision object that owns a rigid body (see unit_39C90). */
-typedef struct { u8 pad0[4]; s32 flags; u8 pad8[0x54]; s32 kind; RigidBody *b; u8 pad64[0x20]; u32 u84; } Collider;
 typedef struct { Collider *o; Vec3f p; Vec3f n; } Contact;        /* body against the world */
 typedef struct { Collider *o0; Collider *o1; Vec3f p; Vec3f n; } ContactPair;
 extern u8 D_80138D38[];
@@ -62,7 +37,7 @@ void RigidBody_Init(RigidBody *b, f32 mass, f32 x, f32 y, f32 z, Vec3f p) {
     b->f.z = b->f.y = b->f.x = 0.0f;
     b->g.x = 0.0f;
     b->g.y = 0.0f;
-    b->f50 = 386.0f;
+    b->f50 = GRAVITY;
     b->g.z = -1.0f;
     RigidBody_SetBoxInertia(b, x, y, z);
     rt.m[0][0] = b->r.m[0][0];
@@ -267,7 +242,7 @@ f32 RigidBody_ResolveWorldContact(Contact *c, f32 fr) {
     f32 inv;
     f32 s;
 
-    b = c->o->b;
+    b = c->o->body;
     p = c->p;
     n = c->n;
     VEC3_SUB(m, p, b->pos);
@@ -321,7 +296,7 @@ f32 RigidBody_ResolveWorldContact(Contact *c, f32 fr) {
         f32 e = D_80138D38[restitution_index(o0->kind, o1->kind)] / 10.0f;
     - Immovable body mass fallback:
         if (body == NULL && (collider->flags & 0x6))
-            denom_term = 386.0f / (f32)collider->weight; // Standard gravity g (in/s^2) / weight W = 1/mass
+            denom_term = GRAVITY / (f32)collider->weight;
     - Flags:
         o->flags & 0x40: Attacker boost (magnifies impulse to opponent by x10 if opponent kind == 4, else x4).
         o->flags & 0x60: Immovable/kinematic mask (skips impulse application to this body).
@@ -358,8 +333,8 @@ f32 RigidBody_ResolvePairContact(ContactPair *c) {
 
     o0 = c->o0;
     o1 = c->o1;
-    b1 = o0->b;
-    b2 = o1->b;
+    b1 = o0->body;
+    b2 = o1->body;
     p = c->p;
     n = c->n;
     if (b1 != NULL) {
@@ -412,8 +387,8 @@ f32 RigidBody_ResolvePairContact(ContactPair *c) {
         VEC3_CROSS(x, a, r1);
         d1 = b1->im + (n.x * x.x + n.y * x.y + n.z * x.z);
     } else if (c->o0->flags & 6) {
-        if (c->o0->u84 != 0) {
-            d1 = 386.0f / (f32)c->o0->u84;
+        if (c->o0->weight != 0) {
+            d1 = GRAVITY / (f32)c->o0->weight;
         } else {
             return 0.0f;
         }
@@ -429,8 +404,8 @@ f32 RigidBody_ResolvePairContact(ContactPair *c) {
         VEC3_CROSS(x, a, r2);
         d2 = b2->im + (n.x * x.x + n.y * x.y + n.z * x.z);
     } else if (c->o1->flags & 6) {
-        if (c->o1->u84 != 0) {
-            d2 = 386.0f / (f32)c->o1->u84;
+        if (c->o1->weight != 0) {
+            d2 = GRAVITY / (f32)c->o1->weight;
         } else {
             return 0.0f;
         }

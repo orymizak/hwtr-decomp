@@ -245,7 +245,7 @@ void Particles_Draw(ParticlePool *pool, f32 (*m)[4]) {
             }
             mtx = Mtx_New(b);
             GFX_RESERVE(14);
-            gSPMatrix(gDisplayListHead++, mtx - 0x80000000, G_MTX_MODELVIEW | G_MTX_LOAD | G_MTX_NOPUSH);
+            gSPMatrix(gDisplayListHead++, OS_K0_TO_PHYSICAL(mtx), G_MTX_MODELVIEW | G_MTX_LOAD | G_MTX_NOPUSH);
             gDPPipeSync(gDisplayListHead++);
             if (!(p->flags & 0x80)) {
                 k = p->kind;
@@ -283,14 +283,14 @@ void Particles_Draw(ParticlePool *pool, f32 (*m)[4]) {
             }
             if (last != dl) {
                 last = dl;
-                gSPDisplayList(gDisplayListHead++, (u32) last - 0x80000000);
+                gSPDisplayList(gDisplayListHead++, OS_K0_TO_PHYSICAL(last));
             }
             gDPPipeSync(gDisplayListHead++);
             gDPSetPrimColor(gDisplayListHead++, 0, 0, p->r, p->g, p->b, p->alpha >> 8);
             if (p->flags & 2) {
                 GfxPools_ReserveVtx(4);
                 memcpy(gVtxHead, p, 4 * sizeof(Vtx));
-                gSPVertex(gDisplayListHead++, (u32) gVtxHead - 0x80000000, 4, 0);
+                gSPVertex(gDisplayListHead++, OS_K0_TO_PHYSICAL(gVtxHead), 4, 0);
                 gVtxHead += 4;
             } else if (p->flags & 0x20) {
                 GfxPools_ReserveVtx(3);
@@ -312,10 +312,10 @@ void Particles_Draw(ParticlePool *pool, f32 (*m)[4]) {
                 gVtxHead[2].v.cn[1] = 0;
                 gVtxHead[2].v.cn[2] = 0;
                 gVtxHead[2].v.cn[3] = p->alpha >> 8;
-                gSPVertex(gDisplayListHead++, (u32) gVtxHead - 0x80000000, 3, 0);
+                gSPVertex(gDisplayListHead++, OS_K0_TO_PHYSICAL(gVtxHead), 3, 0);
                 gVtxHead += 3;
             }
-            gSPDisplayList(gDisplayListHead++, (u32) dl2 - 0x80000000);
+            gSPDisplayList(gDisplayListHead++, OS_K0_TO_PHYSICAL(dl2));
         }
         GFX_RESERVE(1);
         gDPPipeSync(gDisplayListHead++);

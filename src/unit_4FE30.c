@@ -1,36 +1,7 @@
 #include "common.h"
 #include "math.h"
+#include "physics.h"
 #include "include_asm.h"
-typedef struct { u8 p0[0x94]; f32 m[3][3]; f32 v[3]; } Body4F_;
-    /* TODO (Clean version): Define unified engine structs for E88_ and its dynamically allocated child object (0x118 bytes):
-    typedef struct {
-        u8 pad0[0x60];
-        Vec3f base_pos;
-        Vec3f offset_pos;
-        u8 pad78[0x1C];
-        f32 rot[3][3];    // 0x94
-        u8 padB8[0x58];
-        u8 state;          // 0x110
-        u8 pad111[7];
-    } PhysicsObj;          // sizeof 0x118
-
-    typedef struct {
-        u32 pad0;
-        u32 flags;         // 0x04
-        u8 state;          // 0x08
-        u8 pad9[3];
-        Vec3i pos;          // 0x0C
-        u8 pad18[0xC];
-        f32 m[9];          // 0x24
-        u8 pad48[0x14];
-        s32 kind;          // 0x5C
-        PhysicsObj *obj;   // 0x60
-        u8 pad64[0x20];
-        u32 val;           // 0x84
-    } Entity88;            // sizeof 0x88
-    */
-typedef struct { u8 pad0[8]; u8 state; u8 pad9[3]; Vec3i pos; u8 pad18[0xC]; f32 m[9]; u8 pad48[0x14]; s32 kind; u8 *obj; u8 pad64[0x24]; } E88_;
-typedef struct { u8 pad0[4]; u32 flags; u8 pad8[4]; Vec3i pos; u8 pad18[0x70]; } E88b_;
 typedef struct { u32 flags; u8 pad4[3]; u8 b7; u8 pad8[3]; u8 bB; } Inf12b_;
 extern void (*svcTrackSmashObject[])(s32, Vec3f);
 u8 RaceSfx_Play(Vec3i, u8, u8, s32);
@@ -38,13 +9,13 @@ extern u32 (*svcTrackGetLinkCount)(void);
 extern Vec3f D_80100B00;
 void *Memory_Alloc(s32 size);
 void CollShape_InitBox(Vec3i *, Vec3f, Vec3f, f32 *, s32);
-void RigidBody_Init(u8 *, f32, f32, f32, f32, Vec3f);
-void Coll_Register(u8 *o);
+void RigidBody_Init(RigidBody *, f32, f32, f32, f32, Vec3f);
+void Coll_Register(Collider *o);
 extern void (*svcTrackGetLink)(u32, Vec3i *, f32 *, f32 *, f32 *, f32 *, f32 *, f32 *);
 extern void (*svcTrackSetLinkTransform)(u32, f32, f32, f32, void *);
 void RigidBody_Integrate(void *, f32);
 void Mtx3_Orthonormalize(void *);
-extern u8 *gTrackObjs;
+extern Collider *gTrackObjs;
 extern void *gTrackObjInfo;
 extern u32 gTrackObjCount;
 s32 Coll_Unregister(s32 *);
@@ -59,10 +30,10 @@ s32 TrackObj_Init(void) {
     f32 m[9];
     Vec3f dflt;
     u32 val;
-    E88_ *e;
+    Collider *e;
     u32 *info;
     u32 i;
-    u8 *obj;
+    RigidBody *obj;
     s32 fl;
 
     dflt = D_80100B00;
@@ -70,22 +41,22 @@ s32 TrackObj_Init(void) {
     if (gTrackObjCount == 0) {
         return 1;
     }
-    gTrackObjs = Memory_Alloc(gTrackObjCount * 0x88);
-    memset(gTrackObjs, 0, gTrackObjCount * 0x88);
+    gTrackObjs = Memory_Alloc(gTrackObjCount * sizeof(Collider));
+    memset(gTrackObjs, 0, gTrackObjCount * sizeof(Collider));
     gTrackObjInfo = Memory_Alloc(gTrackObjCount * 12);
     memset(gTrackObjInfo, 0, gTrackObjCount * 12);
-    e = (E88_ *)gTrackObjs;
+    e = gTrackObjs;
     info = gTrackObjInfo;
     for (i = 0; i < gTrackObjCount; e++, i++, info += 3) {
         svcTrackGetLink(i, (Vec3i *)&pos, m, (f32 *)&dir, (f32 *)&val, (f32 *)info, (f32 *)(info + 1), (f32 *)(info + 2));
         if (info[0] & 1) {
-            *(s32 *)((u8 *)e + 4) |= 2;
+            e->flags |= 2;
         }
         if (info[0] & 2) {
-            *(s32 *)((u8 *)e + 4) |= 4;
+            e->flags |= 4;
         }
         if (info[0] & 0x40) {
-            *(s32 *)((u8 *)e + 4) |= 8;
+            e->flags |= 8;
         }
         if (info[0] & 8) {
             e->kind = 2;
@@ -94,59 +65,45 @@ s32 TrackObj_Init(void) {
         } else {
             e->kind = 0;
         }
-        *(u32 *)((u8 *)e + 0x84) = val;
+        e->weight = val;
         fl = (info[0] >> 4) & 1;
         CollShape_InitBox(&e->pos, dir, pos, m, fl);
         if (e->kind == 1) {
-            e->obj = obj = Memory_Alloc(0x118);
-            memset(obj, 0, 0x118);
-            /* TODO (Clean version): 386.0f is gravitational acceleration in inches/sec^2 (~32.174 ft/s^2 * 12), converting weight into mass:
-               #define GRAVITY_INCHES_PER_SEC2 386.0f
-               RigidBody_Init(e->obj, (f32)val / GRAVITY_INCHES_PER_SEC2, dir.x, dir.y, dir.z, dflt);
-            */
-            RigidBody_Init(e->obj, (f32) val / 386.0f, dir.x, dir.y, dir.z, dflt);
-            *(f32 *)(e->obj + 0x94) = m[0];
-            *(f32 *)(e->obj + 0x98) = m[1];
-            *(f32 *)(e->obj + 0x9C) = m[2];
-            *(f32 *)(e->obj + 0xA0) = m[3];
-            *(f32 *)(e->obj + 0xA4) = m[4];
-            *(f32 *)(e->obj + 0xA8) = m[5];
-            *(f32 *)(e->obj + 0xAC) = m[6];
-            *(f32 *)(e->obj + 0xB0) = m[7];
-            *(f32 *)(e->obj + 0xB4) = m[8];
-            *(f32 *)(e->obj + 0x6C) = pos.x - *(f32 *)(e->obj + 0x60);
-            *(f32 *)(e->obj + 0x70) = pos.y - *(f32 *)(e->obj + 0x64);
-            *(f32 *)(e->obj + 0x74) = pos.z - *(f32 *)(e->obj + 0x68);
-            e->obj[0x110] = 1;
+            e->body = obj = Memory_Alloc(sizeof(RigidBody));
+            memset(obj, 0, sizeof(RigidBody));
+            RigidBody_Init(e->body, (f32) val / GRAVITY, dir.x, dir.y, dir.z, dflt);
+            e->body->r.m[0][0] = m[0];
+            e->body->r.m[0][1] = m[1];
+            e->body->r.m[0][2] = m[2];
+            e->body->r.m[1][0] = m[3];
+            e->body->r.m[1][1] = m[4];
+            e->body->r.m[1][2] = m[5];
+            e->body->r.m[2][0] = m[6];
+            e->body->r.m[2][1] = m[7];
+            e->body->r.m[2][2] = m[8];
+            e->body->pos.x = pos.x - e->body->f60.x;
+            e->body->pos.y = pos.y - e->body->f60.y;
+            e->body->pos.z = pos.z - e->body->f60.z;
+            e->body->frozen = 1;
         }
-        Coll_Register((u8 *)e);
+        Coll_Register(e);
     }
     return 1;
 }
 
 s32 TrackObj_Shutdown(void) {
-    u8 *e;
+    Collider *e;
     u32 i;
 
     if (gTrackObjs != NULL) {
         e = gTrackObjs;
-        /* TODO (Clean version): Avoid raw byte-offset casting; access fields via E88_ struct:
-           for (i = 0; i < gTrackObjCount; i++) {
-               Coll_Unregister((s32 *)e);
-               if (e->kind == 1) {
-                   Memory_Free(e->obj);
-               }
-               CollShape_Free(&e->pos);
-               e++;
-           }
-        */
         for (i = 0; i < gTrackObjCount; i++) {
             Coll_Unregister((s32 *)e);
-            if (*(s32 *)(e + 0x5C) == 1) {
-                Memory_Free(*(void **)(e + 0x60));
+            if (e->kind == 1) {
+                Memory_Free(e->body);
             }
-            CollShape_Free(e + 0xC);
-            e += 0x88;
+            CollShape_Free(&e->pos);
+            e++;
         }
         Memory_Free(gTrackObjs);
         Memory_Free(gTrackObjInfo);
@@ -159,7 +116,7 @@ s32 TrackObj_Shutdown(void) {
 
 void TrackObj_Update(void) {
     u32 i;
-    E88_ *e;
+    Collider *e;
     f32 v[3];
     Vec3i pos;
     s32 pad;
@@ -170,18 +127,18 @@ void TrackObj_Update(void) {
     f32 c;
     f32 d;
 
-    e = (E88_ *) gTrackObjs;
+    e = gTrackObjs;
     for (i = 0; i < gTrackObjCount; i++, e++) {
         if (e->kind == 1) {
-            if (e->obj[0x110] == 0) {
-                RigidBody_Integrate(e->obj, 0.01f);
-                Mtx3_Orthonormalize(e->obj + 0x94);
-                v[0] = *(f32 *) (e->obj + 0x6C) + *(f32 *) (e->obj + 0x60);
-                v[1] = *(f32 *) (e->obj + 0x70) + *(f32 *) (e->obj + 0x64);
-                v[2] = *(f32 *) (e->obj + 0x74) + *(f32 *) (e->obj + 0x68);
-                svcTrackSetLinkTransform(i, v[0], v[1], v[2], e->obj + 0x94);
+            if (e->body->frozen == 0) {
+                RigidBody_Integrate(e->body, 0.01f);
+                Mtx3_Orthonormalize(&e->body->r);
+                v[0] = e->body->pos.x + e->body->f60.x;
+                v[1] = e->body->pos.y + e->body->f60.y;
+                v[2] = e->body->pos.z + e->body->f60.z;
+                svcTrackSetLinkTransform(i, v[0], v[1], v[2], &e->body->r);
             }
-            e->state = e->obj[0x110];
+            e->state = e->body->frozen;
         } else if (e->kind == 2) {
             svcTrackGetLink(i, &pos, m, w, &a, &b, &c, &d);
             e->pos = pos;
@@ -198,8 +155,8 @@ void TrackObj_Update(void) {
     }
 }
 
-void TrackObj_Smash(E88b_ *e, Vec3f v) {
-    s32 idx = e - (E88b_ *)gTrackObjs;
+void TrackObj_Smash(Collider *e, Vec3f v) {
+    s32 idx = e - gTrackObjs;
     Inf12b_ *inf = &((Inf12b_ *)gTrackObjInfo)[idx];
 
     e->flags |= 1;
@@ -210,10 +167,7 @@ void TrackObj_Smash(E88b_ *e, Vec3f v) {
 }
 
 s32 TrackObj_SaveReplay(s32 arg0, u32 arg1) {
-    /* TODO (Clean version): Simplify conditional expression:
-       return (arg1 >= 4) ? 4 : 0;
-    */
-    return (arg1 >= 4U) * 4;
+    return (arg1 >= 4) ? 4 : 0;
 }
 
 void TrackObj_LoadReplay(void) {
