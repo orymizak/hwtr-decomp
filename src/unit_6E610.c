@@ -1,88 +1,175 @@
 #include "common.h"
 #include "ultra64.h"
 #include "include_asm.h"
-    /* TODO (Clean version): Unify fragmented partial structs into cohesive audio engine types:
-    1. Unify VoiceW_, VoiceX_, VoiceY_, VoiceZ_, VoiceG_, VoiceC_, VoiceB_, Voice9_,
-        Voice8_, Voice7_, Voice5_, Voice4_, Voice_, VoiceIB_, VoiceEB_ into a single
-        AudioVoice structure of size 0x13C.
-    2. Unify SeqChan6_, SeqChan_, SeqChan2_, SeqChan3_, SeqA_, SeqB_, SeqC_, SeqD_,
-        SeqE_, SeqF_, SeqG_, SeqH_, SeqJ_, SeqK_, SeqN_, SeqO_, SeqP_, SeqZ_, SeqE9_, SeqEnvR_
-        into a single SequenceChannel structure.
-    3. Unify SynD_, SynMB_, SynFX_, SynPV_, SynQ_, SynC_ into standard libultra ALSynth,
-        ALMainBus, ALFx, ALPVoice, and ALSynConfig types.
-    */
+/* Voice groups for Snd_FadeOutAll (bit mask). */
+#define SND_GROUP_SFX 1 /* voices playing a bank sound effect (unk78 != NULL) */
+#define SND_GROUP_SEQ 2 /* voices owned by the music sequencer */
+#define SND_MUSIC_VOICES 4 /* voices 0-3 are reserved for music */
+
+/* Sound bank (sfx) loaded with Snd_LoadSfxBank. */
+typedef struct { u8 p0[0x10]; s32 unk10; s32 unk14; struct { s32 a; s32 b; } entries[1]; } SndBank;
+/* Sequence (song) played by a music voice. */
+typedef struct { u8 p0[0x1C]; u8 *unk1C; s32 unk20; } SndSeq;
+/* Driver voice (0x13C): voices 0-3 play music sequences (unk74), the rest sound effects
+   from a bank (unk78). unk44 is the handle returned to the game. */
+typedef struct {
+    /* 0x00 */ u32 unk0;
+    /* 0x04 */ s32 unk4;
+    /* 0x08 */ s32 unk8;
+    /* 0x0C */ s32 unkC;  /* also seen as u32 */
+    /* 0x10 */ s32 unk10;
+    /* 0x14 */ s32 unk14;
+    /* 0x18 */ s32 unk18;
+    /* 0x1C */ s32 unk1C;
+    /* 0x20 */ f32 unk20;
+    /* 0x24 */ f32 unk24;
+    /* 0x28 */ u8 p28[0x4];
+    /* 0x2C */ f32 unk2C;
+    /* 0x30 */ f32 unk30;
+    /* 0x34 */ s32 unk34;
+    /* 0x38 */ u8* unk38;  /* also seen as s32 */
+    /* 0x3C */ u32 unk3C;  /* also seen as s32 */
+    /* 0x40 */ u32 unk40;  /* also seen as s32 */
+    /* 0x44 */ s32 unk44;
+    /* 0x48 */ s32 unk48;
+    /* 0x4C */ u8 p4C[0x4];
+    /* 0x50 */ f32 unk50;
+    /* 0x54 */ u32 unk54;  /* also seen as s32 */
+    /* 0x58 */ f32 unk58;
+    /* 0x5C */ f32 unk5C;
+    /* 0x60 */ f32 unk60;
+    /* 0x64 */ u32 unk64;  /* also seen as s32 */
+    /* 0x68 */ f32 unk68;
+    /* 0x6C */ f32 unk6C;
+    /* 0x70 */ f32 unk70;
+    /* 0x74 */ SndSeq* unk74;  /* also seen as SndSeq*, s32 */
+    /* 0x78 */ SndBank* unk78;  /* also seen as s32, void* */
+    /* 0x7C */ s32 unk7C;
+    /* 0x80 */ s32 unk80;
+    /* 0x84 */ u8* unk84;  /* also seen as s32 */
+    /* 0x88 */ u8 p88[0x8];
+    /* 0x90 */ f32 unk90;
+    /* 0x94 */ s32 unk94;
+    /* 0x98 */ s16 unk98;
+    /* 0x9A */ u16 unk9A;
+    /* 0x9C */ u16 unk9C;  /* also seen as s16 */
+    /* 0x9E */ s16 unk9E;
+    /* 0xA0 */ u8 pA0[0x2];
+    /* 0xA2 */ u16 unkA2;
+    /* 0xA4 */ u16 unkA4;
+    /* 0xA6 */ s16 unkA6;
+    /* 0xA8 */ u16 unkA8;
+    /* 0xAA */ u16 unkAA;
+    /* 0xAC */ u16 unkAC;  /* also seen as s16 */
+    /* 0xAE */ u16 unkAE;
+    /* 0xB0 */ s16 unkB0;
+    /* 0xB2 */ u16 unkB2;  /* also seen as s16 */
+    /* 0xB4 */ u16 unkB4;  /* also seen as s16 */
+    /* 0xB6 */ u8 unkB6;
+    /* 0xB7 */ u8 unkB7;
+    /* 0xB8 */ u8 unkB8;
+    /* 0xB9 */ u8 unkB9;
+    /* 0xBA */ u8 unkBA;
+    /* 0xBB */ u8 pBB[0x1];
+    /* 0xBC */ u8 unkBC;
+    /* 0xBD */ u8 unkBD;
+    /* 0xBE */ u8 unkBE;
+    /* 0xBF */ u8 unkBF;
+    /* 0xC0 */ u8 unkC0;
+    /* 0xC1 */ u8 unkC1;
+    /* 0xC2 */ u8 unkC2;
+    /* 0xC3 */ u8 unkC3;
+    /* 0xC4 */ u8 unkC4;
+    /* 0xC5 */ u8 unkC5;
+    /* 0xC6 */ u8 unkC6;
+    /* 0xC7 */ u8 unkC7;
+    /* 0xC8 */ u8 unkC8;
+    /* 0xC9 */ u8 unkC9;
+    /* 0xCA */ u8 unkCA;
+    /* 0xCB */ u8 unkCB;
+    /* 0xCC */ u8 unkCC;
+    /* 0xCD */ u8 unkCD;
+    /* 0xCE */ u8 unkCE;
+    /* 0xCF */ u8 unkCF;
+    /* 0xD0 */ u8 unkD0;
+    /* 0xD1 */ s8 unkD1;
+    /* 0xD2 */ u8 unkD2;
+    /* 0xD3 */ u8 unkD3;
+    /* 0xD4 */ u8 unkD4;
+    /* 0xD5 */ u8 unkD5;
+    /* 0xD6 */ u8 unkD6;
+    /* 0xD7 */ u8 unkD7;
+    /* 0xD8 */ u8 unkD8;
+    /* 0xD9 */ u8 unkD9;
+    /* 0xDA */ u8 unkDA;
+    /* 0xDB */ u8 unkDB;
+    /* 0xDC */ f32 unkDC;
+    /* 0xE0 */ u8* unkE0[4];
+    /* 0xF0 */ s32 unkF0[4];
+    /* 0x100 */ s32 unk100[4];
+    /* 0x110 */ u16 unk110[4];
+    /* 0x118 */ u16 unk118[4];
+    /* 0x120 */ u8 unk120[4];
+    /* 0x124 */ u8 unk124[4];
+    /* 0x128 */ f32 unk128[4];
+    /* 0x138 */ u8 p138[0x4];
+} SndVoice; /* size = 0x13C */
 
     /* Sequence player handle (fields still unidentified). */
 typedef struct { u8 p0[4]; s32 unk4; u8 p8[8]; s32 unk10; } SeqPl6_;
 /* Sequence channel as seen by the command handlers (fields still unidentified). */
-typedef struct { u8 p0[0x8]; s32 unk8; u8 pC[0x14]; f32 unk20; f32 unk24; u8 p28[0xC]; s32 unk34; s32 unk38; u8 p3C[0x4]; s32 unk40; s32 unk44; u8 p48[0x20]; f32 unk68; f32 unk6C; f32 unk70; s32 unk74; s32 unk78; u8 p7C[0x8]; s32 unk84; u8 p88[0xC]; s32 unk94; u8 p98[0x12]; u16 unkAA; s16 unkAC; u8 pAE[0x4]; s16 unkB2; s16 unkB4; u8 unkB6; u8 unkB7; u8 unkB8; u8 unkB9; u8 unkBA; u8 pBB[0x1]; u8 unkBC; u8 unkBD; u8 pBE[0xB]; u8 unkC9; u8 unkCA; u8 pCB[0x3]; u8 unkCE; u8 unkCF; u8 unkD0; s8 unkD1; u8 unkD2; u8 unkD3; u8 unkD4; u8 unkD5; u8 unkD6; u8 unkD7; u8 unkD8; u8 unkD9; u8 unkDA; u8 pDB[0x1]; f32 unkDC; } SeqChan6_;
-typedef struct { u32 unk0; s32 unk4; u8 p8[8]; s32 unk10; u8 p14[8]; s32 unk1C; u8 p20[0x58]; s32 unk78; u8 p7C[0xC0]; } VoiceW_;
-typedef struct { u32 unk0; u8 p4[0xC]; s32 unk10; u8 p14[8]; s32 unk1C; u8 p20[0x24]; s32 unk44; u8 p48[0xF4]; } VoiceX_;
-typedef struct { s32 unk0; u8 p4[0x40]; s32 unk44; u8 p48[0x34]; s32 unk7C; u8 p80[0xBC]; } VoiceY_;
-typedef struct { u8 p0[0x44]; s32 unk44; s32 unk48; u8 p4C[0x2C]; void *unk78; u8 p7C[0x22]; s16 unk9E; u8 pA0[0x10]; s16 unkB0; } SeqY_;
 typedef struct { u8 p0[0x7C]; s32 unk7C; } SeqY2_;
-typedef struct { s32 unk0; u8 p4[0x70]; s32 unk74; u8 p78[0x24]; s16 unk9C; u8 p9E[0xA]; s16 unkA8; u8 pAA[0x92]; } VoiceZ_;
-typedef struct { u8 p0[0x74]; s32 unk74; s32 unk78; u8 p7C[0x1C]; s16 unk98; u8 p9A[2]; s16 unk9C; } SeqZ_;
 extern s32 gSndFrameRate;
-typedef struct { u8 p0[0xC]; s32 unkC; u8 p10[4]; s32 unk14; u8 p18[0x20]; u8 *unk38; u8 p3C[0x66]; u16 unkA2; u8 pA4[0x18]; u8 unkBC; } SeqP_;
-typedef struct { u8 p0[0xC]; s32 unkC; u8 p10[0x84]; s32 unk94; u8 p98[0x25]; u8 unkBD; u8 pBE[0x16]; u8 unkD4; u8 pD5[4]; u8 unkD9; u8 unkDA; } SeqO_;
-typedef struct { u8 p0[0x10]; s32 unk10; u8 p14[4]; struct { s32 a; s32 b; } entries[1]; } BankG_;
-typedef struct { u8 p0[4]; s32 unk4; u8 p8[0x3C]; s32 unk44; s32 unk48; u8 p4C[0x2C]; BankG_ *unk78; s32 unk7C; s32 unk80; u8 p84[0x1A]; s16 unk9E; u8 pA0[6]; s16 unkA6; u8 pA8[8]; s16 unkB0; u8 pB2[0x8A]; } VoiceG_;
-extern VoiceG_ *gSndSfxVoices;
+extern SndVoice *gSndSfxVoices;
 extern s32 gSndNextHandle;
-void SndVoice_Reset(VoiceG_ *v);
-typedef struct { u8 p0[0x24]; f32 unk24; u8 p28[0xC]; s32 unk34; s32 unk38; u8 p3C[0x30]; f32 unk6C; f32 unk70; u8 p74[0x2E]; u16 unkA2; u16 unkA4; u8 pA6[0x16]; u8 unkBC; u8 pBD[0x1E]; u8 unkDB; u8 pDC[4]; u8 *unkE0[4]; s32 unkF0[4]; s32 unk100[4]; u16 unk110[4]; u16 unk118[4]; u8 unk120[4]; u8 unk124[4]; f32 unk128[4]; } SeqN_;
+void SndVoice_Reset(SndVoice *v);
 typedef struct { u8 b[8]; } AudMsgE_;
 void Snd_MemMove(void *dst, void *src, s32 n);
 s32 SndMsg_Post(AudMsgE_ *msg);
-typedef struct { s32 unk0; u8 p4[0x40]; s32 unk44; u8 p48[0x50]; s16 unk98; u8 p9A[2]; s16 unk9C; u8 p9E[0xA]; u16 unkA8; u8 pAA[0x92]; } VoiceC_;
-typedef struct { s32 unk0; u8 p4[0x40]; s32 unk44; u8 p48[0x83]; u8 unkCB; u8 unkCC; u8 pCD[0x6F]; } VoiceB_;
-typedef struct { u8 p0[0x20]; s32 unk20; } ObjA_;
-typedef struct { u8 p0[0x14]; s32 unk14; } ObjB_;
-typedef struct { s32 unk0; u8 p4[0x40]; s32 unk44; u8 p48[0x2C]; ObjA_ *unk74; ObjB_ *unk78; u8 p7C[0xC0]; } Voice9_;
-typedef struct { u8 p0[0x3C]; s32 unk3C; s32 unk40; u8 p44[0x10]; s32 unk54; u8 p58[0x42]; u16 unk9A; u8 p9C[0x16]; u16 unkB2; u16 unkB4; u8 pB6[9]; u8 unkBF; u8 unkC0; u8 pC1[2]; u8 unkC3; u8 unkC4; u8 unkC5; } SeqK_;
-typedef struct { u8 p0[0x20]; f32 unk20; u8 p24[0x92]; u8 unkB6; u8 pB7[0x1E]; u8 unkD5; u8 pD6[6]; f32 unkDC; } SeqJ_;
-typedef struct { s32 unk0; u8 p4[0x2C]; f32 unk30; u8 p34[0x10]; s32 unk44; u8 p48[0x48]; f32 unk90; u8 p94[0xA8]; } Voice8_;
-typedef struct { s32 unk0; u8 p4[0x40]; s32 unk44; u8 p48[0x68]; s16 unkB0; u8 pB2[0xC]; u8 unkBE; u8 pBF[0x7D]; } Voice7_;
-typedef struct { u8 p0[0x34]; s32 unk34; s32 unk38; u8 p3C[0x34]; f32 unk70; u8 p74[0x2E]; u16 unkA2; u16 unkA4; u8 pA6[0x16]; u8 unkBC; u8 pBD[0x1E]; u8 unkDB; u8 pDC[4]; u8 *unkE0[4]; s32 unkF0[4]; s32 unk100[4]; u16 unk110[4]; u16 unk118[4]; u8 unk120[4]; u8 unk124[4]; f32 unk128[4]; } SeqH_;
-typedef struct { s32 unk0; u8 p4[0x40]; s32 unk44; u8 p48[0x56]; s16 unk9E; u8 pA0[0x9C]; } Voice5_;
-typedef struct { s32 unk0; u8 p4[0x40]; s32 unk44; u8 p48[0x34]; s32 unk7C; u8 p80[0xBC]; } Voice4_;
-typedef struct { u8 p0[0x30]; f32 unk30; u8 p34[0x5C]; f32 unk90; } SeqG_;
-typedef struct { s32 unk0; u8 p4[0x40]; s32 unk44; u8 p48[0xF4]; } Voice_;
 extern s32 gSndNumVoices;
-typedef struct { u8 p0[0xBD]; u8 unkBD; } SeqF_;
-typedef struct { u8 p0[0xBC]; u8 unkBC; } SeqE_;
-typedef struct { u8 p0[0xB9]; u8 unkB9; } SeqD_;
-typedef struct { u8 p0[0x1C]; u8 *unk1C; } Bank_;
-typedef struct { u8 p0[0x74]; Bank_ *unk74; u8 p78[0xC]; u8 *unk84; } SeqC_;
 typedef struct { s32 unk0; s32 unk4; } Entry_;
-typedef struct { u8 p0[0xAC]; u16 unkAC; } SeqB_;
-typedef struct { u8 p0[0xAE]; u16 unkAE; } SeqA_;
-typedef struct { u8 p0[0xCE]; u8 unkCE; u8 unkCF; u8 pD0[8]; u8 unkD8; } SeqChan3_;
-typedef struct { u8 p0[0xB2]; u16 unkB2; u16 unkB4; } SeqChan2_;
 extern s32 gSndFxPreset;
 void Snd_Resume(s32 arg);
 typedef struct { u8 type; u8 pad[3]; s32 arg; } AudMsg_;
-typedef struct { u8 p0[0x2C]; f32 unk2C; u8 p30[0x20]; f32 unk50; u8 p54[0x64]; u8 unkB8; } SeqChan_;
 extern s32 gSndFxPresetCount;
 extern u8 gSndFxPresets;
-s32 SndVoice_PlaySfx(BankG_ *b, s32 idx, s32 a2, s32 a3, s32 prio);
+s32 SndVoice_PlaySfx(SndBank *b, s32 idx, s32 a2, s32 a3, s32 prio);
 typedef struct { s32 a; s32 b; } Ent89_;
 typedef struct { s32 n; u8 p4[8]; s32 flags; s32 unk10; s32 unk14; Ent89_ e[1]; } Bank89_;
-typedef struct { u8 p0[0x58]; f32 unk58; f32 unk5C; f32 unk60; s32 unk64; u8 p68[0x57]; u8 unkBF; u8 unkC0; u8 unkC1; u8 unkC2; u8 pC3[3]; u8 unkC6; u8 unkC7; u8 unkC8; } SeqE9_;
-typedef struct { u8 p0[0xC]; u32 unkC; u8 p10[0x30]; u32 unk40; u8 p44[0x10]; u32 unk54; f32 unk58; f32 unk5C; f32 unk60; u32 unk64; u8 p68[0x57]; u8 unkBF; u8 unkC0; u8 unkC1; u8 unkC2; u8 unkC3; u8 unkC4; u8 unkC5; u8 unkC6; u8 unkC7; u8 unkC8; u8 pC9[4]; u8 unkCD; } SeqEnvR_;
 void SndFx_Alloc();
 extern void *gSndVoices;
 extern u8 D_800FACF8;
 extern s32 D_800FB170;
 extern void *n_syn;
-typedef struct SynQ_ { struct SynQ_ *next; u8 p4[0x18]; } SynQ_;
-typedef struct { u8 p0[8]; s32 unk8; u8 pC[0x80]; } SynPV_;
-typedef struct { u8 p0[0x14]; s32 unk14; s32 unk18; SynPV_ **unk1C; s32 unk20; s32 unk24[8]; } SynMB_;
-typedef struct { u8 p0[4]; void *unk4; } SynFX_;
-typedef struct { s32 unk0; s32 unk4; s32 unk8; s32 unkC; s32 unk10; s32 unk14; s32 unk18; s32 unk1C; s32 unk20; s32 unk24; void *unk28; SynQ_ *unk2C; SynFX_ *unk30; SynMB_ *unk34; s32 unk38; u8 p3C[4]; s32 unk40; s32 unk44; s32 unk48; s32 unk4C; } SynD_;
-typedef struct { u8 p0[4]; s32 unk4; s32 unk8; u8 pC[4]; s32 unk10; void *unk14; s32 unk18; u8 unk1C; u8 p1D[3]; void *unk20; } SynC_;
-void SndSyn_New(SynC_ *c);
+/* Local mirror of the n_audio synthesizer types (n_audio.h), used by the game's own copy of
+   n_alSynNew. Sizes: ALParam 0x1C, N_PVoice 0x8C, N_ALAuxBus 0x44, N_ALMainBus 0x14. */
+typedef struct SndParam { struct SndParam *next; u8 p4[0x18]; } SndParam;
+typedef struct { u8 node[8]; s32 vvoice; u8 pC[0x80]; } SndPVoice;
+typedef struct { u8 p0[0x14]; s32 sourceCount; s32 maxSources; SndPVoice **sources; s32 fx; s32 unk24[8]; } SndAuxBus;
+typedef struct { u8 p0[4]; void *pull; } SndMainBus;
+typedef struct { s32 next; s32 prev; } SndLink;
+typedef struct {
+    /* 0x00 */ s32 head;
+    /* 0x04 */ SndLink pFreeList;
+    /* 0x0C */ SndLink pAllocList;
+    /* 0x14 */ SndLink pLameList;
+    /* 0x1C */ s32 paramSamples;
+    /* 0x20 */ s32 curSamples;
+    /* 0x24 */ s32 dma;
+    /* 0x28 */ void *heap;
+    /* 0x2C */ SndParam *paramList;
+    /* 0x30 */ SndMainBus *mainBus;
+    /* 0x34 */ SndAuxBus *auxBus;
+    /* 0x38 */ s32 numPVoices;
+    /* 0x3C */ u8 p3C[4];
+    /* 0x40 */ s32 outputRate;
+    /* 0x44 */ s32 maxOutSamples;
+    /* 0x48 */ s32 outBuf;
+    /* 0x4C */ s32 maxAuxBusses;
+} SndSynth; /* N_ALSynth */
+/* ALSynConfig */
+typedef struct { u8 p0[4]; s32 maxPVoices; s32 maxUpdates; u8 pC[4]; s32 dmaproc; void *heap; s32 outputRate; u8 fxType; u8 p1D[3]; void *params; } SndSynConfig;
+void SndSyn_New(SndSynConfig *c);
 extern s32 D_8014C6D0;
 extern s32 gSndSeqFxControl;
 s32 SndWave_Relocate();
@@ -111,7 +198,6 @@ extern f64 D_801016A0;
 INCLUDE_ASM("asm/nonmatchings/unit_6E610", SndCmd_SetEnvelopePreset);
 
 typedef struct { s32 unk0; s32 unk4; s32 unk8; s32 unkC; s32 unk10; s32 unk14; s32 unk18; s32 unk1C; s32 unk20; s32 unk24; u8 p28[0x18]; s32 unk40; } AudCfgB_;
-typedef struct { u8 p0[0xC9]; u8 unkC9; u8 pCA[0x72]; } VoiceIB_;
 typedef struct { u16 a; u16 b; u8 c; } AudMsgB_;
 extern s32 osTvType;
 extern s32 D_80138144;
@@ -131,12 +217,8 @@ void n_alSynAllocVoice(s32, void *);
 void SndHeap_GetUsed(void);
 s32 Snd_Update(void);
 
-    /* TODO (Clean version): audioDriverInit(AudCfg *cfg):
-    Initializes sound driver voice channels, sequence players, and message queue.
-    - PAL (50Hz) vs NTSC (60Hz) tick interval: 1,000,000 / framerate (microseconds per tick).
-    - Allocates voice structures (count * sizeof(AudioVoice), where sizeof(AudioVoice) == 0x13C).
-    - Initializes ring buffer gSndMsgQueue for asynchronous audio event dispatch.
-    */
+/* Starts the sound driver: voices (4 music + c->unk4 sfx), message queue, banks and the
+ * synthesizer player; ticks at the TV frame rate. */
 void Snd_Init(AudCfgB_ *c) {
     s32 i;
     AudMsgB_ msg;
@@ -144,18 +226,18 @@ void Snd_Init(AudCfgB_ *c) {
 
     D_80138144 = c->unk40;
     D_80145564 = c->unk0;
-    gSndNumVoices = c->unk4 + 4;
-    if (osTvType == 0) {
+    gSndNumVoices = c->unk4 + SND_MUSIC_VOICES;
+    if (osTvType == OS_TV_PAL) {
         gSndFrameRate = 50;
     } else {
         gSndFrameRate = 60;
     }
-    gSndTickUsec = 1000000 / gSndFrameRate;
+    gSndTickUsec = 1000000 / gSndFrameRate; /* microseconds per audio tick */
     SndHeap_Init(c->unk10, c->unk14);
     Snd_SetScheduler(c->unk8);
-    gSndPVoices = SndHeap_Alloc((gSndNumVoices - 4) * 0x1C);
-    gSndVoices = (void *)SndHeap_Alloc(gSndNumVoices * 0x13C);
-    gSndSfxVoices = (VoiceG_ *)&((VoiceIB_ *)gSndVoices)[4];
+    gSndPVoices = SndHeap_Alloc((gSndNumVoices - SND_MUSIC_VOICES) * 0x1C);
+    gSndVoices = (void *)SndHeap_Alloc(gSndNumVoices * sizeof(SndVoice));
+    gSndSfxVoices = (SndVoice *)&((SndVoice *)gSndVoices)[SND_MUSIC_VOICES];
     SndMsg_InitQueue(c->unk24);
     gSndCurWaveBank = 0;
     gSndDefWaveBank = 0;
@@ -179,8 +261,8 @@ void Snd_Init(AudCfgB_ *c) {
     D_80127924 = q;
     n_alSynAddPlayer(q);
     for (i = 0; i < gSndNumVoices; i++) {
-        ((VoiceIB_ *)gSndVoices)[i].unkC9 = 0;
-        SndVoice_Reset((VoiceG_ *)&((VoiceIB_ *)gSndVoices)[i]);
+        ((SndVoice *)gSndVoices)[i].unkC9 = 0;
+        SndVoice_Reset((SndVoice *)&((SndVoice *)gSndVoices)[i]);
         msg.c = 0;
         msg.a = c->unkC;
         msg.b = 0;
@@ -227,33 +309,26 @@ s32 Snd_PlaySfxDefault(s32 id) {
     if (gSndCurWaveBank == 0) {
         gSndCurWaveBank = (void *)((SeqPl6_ *)bank)->unk10;
     }
-    h = SndVoice_PlaySfx((BankG_ *)bank, id, 0x80, 0x80, -1);
+    h = SndVoice_PlaySfx((SndBank *)bank, id, 0x80, 0x80, -1);
     gSndCurWaveBank = 0;
     return h;
 }
 
 INCLUDE_ASM("asm/nonmatchings/unit_6E610", Snd_StartSound);
 
-    /* TODO (Clean version): Voice fade-out / release helper:
-    v->unk78 != NULL distinguishes sound effect voices (SFX) from music sequencer voices (BGM).
-    flags & 1 targets SFX voices, flags & 2 targets BGM voices:
-        u32 isSfx = (v->bank != NULL);
-        if (!((isSfx && (flags & VOICE_FLAG_SFX)) || (!isSfx && (flags & VOICE_FLAG_BGM)))) {
-            continue;
-        }
-    */
+/* Fades out (or releases) every voice of the groups in flags (SND_GROUP_*). */
 void Snd_FadeOutAll(s32 flags, s32 val) {
     s32 i;
     s32 rate;
-    VoiceW_ *v;
+    SndVoice *v;
 
     rate = val;
     if (val == 0) {
         rate = 1;
     }
-    v = *(VoiceW_ **)&gSndVoices;
+    v = *(SndVoice **)&gSndVoices;
     for (i = 0; i < gSndNumVoices; i++, v++) {
-        if (!((v->unk78 != 0) ? (flags & 1) : (flags & 2))) {
+        if (!((v->unk78 != NULL) ? (flags & SND_GROUP_SFX) : (flags & SND_GROUP_SEQ))) {
             continue;
         }
         if (v->unk4 == 0) {
@@ -276,10 +351,10 @@ void Snd_FadeOutAll(s32 flags, s32 val) {
 s32 Snd_CountActive(s32 flags) {
     s32 i;
     s32 n;
-    VoiceW_ *v;
+    SndVoice *v;
 
     n = 0;
-    v = *(VoiceW_ **)&gSndVoices;
+    v = *(SndVoice **)&gSndVoices;
     for (i = 0; i < gSndNumVoices; i++, v++) {
         if (v->unk4 == 0) {
             continue;
@@ -295,7 +370,7 @@ s32 Snd_Stop(s32 id, s32 val) {
     s32 i;
     s32 n;
     s32 rate;
-    VoiceX_ *v;
+    SndVoice *v;
 
     if (id == 0) {
         return 0;
@@ -305,7 +380,7 @@ s32 Snd_Stop(s32 id, s32 val) {
         rate = 1;
     }
     i = 0;
-    v = *(VoiceX_ **)&gSndVoices;
+    v = *(SndVoice **)&gSndVoices;
     for (n = 0; i < gSndNumVoices; i++, v++) {
         if (v->unk44 == id && v->unk10 == -1) {
             if (v->unk0 & 1) {
@@ -324,14 +399,14 @@ s32 Snd_Stop(s32 id, s32 val) {
 
 s32 Snd_IsPlaying(s32 id) {
     s32 i;
-    Voice_ *v;
+    SndVoice *v;
     s32 n;
 
     if (id == 0) {
         return 0;
     }
     i = 0;
-    v = *(Voice_ **)&gSndVoices;
+    v = *(SndVoice **)&gSndVoices;
     for (n = 0; i < gSndNumVoices; i++, v++) {
         n += (v->unk44 == id);
     }
@@ -341,13 +416,13 @@ s32 Snd_IsPlaying(s32 id) {
 s32 Snd_SetVolume(s32 id, s16 val) {
     s32 i;
     s32 n;
-    Voice5_ *v;
+    SndVoice *v;
 
     if (id == 0) {
         return 0;
     }
     i = 0;
-    v = (*(Voice5_ * *)&gSndVoices);
+    v = (*(SndVoice * *)&gSndVoices);
     for (n = 0; i < gSndNumVoices; i++, v++) {
         if (v->unk44 == id) {
             v->unk9E = val;
@@ -360,13 +435,13 @@ s32 Snd_SetVolume(s32 id, s16 val) {
 s32 Snd_SetPan(s32 id, s16 val) {
     s32 i;
     s32 n;
-    Voice7_ *v;
+    SndVoice *v;
 
     if (id == 0) {
         return 0;
     }
     i = 0;
-    v = (*(Voice7_ * *)&gSndVoices);
+    v = (*(SndVoice * *)&gSndVoices);
     for (n = 0; i < gSndNumVoices; i++, v++) {
         if (v->unk44 == id) {
             n++;
@@ -381,13 +456,13 @@ s32 Snd_SetPan(s32 id, s16 val) {
 s32 Snd_SetPitch(s32 id, f32 val) {
     s32 i;
     s32 n;
-    Voice8_ *v;
+    SndVoice *v;
 
     if (id == 0) {
         return 0;
     }
     i = 0;
-    v = (*(Voice8_ * *)&gSndVoices);
+    v = (*(SndVoice * *)&gSndVoices);
     for (n = 0; i < gSndNumVoices; i++, v++) {
         if (v->unk44 == id) {
             v->unk30 = val + v->unk90;
@@ -401,7 +476,7 @@ s32 Snd_SetPitch(s32 id, f32 val) {
 s32 Snd_SetTempoScale(s32 id, s32 val) {
     s32 i;
     s32 n;
-    VoiceC_ *v;
+    SndVoice *v;
 
     if (id == 0) {
         return 0;
@@ -412,7 +487,7 @@ s32 Snd_SetTempoScale(s32 id, s32 val) {
         val = 256;
     }
     i = 0;
-    v = (*(VoiceC_ * *)&gSndVoices);
+    v = (*(SndVoice * *)&gSndVoices);
     for (n = 0; i < gSndNumVoices; i++, v++) {
         if (v->unk44 == id) {
             n++;
@@ -427,7 +502,7 @@ s32 Snd_SetTempoScale(s32 id, s32 val) {
 s32 Snd_SetFxMix(s32 id, s32 val) {
     s32 i;
     s32 n;
-    VoiceB_ *v;
+    SndVoice *v;
 
     if (id == 0) {
         return 0;
@@ -438,7 +513,7 @@ s32 Snd_SetFxMix(s32 id, s32 val) {
         val = 127;
     }
     i = 0;
-    v = (*(VoiceB_ * *)&gSndVoices);
+    v = (*(SndVoice * *)&gSndVoices);
     for (n = 0; i < gSndNumVoices; i++, v++) {
         if (v->unk44 == id) {
             n++;
@@ -476,12 +551,12 @@ s32 Snd_GetDefaultWaveBank(void) {
 
 s32 Snd_GetTag(s32 id) {
     s32 i;
-    Voice4_ *v;
+    SndVoice *v;
 
     if (id == 0) {
         return 0;
     }
-    v = (*(Voice4_ * *)&gSndVoices);
+    v = (*(SndVoice * *)&gSndVoices);
     for (i = 0; i < gSndNumVoices; i++, v++) {
         if (v->unk44 == id) {
             return v->unk7C;
@@ -585,12 +660,12 @@ INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CE968);
 
 s32 func_800CE9CC(s32 id) {
     s32 i;
-    Voice9_ *v;
+    SndVoice *v;
 
     if (id == 0) {
         return 0;
     }
-    v = (*(Voice9_ * *)&gSndVoices);
+    v = (*(SndVoice * *)&gSndVoices);
     for (i = 0; i < gSndNumVoices; i++, v++) {
         if (v->unk44 == id) {
             if (v->unk74 != 0) {
@@ -645,19 +720,18 @@ s32 SndMsg_Post(AudMsgE_ *msg) {
 }
 
 
-typedef struct { s32 unk0; s32 unk4; s32 unk8; u32 unkC; s32 unk10; s32 unk14; s32 unk18; u8 p1C[0x14]; f32 unk30; s32 unk34; s32 unk38; u32 unk3C; u32 unk40; s32 unk44; u8 p48[0x2C]; s32 unk74; s32 unk78; u8 p7C[0x18]; s32 unk94; u8 p98[2]; u16 unk9A; u16 unk9C; u8 p9E[0xC]; u16 unkAA; u8 pAC[0x17]; u8 unkC3; u8 pC4[5]; u8 unkC9; u8 pCA[4]; u8 unkCE; u8 pCF[5]; u8 unkD4; u8 unkD5; u8 pD6[0x66]; } VoiceEB_;
 void SndVoice_ProcessEvents(void *arg0, s32 arg1);
 void SndPitchCurve_Update(void *arg0);
-void SndEnv_Update(SeqEnvR_ *s);
-void SndAutoPan_Update(SeqO_ *s);
-f32 SndVibrato_Update(SeqChan6_ *c);
-f32 SndTrill_Update(SeqChan6_ *c);
-void SndVolCurve_Update(SeqP_ *s);
+void SndEnv_Update(SndVoice *s);
+void SndAutoPan_Update(SndVoice *s);
+f32 SndVibrato_Update(SndVoice *c);
+f32 SndTrill_Update(SndVoice *c);
+void SndVolCurve_Update(SndVoice *s);
 void SndVoice_UpdatePitch(void *arg0, s32 arg1, f32 arg2);
 void SndVoice_UpdateVolPan(void *arg0, s32 arg1);
 s32 Snd_Update(void) {
     s32 i;
-    VoiceEB_ *v;
+    SndVoice *v;
     f32 f;
 
     while (gSndMsgRead != gSndMsgWrite) {
@@ -667,7 +741,7 @@ s32 Snd_Update(void) {
             gSndMsgRead = 0;
         }
     }
-    for (i = -4, v = (VoiceEB_ *)gSndVoices; i < gSndNumVoices - 4; i++, v++) {
+    for (i = -4, v = (SndVoice *)gSndVoices; i < gSndNumVoices - 4; i++, v++) {
         if (v->unk4 == 0) {
             continue;
         }
@@ -690,7 +764,7 @@ s32 Snd_Update(void) {
             }
         }
         if (v->unk38 != 0 && (s32)(v->unk14 - v->unkC) < 0) {
-            SndVolCurve_Update((SeqP_ *)v);
+            SndVolCurve_Update((SndVoice *)v);
         }
         if (v->unk34 != 0 && (s32)(v->unk18 - v->unkC) < 0) {
             SndPitchCurve_Update(v);
@@ -710,17 +784,17 @@ s32 Snd_Update(void) {
         }
         if (v->unkC9 != 0) {
             if (v->unkC3 != 0) {
-                SndEnv_Update((SeqEnvR_ *)v);
+                SndEnv_Update((SndVoice *)v);
             }
             if (v->unkD4 != 0 && (s32)(v->unk94 - v->unkC) < 0) {
-                SndAutoPan_Update((SeqO_ *)v);
+                SndAutoPan_Update((SndVoice *)v);
             }
             f = v->unk30;
             if (v->unkD5 != 0) {
-                f += SndVibrato_Update((SeqChan6_ *)v);
+                f += SndVibrato_Update((SndVoice *)v);
             }
             if (v->unkCE != 0) {
-                f += SndTrill_Update((SeqChan6_ *)v);
+                f += SndTrill_Update((SndVoice *)v);
             }
             if (v->unk8 == 0) {
                 SndVoice_UpdatePitch(v, i, f);
@@ -735,7 +809,7 @@ s32 Snd_Update(void) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_6E610", SndVoice_ProcessEvents);
 
-void SndVoice_KeyOn(SeqChan6_ *c, s32 i) {
+void SndVoice_KeyOn(SndVoice *c, s32 i) {
     if (c->unkC9 != 0) {
         n_alSynStopVoice(gSndPVoices + i * 0x1C);
     }
@@ -748,7 +822,7 @@ INCLUDE_ASM("asm/nonmatchings/unit_6E610", SndVoice_UpdateVolPan);
 
 INCLUDE_ASM("asm/nonmatchings/unit_6E610", SndVoice_UpdatePitch);
 
-void SndEnv_Start(SeqK_ *s) {
+void SndEnv_Start(SndVoice *s) {
     if (s->unk9A != 0x7FFF) {
         if (s->unkB2 != 0) {
             s->unk54 = s->unk40 + (s->unkB2 << 8);
@@ -764,7 +838,7 @@ void SndEnv_Start(SeqK_ *s) {
 }
 
 
-void SndEnv_Update(SeqEnvR_ *s) {
+void SndEnv_Update(SndVoice *s) {
     s32 t;
 
     if ((s32)(s->unk54 - s->unkC) < 0 && s->unkC3 < 4) {
@@ -806,13 +880,13 @@ void SndEnv_Update(SeqEnvR_ *s) {
     }
 }
 
-void SndAutoPan_Reset(SeqChan6_ *c) {
+void SndAutoPan_Reset(SndVoice *c) {
     c->unkD9 = 0;
     c->unk94 = c->unk40;
     c->unkDA = c->unkBD & 0x40;
 }
 
-void SndAutoPan_Update(SeqO_ *s) {
+void SndAutoPan_Update(SndVoice *s) {
     u32 t;
 
     do {
@@ -841,7 +915,7 @@ void SndAutoPan_Update(SeqO_ *s) {
 }
 
 
-f32 SndTrill_Update(SeqChan6_ *c) {
+f32 SndTrill_Update(SndVoice *c) {
     if (--c->unkD0 == 0) {
         if (c->unkD1 == 0) {
             c->unkD1 = c->unkD8;
@@ -854,13 +928,13 @@ f32 SndTrill_Update(SeqChan6_ *c) {
     return c->unkD1;
 }
 
-    /* TODO (Clean version / Bug check):
+    /* TODO (Clean version / Bug check): [evaluated 2026-11-18: an explicit return changes the ROM]
     The original code is missing an explicit return statement for the float return type.
     In the MIPS 'o32' ABI, the result of the float multiplication is computed directly into $f0,
     which happens to be the float return register, so $f0 was returned by caller convention:
         return c->unk68 = sinf(t * c->unkDC) * c->unk20;
     */
-f32 SndVibrato_Update(SeqChan6_ *c) {
+f32 SndVibrato_Update(SndVoice *c) {
     s32 t = c->unkAA - c->unkB6;
 
     if (t <= 0) {
@@ -870,7 +944,7 @@ f32 SndVibrato_Update(SeqChan6_ *c) {
     c->unk68 = sinf(t * c->unkDC) * c->unk20;
 }
 
-void SndVolCurve_Update(SeqP_ *s) {
+void SndVolCurve_Update(SndVoice *s) {
     u8 b;
     u16 v;
 
@@ -899,7 +973,8 @@ void SndVolCurve_Update(SeqP_ *s) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_6E610", SndPitchCurve_Update);
 
-    /* TODO (Clean version):
+    /* TODO (Clean version): [evaluated 2026-11-18: kept as documentation; the code is the
+    original algorithm]
     Computes 2.0f^x (exp2f(x)) using degree-6 Taylor series polynomial expansion:
         2^x = exp(x * ln(2)) = 1 + c1*x + c2*x^2 + c3*x^3 + c4*x^4 + c5*x^5 + c6*x^6
     where c_k = (ln 2)^k / k!:
@@ -936,7 +1011,8 @@ f32 Snd_Exp2(f32 x) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_6E610", SndWave_Relocate);
 
-    /* TODO (Clean version):
+    /* TODO (Clean version): [evaluated 2026-11-18: kept as documentation; the code is the
+    original algorithm]
     Implements a 32-bit Linear Feedback Shift Register (LFSR) pseudo-random number generator,
     stepped 8 iterations per sample with polynomial taps at bits 30 and 27 (mask 0x48000000),
     returning (rand / 2^32) * range:
@@ -985,7 +1061,7 @@ void Snd_RelocatePtrs(void *arg0, s32 arg1, s32 arg2) {
     }
 }
 
-inline s32 SndVoice_Setup(VoiceG_ *v, BankG_ *b, s32 idx, s32 a3, s32 a4, s32 a5) {
+inline s32 SndVoice_Setup(SndVoice *v, SndBank *b, s32 idx, s32 a3, s32 a4, s32 a5) {
     SndVoice_Reset(v);
     v->unkA6 = idx;
     v->unk78 = b;
@@ -1001,10 +1077,10 @@ inline s32 SndVoice_Setup(VoiceG_ *v, BankG_ *b, s32 idx, s32 a3, s32 a4, s32 a5
     return v->unk44;
 }
 
-s32 SndVoice_PlaySfx(BankG_ *b, s32 idx, s32 a2, s32 a3, s32 prio) {
+s32 SndVoice_PlaySfx(SndBank *b, s32 idx, s32 a2, s32 a3, s32 prio) {
     s32 i;
-    VoiceG_ *v;
-    VoiceG_ *bv;
+    SndVoice *v;
+    SndVoice *bv;
     s32 best;
 
     if (prio == -1) {
@@ -1030,7 +1106,7 @@ INCLUDE_ASM("asm/nonmatchings/unit_6E610", SndSong_Start);
 
 void SndVoice_SetFlags(s32 id, s32 mask, s32 bits) {
     s32 i;
-    Voice_ *v = (*(Voice_ * *)&gSndVoices);
+    SndVoice *v = (*(SndVoice * *)&gSndVoices);
 
     for (i = 0; i < gSndNumVoices; i++, v++) {
         if (v->unk44 == id) {
@@ -1040,7 +1116,7 @@ void SndVoice_SetFlags(s32 id, s32 mask, s32 bits) {
 }
 
 
-s32 SndCmd_End(SeqChan6_ *c) {
+s32 SndCmd_End(SndVoice *c) {
     c->unk38 = 0;
     c->unk34 = 0;
     c->unk74 = 0;
@@ -1050,7 +1126,7 @@ s32 SndCmd_End(SeqChan6_ *c) {
     return 0;
 }
 
-u8 *SndCmd_Op81(SeqA_ *s, u8 *p) {
+u8 *SndCmd_Op81(SndVoice *s, u8 *p) {
     s32 v = *p++;
     if (v & 0x80) {
         v = *p++ | ((v & 0x7F) << 8);
@@ -1060,7 +1136,7 @@ u8 *SndCmd_Op81(SeqA_ *s, u8 *p) {
 }
 
 
-u8 *SndCmd_Op82(SeqChan_ *s, u8 *p) {
+u8 *SndCmd_Op82(SndVoice *s, u8 *p) {
     u8 v = *p++;
     s->unkB8 = v;
     if (v) {
@@ -1070,12 +1146,12 @@ u8 *SndCmd_Op82(SeqChan_ *s, u8 *p) {
 }
 
 
-s32 SndCmd_Op83(SeqChan6_ *c, s32 ptr) {
+s32 SndCmd_Op83(SndVoice *c, s32 ptr) {
     c->unkB8 = 0;
     return ptr;
 }
 
-u8 *SndCmd_SetEnvelope(SeqE9_ *s, u8 *p) {
+u8 *SndCmd_SetEnvelope(SndVoice *s, u8 *p) {
     u8 n;
     u8 c;
 
@@ -1102,18 +1178,18 @@ u8 *SndCmd_SetEnvelope(SeqE9_ *s, u8 *p) {
     return p;
 }
 
-u8 *SndCmd_SetTempo(SeqZ_ *s, u8 *p) {
+u8 *SndCmd_SetTempo(SndVoice *s, u8 *p) {
     s32 tempo = ((*p * 0x6000) / 120) / gSndFrameRate;
     s32 scaled;
     s32 i;
-    VoiceZ_ *v;
+    SndVoice *v;
 
     p++;
     scaled = (tempo * s->unk98) >> 7;
     if (s->unk78 != 0) {
         s->unk9C = tempo;
     } else {
-        v = (*(VoiceZ_ * *)&gSndVoices);
+        v = (*(SndVoice * *)&gSndVoices);
         for (i = 0; i < gSndNumVoices; i++, v++) {
             if (v->unk74 == s->unk74) {
                 v->unkA8 = tempo;
@@ -1124,7 +1200,7 @@ u8 *SndCmd_SetTempo(SeqZ_ *s, u8 *p) {
     return p;
 }
 
-u8 *SndCmd_SetReleaseLead(SeqChan6_ *c, u8 *ptr) {
+u8 *SndCmd_SetReleaseLead(SndVoice *c, u8 *ptr) {
     s16 v = *ptr;
 
     c->unkB2 = 0;
@@ -1132,7 +1208,7 @@ u8 *SndCmd_SetReleaseLead(SeqChan6_ *c, u8 *ptr) {
     return ptr + 1;
 }
 
-u8 *SndCmd_SetReleaseTime(SeqChan2_ *s, u8 *p) {
+u8 *SndCmd_SetReleaseTime(SndVoice *s, u8 *p) {
     s32 hi = *p++;
     s32 lo = *p++;
     s->unkB4 = 0;
@@ -1141,7 +1217,7 @@ u8 *SndCmd_SetReleaseTime(SeqChan2_ *s, u8 *p) {
 }
 
 
-u8 *SndCmd_VibratoOn(SeqJ_ *s, u8 *p) {
+u8 *SndCmd_VibratoOn(SndVoice *s, u8 *p) {
     s->unkB6 = *p++;
     s->unkD5 = *p++;
     s->unk20 = (f32)*p / 50.0;
@@ -1149,7 +1225,7 @@ u8 *SndCmd_VibratoOn(SeqJ_ *s, u8 *p) {
     return p + 1;
 }
 
-u8 *SndCmd_VibratoOnNeg(SeqJ_ *s, u8 *p) {
+u8 *SndCmd_VibratoOnNeg(SndVoice *s, u8 *p) {
     f32 a;
     f32 b;
 
@@ -1162,13 +1238,13 @@ u8 *SndCmd_VibratoOnNeg(SeqJ_ *s, u8 *p) {
     return p;
 }
 
-s32 SndCmd_VibratoOff(SeqChan6_ *c, s32 ptr) {
+s32 SndCmd_VibratoOff(SndVoice *c, s32 ptr) {
     c->unkD5 = 0;
     c->unk68 = 0;
     return ptr;
 }
 
-u8 *SndCmd_Op8B(SeqB_ *s, u8 *p) {
+u8 *SndCmd_Op8B(SndVoice *s, u8 *p) {
     s32 v = *p++;
     if (v >= 0x80) {
         v &= 0x7F;
@@ -1180,22 +1256,22 @@ u8 *SndCmd_Op8B(SeqB_ *s, u8 *p) {
 }
 
 
-s32 SndCmd_Op8C(SeqChan6_ *c, s32 ptr) {
+s32 SndCmd_Op8C(SndVoice *c, s32 ptr) {
     c->unkB7 = 1;
     return ptr;
 }
 
-u8 *SndCmd_SetTranspose(SeqChan6_ *c, u8 *ptr) {
+u8 *SndCmd_SetTranspose(SndVoice *c, u8 *ptr) {
     c->unkB9 = *ptr;
     return ptr + 1;
 }
 
-s32 SndCmd_IgnoreTranspose(SeqChan6_ *c, s32 ptr) {
+s32 SndCmd_IgnoreTranspose(SndVoice *c, s32 ptr) {
     c->unkBA = 1;
     return ptr;
 }
 
-u8 *SndCmd_SetFineTune(SeqG_ *s, u8 *p) {
+u8 *SndCmd_SetFineTune(SndVoice *s, u8 *p) {
     s32 v = *p++;
     f32 f;
 
@@ -1208,27 +1284,27 @@ u8 *SndCmd_SetFineTune(SeqG_ *s, u8 *p) {
     return p;
 }
 
-s32 SndCmd_Op91(SeqChan6_ *c, s32 ptr) {
+s32 SndCmd_Op91(SndVoice *c, s32 ptr) {
     c->unkD6 = 1;
     return ptr;
 }
 
-s32 SndCmd_Op92(SeqChan6_ *c, s32 ptr) {
+s32 SndCmd_Op92(SndVoice *c, s32 ptr) {
     c->unkD6 = 0;
     return ptr;
 }
 
-s32 SndCmd_Op93(SeqChan6_ *c, s32 ptr) {
+s32 SndCmd_Op93(SndVoice *c, s32 ptr) {
     c->unkD7 = 1;
     return ptr;
 }
 
-s32 SndCmd_Op94(SeqChan6_ *c, s32 ptr) {
+s32 SndCmd_Op94(SndVoice *c, s32 ptr) {
     c->unkD7 = 0;
     return ptr;
 }
 
-u8 *SndCmd_LoopStart(SeqH_ *s, u8 *p) {
+u8 *SndCmd_LoopStart(SndVoice *s, u8 *p) {
     s32 i = s->unkDB;
 
     s->unk120[i] = *p++;
@@ -1243,7 +1319,7 @@ u8 *SndCmd_LoopStart(SeqH_ *s, u8 *p) {
     return p;
 }
 
-u8 *SndCmd_LoopEnd(SeqN_ *s, u8 *p) {
+u8 *SndCmd_LoopEnd(SndVoice *s, u8 *p) {
     s32 i = s->unkDB - 1;
 
     if (s->unk120[i] != 0xFF) {
@@ -1265,29 +1341,29 @@ u8 *SndCmd_LoopEnd(SeqN_ *s, u8 *p) {
     return p;
 }
 
-u8 *SndCmd_TrillOn(SeqChan3_ *s, u8 *p) {
+u8 *SndCmd_TrillOn(SndVoice *s, u8 *p) {
     s->unkD8 = *p++;
     s->unkCE = *p++;
     s->unkCF = *p;
     return p + 1;
 }
 
-s32 SndCmd_TrillOff(SeqChan6_ *c, s32 ptr) {
+s32 SndCmd_TrillOff(SndVoice *c, s32 ptr) {
     c->unkCE = 0;
     return ptr;
 }
 
-s32 SndCmd_Op99(SeqChan6_ *c, s32 ptr) {
+s32 SndCmd_Op99(SndVoice *c, s32 ptr) {
     c->unkD2 = 1;
     return ptr;
 }
 
-s32 SndCmd_Op9A(SeqChan6_ *c, s32 ptr) {
+s32 SndCmd_Op9A(SndVoice *c, s32 ptr) {
     c->unkD2 = 0;
     return ptr;
 }
 
-u8 *SndCmd_Op9B(SeqChan6_ *c, u8 *ptr) {
+u8 *SndCmd_Op9B(SndVoice *c, u8 *ptr) {
     u8 v = *ptr;
 
     c->unkD2 = 0;
@@ -1295,7 +1371,7 @@ u8 *SndCmd_Op9B(SeqChan6_ *c, u8 *ptr) {
     return ptr + 1;
 }
 
-u8 *SndCmd_SetPan(SeqChan6_ *c, u8 *ptr) {
+u8 *SndCmd_SetPan(SndVoice *c, u8 *ptr) {
     c->unkBD = *ptr >> 1;
     return ptr + 1;
 }
@@ -1304,7 +1380,7 @@ s32 SndCmd_Skip2(s32 arg0, s32 arg1) {
     return arg1 + 2;
 }
 
-u8 *SndCmd_SetPatch(SeqC_ *s, u8 *p) {
+u8 *SndCmd_SetPatch(SndVoice *s, u8 *p) {
     s32 v = *p++;
     if (v >= 0x80) {
         v &= 0x7F;
@@ -1316,7 +1392,7 @@ u8 *SndCmd_SetPatch(SeqC_ *s, u8 *p) {
 }
 
 
-s32 SndCmd_ClearPatch(SeqChan6_ *c, s32 ptr) {
+s32 SndCmd_ClearPatch(SndVoice *c, s32 ptr) {
     c->unk84 = 0;
     return ptr;
 }
@@ -1327,41 +1403,41 @@ s32 SndCmd_Skip1(s32 arg0, s32 arg1) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_6E610", SndCmd_SetCurves);
 
-u8 *SndCmd_SetFxMix(SeqChan6_ *c, u8 *ptr) {
+u8 *SndCmd_SetFxMix(SndVoice *c, u8 *ptr) {
     c->unkCA = *ptr;
     return ptr + 1;
 }
 
-u8 *SndCmd_RandomTranspose(SeqD_ *s, u8 *p) {
+u8 *SndCmd_RandomTranspose(SndVoice *s, u8 *p) {
     s->unkB9 = Snd_Random(*p++);
     s->unkB9 += *p++;
     return p;
 }
 
-u8 *SndCmd_RandomVolume(SeqE_ *s, u8 *p) {
+u8 *SndCmd_RandomVolume(SndVoice *s, u8 *p) {
     s->unkBC = Snd_Random(*p++);
     s->unkBC += *p++;
     return p;
 }
 
 
-u8 *SndCmd_RandomPan(SeqF_ *s, u8 *p) {
+u8 *SndCmd_RandomPan(SndVoice *s, u8 *p) {
     s->unkBD = Snd_Random(*p++);
     s->unkBD += *p++;
     return p;
 }
 
 
-u8 *SndCmd_SetVolume(SeqChan6_ *c, u8 *ptr) {
+u8 *SndCmd_SetVolume(SndVoice *c, u8 *ptr) {
     c->unkBC = *ptr;
     return ptr + 1;
 }
 
-u8 *SndCmd_PlaySfx(SeqY_ *s, u8 *p) {
+u8 *SndCmd_PlaySfx(SndVoice *s, u8 *p) {
     s32 v = *p++;
     s32 id;
     s32 i;
-    VoiceY_ *vc;
+    SndVoice *vc;
 
     if (v >= 0x80) {
         v = ((v & 0x7F) << 8) + *p++;
@@ -1370,7 +1446,7 @@ u8 *SndCmd_PlaySfx(SeqY_ *s, u8 *p) {
     id = SndVoice_PlaySfx(s->unk78, v, s->unk9E, s->unkB0, s->unk48);
     s->unk48--;
     if (id != 0) {
-        vc = (*(VoiceY_ * *)&gSndVoices);
+        vc = (*(SndVoice * *)&gSndVoices);
         for (i = 0; i < gSndNumVoices; i++, vc++) {
             if (vc->unk44 == id) {
                 vc->unk44 = s->unk44;
@@ -1381,7 +1457,7 @@ u8 *SndCmd_PlaySfx(SeqY_ *s, u8 *p) {
     return p;
 }
 
-u8 *SndCmd_SetBendRange(SeqChan6_ *c, u8 *ptr) {
+u8 *SndCmd_SetBendRange(SndVoice *c, u8 *ptr) {
     f32 v;
 
     v = (f32)*ptr * D_801016A0;
@@ -1390,7 +1466,7 @@ u8 *SndCmd_SetBendRange(SeqChan6_ *c, u8 *ptr) {
     return ptr + 1;
 }
 
-u8 *SndCmd_SetAutoPanRate(SeqChan6_ *c, u8 *ptr) {
+u8 *SndCmd_SetAutoPanRate(SndVoice *c, u8 *ptr) {
     c->unkD4 = *ptr;
     return ptr + 1;
 }
@@ -1406,7 +1482,7 @@ u8 *SndCmd_SelectFx(s32 arg0, u8 *ptr) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_6E610", SndCmd_Marker);
 
-s32 SndCmd_OpAC(SeqChan6_ *c, s32 ptr) {
+s32 SndCmd_OpAC(SndVoice *c, s32 ptr) {
     c->unkAC = 0;
     return ptr;
 }
@@ -1418,7 +1494,7 @@ void SndSyn_Init(s32 arg0, s32 arg1) {
             SndFx_UseCustomConfig(arg1);
             D_8014C6D0 = D_800FB170;
             n_syn = (void *)D_800FB170;
-            SndSyn_New((SynC_ *)arg1);
+            SndSyn_New((SndSynConfig *)arg1);
         }
     }
 }
@@ -1428,72 +1504,60 @@ s32 SndFx_Create(s32 arg0);
 void n_alFxPull(void);
 void n_alAuxBusPull(void);
 
-    /* TODO (Clean version):
-    Standard libultra alSynNew(ALSynth *s, ALSynConfig *c):
-        void alSynNew(ALSynth *s, ALSynConfig *c) {
-            s->head = NULL;
-            s->maxPVoices = c->maxPVoices;
-            s->curSamples = 0;
-            s->outputRate = c->outputRate;
-            s->dramAlignSize = 0xB8;
-            s->mainBus = (ALMainBus *)alHeapDBAlloc(0, 0, c->heap, 1, sizeof(ALMainBus));
-            ...
-        }
-    Replace SynD_, SynMB_, SynFX_, SynPV_, SynC_ with standard libultra ALSynth types.
-    */
-void SndSyn_New(SynC_ *c) {
-    void *hp = c->unk14;
+/* The game's own copy of n_alSynNew (debug heap allocator), on mirror types of n_audio.h. */
+void SndSyn_New(SndSynConfig *c) {
+    void *hp = c->heap;
     s32 i;
-    SynPV_ *pv;
-    SynQ_ *q;
+    SndPVoice *pv;
+    SndParam *q;
 
-    ((SynD_ *)n_syn)->unk0 = 0;
-    ((SynD_ *)n_syn)->unk38 = c->unk4;
-    ((SynD_ *)n_syn)->unk20 = 0;
-    ((SynD_ *)n_syn)->unk1C = 0;
-    ((SynD_ *)n_syn)->unk40 = c->unk18;
-    ((SynD_ *)n_syn)->unk44 = 0xB8;
-    ((SynD_ *)n_syn)->unk24 = c->unk10;
-    ((SynD_ *)n_syn)->unk4C = 1;
-    ((SynD_ *)n_syn)->unk48 = 0;
-    ((SynD_ *)n_syn)->unk34 = (SynMB_ *)alHeapDBAlloc(0, 0, hp, 1, 0x44);
-    ((SynD_ *)n_syn)->unk34->unk14 = 0;
-    ((SynD_ *)n_syn)->unk34->unk18 = c->unk4;
-    ((SynD_ *)n_syn)->unk34->unk1C = (SynPV_ **)alHeapDBAlloc(0, 0, hp, c->unk4, 4);
-    ((SynD_ *)n_syn)->unk30 = (SynFX_ *)alHeapDBAlloc(0, 0, hp, 1, 0x14);
-    if (c->unk1C != 0) {
-        ((SynD_ *)n_syn)->unk34->unk20 = ((s32 (*)(s32, SynC_ *, void *))SndFx_Create)(0, c, hp);
-        ((SynD_ *)n_syn)->unk30->unk4 = n_alFxPull;
+    ((SndSynth *)n_syn)->head = 0;
+    ((SndSynth *)n_syn)->numPVoices = c->maxPVoices;
+    ((SndSynth *)n_syn)->curSamples = 0;
+    ((SndSynth *)n_syn)->paramSamples = 0;
+    ((SndSynth *)n_syn)->outputRate = c->outputRate;
+    ((SndSynth *)n_syn)->maxOutSamples = 184;
+    ((SndSynth *)n_syn)->dma = c->dmaproc;
+    ((SndSynth *)n_syn)->maxAuxBusses = 1;
+    ((SndSynth *)n_syn)->outBuf = 0;
+    ((SndSynth *)n_syn)->auxBus = (SndAuxBus *)alHeapDBAlloc(0, 0, hp, 1, 0x44);
+    ((SndSynth *)n_syn)->auxBus->sourceCount = 0;
+    ((SndSynth *)n_syn)->auxBus->maxSources = c->maxPVoices;
+    ((SndSynth *)n_syn)->auxBus->sources = (SndPVoice **)alHeapDBAlloc(0, 0, hp, c->maxPVoices, 4);
+    ((SndSynth *)n_syn)->mainBus = (SndMainBus *)alHeapDBAlloc(0, 0, hp, 1, 0x14);
+    if (c->fxType != 0) {
+        ((SndSynth *)n_syn)->auxBus->fx = ((s32 (*)(s32, SndSynConfig *, void *))SndFx_Create)(0, c, hp);
+        ((SndSynth *)n_syn)->mainBus->pull = n_alFxPull;
     } else {
-        ((SynD_ *)n_syn)->unk30->unk4 = n_alAuxBusPull;
+        ((SndSynth *)n_syn)->mainBus->pull = n_alAuxBusPull;
     }
-    ((SynD_ *)n_syn)->unk4 = 0;
-    ((SynD_ *)n_syn)->unk8 = 0;
-    ((SynD_ *)n_syn)->unk14 = 0;
-    ((SynD_ *)n_syn)->unk18 = 0;
-    ((SynD_ *)n_syn)->unkC = 0;
-    ((SynD_ *)n_syn)->unk10 = 0;
-    pv = (SynPV_ *)alHeapDBAlloc(0, 0, hp, c->unk4, 0x8C);
-    for (i = 0; i < c->unk4; i++) {
-        alLink(&pv[i], &((SynD_ *)n_syn)->unk4);
-        pv[i].unk8 = 0;
-        _n_initPVoice(&pv[i], ((SynD_ *)n_syn)->unk24, hp);
-        ((SynD_ *)n_syn)->unk34->unk1C[((SynD_ *)n_syn)->unk34->unk14++] = &pv[i];
+    ((SndSynth *)n_syn)->pFreeList.next = 0;
+    ((SndSynth *)n_syn)->pFreeList.prev = 0;
+    ((SndSynth *)n_syn)->pLameList.next = 0;
+    ((SndSynth *)n_syn)->pLameList.prev = 0;
+    ((SndSynth *)n_syn)->pAllocList.next = 0;
+    ((SndSynth *)n_syn)->pAllocList.prev = 0;
+    pv = (SndPVoice *)alHeapDBAlloc(0, 0, hp, c->maxPVoices, 0x8C);
+    for (i = 0; i < c->maxPVoices; i++) {
+        alLink(&pv[i], &((SndSynth *)n_syn)->pFreeList);
+        pv[i].vvoice = 0;
+        _n_initPVoice(&pv[i], ((SndSynth *)n_syn)->dma, hp);
+        ((SndSynth *)n_syn)->auxBus->sources[((SndSynth *)n_syn)->auxBus->sourceCount++] = &pv[i];
     }
-    q = (SynQ_ *)alHeapDBAlloc(0, 0, hp, c->unk8, 0x1C);
-    ((SynD_ *)n_syn)->unk2C = 0;
-    for (i = 0; i < c->unk8; i++) {
-        q[i].next = ((SynD_ *)n_syn)->unk2C;
-        ((SynD_ *)n_syn)->unk2C = &q[i];
+    q = (SndParam *)alHeapDBAlloc(0, 0, hp, c->maxUpdates, 0x1C);
+    ((SndSynth *)n_syn)->paramList = 0;
+    for (i = 0; i < c->maxUpdates; i++) {
+        q[i].next = ((SndSynth *)n_syn)->paramList;
+        ((SndSynth *)n_syn)->paramList = &q[i];
     }
-    ((SynD_ *)n_syn)->unk28 = hp;
+    ((SndSynth *)n_syn)->heap = hp;
 }
 
 s32 SndFx_Create(s32 arg0) {
     s32 i = (s16)arg0;
 
-    SndFx_Alloc(&((SynD_ *)n_syn)->unk34->unk24[i]);
-    return ((SynD_ *)n_syn)->unk34->unk24[i];
+    SndFx_Alloc(&((SndSynth *)n_syn)->auxBus->unk24[i]);
+    return ((SndSynth *)n_syn)->auxBus->unk24[i];
 }
 
 
@@ -1523,9 +1587,9 @@ void SndFx_Alloc(s32 *rp, u8 *c, void *hp) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_6E610", SndFx_SetParams);
 
-void SndFx_UseCustomConfig(SynC_ *c) {
-    c->unk1C = 6;
-    c->unk20 = &D_800FACF8;
+void SndFx_UseCustomConfig(SndSynConfig *c) {
+    c->fxType = 6; /* AL_FX_CUSTOM */
+    c->params = &D_800FACF8;
 }
 
 s32 SndFx_MaxSections(void) {
@@ -1555,14 +1619,14 @@ s32 SndFx_MaxLength(void) {
 
 
 s32 SndFx_SelectPreset(s32 arg0) {
-    SynMB_ *mb;
+    SndAuxBus *mb;
 
     if (arg0 >= gSndFxPresetCount) {
         return 1;
     } else {
         SndFx_SetParams(((s32 *)&gSndFxPresets)[arg0]);
-        mb = ((SynD_ *)D_8014C6D0)->unk34;
-        alFxParam(mb->unk20, 1, (s32)mb);
+        mb = ((SndSynth *)D_8014C6D0)->auxBus;
+        alFxParam(mb->fx, 1, (s32)mb);
         return 0;
     }
 }
