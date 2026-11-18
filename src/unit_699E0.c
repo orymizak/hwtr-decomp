@@ -1,7 +1,7 @@
 #include "common.h"
 #include "include_asm.h"
-extern void (*D_80141004)(s32);
-extern void (*D_80141000)(s32, void *);
+extern void (*sysFontFree)(s32);
+extern void (*sysFontLoad)(s32, void *);
 extern u8 D_80101070;
 extern u8 D_80101078;
 void func_800C8DE0(void);
@@ -9,7 +9,7 @@ void func_800C8DE0(void);
 
 
 extern u8 D_800F64F0[];
-extern u8 (*D_80141008)(u8, u8);
+extern u8 (*sysFontGetCharWidth)(u8, u8);
 s8 func_80086F80(u8 font, u8 a, u8 b);
 extern inline u8 Chr_Index(u8 c) {
     u8 i;
@@ -34,7 +34,7 @@ extern inline u8 Chr_Width(u8 font, u8 c) {
     if (c == ' ') {
         return 5;
     }
-    return D_80141008(font, c);
+    return sysFontGetCharWidth(font, c);
 }
 s32 func_8008711C(u8 font, u8 a, u8 pct);
 
@@ -66,7 +66,7 @@ u8 func_800C902C(u8 font, u8 c) {
 }
 
 void func_800C90DC(void) {
-    void (**fp)(s32, void *) = &D_80141000;
+    void (**fp)(s32, void *) = &sysFontLoad;
 
     (*fp)(0, &D_80101070);
     (*fp)(1, &D_80101078);
@@ -74,7 +74,7 @@ void func_800C90DC(void) {
 }
 
 void func_800C9130(void) {
-    void (**fp)(s32) = &D_80141004;
+    void (**fp)(s32) = &sysFontFree;
 
     (*fp)(0);
     (*fp)(1);

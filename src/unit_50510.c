@@ -34,7 +34,7 @@ extern u8 D_80123D28[];
 extern u8 D_80123D24[];
 extern s32 D_80138098[];
 extern s32 (*D_80140FE8[])(s32);
-extern s32 (*D_80141048)(void);
+extern s32 (*sysTimeGetMillis)(void);
 void func_800B2440(u8 *, f32);
 void func_800B2540(u8 *, f32);
 void func_800B2640(u8 *, f32);
@@ -53,7 +53,7 @@ void func_800B1250(s32 x);
 extern s32 D_80123D00[];
 extern u8 D_801206D0;
 
-extern s32 (*D_8014104C)(s32);
+extern s32 (*sysRandRange)(s32);
 s32 func_800B073C();
 s32 func_800B0A5C();
 extern s32 (*D_80141040)(s32);
@@ -304,7 +304,7 @@ void func_800B061C(void) {
 void func_800B0624(void) {
     do {
 
-    } while (D_8014104C(0x17D78400) == 0);
+    } while (sysRandRange(0x17D78400) == 0);
 }
 
 INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B0654);
@@ -821,9 +821,9 @@ void func_800B2844(u8 *t, u8 i) {
 
     if (D_80123DB0 == NULL) {
         dt = 0.15f;
-        D_80123DB0[i] = D_80141048();
+        D_80123DB0[i] = sysTimeGetMillis();
     } else {
-        now = D_80141048();
+        now = sysTimeGetMillis();
         d = now - D_80123DB0[i];
         if (d > 100) {
             dt = 0.1f;

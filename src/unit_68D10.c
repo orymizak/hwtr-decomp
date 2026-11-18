@@ -12,7 +12,7 @@ extern s32 (*D_801455A0)(s32);
 extern s32 D_80124D48;
 extern s32 D_80124D51;
 extern s32 D_80124D40;
-extern s32 (*D_80141048)();
+extern s32 (*sysTimeGetMillis)();
 extern s32 D_80124D44;
 
 void func_800C8110(void) {
@@ -81,7 +81,7 @@ u8 func_800C8214(u8 i, s32 k) {
 
 
 void func_800C82B4(void) {
-    s32 (**fp)() = &D_80141048;
+    s32 (**fp)() = &sysTimeGetMillis;
 
     if ((u32)((*fp)() - D_80124D44) >= 1000) {
         D_80124D44 = (*fp)();
@@ -90,7 +90,7 @@ void func_800C82B4(void) {
 }
 
 void func_800C8320(void) {
-    s32 (**fp)() = &D_80141048;
+    s32 (**fp)() = &sysTimeGetMillis;
 
     if ((u32)((*fp)() - D_80124D44) >= 3000) {
         D_80124D44 = (*fp)();
@@ -100,7 +100,7 @@ void func_800C8320(void) {
 
 
 void func_800C838C(void) {
-    s32 (**fp)() = &D_80141048;
+    s32 (**fp)() = &sysTimeGetMillis;
 
     if ((u32)((*fp)() - D_80124D44) >= 5000) {
         D_80124D44 = (*fp)();
@@ -110,7 +110,7 @@ void func_800C838C(void) {
 
 
 void func_800C83F8(void) {
-    s32 (**fp)() = &D_80141048;
+    s32 (**fp)() = &sysTimeGetMillis;
 
     if ((u32)((*fp)() - D_80124D44) >= 30000) {
         D_80124D44 = (*fp)();
@@ -120,23 +120,23 @@ void func_800C83F8(void) {
 
 
 void func_800C8464(void) {
-    if ((u32) (D_80141048() - D_80124D40) >= 0x1388U) {
+    if ((u32) (sysTimeGetMillis() - D_80124D40) >= 0x1388U) {
         func_800C9F18(&D_800F9F70, 0x10);
     }
 }
 
 void func_800C84B0(void) {
-    if ((u32) (D_80141048() - D_80124D40) >= 0x7530U) {
+    if ((u32) (sysTimeGetMillis() - D_80124D40) >= 0x7530U) {
         func_800C9F18(&D_800F9F70, 0x38);
     }
 }
 
 void func_800C84FC(void) {
-    D_80124D40 = D_80141048();
+    D_80124D40 = sysTimeGetMillis();
 }
 
 void func_800C8528(void) {
-    D_80124D44 = D_80141048();
+    D_80124D44 = sysTimeGetMillis();
 }
 
 /* Menu input for controller 1: newly pressed buttons allowed by mask play the menu sound and a

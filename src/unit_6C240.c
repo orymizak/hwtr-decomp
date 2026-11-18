@@ -52,7 +52,7 @@ void *func_800B027C();
 extern s32 (*D_8014105C)(s32);
 u8 func_800CCEFC(u8);
 extern s32 (*D_80141064)(s32);
-extern s32 (*D_80141054)(s32);
+extern s32 (*sysAudioSetMusicVolume)(s32);
 extern s32 D_800FA51C;
 extern s32 (*D_8014C0AC)(s32);
 extern s32 (*D_8014C0B0)();
@@ -421,7 +421,7 @@ void func_800CD18C(void) {
     if (cur != 0xFF) {
         next = func_800CCD94(cur);
         opt[0x87D] = next;
-        D_80141054(next);
+        sysAudioSetMusicVolume(next);
     }
 }
 
@@ -433,7 +433,7 @@ void func_800CD1DC(void) {
     if (cur != 0) {
         next = func_800CCEFC(cur);
         opt[0x87D] = next;
-        D_80141054(next);
+        sysAudioSetMusicVolume(next);
     }
 }
 

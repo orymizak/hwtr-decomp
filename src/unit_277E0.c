@@ -2,8 +2,8 @@
 #include "ultra64.h"
 #include "include_asm.h"
 extern char D_800FFAB0[];
-extern s32 (*D_80140FE4)(char *);
-extern u32 (*D_80140FE0)(char *, void *);
+extern s32 (*sysFileGetSize)(char *);
+extern u32 (*sysFileLoad)(char *, void *);
 extern u8 D_80115860[];
 typedef struct { char s[5][20]; } CdtEntry_;
 extern CdtEntry_ D_80144480[41];
@@ -22,11 +22,11 @@ s32 func_80086BE0(char *name) {
     u8 c;
 
     sprintf(buf, D_800FFAB0, name);
-    size = D_80140FE4(buf);
+    size = sysFileGetSize(buf);
     if (size == 0) {
         return 0;
     }
-    if (D_80115860 == NULL || D_80140FE0(buf, D_80115860) != size) {
+    if (D_80115860 == NULL || sysFileLoad(buf, D_80115860) != size) {
         return 0;
     }
     src = D_80115860;

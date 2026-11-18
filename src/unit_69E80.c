@@ -13,8 +13,8 @@ typedef struct { u8 p0[0x18]; u8 n; u8 p19[3]; FldX_ *f; } MenuX_;
 void func_800C96DC(void);
 s32 func_800C9590();
 extern char D_80101080[];
-extern s32 (*D_80140FE4)(char *);
-extern s32 (*D_80140FE0)(char *, void *);
+extern s32 (*sysFileGetSize)(char *);
+extern s32 (*sysFileLoad)(char *, void *);
 extern u8 D_80138D38[];
 void func_80087F7C(u16, u16, s32);
 void func_80087EA4(u16, V12_ *);
@@ -180,8 +180,8 @@ s32 func_800C9E70(void) {
     char buf[80];
 
     sprintf(buf, D_80101080);
-    if (D_80140FE4(buf) == 0x100) {
-        return D_80140FE0(buf, D_80138D38) == 0x100;
+    if (sysFileGetSize(buf) == 0x100) {
+        return sysFileLoad(buf, D_80138D38) == 0x100;
     }
     return 0;
 }

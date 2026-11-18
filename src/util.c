@@ -30,13 +30,13 @@ s32 func_8007F420(void) {
     return 1;
 }
 
-u32 func_8007F448(void) {
+u32 Time_GetMillis(void) {
     u64 time = osGetTime() * 64 / 3000;
 
     return time / 1000;
 }
 
-u32 func_8007F498(u32 max) {
+u32 Rand_Range(u32 max) {
     return rand() % max;
 }
 

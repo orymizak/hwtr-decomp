@@ -42,11 +42,11 @@ extern void (*D_801455AC)(s32, s32);
 u8 func_800B7EE8(u8 i);
 typedef struct { u8 a; u8 pad; s16 b; s16 c; u8 pad2[4]; } E0A_;
 typedef struct { u8 pad[2]; u8 n; u8 pad2; E0A_ *arr; u8 pad3[8]; u8 r; u8 g; u8 bl; } T39_;
-extern void (*D_80141020)(s32, s32, s32);
+extern void (*sysScreenSetClearColor)(s32, s32, s32);
 extern void (*D_8014102C)(void);
-extern void (*D_80141038)(f32, f32, f32, f32);
+extern void (*sysCameraSetPerspective)(f32, f32, f32, f32);
 extern void (*D_8014105C)(s32);
-extern u8 (*D_80141080)(void);
+extern u8 (*sysIsPAL)(void);
 extern u8 (*D_801455A4)(void);
 extern void (*D_8014556C)(s32);
 extern u8 (*D_80145578)(s32, s32);
@@ -154,7 +154,7 @@ extern s32 D_80124110[];
 extern Nm5010_ D_800F61F0[];
 void func_800B337C(u8, f32, f32, f32, f32, f32, f32, f32);
 void func_800B318C(f32 (*m)[4]);
-extern void (*D_80141034)(f32 (*)[4]);
+extern void (*sysCameraApply)(f32 (*)[4]);
 extern u8 D_800F648F;
 extern u8 D_800F648E;
 void func_800C4890(void);
@@ -162,7 +162,7 @@ extern u8 D_80100BD8;
 void func_800B4DF8(s32 arg0);
 s32 func_800B7DFC(u8 i, s32 p);
 extern void (*D_80141044)(u8);
-extern void (*D_80141000)(s32, void *);
+extern void (*sysFontLoad)(s32, void *);
 extern u8 D_80100F94;
 void func_800B8308(void);
 extern s32 (*D_80141030)();
@@ -179,7 +179,7 @@ extern u8 D_80101064;
 extern s32 (*D_80140F98)(void *);
 void *memcpy(void *, const void *, size_t);
 extern u8 *D_801410E0[];
-extern s32 (*D_80141008)(s32, u8);
+extern s32 (*sysFontGetCharWidth)(s32, u8);
 s8 func_80086F80(s32, u8, u8);
 s32 func_800B0454(u32 i, E140b_ *src);
 extern char D_80100F70[];
@@ -258,10 +258,10 @@ extern Bars4_ D_801240E0;
 extern u8 D_80100FA4;
 extern ObjG1_ D_800F63B8;
 extern void (*D_801455A8)(s32, s32);
-extern void (*D_80141054)(s32);
+extern void (*sysAudioSetMusicVolume)(s32);
 extern void (*D_80141064)(s32);
 extern void (*D_8014107C)(void);
-extern void (*D_80141088)(void);
+extern void (*sysScreenFreeBg)(void);
 void func_800C9130(void);
 void func_800C9A00(void);
 extern u32 D_800F6078[];
@@ -296,8 +296,8 @@ extern u8 D_800F6476;
 s32 func_800C8134(s32, s32);
 extern u8 D_800F6480;
 extern u8 D_80124C94;
-extern void (*D_8014100C)(s32, s32, s32, s32, s32);
-extern void (*D_80141010)(s32, s32, s32);
+extern void (*sysFontDrawChar)(s32, s32, s32, s32, s32);
+extern void (*sysDraw2DSetColor)(s32, s32, s32);
 extern void func_800C9F18(void *, s32);
 extern u8 *D_800F641C;
 extern u8 D_80123EBE;
@@ -404,9 +404,9 @@ extern s32 D_800F5F1C;
 extern s32 (*D_8014C0B4)();
 extern s8 D_80124C73;
 extern s32 D_800F6468;
-extern s32 (*D_80141048)();
+extern s32 (*sysTimeGetMillis)();
 s32 func_800B2A84();
-extern s32 (*D_80141084)();
+extern s32 (*sysScreenAllocBg)();
 s32 func_80086F78();
 extern s32 (*D_80140F94)();
 s32 func_800B2AD0(s32);
@@ -464,7 +464,7 @@ extern s32 D_800F6370;
 extern s32 D_80100F78;
 extern u8 D_800F61D4;
 extern s32 D_800F5F60;
-extern s32 (*D_80141004)(s32);
+extern s32 (*sysFontFree)(s32);
 extern u8 D_80124107;
 extern u8 D_80124109;
 extern u8 D_8012410B;
@@ -511,13 +511,13 @@ extern s32 D_80101020;
 extern s32 D_80124D04;
 extern s8 D_80124D08;
 extern s8 D_80124D09;
-extern s32 (*D_8014104C)(s32);
+extern s32 (*sysRandRange)(s32);
 s32 strcpy(s32 *, s32);
 extern s32 D_801345B8;
 extern s32 D_80138D20;
 
 extern u32 D_800F6050[];
-extern s32 (*D_80141048)();
+extern s32 (*sysTimeGetMillis)();
 
 /* TODO (Bug potential): Discontinuity in delta time calculation. In func_800B3024, delta > 500 clamps to 0.5f (d / 1000.0f).
  * Here, if delta > 100, ret is set to 0.1f instead of 1.0f (delta / 100.0f), causing an abrupt 10x drop during lag spikes.
@@ -531,9 +531,9 @@ f32 func_800B2F30(u8 arg0) {
 
     if (D_800F6050[arg0] == 0) {
         ret = 0.15f;
-        D_800F6050[arg0] = D_80141048();
+        D_800F6050[arg0] = sysTimeGetMillis();
     } else {
-        now = D_80141048();
+        now = sysTimeGetMillis();
         delta = now - D_800F6050[arg0];
         if (delta > 100) {
             ret = 0.1f;
@@ -553,9 +553,9 @@ f32 func_800B3024(u8 i) {
 
     if (D_800F6078[i] == 0) {
         r = 0.15f;
-        D_800F6078[i] = D_80141048();
+        D_800F6078[i] = sysTimeGetMillis();
     } else {
-        now = D_80141048();
+        now = sysTimeGetMillis();
         d = now - D_800F6078[i];
         if (d > 500) {
             r = 0.5f;
@@ -598,12 +598,12 @@ void func_800B318C(f32 (*m)[4]) {
  * Propose:
  *   #define FOV_60_DEGREES  1.0471967f
  *   #define ASPECT_4_3      (4.0f / 3.0f)
- *   D_80141038(48.0f, 5000.0f, FOV_60_DEGREES, ASPECT_4_3);
+ *   sysCameraSetPerspective(48.0f, 5000.0f, FOV_60_DEGREES, ASPECT_4_3);
  */
 void func_800B3264(void) {
-    D_80141020(0, 0, 0);
+    sysScreenSetClearColor(0, 0, 0);
     D_8014102C();
-    D_80141038(48.0f, 5000.0f, 1.0471967f, 1.3333334f);
+    sysCameraSetPerspective(48.0f, 5000.0f, 1.0471967f, 1.3333334f);
 }
 
 
@@ -615,8 +615,8 @@ s32 func_800B32D0() {
 void func_800B32F4(u8 arg0, u8 arg1, s32 arg2, s32 arg3, u8 arg4, u8 arg5, u8 arg6, u8 arg7) {
     s32 n = arg3 + 1;
 
-    D_80141010(arg5, arg6, arg7);
-    D_8014100C(arg1, arg0, arg2, n, arg4);
+    sysDraw2DSetColor(arg5, arg6, arg7);
+    sysFontDrawChar(arg1, arg0, arg2, n, arg4);
 }
 
 /* Places an object: applies the pre-scale translation (shrunk with depth z), uniform scale and X/Y/Z
@@ -697,7 +697,7 @@ void func_800B337C(u8 id, f32 x, f32 y, f32 z, f32 rx, f32 ry, f32 rz, f32 scale
         m[2][0] = a;
         m[2][1] = b;
     }
-    D_80141034(m);
+    sysCameraApply(m);
     func_800B3114(id);
 }
 
@@ -999,7 +999,7 @@ void func_800B463C(s8 unused) {
         m[2][0] = a;
         m[2][1] = b;
     }
-    D_80141034(m);
+    sysCameraApply(m);
     D_80141044(func_800B1064(&D_80100BD0));
 }
 
@@ -1076,9 +1076,9 @@ void func_800B4E74(Scroll4E_ *t) {
             n++;
         }
         if (s[1] != 0) {
-            x += D_80141008(0, *s) + func_80086F80(0, *s, s[1]);
+            x += sysFontGetCharWidth(0, *s) + func_80086F80(0, *s, s[1]);
         } else {
-            x += D_80141008(0, *s);
+            x += sysFontGetCharWidth(0, *s);
         }
     }
     if (n == 0 && t->x < t->lo) {
@@ -1900,7 +1900,7 @@ void func_800B8184(void) {
 
 
 void func_800B8260(void) {
-    *(u8 *)&D_800F6464 = D_8014104C(7);
+    *(u8 *)&D_800F6464 = sysRandRange(7);
 }
 
 
@@ -1962,7 +1962,7 @@ void func_800B83B0(void) {
         D_80124C72 = *(u8 *)&D_800F6464;
         return;
     }
-    v = D_8014104C(7);
+    v = sysRandRange(7);
     D_80124C72 = v;
     *(u8 *)&D_800F6464 = v;
 }
@@ -1997,19 +1997,19 @@ void func_800B853C(void) {
 }
 
 void func_800B854C(void) {
-    D_800F6468 = D_80141048();
+    D_800F6468 = sysTimeGetMillis();
 }
 
 /* TODO (Clean version / Bug check): Idle timeout check (30,000 ms = 30 seconds).
  * Using (now > start + 30000) causes an early trigger or miss on 32-bit timer overflow (wraps around ~49.7 days).
  * Standard delta time check is overflow-safe:
  *   #define IDLE_TIMEOUT_MS 30000
- *   if ((u32)(D_80141048() - D_800F6468) > IDLE_TIMEOUT_MS) {
+ *   if ((u32)(sysTimeGetMillis() - D_800F6468) > IDLE_TIMEOUT_MS) {
  *       func_800C9F18(&D_800F9F70, 0x38);
  *   }
  */
 void func_800B8578(void) {
-    if ((u32)D_80141048() > (u32)(D_800F6468 + 30000)) {
+    if ((u32)sysTimeGetMillis() > (u32)(D_800F6468 + 30000)) {
         func_800C9F18(&D_800F9F70, 0x38);
     }
 }
@@ -2030,7 +2030,7 @@ void func_800B8620(void) {
 }
 
 void func_800B863C(void) {
-    D_80141084();
+    sysScreenAllocBg();
 }
 
 /* TODO (Clean version): D_801411CC is a loaded configuration/calibration block.
@@ -2080,14 +2080,14 @@ void func_800B87D8(void) {
         *func_800B02E4(0) = *(Big88C_ *)&D_80124160;
     }
     func_800B8448();
-    D_80141054(D_800F641C[0x87D]);
+    sysAudioSetMusicVolume(D_800F641C[0x87D]);
     D_8014105C(D_800F641C[0x87C]);
     D_80141064(D_800F641C[0x880]);
     D_80141068(0xFF);
     func_800C9130();
     func_800C9A00();
     D_8014107C();
-    D_80141088();
+    sysScreenFreeBg();
     func_800B8620();
 }
 
@@ -2095,7 +2095,7 @@ void func_800B88F8(void) {
     func_800C90DC();
     func_800C9978();
     func_800B85C4();
-    D_80141084();
+    sysScreenAllocBg();
     D_80141068(0);
     D_8014105C(0xFF);
     func_800B83B0();
@@ -2146,7 +2146,7 @@ u32 func_800B8AF8(u32 arg0) {
 }
 
 void func_800B8B44(void) {
-    if (D_80141080() != 0) {
+    if (sysIsPAL() != 0) {
         func_800C9F18(&D_800F9F70, 0x13);
     } else {
         func_800C9F18(&D_800F9F70, 0x14);
@@ -2325,7 +2325,7 @@ void func_800B92CC(void) {
 
 void func_800B93D8(void) {
     if (D_80124C7C != 0 || D_80124C7D != 0) {
-        D_80124C78 = D_80141048();
+        D_80124C78 = sysTimeGetMillis();
         func_800C9F18(&D_800F9F70, 0x34);
     } else {
         func_800C9F18(&D_800F9F70, 0x35);
@@ -2376,7 +2376,7 @@ void func_800B9668(void) {
 }
 
 void func_800B96C8(void) {
-    if ((u32)D_80141048() > (u32)(D_80124C78 + 5000)) {
+    if ((u32)sysTimeGetMillis() > (u32)(D_80124C78 + 5000)) {
         if (D_80124C7E != 0) {
             func_800C8554(0x50);
         } else if (D_80124C7F != 0) {
@@ -2386,7 +2386,7 @@ void func_800B96C8(void) {
 }
 
 void func_800B973C(s32 arg0) {
-    *(s32 *)((u8 *)&D_80124C8C + ((arg0 & 0xFF) * 4)) = D_80141048();
+    *(s32 *)((u8 *)&D_80124C8C + ((arg0 & 0xFF) * 4)) = sysTimeGetMillis();
 }
 
 void func_800B977C(void) {
@@ -2410,7 +2410,7 @@ void func_800B9794(u8 i) {
 
 
 s32 func_800B97D8(u8 i) {
-    u32 now = D_80141048();
+    u32 now = sysTimeGetMillis();
 
     return ((u32 *)&D_80124C8C)[i] + ((u32 *)&D_80124C84)[i] < now;
 }
@@ -3491,7 +3491,7 @@ void func_800BD264(void) {
 }
 
 void func_800BD26C(void) {
-    if ((u32)D_80141048() > (u32)(D_80124C98 + 5000)) {
+    if ((u32)sysTimeGetMillis() > (u32)(D_80124C98 + 5000)) {
         func_800C8554(0x50);
     }
 }
@@ -3500,7 +3500,7 @@ void func_800BD2B0(void) {
     func_800B3144(&D_80100EFC);
     func_800B2AD0(D_800F5F38);
     func_800B8D74();
-    D_80124C98 = D_80141048();
+    D_80124C98 = sysTimeGetMillis();
 }
 
 void func_800BD300(void) {
@@ -3539,7 +3539,7 @@ void func_800BD510(void) {
 }
 
 void func_800BD518(void) {
-    if ((u32)D_80141048() > (u32)(D_80124C98 + 5000)) {
+    if ((u32)sysTimeGetMillis() > (u32)(D_80124C98 + 5000)) {
         func_800C8554(0x50);
     }
 }
@@ -3549,7 +3549,7 @@ void func_800BD55C(void) {
     func_800B3144(&D_80100F04);
     func_800B2AD0(D_800F5F3C);
     func_800B8D74();
-    D_80124C98 = D_80141048();
+    D_80124C98 = sysTimeGetMillis();
 }
 
 void func_800BD5AC(void) {
@@ -3693,15 +3693,15 @@ void func_800BDCF0(void) {
 }
 
 void func_800BDE74(void) {
-    D_800F6484 = D_80141048();
+    D_800F6484 = sysTimeGetMillis();
 }
 
 void func_800BDEA0(void) {
-    D_800F6488 = D_80141048();
+    D_800F6488 = sysTimeGetMillis();
 }
 
 void func_800BDECC(void) {
-    s32 (**fp)() = &D_80141048;
+    s32 (**fp)() = &sysTimeGetMillis;
 
     if ((u32)(*fp)() > (u32)(D_800F6484 + 3000)) {
         func_800C9F18(&D_800F9F70, 0x5A);
@@ -4253,7 +4253,7 @@ void func_800C0288(void) {
         } else {
             D_800F641C[0x87D] = 0;
         }
-        D_80141054(D_800F641C[0x87D]);
+        sysAudioSetMusicVolume(D_800F641C[0x87D]);
         break;
     case 2:
         if (D_800F641C[0x87C] > 10) {
@@ -4288,7 +4288,7 @@ void func_800C03B4(void) {
         } else {
             D_800F641C[0x87D] = 255;
         }
-        D_80141054(D_800F641C[0x87D]);
+        sysAudioSetMusicVolume(D_800F641C[0x87D]);
         break;
     case 2:
         if (D_800F641C[0x87C] < 245) {
@@ -4429,12 +4429,12 @@ void func_800C09AC(void) {
 }
 
 void func_800C09D0(void) {
-    D_80141000(2, &D_80100F94);
+    sysFontLoad(2, &D_80100F94);
 }
 
 
 void func_800C09FC(void) {
-    D_80141004(2);
+    sysFontFree(2);
 }
 
 void func_800C0A20(u8 which, u8 name, s32 x, s32 y, u8 val) {
@@ -5330,11 +5330,11 @@ void func_800C3C58(void) {
     if (D_80124146 == 0) {
         for (i = 0; i < D_801240D6 - 1; i++) {
             if (i == D_801240DC) {
-                D_8014100C(1, 0x9B, D_800F610C[i], D_800F6170[i], i == D_801240D4);
+                sysFontDrawChar(1, 0x9B, D_800F610C[i], D_800F6170[i], i == D_801240D4);
             } else if (i == *(u8 *)&D_801240DD) {
-                D_8014100C(1, 0x9A, D_800F610C[i], D_800F6170[i], i == D_801240D4);
+                sysFontDrawChar(1, 0x9A, D_800F610C[i], D_800F6170[i], i == D_801240D4);
             } else {
-                D_8014100C(1, D_801410A8[i], D_800F610C[i], D_800F6170[i], i == D_801240D4);
+                sysFontDrawChar(1, D_801410A8[i], D_800F610C[i], D_800F6170[i], i == D_801240D4);
             }
         }
         func_800B4E74(&D_800F6400);
@@ -5524,17 +5524,17 @@ void func_800C4860(void) {
 void func_800C4890(void) {
     s32 t;
 
-    D_80124100 = D_8014104C(3);
+    D_80124100 = sysRandRange(3);
     t = D_80124100;
     if (t >= 0) {
         if (t < 2) {
             do {
-            } while (!func_800B7E48(D_80124101 = D_8014104C(12)));
+            } while (!func_800B7E48(D_80124101 = sysRandRange(12)));
             return;
         }
     }
     do {
-    } while (!func_800B7EE8(D_80124102 = D_8014104C(3)));
+    } while (!func_800B7EE8(D_80124102 = sysRandRange(3)));
 }
 
 void func_800C4930(void) {
@@ -5845,10 +5845,10 @@ INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800C65AC);
 void func_800C6700(void) {
     s32 buf[8];
 
-    sprintf(buf, &D_80101020, D_8014104C(10));
+    sprintf(buf, &D_80101020, sysRandRange(10));
     func_800B3144(buf);
     func_800B8D74();
-    D_80124D04 = D_80141048();
+    D_80124D04 = sysTimeGetMillis();
     D_80124D08 = 0;
     D_80124D09 = 0;
 }
@@ -5871,14 +5871,14 @@ void func_800C67EC(void) {
 }
 
 void func_800C6814(void) {
-    if ((u32)D_80141048() > (u32)(D_80124D04 + 10000)) {
+    if ((u32)sysTimeGetMillis() > (u32)(D_80124D04 + 10000)) {
         func_800C9F18(&D_800F9F70, 0x7D);
     }
 }
 
 
 void func_800C6860(void) {
-    if (*(u8 *)&D_80124D09 == 0 && (u32)D_80141048() > (u32)(D_80124D04 + 3000)) {
+    if (*(u8 *)&D_80124D09 == 0 && (u32)sysTimeGetMillis() > (u32)(D_80124D04 + 3000)) {
         func_800C8554(0x50);
         if (D_80123EA0 == 2) {
             func_800C891C(0x50);

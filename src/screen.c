@@ -106,7 +106,7 @@ s32 func_80078120(void) {
     return 1;
 }
 
-void func_80078140(u8 arg0, u8 arg1, u8 arg2) {
+void Screen_SetClearColor(u8 arg0, u8 arg1, u8 arg2) {
     D_800F20FE = arg0;
     D_800F20FF = arg1;
     D_800F2100 = arg2;
@@ -132,14 +132,14 @@ void func_8007815C(u8 alpha) {
     It should ideally be allocated once during system startup or managed via a dedicated 
     static texture/framebuffer pool.
     */
-s32 func_800781BC(void) {
+s32 Screen_AllocBg(void) {
     if (D_800F20F0 == NULL) {
         D_800F20F0 = Memory_Alloc(SCREEN_BG_BUFFER_SIZE);
     }
     return D_800F20F0 != NULL;
 }
 
-s32 func_800781FC(void) {
+s32 Screen_FreeBg(void) {
     if (D_800F20F0 != NULL) {
         Memory_Free(D_800F20F0);
         D_800F20F0 = NULL;
@@ -214,7 +214,7 @@ s32 Mtx_New(Mtx34f *);
     and manually writing low-level display list commands with hardware offsets (`0xDA380003`) 
     should be encapsulated into a clean matrix stack helper (e.g., `Matrix_LoadModelView(...)`).
     */
-void func_80078684(Mtx34f *m) {
+void Camera_Apply(Mtx34f *m) {
     Mtx34f t;
     D_800F2138 = *m;
     t = *m;
@@ -228,7 +228,7 @@ void func_80078684(Mtx34f *m) {
     should be defined using descriptive configuration constants:
     #define VIEWPORT_SCALE_X_FACTOR 1.04f
     */
-void func_800787EC(f32 arg0, f32 arg1, f32 arg2, f32 arg3) {
+void Camera_SetPerspective(f32 arg0, f32 arg1, f32 arg2, f32 arg3) {
     func_80078878(arg0, arg1, arg2 * 1.04, arg3);
 }
 

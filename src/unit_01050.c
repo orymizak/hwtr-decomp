@@ -47,7 +47,7 @@ extern s32 D_800F0124[];
 extern s32 D_800F013C;
 extern s32 D_800F0140[];
 extern s32 D_800F0158;
-s32 func_8007F498(s32);
+s32 Rand_Range(s32);
 extern s32 D_800EFC64;
 extern Vec3f D_800FE7B8;
 extern u8 D_800F01B0;
@@ -233,9 +233,9 @@ void func_80078388();
 void func_80078624();
 void func_80078630();
 void func_8007863C();
-void func_80078684();
+void Camera_Apply();
 void func_80078828();
-void func_8007F448();
+void Time_GetMillis();
 void func_80060B8C();
 void func_80060BB8();
 void func_80060BE4();
@@ -304,10 +304,10 @@ s32 func_80060458(void) {
     D_801416B4 = &func_80078624;
     D_801416B8 = &func_80078630;
     D_801416BC = &func_8007863C;
-    D_801416C4 = &func_80078684;
+    D_801416C4 = &Camera_Apply;
     D_801416C8 = &func_80078828;
-    D_80141698 = &func_8007F448;
-    D_8014169C = &func_8007F498;
+    D_80141698 = &Time_GetMillis;
+    D_8014169C = &Rand_Range;
     D_80141780 = &func_80060B8C;
     D_80141784 = &func_80060BB8;
     D_80141788 = &func_80060BE4;
@@ -757,13 +757,13 @@ s32 func_80061B94(s32 kind) {
 
     switch ((u32)kind) {
     case 0:
-        snd = D_800F0108[func_8007F498(D_800F0120)];
+        snd = D_800F0108[Rand_Range(D_800F0120)];
         break;
     case 1:
-        snd = D_800F0140[func_8007F498(D_800F0158)];
+        snd = D_800F0140[Rand_Range(D_800F0158)];
         break;
     case 2:
-        snd = D_800F0124[func_8007F498(D_800F013C)];
+        snd = D_800F0124[Rand_Range(D_800F013C)];
         break;
     }
     if (snd != 0) {
@@ -1235,7 +1235,7 @@ s32 func_80064638(u8 id, f32 v) {
 }
 
 
-void func_80064684(u8 v) {
+void Audio_SetMusicVolume(u8 v) {
     f32 *p = &D_800EFC6C;
 
     *p = v / 255.0;
@@ -1245,7 +1245,7 @@ void func_80064684(u8 v) {
 }
 
 
-u8 func_8006470C(void) {
+u8 Audio_GetMusicVolume(void) {
     return D_800EFC6C * 255.0f;
 }
 

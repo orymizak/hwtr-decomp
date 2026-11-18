@@ -9,8 +9,8 @@ typedef struct { Ln74_ *lines; s32 a4; s32 a8; s32 top; s32 bottom; s32 start; f
 void func_80087260(char *, s32, s32, s32, s32);
 f32 func_800B3024(u8);
 extern u8 D_80116C70[];
-extern s32 (*D_80140FE0)(char *, void *);
-extern u32 (*D_80140FE4)(char *);
+extern s32 (*sysFileLoad)(char *, void *);
+extern u32 (*sysFileGetSize)(char *);
 extern u8 *D_801410E0[];
 extern char D_800FFAC0[];
 extern KernFont_ D_800F2800[];
@@ -19,14 +19,14 @@ extern u8 D_80140F90;
 extern u8 D_80145568;
 extern u8 D_8014C0A8;
 extern u8 D_80141698;
-u8 func_8007EBF8(void);
+u8 Sys_InitTable(void);
 u8 func_8006B4F8(void);
 u8 func_800610DC(void);
 u8 func_80060458(void);
 s32 func_80060840();
 s32 func_80061334();
 s32 func_8006B630();
-s32 func_8007EF30();
+s32 Sys_ClearTable();
 
 
 
@@ -39,7 +39,7 @@ u8 func_80086E40(char *name) {
     u32 i;
 
     sprintf(path, D_800FFAC0, name);
-    size = D_80140FE4(path);
+    size = sysFileGetSize(path);
     if (size == 0) {
         return 0;
     }
@@ -50,7 +50,7 @@ u8 func_80086E40(char *name) {
     if (buf == NULL) {
         return 0;
     }
-    n = D_80140FE0(path, buf);
+    n = sysFileLoad(path, buf);
     if (n != size) {
         return 0;
     }
@@ -203,7 +203,7 @@ void func_8008745C(Scr74_ *s, u8 fast) {
 void func_800876D4(void **tbl, u32 size);
 s32 func_800875A0(void) {
     func_800876D4((void **)&D_80140F90, 0xFC);
-    if (func_8007EBF8() == 0) {
+    if (Sys_InitTable() == 0) {
         return 0;
     }
     func_800876D4((void **)&D_80145568, 0x4C);
@@ -218,7 +218,7 @@ s32 func_800875A0(void) {
         }
         func_8006B630();
     }
-    func_8007EF30();
+    Sys_ClearTable();
     return 0;
 }
 
@@ -235,7 +235,7 @@ s32 func_80087660(void) {
     if (!(u8)func_8006B630()) {
         n++;
     }
-    if (!(u8)func_8007EF30()) {
+    if (!(u8)Sys_ClearTable()) {
         n++;
     }
     return (u8)n == 0;
