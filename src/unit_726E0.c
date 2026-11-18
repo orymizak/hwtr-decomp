@@ -12,7 +12,43 @@ Seg_ *func_800D1D9C();
 u32 osVirtualToPhysical(void *);
 u32 func_800D1D30(u32 addr);
 
-INCLUDE_ASM("asm/nonmatchings/unit_726E0", func_800D1AE0);
+typedef struct DmaC_ { struct DmaC_ *prev; struct DmaC_ *next; s32 frame; u32 addr; s32 ptr; } DmaC_;
+typedef struct { u8 p0[2]; u8 pri; u8 p3; void *retQueue; s32 dramAddr; u32 devAddr; s32 size; s32 piHandle; } IoMesgD_;
+extern void *D_801279C8;
+extern s32 D_801279A4;
+extern IoMesgD_ *D_8012799C;
+extern DmaC_ *D_80127998;
+extern void *D_801279A0;
+void *osCartRomInit(void);
+void *func_800D23FC(s32);
+void func_800D2450(void *, u8, s32);
+void osCreateMesgQueue(void *, void *, s32);
+s32 *func_800D1D24(void);
+/* Sets up the ROM DMA cache: n buffers of size bytes in a doubly linked free list, plus the PI
+ * message queue; returns the cached-DMA callback. */
+void *func_800D1AE0(s32 n, s32 size) {
+    s32 i;
+
+    D_801279C8 = osCartRomInit();
+    D_8012799C = func_800D23FC(n * 48);
+    D_801279A0 = func_800D23FC(n * 8);
+    D_80127998 = func_800D23FC(n * 20);
+    func_800D2450(D_80127998, 0, n * 20);
+    for (i = 0; i < n - 1; i++) {
+        D_80127998[i].next = &D_80127998[i] + 1;
+        D_80127998[i].next->prev = &D_80127998[i];
+        D_80127998[i].ptr = (s32)func_800D23FC(size);
+        D_80127998[i].addr = -1;
+    }
+    D_80127998[i].ptr = (s32)func_800D23FC(size);
+    D_80127998[i].addr = -1;
+    D_801279A4 = size;
+    D_801279A8 = 0;
+    D_80127990 = NULL;
+    D_80127994 = (void **)D_80127998;
+    osCreateMesgQueue(&D_801279B0, D_801279A0, n * 2);
+    return func_800D1D24;
+}
 
 void func_800D1C54(void) {
     s32 msg;
@@ -69,13 +105,8 @@ u32 func_800D1D30(u32 addr) {
     return osVirtualToPhysical((void *)(s->unk10 + addr - s->unkC));
 }
 
-typedef struct DmaC_ { struct DmaC_ *prev; struct DmaC_ *next; s32 frame; u32 addr; s32 ptr; } DmaC_;
-typedef struct { u8 p0[2]; u8 pri; u8 p3; void *retQueue; s32 dramAddr; u32 devAddr; s32 size; s32 piHandle; } IoMesgD_;
 extern void *D_80138144;
 extern s32 D_80145564;
-extern void *D_801279C8;
-extern s32 D_801279A4;
-extern IoMesgD_ *D_8012799C;
 s32 osEPiStartDma(void *, IoMesgD_ *, s32);
 
 Seg_ *func_800D1D9C(u32 addr, s32 len) {

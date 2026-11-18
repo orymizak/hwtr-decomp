@@ -237,7 +237,61 @@ INCLUDE_ASM("asm/nonmatchings/unit_49CF0", func_800AA054);
 
 INCLUDE_ASM("asm/nonmatchings/unit_49CF0", func_800AA214);
 
-INCLUDE_ASM("asm/nonmatchings/unit_49CF0", func_800AA80C);
+extern u8 D_800F3B3F;
+/* Draws the HUD elements enabled in D_800F3B34[idx] for player idx. */
+s32 func_800AA80C(u8 idx) {
+    u8 two;
+    u8 done;
+    Car *p;
+    u16 x;
+    u16 y;
+
+    two = D_800F3B42 == 2;
+    D_801416E0(0xFF, 0xFF, 0xFF);
+    done = 0;
+    if (D_800F3B34[idx] & 1) {
+        func_800A93B4(idx, two);
+    }
+    if (D_800F3B34[idx] & 0x10) {
+        p = func_800960D8((&D_800F3B40)[idx]);
+        D_801416E0(0xFF, 0xFF, 0xFF);
+        if (p->unk6DC != 0) {
+            if ((u8)two == 0) {
+                x = 0x102;
+                y = 0xB2;
+            } else {
+                x = 0x102;
+                y = 0xB2;
+                if (idx == 0) {
+                    y = 0x46;
+                }
+            }
+            D_801416DC(1, (u8)(p->unk6DC + 10), x, y, 2);
+        }
+    }
+    if (D_800F3B34[idx] & 2) {
+        if (D_800F3B3F != 0) {
+            func_800A978C(idx, two);
+        } else {
+            func_800A99D0(idx, two);
+        }
+        done = func_800A9C00(idx, two);
+    }
+    if (D_800F3B34[idx] & 0x200) {
+        func_800A978C(idx, two);
+        func_800A9EDC(idx, two);
+    }
+    if (D_800F3B34[idx] & 8) {
+        func_800A9604(idx, two);
+    }
+    if (((D_800F3B34[idx] & 4) != 0) & (done == 0)) {
+        func_800AA054(idx, two);
+    }
+    if (D_800F3B34[idx] & 0x20) {
+        func_800AA214(idx, two);
+    }
+    return 1;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_49CF0", func_800AAA20);
 

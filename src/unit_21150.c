@@ -58,7 +58,85 @@ s32 func_80080AD0(TrAD_ *t, u8 i) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_21150", func_80080C20);
 
-INCLUDE_ASM("asm/nonmatchings/unit_21150", func_80081384);
+typedef struct { f32 x; f32 y; f32 z; } V3f81_;
+typedef struct { u16 a; u16 key; f32 x; f32 y; f32 z; f32 rx; f32 ry; f32 rz; } Wp81_;
+typedef struct { u16 n0; u16 n; u16 ids[6]; u8 *p20; u8 *recs; } WpTbl81_;
+extern WpTbl81_ D_80114810;
+#define ABS(x) ((x) < 0.0f ? -(x) : (x))
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+#define RD16(p) ((p)[0] | ((p)[1] << 8))
+/* Picks the record for the given time: binary-searches the table by key (time / 10), then steps
+ * forward (wrapping) past every record lying within 120 units of one of the n positions. */
+u8 func_80081384(u32 time, u32 n, V3f81_ *pts, Wp81_ *out) {
+    u32 i = 0;
+    u32 lo;
+    u32 hi;
+    u32 j;
+    u8 *r;
+    u8 found;
+    u32 key;
+    f32 d[3];
+    f32 m;
+
+    if (D_80114800 == 0 || D_80114810.n == 0) {
+        return 0;
+    }
+    lo = 0;
+    time /= 10;
+    hi = (D_80114810.n - 1) / 16;
+    while (lo < hi) {
+        i = (lo + hi) >> 1;
+        r = D_80114810.recs + i * 16;
+        key = RD16(r + 2);
+        if (key < time) {
+            lo = i + 1;
+        } else if (time < key) {
+            hi = i;
+        } else {
+            lo = hi = i;
+        }
+    }
+    i = lo;
+    r = D_80114810.recs + i * 16;
+    key = RD16(r + 2);
+    if (key < time) {
+        i = 0;
+    }
+    do {
+        r = D_80114810.recs + i * 16;
+        out->a = RD16(r);
+        r += 2;
+        out->key = RD16(r);
+        r += 2;
+        out->x = (s16)RD16(r);
+        r += 2;
+        out->y = (s16)RD16(r);
+        r += 2;
+        out->z = (s16)RD16(r);
+        r += 2;
+        out->rx = (s16)RD16(r) / 4096.0f;
+        r += 2;
+        out->ry = (s16)RD16(r) / 4096.0f;
+        r += 2;
+        out->rz = (s16)RD16(r) / 4096.0f;
+        found = 0;
+        for (j = 0; j < n; j++) {
+            d[0] = out->x - pts[j].x;
+            d[1] = out->y - pts[j].y;
+            d[2] = out->z - pts[j].z;
+            m = MAX(MAX(ABS(d[0]), ABS(d[1])), ABS(d[2]));
+            if (m < 120.0f) {
+                i++;
+                found = 1;
+                if (i == D_80114810.n >> 4) {
+                    i = 0;
+                }
+                break;
+            }
+        }
+    } while (found);
+    return 1;
+}
 
 s32 func_800817A8(u8 i, V12_ *out) {
     Q817_ q;

@@ -907,7 +907,13 @@ void func_800B2C78(void) {
     func_800C9130();
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B2C94);
+/* Returns 1 when the two points are at most 10 apart on both axes. */
+u8 func_800B2C94(P16b_ a, P16b_ b) {
+    if ((u32)(a.x - b.x + 10) >= 21 || (u32)(a.y - b.y + 10) >= 21) {
+        return 0;
+    }
+    return 1;
+}
 
 s32 func_800B2CE0(u8 *t) {
     u8 i;

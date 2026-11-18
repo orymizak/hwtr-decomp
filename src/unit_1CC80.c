@@ -340,14 +340,6 @@ void func_8007C434(PoolPC4_ *pool, f32 (*m)[4]) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_1CC80", func_8007D14C);
-
-INCLUDE_ASM("asm/nonmatchings/unit_1CC80", func_8007D364);
-
-INCLUDE_ASM("asm/nonmatchings/unit_1CC80", func_8007D808);
-
-INCLUDE_ASM("asm/nonmatchings/unit_1CC80", func_8007DB10);
-
 /* TODO (Clean version):
 Definición redundante de estructuras matemáticas y de partículas (V3Q_, Q4Q_, PrtQ_, PPoolQ_, M34Q_) locales para func_8007DE54. En C limpio deben sustituirse por tipos globales compartidos (Vec3f, Vec4f, Particle, ParticlePool, Mtx34f). Se mantienen para el match.
 */
@@ -427,6 +419,64 @@ static inline void PushQ_(PPoolQ_ *pool, PrtQ_ *p) {
         }
     }
 }
+INCLUDE_ASM("asm/nonmatchings/unit_1CC80", func_8007D14C);
+
+INCLUDE_ASM("asm/nonmatchings/unit_1CC80", func_8007D364);
+
+/* Spawns a coloured particle of the given kind at pos, sized by size. */
+void func_8007D808(V3Q_ pos, u32 size, s32 kind, s32 r, s32 g, s32 b) {
+    PrtQ_ p;
+
+    p.pos = pos;
+    p.vx = (rand() & 3) + 3;
+    p.vy = (rand() & 3) + 5;
+    p.vz = rand() & 1;
+    p.f58 = 0.0f;
+    p.flags = 1;
+    p.q.x = (rand() & 7) + 12 + size / 5;
+    p.q.y = -1.0f;
+    p.q.z = rand();
+    p.q.w = ((rand() & 0xFF) - 128.0f) / 1000.0f;
+    p.life = 1000;
+    p.kind = kind;
+    p.h6C = ((rand() & 0xF) + (size / 2 + 100)) << 8;
+    p.h6E = -((rand() & 3) + 6) << 8;
+    p.r = r;
+    p.g = g;
+    p.b = b;
+    p.f5C = 100.0f;
+    PushQ_(&D_80148088, &p);
+}
+
+extern PPoolQ_ D_80134FC0;
+/* Spawns a particle of the given kind near pos (jittered by up to 64 units), sized by size. */
+void func_8007DB10(V3Q_ pos, u32 size, s32 kind) {
+    PrtQ_ p;
+
+    p.pos = pos;
+    p.pos.x += (rand() & 0x7F) - 0x3F;
+    p.pos.y += (rand() & 0x7F) - 0x3F;
+    p.pos.z += (rand() & 0x7F) - 0x3F;
+    p.vx = 0.0f;
+    p.vy = 0.0f;
+    p.vz = rand() & 1;
+    p.f58 = 0.0f;
+    p.flags = 1;
+    p.q.x = (rand() & 0xF) + 42 + size / 5;
+    p.q.y = -1.0f;
+    p.q.z = rand();
+    p.q.w = ((rand() & 0xFF) - 128.0f) / 1000.0f;
+    p.life = 1200;
+    p.kind = kind;
+    p.h6C = ((rand() & 0xF) + (size / 2 + 120)) << 8;
+    p.h6E = -((rand() & 3) + 5) << 8;
+    p.r = (rand() & 0xF) + 90;
+    p.g = (rand() & 0xF) + 90;
+    p.b = (rand() & 0x1F) + 100;
+    p.f5C = 100.0f;
+    PushQ_(&D_80134FC0, &p);
+}
+
 void func_8007DE54(V3Q_ pos, u32 n, PDef_ *def, V3Q_ vel) {
     PrtQ_ p;
     M34Q_ m;
@@ -520,6 +570,52 @@ void func_8007DE54(V3Q_ pos, u32 n, PDef_ *def, V3Q_ vel) {
     PushQ_(&D_80148088, &p);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_1CC80", func_8007E694);
+/* Spawns a kind-11 particle at pos with a velocity jittered around vel. */
+void func_8007E694(V3Q_ pos, V3Q_ vel) {
+    PrtQ_ p;
 
-INCLUDE_ASM("asm/nonmatchings/unit_1CC80", func_8007E974);
+    p.pos = pos;
+    p.vx = vel.x + (rand() & 3) - 1.0f;
+    p.vy = vel.y + (rand() & 3) - 2.0f;
+    p.vz = vel.z + (rand() & 3) - 1.0f;
+    p.f58 = -3.0f;
+    p.flags = 1;
+    p.q.x = (rand() & 3) + 14;
+    p.q.y = 1.0f;
+    p.q.z = rand();
+    p.q.w = ((rand() & 0xFF) - 128.0f) / 1000.0f;
+    p.life = 1000;
+    p.kind = 11;
+    p.h6C = ((rand() & 0xF) + 150) << 8;
+    p.h6E = -((rand() & 3) + 3) << 8;
+    p.r = 200;
+    p.g = 200;
+    p.b = 200;
+    p.f5C = 100.0f;
+    PushQ_(&D_80148088, &p);
+}
+
+/* Spawns a kind-12 particle at pos moving with vel. */
+void func_8007E974(V3Q_ pos, V3Q_ vel) {
+    PrtQ_ p;
+
+    p.pos = pos;
+    p.vx = vel.x;
+    p.vy = vel.y;
+    p.vz = vel.z;
+    p.f58 = -1.0f;
+    p.flags = 1;
+    p.q.x = (rand() & 0xF) + 24;
+    p.q.y = 2.0f;
+    p.q.z = rand();
+    p.q.w = ((rand() & 0xFF) - 128.0f) / 1000.0f;
+    p.life = 1000;
+    p.kind = 12;
+    p.h6C = ((rand() & 0xF) + 150) << 8;
+    p.h6E = -((rand() & 3) + 2) << 8;
+    p.r = 200;
+    p.g = 200;
+    p.b = 200;
+    p.f5C = 100.0f;
+    PushQ_(&D_80148088, &p);
+}

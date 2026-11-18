@@ -97,7 +97,53 @@ INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_8007A004);
 
 INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_8007A858);
 
-INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_8007A9E0);
+typedef struct { f32 x; f32 y; f32 z; } V3o_;
+static inline void V3o_Normalize(V3o_ *v) {
+    f32 inv = 1.0f / sqrtf(v->x * v->x + v->y * v->y + v->z * v->z);
+
+    v->x *= inv;
+    v->y *= inv;
+    v->z *= inv;
+}
+static inline void V3o_Cross(V3o_ *r, V3o_ *a, V3o_ *b) {
+    r->x = a->y * b->z - b->y * a->z;
+    r->y = b->x * a->z - a->x * b->z;
+    r->z = a->x * b->y - b->x * a->y;
+}
+/* Re-orthonormalises the rotation part of a 3x3 matrix, keeping the direction of its first column. */
+void func_8007A9E0(f32 *m) {
+    V3o_ a;
+    V3o_ b;
+    V3o_ c;
+    V3o_ t;
+    V3o_ u;
+
+    a.x = m[0];
+    a.y = m[3];
+    a.z = m[6];
+    b.x = m[1];
+    b.y = m[4];
+    b.z = m[7];
+    c.x = 0.0f;
+    c.y = 0.0f;
+    c.z = 0.0f;
+    V3o_Normalize(&a);
+    V3o_Cross(&t, &a, &b);
+    V3o_Normalize(&t);
+    c = t;
+    V3o_Cross(&u, &c, &a);
+    V3o_Normalize(&u);
+    b = u;
+    m[0] = a.x;
+    m[1] = b.x;
+    m[2] = c.x;
+    m[3] = a.y;
+    m[4] = b.y;
+    m[5] = c.y;
+    m[6] = a.z;
+    m[7] = b.z;
+    m[8] = c.z;
+}
 
 f32 func_8007AC64(f32 x) {
     f32 c;

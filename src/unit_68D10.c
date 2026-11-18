@@ -1,7 +1,8 @@
 #include "common.h"
 #include "include_asm.h"
-u8 func_800C8554(u16);
-u8 func_800C891C(u16);
+u8 func_800C8554(u16 mask);
+extern void (*D_80140FAC)(s32, s32, f32, f32);
+u8 func_800C891C(u16 mask);
 extern void (*D_8014556C)(s32);
 extern u8 D_800F64B0[][14];
 s32 func_800C9F18(void *,s32);
@@ -138,9 +139,159 @@ void func_800C8528(void) {
     D_80124D44 = D_80141048();
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_68D10", func_800C8554);
+/* Menu input for controller 1: newly pressed buttons allowed by mask play the menu sound and a
+ * voice line; the other buttons feed the cheat-code buffer. Returns 1 if anything was pressed. */
+u8 func_800C8554(u16 mask) {
+    u8 hit = 0;
 
-INCLUDE_ASM("asm/nonmatchings/unit_68D10", func_800C891C);
+    D_8014556C(0);
+    if (func_800C8214(0, 0xE) && (mask & 0x1)) {
+        func_800C84FC();
+        hit = 1;
+        D_80140FAC(0x2E, 1, 1.0f, 1.0f);
+        func_800C9F18(&D_800F9F70, 6);
+    }
+    if (func_800C8214(0, 0xF) && (mask & 0x2)) {
+        func_800C84FC();
+        hit = 1;
+        D_80140FAC(0x2F, 1, 1.0f, 1.0f);
+        func_800C9F18(&D_800F9F70, 8);
+    }
+    if (func_800C8214(0, 0x12) && (mask & 0x10)) {
+        func_800C84FC();
+        hit = 1;
+        D_80140FAC(0x32, 1, 1.0f, 1.0f);
+        func_800C9F18(&D_800F9F70, 2);
+    }
+    if (func_800C8214(0, 0x13) && (mask & 0x20)) {
+        func_800C84FC();
+        hit = 1;
+        D_80140FAC(0x33, 1, 1.0f, 1.0f);
+        func_800C9F18(&D_800F9F70, 0);
+    }
+    if (func_800C8214(0, 0x11) && (mask & 0x8)) {
+        func_800C84FC();
+        hit = 1;
+        D_80140FAC(0x31, 1, 1.0f, 1.0f);
+        func_800C9F18(&D_800F9F70, 12);
+    }
+    if (func_800C8214(0, 0x10) && (mask & 0x4)) {
+        func_800C84FC();
+        hit = 1;
+        D_80140FAC(0x30, 1, 1.0f, 1.0f);
+        func_800C9F18(&D_800F9F70, 10);
+    }
+    if (func_800C8214(0, 0x1A) && (mask & 0x40)) {
+        func_800C84FC();
+        hit = 1;
+        D_80140FAC(0x32, 1, 1.0f, 1.0f);
+        func_800C9F18(&D_800F9F70, 4);
+    }
+    if (func_800C8214(0, 0x14)) {
+        hit = 1;
+        func_800C81CC(0, 0x31);
+    }
+    if (func_800C8214(0, 0x15)) {
+        hit = 1;
+        func_800C81CC(0, 0x32);
+    }
+    if (func_800C8214(0, 0x16)) {
+        hit = 1;
+        func_800C81CC(0, 0x33);
+        func_800C9F18(&D_800F9F70, 0xE);
+    }
+    if (func_800C8214(0, 0x17)) {
+        hit = 1;
+        func_800C81CC(0, 0x34);
+        func_800C9F18(&D_800F9F70, 0x62);
+    }
+    if (func_800C8214(0, 0x18)) {
+        hit = 1;
+        func_800C81CC(0, 0x35);
+    }
+    if (func_800C8214(0, 0x19)) {
+        hit = 1;
+        func_800C81CC(0, 0x36);
+    }
+    return hit;
+}
+
+/* Menu input for controller 2: newly pressed buttons allowed by mask play the menu sound and a
+ * voice line; the other buttons feed the cheat-code buffer. Returns 1 if anything was pressed. */
+u8 func_800C891C(u16 mask) {
+    u8 hit = 0;
+
+    D_8014556C(1);
+    if (func_800C8214(1, 0xE) && (mask & 0x1)) {
+        func_800C84FC();
+        hit = 1;
+        D_80140FAC(0x2E, 1, 1.0f, 1.0f);
+        func_800C9F18(&D_800F9F70, 7);
+    }
+    if (func_800C8214(1, 0xF) && (mask & 0x2)) {
+        func_800C84FC();
+        hit = 1;
+        D_80140FAC(0x2F, 1, 1.0f, 1.0f);
+        func_800C9F18(&D_800F9F70, 9);
+    }
+    if (func_800C8214(1, 0x12) && (mask & 0x10)) {
+        func_800C84FC();
+        hit = 1;
+        D_80140FAC(0x32, 1, 1.0f, 1.0f);
+        func_800C9F18(&D_800F9F70, 3);
+    }
+    if (func_800C8214(1, 0x13) && (mask & 0x20)) {
+        func_800C84FC();
+        hit = 1;
+        D_80140FAC(0x33, 1, 1.0f, 1.0f);
+        func_800C9F18(&D_800F9F70, 1);
+    }
+    if (func_800C8214(1, 0x11) && (mask & 0x8)) {
+        func_800C84FC();
+        hit = 1;
+        D_80140FAC(0x31, 1, 1.0f, 1.0f);
+        func_800C9F18(&D_800F9F70, 13);
+    }
+    if (func_800C8214(1, 0x10) && (mask & 0x4)) {
+        func_800C84FC();
+        hit = 1;
+        D_80140FAC(0x30, 1, 1.0f, 1.0f);
+        func_800C9F18(&D_800F9F70, 11);
+    }
+    if (func_800C8214(1, 0x1A) && (mask & 0x40)) {
+        func_800C84FC();
+        hit = 1;
+        D_80140FAC(0x32, 1, 1.0f, 1.0f);
+        func_800C9F18(&D_800F9F70, 5);
+    }
+    if (func_800C8214(1, 0x14)) {
+        hit = 1;
+        func_800C81CC(1, 0x31);
+    }
+    if (func_800C8214(1, 0x15)) {
+        hit = 1;
+        func_800C81CC(1, 0x32);
+    }
+    if (func_800C8214(1, 0x16)) {
+        hit = 1;
+        func_800C81CC(1, 0x33);
+        func_800C9F18(&D_800F9F70, 0xF);
+    }
+    if (func_800C8214(1, 0x17)) {
+        hit = 1;
+        func_800C81CC(1, 0x34);
+        func_800C9F18(&D_800F9F70, 0x63);
+    }
+    if (func_800C8214(1, 0x18)) {
+        hit = 1;
+        func_800C81CC(1, 0x35);
+    }
+    if (func_800C8214(1, 0x19)) {
+        hit = 1;
+        func_800C81CC(1, 0x36);
+    }
+    return hit;
+}
 
 s32 func_800C8CE4(u16 a, u16 b) {
     s32 r;

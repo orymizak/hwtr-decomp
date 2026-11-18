@@ -13,7 +13,7 @@ typedef struct { u8 pad0[0x5C]; s32 kind; BodyA_ *b; } OwnA_;
 typedef struct { OwnA_ *o; V3a_ p; V3a_ n; } CtA_;
 typedef struct { f32 x; f32 y; f32 z; } V3e_;
 typedef struct { f32 m[3][3]; } M3e_;
-typedef struct { u8 pad0[0x24]; M3e_ ib; f32 f48; f32 im; f32 f50; V3e_ g; u8 pad60[0xC]; V3e_ pos; V3e_ mom; V3e_ vel; f32 speed; M3e_ r; V3e_ am; M3e_ iw; V3e_ w; f32 wlen; V3e_ f; V3e_ t; u8 frozen; } BodyE_;
+typedef struct { u8 pad0[0x24]; M3e_ ib; f32 f48; f32 im; f32 f50; V3e_ g; V3e_ f60; V3e_ pos; V3e_ mom; V3e_ vel; f32 speed; M3e_ r; V3e_ am; M3e_ iw; V3e_ w; f32 wlen; V3e_ f; V3e_ t; u8 frozen; u8 pad111[3]; s32 x114; } BodyE_;
 typedef struct { f32 x; f32 y; f32 z; } V3f_;
 typedef struct { u8 pad0[0x4C]; f32 im; u8 pad50[0x1C]; V3f_ pos; V3f_ mom; V3f_ vel; u8 pad90[0x28]; V3f_ am; f32 m[9]; V3f_ w; } BodyF_;
 typedef struct { u8 pad0[4]; s32 flags; u8 pad8[0x54]; s32 kind; BodyF_ *b; u8 pad64[0x20]; u32 u84; } OwnF_;
@@ -23,7 +23,71 @@ extern u8 D_80138D38[];
 
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_4D480", func_800AC880);
+void func_800AE8F4(BodyI_ *o, f32 x, f32 y, f32 z);
+/* Resets a rigid body: mass, identity orientation, zero motion, gravity of 386 units/s^2 along -Z,
+ * box inertia from x/y/z, and the derived world inverse inertia and angular velocity. */
+void func_800AC880(BodyE_ *b, f32 mass, f32 x, f32 y, f32 z, V3e_ p) {
+    M3e_ rt;
+    M3e_ ri;
+    V3e_ wv;
+
+    b->f48 = mass;
+    b->im = 1.0f / mass;
+    b->pos.x = 0.0f;
+    b->pos.y = 0.0f;
+    b->pos.z = 0.0f;
+    b->mom.x = 0.0f;
+    b->mom.y = 0.0f;
+    b->mom.z = 0.0f;
+    b->vel.x = 0.0f;
+    b->vel.y = 0.0f;
+    b->vel.z = 0.0f;
+    b->f60 = p;
+    b->r.m[0][0] = b->r.m[1][1] = b->r.m[2][2] = 0.0f;
+    b->r.m[0][0] = b->r.m[1][1] = b->r.m[2][2] = 1.0f;
+    b->r.m[0][1] = b->r.m[0][2] = b->r.m[1][0] = b->r.m[1][2] = b->r.m[2][0] = b->r.m[2][1] = 0.0f;
+    b->am.z = b->am.y = b->am.x = 0.0f;
+    b->t.z = b->t.y = b->t.x = 0.0f;
+    b->f.z = b->f.y = b->f.x = 0.0f;
+    b->g.x = 0.0f;
+    b->g.y = 0.0f;
+    b->f50 = 386.0f;
+    b->g.z = -1.0f;
+    func_800AE8F4((BodyI_ *)b, x, y, z);
+    rt.m[0][0] = b->r.m[0][0];
+    rt.m[0][1] = b->r.m[1][0];
+    rt.m[0][2] = b->r.m[2][0];
+    rt.m[1][0] = b->r.m[0][1];
+    rt.m[1][1] = b->r.m[1][1];
+    rt.m[1][2] = b->r.m[2][1];
+    rt.m[2][0] = b->r.m[0][2];
+    rt.m[2][1] = b->r.m[1][2];
+    rt.m[2][2] = b->r.m[2][2];
+    ri.m[0][0] = b->r.m[0][0] * b->ib.m[0][0] + b->r.m[0][1] * b->ib.m[1][0] + b->r.m[0][2] * b->ib.m[2][0];
+    ri.m[0][1] = b->r.m[0][0] * b->ib.m[0][1] + b->r.m[0][1] * b->ib.m[1][1] + b->r.m[0][2] * b->ib.m[2][1];
+    ri.m[0][2] = b->r.m[0][0] * b->ib.m[0][2] + b->r.m[0][1] * b->ib.m[1][2] + b->r.m[0][2] * b->ib.m[2][2];
+    ri.m[1][0] = b->r.m[1][0] * b->ib.m[0][0] + b->r.m[1][1] * b->ib.m[1][0] + b->r.m[1][2] * b->ib.m[2][0];
+    ri.m[1][1] = b->r.m[1][0] * b->ib.m[0][1] + b->r.m[1][1] * b->ib.m[1][1] + b->r.m[1][2] * b->ib.m[2][1];
+    ri.m[1][2] = b->r.m[1][0] * b->ib.m[0][2] + b->r.m[1][1] * b->ib.m[1][2] + b->r.m[1][2] * b->ib.m[2][2];
+    ri.m[2][0] = b->r.m[2][0] * b->ib.m[0][0] + b->r.m[2][1] * b->ib.m[1][0] + b->r.m[2][2] * b->ib.m[2][0];
+    ri.m[2][1] = b->r.m[2][0] * b->ib.m[0][1] + b->r.m[2][1] * b->ib.m[1][1] + b->r.m[2][2] * b->ib.m[2][1];
+    ri.m[2][2] = b->r.m[2][0] * b->ib.m[0][2] + b->r.m[2][1] * b->ib.m[1][2] + b->r.m[2][2] * b->ib.m[2][2];
+    b->iw.m[0][0] = ri.m[0][0] * rt.m[0][0] + ri.m[0][1] * rt.m[1][0] + ri.m[0][2] * rt.m[2][0];
+    b->iw.m[0][1] = ri.m[0][0] * rt.m[0][1] + ri.m[0][1] * rt.m[1][1] + ri.m[0][2] * rt.m[2][1];
+    b->iw.m[0][2] = ri.m[0][0] * rt.m[0][2] + ri.m[0][1] * rt.m[1][2] + ri.m[0][2] * rt.m[2][2];
+    b->iw.m[1][0] = ri.m[1][0] * rt.m[0][0] + ri.m[1][1] * rt.m[1][0] + ri.m[1][2] * rt.m[2][0];
+    b->iw.m[1][1] = ri.m[1][0] * rt.m[0][1] + ri.m[1][1] * rt.m[1][1] + ri.m[1][2] * rt.m[2][1];
+    b->iw.m[1][2] = ri.m[1][0] * rt.m[0][2] + ri.m[1][1] * rt.m[1][2] + ri.m[1][2] * rt.m[2][2];
+    b->iw.m[2][0] = ri.m[2][0] * rt.m[0][0] + ri.m[2][1] * rt.m[1][0] + ri.m[2][2] * rt.m[2][0];
+    b->iw.m[2][1] = ri.m[2][0] * rt.m[0][1] + ri.m[2][1] * rt.m[1][1] + ri.m[2][2] * rt.m[2][1];
+    b->iw.m[2][2] = ri.m[2][0] * rt.m[0][2] + ri.m[2][1] * rt.m[1][2] + ri.m[2][2] * rt.m[2][2];
+    wv.x = b->iw.m[0][0] * b->am.x + b->iw.m[0][1] * b->am.y + b->iw.m[0][2] * b->am.z;
+    wv.y = b->iw.m[1][0] * b->am.x + b->iw.m[1][1] * b->am.y + b->iw.m[1][2] * b->am.z;
+    wv.z = b->iw.m[2][0] * b->am.x + b->iw.m[2][1] * b->am.y + b->iw.m[2][2] * b->am.z;
+    b->w = wv;
+    b->frozen = 0;
+    b->x114 = 0;
+}
 
 /* TODO (Clean version): Rigid body 6-DOF time-step integrator (Semi-implicit Euler):
    - Force & Linear integration:

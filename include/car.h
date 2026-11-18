@@ -133,7 +133,7 @@ typedef struct Car {
     /* 0x4CC */ f32 k4CC;
     /* 0x4D0 */ f32 k[24];
     /* 0x530 */ f32 k530;
-    /* 0x534 */ u8 pad534[0x4];
+    /* 0x534 */ f32 k534;
     /* 0x538 */ f32 k538;
     /* 0x53C */ f32 k53C;
     /* 0x540 */ u32 w540;
@@ -151,7 +151,9 @@ typedef struct Car {
     /* 0x6C1 */ u8 unk6C1;
     /* 0x6C2 */ u8 pad6C2[0x1];
     /* 0x6C3 */ u8 unk6C3;
-    /* 0x6C4 */ u8 pad6C4[0x8];
+    /* 0x6C4 */ u8 wrongWay; /* set after driving the wrong way for 500 ms */
+    /* 0x6C5 */ u8 pad6C5[0x3];
+    /* 0x6C8 */ u32 wrongWayTime;
     /* 0x6CC */ u8 n6CC;
     /* 0x6CD */ u8 unk6CD;
     /* 0x6CE */ u8 pad6CE[0xA];

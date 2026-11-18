@@ -454,6 +454,7 @@ void func_800709CC(void) {
     D_8014108C = l + 0x40;
 }
 
+s32 *func_80070C5C(f32 src[3][4], s32 *dst);
 void func_80070BA4(s32 src) {
     s32 mtx;
 
@@ -467,7 +468,51 @@ void func_80070BA4(s32 src) {
     func_80070C5C((void *)src, (void *)mtx);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_103B0", func_80070C5C);
+/* Converts a 3x4 float transform (rows = axes, translation in column 3) to a fixed-point Mtx, transposed,
+ * scaled by 1/4 and with the translation clamped to the s16 range. */
+s32 *func_80070C5C(f32 src[3][4], s32 *dst) {
+    f32 mf[4][4];
+    s32 i;
+    s32 j;
+    s32 e1;
+    s32 e2;
+    s32 *ai;
+    s32 *af;
+
+    mf[0][0] = src[0][0] * 0.25f;
+    mf[0][1] = src[1][0] * 0.25f;
+    mf[0][2] = src[2][0] * 0.25f;
+    mf[1][0] = src[0][1] * 0.25f;
+    mf[1][1] = src[1][1] * 0.25f;
+    mf[1][2] = src[2][1] * 0.25f;
+    mf[2][0] = src[0][2] * 0.25f;
+    mf[2][1] = src[1][2] * 0.25f;
+    mf[2][2] = src[2][2] * 0.25f;
+    mf[3][0] = src[0][3] * 0.25f;
+    mf[3][1] = src[1][3] * 0.25f;
+    mf[3][2] = src[2][3] * 0.25f;
+    mf[0][3] = 0.0f;
+    mf[1][3] = 0.0f;
+    mf[2][3] = 0.0f;
+    mf[3][3] = 1.0f;
+    mf[3][0] = (mf[3][0] < -32767.0f) ? -32767.0f : mf[3][0];
+    mf[3][1] = (mf[3][1] < -32767.0f) ? -32767.0f : mf[3][1];
+    mf[3][2] = (mf[3][2] < -32767.0f) ? -32767.0f : mf[3][2];
+    mf[3][0] = (mf[3][0] > 32767.0f) ? 32767.0f : mf[3][0];
+    mf[3][1] = (mf[3][1] > 32767.0f) ? 32767.0f : mf[3][1];
+    mf[3][2] = (mf[3][2] > 32767.0f) ? 32767.0f : mf[3][2];
+    ai = dst;
+    af = dst + 8;
+    for (i = 0; i < 4; i++) {
+        for (j = 0; j < 2; j++) {
+            e1 = mf[i][j * 2] * 65536.0f;
+            e2 = mf[i][j * 2 + 1] * 65536.0f;
+            *(ai++) = (e1 & 0xFFFF0000) | ((u32)e2 >> 16);
+            *(af++) = ((e1 << 16) & 0xFFFF0000) | (e2 & 0xFFFF);
+        }
+    }
+    return dst;
+}
 
 void func_80070E58(void) {
     register f32 vh;

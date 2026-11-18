@@ -15,7 +15,7 @@ extern s32 D_8014D33C;
 s32 osSetIntMask(s32);
 extern s8 D_8014D97D;
 extern u8 D_8014D97C;
-typedef struct ClientS_ { struct ClientS_ *next; void *mq; u16 mask; } ClientS_;
+typedef struct ClientS_ { struct ClientS_ *next; void *mq; s16 mask; } ClientS_;
 typedef struct { u8 b[0x18]; } MqS_;
 typedef struct { u8 p0[0x10]; u8 list[0x40]; void *msgQ; void *msg; } ScTaskS_;
 typedef struct { s16 retraceMsg; s16 prenmiMsg; MqS_ audioRequestMQ; void *audioBuf[8]; MqS_ gfxMQ; void *gfxBuf[8]; MqS_ retraceMQ; void *retraceBuf[8]; MqS_ rspMQ; void *rspBuf[8]; MqS_ rdpMQ; void *rdpBuf[8]; MqS_ waitMQ; void *waitBuf[8]; u8 p154[4]; u8 schedulerThread[0x1B0]; u8 audioThread[0x1B0]; u8 graphicsThread[0x1B0]; ClientS_ *clientList; ScTaskS_ *curGraphicsTask; ScTaskS_ *curAudioTask; ScTaskS_ *graphicsTaskSuspended; u32 frameRate; u8 retraceCount; u8 frameBufferNum; } SchedS_;
@@ -47,7 +47,7 @@ void osViSetYScale(f32);
 void func_800D57C4(void);
 void func_800D5ABC(void);
 void func_800D5C18(void);
-void func_800D5A5C(u16 *msg);
+void func_800D5A5C(s16 *msg);
 void func_800D5D5C(FrameR_ *f);
 extern u8 D_801345B0;
 
@@ -105,7 +105,7 @@ void func_800D57C4(void) {
         switch ((s32)msg) {
         case 0x29A:
             D_80140E40++;
-            func_800D5A5C((u16 *)&D_8014D300.retraceMsg);
+            func_800D5A5C(&D_8014D300.retraceMsg);
             if (D_801345B0) {
                 if (beforeResetFrame) {
                     beforeResetFrame--;
@@ -119,7 +119,7 @@ void func_800D57C4(void) {
             break;
         case 0x29D:
             D_801345B0 = 1;
-            func_800D5A5C((u16 *)&D_8014D300.prenmiMsg);
+            func_800D5A5C(&D_8014D300.prenmiMsg);
             if (D_800FB180) {
                 D_800FB180();
             }
@@ -174,7 +174,16 @@ void func_800D59E0(ClientS_ *c) {
     osSetIntMask(mask);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_76160", func_800D5A5C);
+/* nuScEventBroadcast: sends msg to every client whose mask includes its type. */
+void func_800D5A5C(s16 *msg) {
+    ClientS_ *p;
+
+    for (p = D_8014D300.clientList; p != 0; p = p->next) {
+        if (p->mask & *msg) {
+            osSendMesg(p->mq, msg, 0);
+        }
+    }
+}
 
 void func_800D5ABC(void) {
     ScTaskS_ *gfxTask;
