@@ -1,6 +1,12 @@
 #include "common.h"
 #include "include_asm.h"
 f32 sqrtf(f32);
+/* TODO (Clean version): Unify duplicate physics structs across unit files into a shared header (e.g. physics.h):
+   - Replace V3a_, V3e_, V3f_ with Vec3f.
+   - Replace BodyA_, BodyE_, BodyF_ with a unified RigidBody struct (offsets 0x6C pos, 0x78 mom, 0x84 vel, 0x94 rot, 0xB8 am, 0xC4 iw, 0xE8 w, 0xF8 f, 0x104 t).
+   - Replace OwnA_, OwnF_ with Collider (offset 0x5C kind, 0x60 body, 0x84 mass/weight).
+   - Replace CtA_, CtF_ with Contact / CollisionPair.
+*/
 typedef struct { f32 x; f32 y; f32 z; } V3a_;
 typedef struct { u8 pad0[0x4C]; f32 im; u8 pad50[0x1C]; V3a_ pos; V3a_ mom; V3a_ vel; u8 pad90[0x28]; V3a_ am; f32 m[9]; V3a_ w; } BodyA_;
 typedef struct { u8 pad0[0x5C]; s32 kind; BodyA_ *b; } OwnA_;
@@ -19,6 +25,26 @@ extern u8 D_80138D38[];
 
 INCLUDE_ASM("asm/nonmatchings/unit_4D480", func_800AC880);
 
+/* TODO (Clean version): Rigid body 6-DOF time-step integrator (Semi-implicit Euler):
+   - Force & Linear integration:
+       b->f.x += b->g.x * (b->mass * b->gravity_scale);
+       b->mom += b->f * dt;
+       b->vel = b->mom * b->im;
+       if (b->speed > 2304.0f) { b->mom *= 2304.0f / b->speed; b->vel *= 2304.0f / b->speed; b->speed = 2304.0f; }
+       b->pos += b->vel * dt;
+       b->f = (Vec3f){0, 0, 0};
+   - Orientation & Angular integration:
+       b->am += b->t * dt;
+       b->iw = b->r * b->ib * transpose(b->r); // World inverse inertia tensor
+       b->w = b->iw * b->am;                   // Angular velocity
+       if (b->wlen > 12.56636f) { // Clamp to 4*pi rad/s (2 rev/s)
+           f32 k = 12.56636f / b->wlen;
+           b->am *= k; b->w *= k; b->wlen = 12.56636f;
+       }
+       Mat3f S = skew_symmetric(b->w * dt);
+       b->r += S * b->r;                       // dR = [w*dt]x * R
+       b->t = (Vec3f){0, 0, 0};
+*/
 void func_800ACDC8(BodyE_ *b, f32 dt) {
     V3e_ tmp;
     V3e_ v;
@@ -151,6 +177,25 @@ void func_800ACDC8(BodyE_ *b, f32 dt) {
     }
 }
 
+/* TODO (Clean version): Rigid body collision impulse against a static surface with Coulomb friction:
+   - Relative contact velocity:
+       Vec3f r = vec3_sub(c->p, b->pos);
+       Vec3f v = vec3_add(b->vel, vec3_cross(b->w, r));
+       f32 vn = vec3_dot(c->n, v);
+       if (vn > 0.0f) return 0.0f; // Separating
+   - Normal impulse:
+       f32 e = (c->o->kind == 6) ? 1.3f : 0.5f; // Kind 6 has super-elastic restitution
+       f32 denom = b->im + vec3_dot(c->n, vec3_cross(mat3_mul_vec3(b->inv_inertia, vec3_cross(r, c->n)), r));
+       f32 imp = (-e * vn) / denom;
+       Vec3f J = vec3_scale(c->n, imp);
+   - Dynamic friction impulse (clamped if tangential displacement exceeds threshold):
+       Vec3f vt = vec3_sub(v, vec3_scale(c->n, vn));
+       if (fabsf(vt.x) > 1.0f || fabsf(vt.y) > 1.0f || fabsf(vt.z) > 1.0f)
+           J = vec3_add(J, vec3_scale(vec3_normalize(vt), -imp * fr));
+   - State update:
+       b->mom += J; b->vel = b->mom * b->im;
+       b->am += vec3_cross(r, J); b->w = mat3_mul_vec3(b->inv_inertia, b->am);
+*/
 f32 func_800AD774(CtA_ *c, f32 fr) {
     V3a_ p;
     V3a_ n;
@@ -251,6 +296,19 @@ f32 func_800AD774(CtA_ *c, f32 fr) {
     return imp;
 }
 
+/* TODO (Clean version): Two-body collision impulse resolution:
+   - Coefficient of restitution table lookup based on collider kinds:
+       f32 e = D_80138D38[restitution_index(o0->kind, o1->kind)] / 10.0f;
+   - Immovable body mass fallback:
+       if (body == NULL && (collider->flags & 0x6))
+           denom_term = 386.0f / (f32)collider->weight; // Standard gravity g (in/s^2) / weight W = 1/mass
+   - Flags:
+       o->flags & 0x40: Attacker boost (magnifies impulse to opponent by x10 if opponent kind == 4, else x4).
+       o->flags & 0x60: Immovable/kinematic mask (skips impulse application to this body).
+   - Impulses:
+       b1->mom += j1; b1->am += vec3_cross(r1, j1);
+       b2->mom -= j2; b2->am -= vec3_cross(r2, j2);
+*/
 f32 func_800ADE1C(CtF_ *c) {
     V3f_ p;
     V3f_ n;
@@ -455,6 +513,17 @@ f32 func_800ADE1C(CtF_ *c) {
     return f;
 }
 
+/* TODO (Clean version): Box moment of inertia tensor and its inverse (dimensions x, y, z; mass m):
+   void rigid_body_set_box_inertia(BodyI_ *o, f32 x, f32 y, f32 z) {
+       f32 c = (1.0f / 12.0f) * o->m;
+       memset(o->i, 0, sizeof(o->i));
+       memset(o->ib, 0, sizeof(o->ib));
+       o->i[0]  = c * (y * y + z * z); o->ib[0] = 1.0f / o->i[0];
+       o->i[4]  = c * (x * x + z * z); o->ib[4] = 1.0f / o->i[4];
+       o->i[8]  = c * (x * x + y * y); o->ib[8] = 1.0f / o->i[8];
+   }
+   Note: chained assignment in original code redundantly zeroes i[4] and ib[4] before setting them.
+*/
 void func_800AE8F4(BodyI_ *o, f32 x, f32 y, f32 z) {
     f32 yy;
     f32 zz;
@@ -479,6 +548,14 @@ void func_800AE8F4(BodyI_ *o, f32 x, f32 y, f32 z) {
     o->ib[8] = 12.0f / c;
 }
 
+/* TODO (Clean version): Project angular momentum vector onto body local orientation axis i (0=X, 1=Y, 2=Z):
+   void body_project_angular_momentum_axis(RigidBody *b, s32 axis) {
+       // Column 'axis' of orientation matrix r (0x94) is the world-space unit vector of local axis
+       Vec3f local_axis = { b->r.m[0][axis], b->r.m[1][axis], b->r.m[2][axis] };
+       f32 d = vec3_dot(local_axis, b->am); // Offset 0xB8 is angular momentum (am)
+       b->am = vec3_scale(local_axis, d);
+   }
+*/
 void func_800AE9C4(u8 *t, u8 i) {
     f32 v[3];
     f32 d;

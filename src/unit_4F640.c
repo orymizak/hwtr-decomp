@@ -1,5 +1,20 @@
 #include "common.h"
 #include "include_asm.h"
+/* TODO (Clean version): Replace temporary types TAE_ and E14t_ with unified types once layout is verified:
+   typedef struct {
+       s32 active;
+       u8 pad[16];
+   } TextAnimEntry;
+
+   typedef struct {
+       u8 pad0[0x18];
+       u8 count;
+       u8 pad1[3];
+       s32 flags;
+       u8 pad2[0x10];
+       TextAnimEntry entries[];
+   } TextAnimGroup;
+*/
 typedef struct { s32 w; u8 p[16]; } E14t_;
 typedef struct { u8 pad[0x18]; u8 n; u8 p2[3]; s32 w1C; u8 p3[0x10]; E14t_ e[1]; } TAE_;
 extern s32 (*D_801416AC)();
@@ -33,6 +48,9 @@ s32 func_800AEA40(TAE_ *t) {
         D_801345C8 = 1;
     }
     D_801415B8 = t->n;
+    /* TODO (Clean version): Simplify flag assignment:
+       D_800F3B81 = (t->w1C & 0x200) != 0;
+    */
     if (t->w1C & 0x200) {
         D_800F3B81 = 1;
     } else {
@@ -73,6 +91,12 @@ void func_800AEE20(u32 dt) {
             fps = 1000.0f / (f32)dt;
         }
         sprintf(buf, D_80100AF0, (s32)(fps + 0.5f));
+        /* TODO (Clean version / Optimization): Avoid calling strlen(buf) on each iteration; cache length in a local variable:
+           u32 len = strlen(buf);
+           for (i = 0; i < len; i++) {
+               D_801416DC(0, buf[i], i * 16 + 16, 16, 0);
+           }
+        */
         for (i = 0; i < strlen(buf); i++) {
             D_801416DC(0, buf[i], i * 16 + 16, 16, 0);
         }

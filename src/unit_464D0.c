@@ -220,10 +220,129 @@ void func_800A6630(void *arg0) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_464D0", func_800A66C0);
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
+typedef struct { u8 p0[0x64]; Car *car; } ContactObj_;
+typedef struct { ContactObj_ *obj; u8 p4[0xC]; Vec3f n; } Contact_;
+void func_800961B0(Car *p, u8 id, u8 flip);
+/* Crashes the car when the impact speed along the contact normal exceeds a threshold that grows with
+ * its k53C factor (clamped to [0.25, 4]) and the normal's alignment with the car's forward axis. */
+void func_800A66C0(Contact_ *h) {
+    Car *car;
+    Vec3f fwd;
+    f32 s;
+    f32 d;
+    f32 speed;
+    f32 limit;
+    f32 nx;
+    f32 ny;
+    f32 nz;
+
+    car = h->obj->car;
+    s = MIN(MAX(car->k53C, 0.25f), 4.0f);
+    fwd.x = car->rot.m[0][2];
+    fwd.y = car->rot.m[1][2];
+    fwd.z = car->rot.m[2][2];
+    nx = h->n.x;
+    ny = h->n.y;
+    nz = h->n.z;
+    d = nx * fwd.x + ny * fwd.y + nz * fwd.z;
+    d = MAX(d, 0.0f);
+    s += d;
+    speed = -(car->vel.x * nx + car->vel.y * ny + car->vel.z * nz);
+    if (s < 1.0f) {
+        limit = (s - 0.25f) * 938.6667f + -704.0f + 2112.0f;
+    } else {
+        limit = (s - 1.0f) * 821.3333f + 0.0f + 2112.0f;
+    }
+    if (limit < speed) {
+        func_800961B0(car, 0, 0);
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_464D0", func_800A6850);
 
-INCLUDE_ASM("asm/nonmatchings/unit_464D0", func_800A6BA4);
+typedef struct { u16 kind; u8 id; u8 idx; s8 rot[6]; s16 pos[3]; } PrtRec_;
+/* Packs the active parts into 16-byte records (two rotation rows as s8, position as s16); returns the
+ * bytes written, 0 if out (size bytes) is too small. */
+u32 func_800A6BA4(PrtRec_ *out, u32 size) {
+    u32 n;
+    Prta5_ *e;
+    u32 i;
+    PrtRec_ *r;
+    s32 v;
+
+    n = 0;
+    for (e = (Prta5_ *)&D_8011E870, i = 0; i < 8; e++, i++) {
+        if (e->active == 0) {
+            continue;
+        }
+        n += sizeof(PrtRec_);
+        if (size < n) {
+            return 0;
+        }
+        r = out++;
+        r->kind = e->active;
+        v = e->m124.m[0][0] * 127.0f;
+        if (v < -127) {
+            v = -127;
+        }
+        if (v > 127) {
+            v = 127;
+        }
+        r->rot[0] = v;
+        v = e->m124.m[0][1] * 127.0f;
+        if (v < -127) {
+            v = -127;
+        }
+        if (v > 127) {
+            v = 127;
+        }
+        r->rot[1] = v;
+        v = e->m124.m[0][2] * 127.0f;
+        if (v < -127) {
+            v = -127;
+        }
+        if (v > 127) {
+            v = 127;
+        }
+        r->rot[2] = v;
+        v = e->m124.m[1][0] * 127.0f;
+        if (v < -127) {
+            v = -127;
+        }
+        if (v > 127) {
+            v = 127;
+        }
+        r->rot[3] = v;
+        v = e->m124.m[1][1] * 127.0f;
+        if (v < -127) {
+            v = -127;
+        }
+        if (v > 127) {
+            v = 127;
+        }
+        r->rot[4] = v;
+        v = e->m124.m[1][2] * 127.0f;
+        if (v < -127) {
+            v = -127;
+        }
+        if (v > 127) {
+            v = 127;
+        }
+        r->rot[5] = v;
+        r->pos[0] = e->vFC.x;
+        r->pos[1] = e->vFC.y;
+        r->pos[2] = e->vFC.z;
+        if (e->active == 1) {
+            r->id = e->id;
+            r->idx = e->idx;
+        }
+    }
+    if (n == 0) {
+        return (size >= 4) ? 4 : 0;
+    }
+    return n;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_464D0", func_800A6D98);

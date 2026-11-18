@@ -39,7 +39,24 @@ void *func_800A7F98(VecA7_ *v) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_48B00", func_800A8050);
+/* Removes element i. Note: when shrinking, the tail goes to n + i rather than n + size * i (original behavior). */
+void func_800A8050(VecA7_ *v, u16 i) {
+    u8 *n;
+    u16 j;
+
+    if ((v->count - 1) % v->cap == 0) {
+        n = Memory_Alloc(v->size * (v->count - 1));
+        memcpy(n, v->data, v->size * i);
+        memcpy(n + i, v->data + v->size * (i + 1), v->size * v->count - i - 1);
+        Memory_Free(v->data);
+        v->data = n;
+    } else {
+        for (j = i + 1; j < v->count; j++) {
+            memcpy(v->data + v->size * (j - 1), v->data + v->size * j, v->size);
+        }
+    }
+    v->count--;
+}
 
 u8 *func_800A81B4(VecA7_ *v, u16 i) {
     return v->data + v->size * i;

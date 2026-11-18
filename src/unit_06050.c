@@ -33,7 +33,9 @@ typedef struct {
     /* 0x0C */ u16 nC;
     /* 0x0E */ u16 nE;
     /* 0x10 */ u16 n10;
-    /* 0x12 */ u8 p12[0x1A];
+    /* 0x12 */ u8 p12[2];
+    /* 0x14 */ Vec3_ v14;
+    /* 0x20 */ Vec3_ v20;
     /* 0x2C */ Node54_ *nodes;
     /* 0x30 */ u8 p30[8];
     /* 0x38 */ Node_ *links;
@@ -46,7 +48,7 @@ typedef struct {
 typedef struct { s32 d[0x114 / 4]; } Big114_;
 typedef struct { s32 d[0x40 / 4]; } Big40_;
 typedef struct { u8 p0[9]; u8 b9; } MdlMat_;
-typedef struct { u8 p0[0x30]; s32 flags; u8 p34[8]; MdlMat_ *mat; } MdlInst_;
+typedef struct { u8 p0[0x30]; s32 flags; u8 p34[8]; MdlMat_ *mat; u8 p40[0x44]; s32 flags84; } MdlInst_;
 typedef struct {
     /* 0x000 */ u8 p0[0x2C];
     /* 0x02C */ MdlInst_ *inst;
@@ -68,6 +70,8 @@ typedef struct {
     /* 0x13C */ Vec4L_ v;
     /* 0x14C */ u8 b14C;
     /* 0x14D */ u8 c[3];
+    /* 0x150 */ u8 p150[0x10];
+    /* 0x160 */ f32 m160[3][4];
 } Model_;
 typedef struct { s32 cur[6]; s32 tgt[6]; s32 dt; } Fade65_;
 typedef struct { f32 x; f32 y; f32 z; } V3f69_;
@@ -177,7 +181,55 @@ s32 func_80065584(void) {
     return 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_800655CC);
+typedef struct { u8 p0[4]; char name[0x13]; u8 variant; } TrackName_;
+extern char D_800FE944[];
+extern char *D_800F01E0[8];
+extern u8 D_800F0200[8][3];
+s32 sprintf(char *, const char *, ...);
+s32 strcmp(const char *a, const char *b);
+char *strlwr(char *);
+s32 func_8006586C(void);
+s32 func_8007319C(char *);
+World_ *func_800731DC(s32);
+void func_800734AC(World_ *);
+void func_8006DD34(World_ *);
+void func_8006572C(char *, u8);
+void func_8006A540(Vec3_ *, Vec3_ *, u8, u8, u8);
+
+/* Loads "<name><variant>.WLD" and applies the matching per-track RGB color (white if none). */
+s32 func_800655CC(TrackName_ *t) {
+    char buf[64];
+    World_ **wp = &D_8013816C;
+    u8 r;
+    u8 g;
+    u8 b;
+    u32 i;
+
+    sprintf(buf, D_800FE944, t->name, t->variant);
+    if (*wp != NULL) {
+        func_8006586C();
+    }
+    *wp = func_800731DC(func_8007319C(buf));
+    if (D_80138AB0 == 1) {
+        func_800734AC(*wp);
+    }
+    func_8006DD34(*wp);
+    b = 255;
+    g = 255;
+    r = 255;
+    func_8006572C(t->name, t->variant);
+    for (i = 0; i < 8; i++) {
+        strlwr(buf);
+        if (strcmp(buf, D_800F01E0[i]) == 0) {
+            r = D_800F0200[i][0];
+            g = D_800F0200[i][1];
+            b = D_800F0200[i][2];
+            break;
+        }
+    }
+    func_8006A540(&D_8013816C->v14, &D_8013816C->v20, r, g, b);
+    return 1;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_8006572C);
 
@@ -491,7 +543,35 @@ s32 func_800682A4(s32 unused, char *name, Big114_ *a, Big40_ *b) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80068390);
+typedef struct { s32 a; s32 b; } Pair68_;
+void func_8006DB84(s32 a, f32 b, u8 c);
+
+/* Unless mode is 2, passes the model matrix moved 96 units along its local Y axis to func_8006DB84. */
+void func_80068390(u8 slot, u8 mode, Pair68_ unused) {
+    f32 m[3][4];
+
+    D_80138A6C[slot] = 1;
+    D_80138174[slot]->inst->flags84 &= ~0x40;
+    if (mode != 2) {
+        m[0][0] = D_80138174[slot]->m160[0][0];
+        m[0][1] = D_80138174[slot]->m160[0][1];
+        m[0][2] = D_80138174[slot]->m160[0][2];
+        m[0][3] = D_80138174[slot]->m160[0][3];
+        m[1][0] = D_80138174[slot]->m160[1][0];
+        m[1][1] = D_80138174[slot]->m160[1][1];
+        m[1][2] = D_80138174[slot]->m160[1][2];
+        m[1][3] = D_80138174[slot]->m160[1][3];
+        m[2][0] = D_80138174[slot]->m160[2][0];
+        m[2][1] = D_80138174[slot]->m160[2][1];
+        m[2][2] = D_80138174[slot]->m160[2][2];
+        m[2][3] = D_80138174[slot]->m160[2][3];
+        m[0][3] += m[0][0] * 0.0f + m[0][1] * 96.0f + m[0][2] * 0.0f;
+        m[1][3] += m[1][0] * 0.0f + m[1][1] * 96.0f + m[1][2] * 0.0f;
+        m[2][3] += m[2][0] * 0.0f + m[2][1] * 96.0f + m[2][2] * 0.0f;
+        func_8006DB84((s32)m, 1.0f, 1);
+    }
+    D_80138174[slot]->b105 = 0;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80068504);
 

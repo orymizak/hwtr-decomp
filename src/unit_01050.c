@@ -34,8 +34,8 @@ typedef struct N64c_ { f32 x; f32 y; f32 z; f32 v; s32 f10; struct N64c_ *next; 
 typedef struct { f32 x; f32 y; f32 z; } V3r_;
 typedef struct { s32 w; u8 p4[0x10]; } E14s_;
 typedef struct { u32 f0; u8 p4[0x14]; u8 n18; u8 p19[3]; u32 f1C; u8 p20[0x10]; E14s_ e[1]; } Cfg9_;
+f32 func_800649F8(void *pos, void *vel);
 s32 func_80064B58(void *);
-f32 func_800649F8(void *, void *);
 extern u8 D_80138AAE;
 extern u8 D_80138AAF;
 extern u8 D_80138AB1;
@@ -1075,7 +1075,35 @@ f32 func_80064988(void *a) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", func_800649F8);
+f32 func_80064D3C(V3r_ *a, V3r_ *off, V3r_ *b);
+/* Doppler pitch offset (clamped to +-7) for a source at pos moving at vel. */
+f32 func_800649F8(void *pos, void *vel) {
+    f32 a;
+    f32 b;
+    f32 ratio;
+
+    /* The listener velocity (D_800EFF14) directly follows its position (D_800EFF08). */
+    a = func_80064D3C(pos, &((V3r_ *)&D_800EFF08)[1], (V3r_ *)&D_800EFF08);
+    b = func_80064D3C((V3r_ *)&D_800EFF08, vel, pos);
+    if (b == 1.0f) {
+        return 0.0f;
+    }
+    ratio = (a / 13500.0 + 1.0) / (1.0 - b / 13500.0);
+    if (ratio < 1.0f) {
+        ratio = 1.0f / ratio;
+        if (ratio <= 2.0f) {
+            return -(ratio - 1.0f) * 7.0f;
+        }
+        return -7.0f;
+    }
+    if (ratio > 1.0f) {
+        if (ratio <= 2.0f) {
+            return (ratio - 1.0f) * 7.0f;
+        }
+        return 7.0f;
+    }
+    return 0.0f;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80064B58);
 

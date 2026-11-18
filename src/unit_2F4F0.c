@@ -13,6 +13,29 @@ extern Ent64_ D_801185B4[];
 extern u8 D_80118620;
 typedef struct { s32 x; s32 y; s32 z; } Pos_;
 typedef Vec3f Vec3f_;
+/* TODO (Clean version): Unify CamE_, Cam90_, Ent64_, and Ent64w_ into a single Camera struct (sizeof 0x64):
+typedef struct {
+    u32 unk0;
+    Vec3f_ pos;
+    Vec3f_ vel;
+    f32 m[3][3];
+    f32 fov;
+    s32 mode;
+    u8 pt;
+    u8 car;
+    u8 b4A;
+    u8 b4B;
+    u8 b4C;
+    u8 pad4D[3];
+    s32 timer;
+    u32 shake;
+    f32 f58;
+    u8 b5C;
+    u8 pad5D[3];
+    u32 b60;
+} Camera;
+extern Camera gCameras[];
+*/
 typedef struct { u8 p0[0x44]; s32 mode; u8 pt; u8 car; u8 p4A[2]; u8 b4C; u8 p4D[3]; s32 timer; } Cam90_;
 typedef struct { u8 p0[4]; Vec3f_ pos; Vec3f_ vel; f32 m[3][3]; f32 fov; s32 mode; u8 pt; u8 car; u8 b4A; u8 b4B; u8 b4C; u8 p4D[7]; u32 shake; f32 f58; u8 b5C; u8 p5D[3]; u32 b60; } CamE_;
 typedef struct { s32 mode; Vec3f_ ofs; f32 dist; } CamT_;
@@ -118,6 +141,21 @@ void func_8008EA6C(u32 dt) {
         fBC = car->fBC;
         switch ((*cam).mode) {
         case 0:
+            /* TODO (Clean version): Replace repetitive inlined vector and matrix math with helper macros:
+             *   #define VEC3_DOT(a, b) ((a).x * (b).x + (a).y * (b).y + (a).z * (b).z)
+             *   #define VEC3_CROSS(dst, a, b) do { \
+             *       (dst).x = (a).y * (b).z - (a).z * (b).y; \
+             *       (dst).y = (a).z * (b).x - (a).x * (b).z; \
+             *       (dst).z = (a).x * (b).y - (a).y * (b).x; \
+             *   } while (0)
+             *   #define VEC3_NORMALIZE(v) do { \
+             *       f32 _l = sqrtf(VEC3_DOT(v, v)); \
+             *       f32 _i = 1.0f / _l; \
+             *       (v).x *= _i; (v).y *= _i; (v).z *= _i; \
+             *   } while (0)
+             *   Mtx33_MultVec3f(m, &((CamT_ *)D_80118624)[cam->pt].ofs, &t);
+             *   VEC3_ADD(cam->pos, pos, t);
+             */
             tmp.x = m[0][0] * (((CamT_ *)D_80118624)[(*cam).pt]).ofs.x + m[0][1] * (((CamT_ *)D_80118624)[(*cam).pt]).ofs.y + m[0][2] * (((CamT_ *)D_80118624)[(*cam).pt]).ofs.z;
             tmp.y = m[1][0] * (((CamT_ *)D_80118624)[(*cam).pt]).ofs.x + m[1][1] * (((CamT_ *)D_80118624)[(*cam).pt]).ofs.y + m[1][2] * (((CamT_ *)D_80118624)[(*cam).pt]).ofs.z;
             tmp.z = m[2][0] * (((CamT_ *)D_80118624)[(*cam).pt]).ofs.x + m[2][1] * (((CamT_ *)D_80118624)[(*cam).pt]).ofs.y + m[2][2] * (((CamT_ *)D_80118624)[(*cam).pt]).ofs.z;
@@ -306,6 +344,10 @@ void func_8008EA6C(u32 dt) {
             { (*cam).m[0][0] = (r).x; (*cam).m[1][0] = (r).y; (*cam).m[2][0] = (r).z; (*cam).m[0][1] = ( f).x; (*cam).m[1][1] = ( f).y; (*cam).m[2][1] = ( f).z; (*cam).m[0][2] = ( u).x; (*cam).m[1][2] = ( u).y; (*cam).m[2][2] = ( u).z; };
             break;
         case 4:
+            /* TODO (Clean version / Bug check): func_800908A0 is declared as void(void) but invoked
+             * as void (*)(CamE_ *, f32). If mode 4 is implemented, align the function prototype:
+             *   void func_800908A0(CamE_ *cam, f32 k);
+             */
             ((void (*)(CamE_ *, f32))func_800908A0)(&(*cam), k);
             break;
         }
@@ -344,6 +386,16 @@ void func_8008EA6C(u32 dt) {
 INCLUDE_ASM("asm/nonmatchings/unit_2F4F0", func_8009013C);
 
 void func_80090410(u8 i, Pos_ *a1, f32 *a2, f32 *a3, f32 *a4, f32 *a5, s8 *a6, u8 *a7) {
+    /* TODO (Clean version): Replace raw byte indexing with Camera struct member accesses:
+     *   CamE_ *cam = &((CamE_ *)D_80118558)[i];
+     *   *a1 = *(Pos_ *)&cam->pos;
+     *   a2[0] = cam->m[0][0]; a2[1] = cam->m[1][0]; a2[2] = cam->m[2][0];
+     *   a3[0] = cam->m[0][1]; a3[1] = cam->m[1][1]; a3[2] = cam->m[2][1];
+     *   a4[0] = cam->m[0][2]; a4[1] = cam->m[1][2]; a4[2] = cam->m[2][2];
+     *   *a5 = cam->fov;
+     *   *a6 = (cam->mode == 0);
+     *   *a7 = cam->car;
+     */
     u8 *p = D_80118558 + i * 0x64;
 
     *a1 = *(Pos_ *)(p + 4);
@@ -362,6 +414,14 @@ void func_80090410(u8 i, Pos_ *a1, f32 *a2, f32 *a3, f32 *a4, f32 *a5, s8 *a6, u
 }
 
 void func_800904C4(V12_ *a, V12_ *b, V3f_ *c, V3f_ *d) {
+    /* TODO (Clean version): D_8011855C, D_80118568, and D_80118578 are pos, vel, and rot columns
+     * of the first camera in D_80118558:
+     *   CamE_ *cam0 = (CamE_ *)D_80118558;
+     *   *a = *(V12_ *)&cam0->pos;
+     *   *b = *(V12_ *)&cam0->vel;
+     *   c->x = cam0->m[0][1]; c->y = cam0->m[1][1]; c->z = cam0->m[2][1];
+     *   d->x = cam0->m[0][2]; d->y = cam0->m[1][2]; d->z = cam0->m[2][2];
+     */
     *a = D_8011855C;
     *b = D_80118568;
     c->x = D_80118578[0][0];
@@ -374,6 +434,9 @@ void func_800904C4(V12_ *a, V12_ *b, V3f_ *c, V3f_ *d) {
 
 
 void func_80090550(s32 arg0, s8 arg1) {
+    /* TODO (Clean version): &D_801185A2 is &((CamE_ *)D_80118558)[0].b4A (offset 0x4A). Refactor as:
+     *   ((CamE_ *)D_80118558)[arg0 & 0xFF].b4A = arg1;
+     */
     *(u8 *)(&D_801185A2 + ((arg0 & 0xFF) * 0x64)) = arg1;
 }
 
@@ -406,6 +469,11 @@ void func_80090578(Cam90_ *cam, u32 dt) {
         bestPt = 0;
         for (i = 0; i < D_80141718(); i++) {
             D_8014171C(i, &pos, b, &flags, &x);
+            /* TODO (Clean version / Bug check): 'flags |= 1;' forces the 'if (flags & 1)' branch,
+             * making the 'else' branch (radius = 0.0f) dead code. Verify if flags was intended
+             * to be tested without unconditional mutation:
+             *   radius = (flags & 1) ? 5400.0f : 0.0f;
+             */
             flags |= 1;
             if (flags & 2) {
                 continue;
@@ -442,6 +510,11 @@ void func_80090578(Cam90_ *cam, u32 dt) {
             v = flags;
             cam->car = bestCar;
             cam->pt = bestPt;
+            /* TODO (Clean version / Bug check): '(-(v & 1) & 3) | 2' simplifies to (v & 1) ? 3 : 2.
+             * Because 'flags |= 1' is unconditionally executed in the loop above, v & 1 is always 1 (mode 3).
+             * Clean equivalent:
+             *   cam->mode = (v & 1) ? 3 : 2;
+             */
             cam->mode = (-(v & 1) & 3) | 2;
         } else {
             do {
@@ -474,6 +547,15 @@ s32 func_800908A8(void) {
     return (n - 1) * 200;
 }
 
+/* TODO (Clean version): D_801185B4[i].on and D_801185B8[i].w correspond to fields b5C (0x5C)
+ * and b60 (0x60) of CamE_:
+ *   for (i = 0; i < D_80118620; i++) {
+ *       if (gCameras[i].b5C != 0) {
+ *           gCameras[i].b60 = 5000;
+ *           gCameras[i].b5C = 0;
+ *       }
+ *   }
+ */
 void func_800908E8(void) {
     u32 i;
 
@@ -501,6 +583,11 @@ INCLUDE_ASM("asm/nonmatchings/unit_2F4F0", func_80090D80);
 
 INCLUDE_ASM("asm/nonmatchings/unit_2F4F0", func_80090FA8);
 
+/* TODO (Clean version): Symbols &D_801185A4 and &D_801185AC represent fields b4C (0x4C)
+ * and shake (0x54) of ((CamE_ *)D_80118558)[arg0 & 0xFF]:
+ *   ((CamE_ *)D_80118558)[arg0 & 0xFF].b4C = 1;
+ *   ((CamE_ *)D_80118558)[arg0 & 0xFF].shake = 0xFA;
+ */
 void func_800911B4(s32 arg0) {
     *(u8 *)(&D_801185A4 + ((arg0 & 0xFF) * 0x64)) = 1;
 }

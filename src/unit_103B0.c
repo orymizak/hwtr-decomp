@@ -16,6 +16,14 @@ typedef struct { u8 r; u8 g; u8 b; u8 pad3; u8 r2; u8 g2; u8 b2; u8 pad[9]; } L1
 typedef struct { u8 b[0x50]; } ViMode7_;
 typedef struct { u8 b[0x50]; } ViMode8_;
 typedef struct { u8 p[0x54]; s16 *type; } Msg6F_;
+typedef struct { f32 r; f32 g; f32 b; } ColF_;
+extern ColF_ D_800F1E58[6];
+extern u8 D_800F20F6;
+void func_800788F8(u8 arg0, u8 arg1, u8 arg2);
+void func_8007891C(s32 arg0, u8 arg1, u8 arg2, u8 arg3);
+void func_80078940(s32 arg0, u8 arg1, u8 arg2, u8 arg3);
+void func_80078964();
+extern f32 D_800F2110;
 extern void (*D_800F1CB4)(Msg6F_ *);
 extern void (*D_800F1CB8)(Msg6F_ *);
 extern s32 D_80140E44;
@@ -156,7 +164,46 @@ void func_8006F8C4(void) {
     D_8010A220 = &D_8014C1D0[0];
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_103B0", func_8006FA7C);
+extern u32 D_80138D30;
+extern u32 D_800F1CB0;
+extern s32 *D_8014C6C8;
+
+/* Queues an RSP graphics task for dl (ucode pair ucode); flag bit 0 also flips to the next frame buffer. */
+void func_8006FA7C(Gfx2_ *dl, s32 size, s32 ucode, u32 flags) {
+    Task6F_ *t;
+    u16 f;
+    u32 mask;
+    u32 next;
+
+    t = D_8010A220;
+    t->dl = dl;
+    t->dlsize = size;
+    t->w14 = flags >> 16;
+    t->w20 = D_80141690[ucode * 2];
+    t->w28 = D_80141690[ucode * 2 + 1];
+    t->w8 = flags & 0xFFFF;
+    t->wC = D_8014C648;
+    f = D_800F1CBC;
+    if (f & 4) {
+        D_800F1CBC = f ^ 4;
+        t->w14 |= 2;
+    }
+    D_800F1CBC = flags;
+    if (flags & 1) {
+        next = (D_80138D30 + 1) % D_800F1CB0;
+        D_8010A220->msg = &D_8010A226;
+        D_80138D30 = next;
+        D_8014C648 = D_8014C6C8[next];
+    } else {
+        D_8010A220->msg = &D_8010A224;
+    }
+    mask = osSetIntMask(1);
+    D_80145484++;
+    osSetIntMask(mask);
+    osWritebackDCacheAll();
+    osSendMesg(&D_8014D33C, D_8010A220, 1);
+    D_8010A220 = D_8010A220->next;
+}
 
 s32 func_8006FBF0(void) {
     Gfx2_ dl[0x101];
@@ -279,7 +326,18 @@ void func_8006FF90(s32 arg0, s32 arg1, s32 arg2, s32 arg3) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_103B0", func_80070148);
+/* Resets the six color slots from D_800F1E58 (level 100 >> D_800F20F6) after setting 20/20/20. */
+void func_80070148(void) {
+    s32 i;
+
+    func_80078964(6);
+    func_800788F8(0x14, 0x14, 0x14);
+    (*(s8 *)&D_800F20F8) = 1;
+    for (i = 0; i < 6; i++) {
+        func_8007891C(i, D_800F1E58[i].r, D_800F1E58[i].g, D_800F1E58[i].b);
+        func_80078940(i, 100 >> D_800F20F6, 100 >> D_800F20F6, 100 >> D_800F20F6);
+    }
+}
 
 void func_800702C4(s32 a, s32 b, s32 c) {
     s32 w;
@@ -434,7 +492,41 @@ INCLUDE_ASM("asm/nonmatchings/unit_103B0", func_8007126C);
 
 INCLUDE_ASM("asm/nonmatchings/unit_103B0", func_80071530);
 
-INCLUDE_ASM("asm/nonmatchings/unit_103B0", func_800717C8);
+/* Sphere-in-frustum test: o's translation transformed by view matrix m, radius r. */
+u8 func_800717C8(f32 (*m)[4], f32 (*o)[4], f32 r) {
+    f32 vz;
+    f32 depth;
+    f32 rs;
+    f32 v;
+    f32 lim;
+
+    vz = m[2][0] * o[0][3] + m[2][1] * o[1][3] + m[2][2] * o[2][3] + m[2][3];
+    depth = -vz;
+    if (D_800F2114 < depth - r) {
+        return 0;
+    }
+    if (depth + r < D_800F2110) {
+        return 0;
+    }
+    rs = r * D_800F2128;
+    v = m[0][0] * o[0][3] + m[0][1] * o[1][3] + m[0][2] * o[2][3] + m[0][3];
+    lim = vz * D_800F212C;
+    if (v + rs < -lim) {
+        return 0;
+    }
+    if (lim < v - rs) {
+        return 0;
+    }
+    v = m[1][0] * o[0][3] + m[1][1] * o[1][3] + m[1][2] * o[2][3] + m[1][3];
+    lim = vz * D_800F2130;
+    if (v + rs < -lim) {
+        return 0;
+    }
+    if (lim < v - rs) {
+        return 0;
+    }
+    return 1;
+}
 
 void func_80071924(void) {
     func_800D6010();

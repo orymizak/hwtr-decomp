@@ -58,6 +58,9 @@ void func_8007C2C8(PPool_ *pool) {
     }
 }
 
+/* TODO (Clean version):
+Estructuras locales y duplicadas creadas para func_8007C434. En C limpio deben sustituirse por los tipos estándar de libultra (Gfx, Vtx) y definiciones unificadas de partículas (Particle, ParticlePool, Vec3f, Vec4f), evitando tipos artificiales como Vtx4C4_ y Vtx3C4_ usados para copiar memoria. Se mantienen para el match.
+*/
 typedef struct { u32 w0; u32 w1; } GfxWC4_;
 typedef union { GfxWC4_ words; s64 force; } GfxC4_;
 typedef struct { GfxC4_ *f0; GfxC4_ *f4; u8 p8[0x318]; } PoolC4_;
@@ -93,6 +96,9 @@ GfxC4_ *func_8007F61C(GfxC4_ *, PDefC4_ *);
 void func_800A8670(QC4_ *, f32, V3C4_);
 void func_800A8BA4(QC4_, f32 (*)[3]);
 extern PDef_ *D_800F2330[];
+/* TODO (Clean version):
+Función estática inline que duplica exactamente a func_8007C2C8 para forzar el inlining en func_8007C318. En C limpio se llamaría directamente a func_8007C2C8 o se compartiría una única función inline. Se mantiene para el match.
+*/
 static inline void Pool_Fix(PPool_ *pool) {
     u32 i;
     Prt70_ *e;
@@ -154,6 +160,9 @@ void func_8007C434(PoolPC4_ *pool, f32 (*m)[4]) {
     f32 sc;
 
     if (pool != NULL) {
+        /* TODO (Clean version):
+        Expansión manual de macros de gestión de buffer de gráficos y comandos GBI (gDPPipeSync, gSPMatrix, gSPDisplayList, gDPSetPrimColor, gSPVertex) escribiendo palabras directamente en memoria en vez de usar la API de libultra. Se mantiene para el match.
+        */
         if ((u32) (D_8014EC78 + (1)) >= (u32) D_8014C740[D_8014C540].f4) { D_8014C740[D_8014C540].f0 = D_8014EC78; GfxPool_Grow(&D_8014C740[D_8014C540], (1)); D_8014EC78 = D_8014C740[D_8014C540].f0; };
         cur = NULL;
         changed = 0;
@@ -279,6 +288,9 @@ void func_8007C434(PoolPC4_ *pool, f32 (*m)[4]) {
             } else {
                 dl = D_800F2418;
                 dl2 = D_800F2400;
+                /* TODO (Bug potential):
+                Si en la primera partícula activa flags no tiene el bit 0x80 y kind es 0, cur no se inicializa (permanece NULL), provocando una desreferencia de puntero nulo al evaluar cur->kind.
+                */
                 if (cur->kind == 0x10) {
                     dl2 = D_800F23A8;
                 }
@@ -291,6 +303,9 @@ void func_8007C434(PoolPC4_ *pool, f32 (*m)[4]) {
             { GfxC4_ *_g = (GfxC4_ *) (D_8014EC78++); _g->words.w0 = (0xFA000000); _g->words.w1 = (u32) ( (p->r << 24) | (p->g << 16) | (p->b << 8) | (p->h6C >> 8)); };
             if (p->flags & 2) {
                 GfxPools_ReserveVtx(4);
+                /* TODO (Clean version):
+                Copia en bloque de vértices mediante casteo forzado a structs temporales (Vtx4C4_ y Vtx3C4_) de 64 y 48 bytes directamente desde la partícula o plantilla en lugar de usar un array de Vtx o memcpy. Se mantiene para el match.
+                */
                 *(Vtx4C4_ *) D_8014445C = *(Vtx4C4_ *) p;
                 { GfxC4_ *_g = (GfxC4_ *) (D_8014EC78++); _g->words.w0 = (0x01004008); _g->words.w1 = (u32) ( (u32) D_8014445C - 0x80000000); };
                 D_8014445C += 4;
@@ -333,6 +348,9 @@ INCLUDE_ASM("asm/nonmatchings/unit_1CC80", func_8007D808);
 
 INCLUDE_ASM("asm/nonmatchings/unit_1CC80", func_8007DB10);
 
+/* TODO (Clean version):
+Definición redundante de estructuras matemáticas y de partículas (V3Q_, Q4Q_, PrtQ_, PPoolQ_, M34Q_) locales para func_8007DE54. En C limpio deben sustituirse por tipos globales compartidos (Vec3f, Vec4f, Particle, ParticlePool, Mtx34f). Se mantienen para el match.
+*/
 typedef struct { f32 x; f32 y; f32 z; } V3Q_;
 typedef struct { f32 x; f32 y; f32 z; f32 w; } Q4Q_;
 typedef struct { Q4Q_ q; f32 f10; f32 f14; f32 f18; f32 f1C; f32 f20; u8 pad24[0x1C]; V3Q_ pos; f32 vx; f32 vy; f32 vz; f32 f58; f32 f5C; PDef_ *def; s16 life; u8 flags; u8 r; u8 g; u8 b; u8 kind; u8 frames; u16 h6C; s16 h6E; } PrtQ_;
@@ -343,6 +361,9 @@ s32 rand(void);
 f32 cosf(f32);
 f32 sinf(f32);
 void func_800A83A0(Q4Q_ *, f32 (*)[3]);
+/* TODO (Clean version):
+Funciones inline locales (RotA_, RotB_, RotC_) que aplican rotaciones a matrices 3x4 en Z, Y y X. En C limpio deberían ser funciones matemáticas compartidas del motor con nombres semánticos. Se mantienen inline para el match.
+*/
 static inline void RotA_(M34Q_ *m, f32 a) {
     f32 c, s, u, v;
 
@@ -370,6 +391,9 @@ static inline void RotC_(M34Q_ *m, f32 a) {
     u = m->m[1][1] * c + m->m[1][2] * s; v = m->m[1][2] * c - m->m[1][1] * s; m->m[1][1] = u; m->m[1][2] = v;
     u = m->m[2][1] * c + m->m[2][2] * s; v = m->m[2][2] * c - m->m[2][1] * s; m->m[2][1] = u; m->m[2][2] = v;
 }
+/* TODO (Clean version):
+Función inline que replica la lógica de func_8007C318 para insertar partículas en la cola circular e incluye un condicional redundante (if (pool != NULL)) debido al inlining. En C limpio se reutilizaría una función unificada del pool. Se mantiene para el match.
+*/
 static inline void PushQ_(PPoolQ_ *pool, PrtQ_ *p) {
     u32 i;
     PrtQ_ *e;
@@ -447,6 +471,9 @@ void func_8007DE54(V3Q_ pos, u32 n, PDef_ *def, V3Q_ vel) {
     r[2][0] = m.m[2][0];
     r[2][1] = m.m[2][1];
     r[2][2] = m.m[2][2];
+    /* TODO (Clean version):
+    La variable local 't' almacena componentes de traslación de la matriz pero su valor nunca se vuelve a leer (código muerto original). Se mantiene para preservar la distribución de registros y stack frame para el match.
+    */
     t.x = m.m[0][3];
     t.y = m.m[1][3];
     t.z = m.m[2][3];
@@ -482,6 +509,9 @@ void func_8007DE54(V3Q_ pos, u32 n, PDef_ *def, V3Q_ vel) {
     p.f20 = a;
     p.life = 1000;
     p.h6C = 0xFFFF;
+    /* TODO (Clean version):
+    Operación con desplazamiento a la izquierda de un número negativo (-((rand() & 3) + 8) << 8). En C limpio se escribiría explícitamente como -(((rand() & 3) + 8) << 8) para evitar depender de precedencia de operadores y comportamiento de shifts negativos. Se mantiene para el match.
+    */
     p.h6E = -((rand() & 3) + 8) << 8;
     p.r = 0xDC;
     p.g = 0xDC;

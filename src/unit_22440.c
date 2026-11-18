@@ -2,7 +2,7 @@
 #include "include_asm.h"
 #include "car.h"
 typedef struct { f32 x; f32 y; f32 z; } Vec3f_;
-typedef struct { u8 id; u8 p1[3]; u8 *car; u8 p8[0x1C]; f32 f24; u8 p28[0x1F0]; f32 f218; u8 p21C[0xC]; Vec3f_ v228; u8 p234[0xC]; Vec3f_ v240; u8 p24C[0x5C]; } Slot85_;
+typedef struct { u8 id; u8 p1[3]; u8 *car; u8 p8[0x1C]; f32 f24; u8 p28[0x1E4]; f32 f20C; u8 p210[8]; f32 f218; u8 p21C[0xC]; Vec3f_ v228; u8 p234[0xC]; Vec3f_ v240; u8 p24C[0x5C]; } Slot85_;
 typedef struct { f32 x; f32 y; f32 z; } V3d_;
 typedef struct { V3d_ p; u8 pad[0x7C]; } BlkD_;
 typedef struct { u8 id; u8 p1[0xBF]; f32 m[3][3]; } CarD_;
@@ -91,7 +91,51 @@ f32 func_800853B4(u8 i) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_22440", func_800853F4);
 
-INCLUDE_ASM("asm/nonmatchings/unit_22440", func_80085780);
+extern f32 D_80115838;
+extern s8 D_80115845;
+extern Car *D_80115848;
+extern Car *D_8011584C;
+extern u8 D_80115850;
+u32 func_80096100(void);
+
+/* Scales each slot's f20C (offset by 100) by car 0's k538, then records the first two cars whose state is not 1. */
+void func_80085780(void) {
+    Car *car;
+    Car *c;
+    u32 i;
+    f32 k;
+
+    car = func_800960D8(0);
+    if (D_80115850 == 0 && car->state != 1) {
+        k = 1.0f - D_80115838 * (1.0f - car->k538);
+        for (i = 0; i < func_80096100(); i++) {
+            D_80114830[i].f20C = (D_80114830[i].f20C + 100.0f) * k - 100.0f;
+        }
+    }
+    D_8011584C = NULL;
+    D_80115848 = NULL;
+    for (i = 0; i < 6; i++) {
+        c = func_800960D8(i);
+        if (c->state == 1) {
+            continue;
+        }
+        if (D_80115848 == NULL) {
+            D_80115848 = c;
+        } else if (D_8011584C == NULL) {
+            D_8011584C = c;
+            break;
+        }
+    }
+    if (D_80115848 == NULL) {
+        D_80115845 = 0;
+        return;
+    }
+    if (D_8011584C != NULL) {
+        D_80115845 = 2;
+    } else {
+        D_80115845 = 1;
+    }
+}
 
 s32 func_800858E8(void) {
     return 1;

@@ -7,6 +7,9 @@ typedef struct { u8 p0[0xC]; s16 *ids; u8 p10[3]; s8 n; } Tb9F_;
 typedef struct { u8 p0[8]; Tb9F_ *t; u8 pC[0xA]; s16 cur; } Ob9F_;
 typedef struct { s32 a; u8 p4[0x10]; } SbA00_;
 typedef struct { u8 p0[0x18]; u8 n; u8 p19[3]; SbA00_ *sub; u8 b20; u8 p21[7]; s32 w28; } TrA00_;
+typedef struct { char *buf; s16 len; u8 p6[0xB]; u8 b11; u8 p12[2]; } FldX_;
+typedef struct { u8 p0[0x18]; u8 n; u8 p19[3]; FldX_ *f; } MenuX_;
+void func_800C96DC(void);
 s32 func_800C9590();
 extern char D_80101080[];
 extern s32 (*D_80140FE4)(char *);
@@ -20,7 +23,6 @@ s32 func_8008E510(u8);
 
 s32 Memory_Alloc(s32);
 s32 func_800C9280();
-s32 func_800C96DC();
 extern void *D_800F5F08;
 s32 Memory_Free(s32);
 extern s32 D_800F9F90;
@@ -31,7 +33,24 @@ INCLUDE_ASM("asm/nonmatchings/unit_69E80", func_800C9280);
 
 INCLUDE_ASM("asm/nonmatchings/unit_69E80", func_800C9590);
 
-INCLUDE_ASM("asm/nonmatchings/unit_69E80", func_800C96DC);
+/* Allocates every menu text field that has no buffer yet and fills it with '_'. */
+void func_800C96DC(void) {
+    s32 i;
+    s32 j;
+    s32 k;
+
+    for (i = 0; i < 33; i++) {
+        for (j = 0; j < ((MenuX_ **)&D_800F5F08)[i]->n; j++) {
+            if (((MenuX_ **)&D_800F5F08)[i]->f[j].buf == NULL) {
+                ((MenuX_ **)&D_800F5F08)[i]->f[j].buf = (char *)Memory_Alloc(((MenuX_ **)&D_800F5F08)[i]->f[j].len);
+                for (k = 0; k < ((MenuX_ **)&D_800F5F08)[i]->f[j].len; k++) {
+                    ((MenuX_ **)&D_800F5F08)[i]->f[j].buf[k] = '_';
+                }
+                ((MenuX_ **)&D_800F5F08)[i]->f[j].b11 = 0;
+            }
+        }
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_69E80", func_800C9848);
 

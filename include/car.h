@@ -110,7 +110,7 @@ typedef struct Car {
     /* 0x474 */ u32 unk474;
     /* 0x478 */ u8 lap;
     /* 0x479 */ u8 checkpoint; /* next checkpoint index */
-    /* 0x47A */ u8 pad47A[0x1];
+    /* 0x47A */ u8 lapsDone; /* completed laps shown on the HUD counter */
     /* 0x47B */ u8 finished; /* set when the last lap is completed */
     /* 0x47C */ Vec3f v47C;
     /* 0x488 */ Vec3f v488;
@@ -133,7 +133,8 @@ typedef struct Car {
     /* 0x4CC */ f32 k4CC;
     /* 0x4D0 */ f32 k[24];
     /* 0x530 */ f32 k530;
-    /* 0x534 */ u8 pad534[0x8];
+    /* 0x534 */ u8 pad534[0x4];
+    /* 0x538 */ f32 k538;
     /* 0x53C */ f32 k53C;
     /* 0x540 */ u32 w540;
     /* 0x544 */ u8 pad544[0x98];

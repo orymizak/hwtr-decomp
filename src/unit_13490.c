@@ -38,6 +38,10 @@ extern u8 D_800F2060;
 extern s32 D_8014C540;
 typedef struct { u32 w0; u32 w1; } GfxWT_;
 typedef union { GfxWT_ words; s64 force; } GfxT_;
+typedef struct { s16 x; s16 y; s16 z; u16 flag; s16 s; s16 t; u8 r; u8 g; u8 b; u8 a; } VtxIn75_;
+typedef struct { f32 x; f32 y; f32 z; u8 r; u8 g; u8 b; u8 on; } VtxOut75_;
+typedef struct { u8 p0[6]; u16 nVtx; } MeshHdr75_;
+typedef struct { f32 m[3][4]; u8 p30[0xC]; MeshHdr75_ *hdr; VtxIn75_ *in; VtxOut75_ *out; } MeshXf75_;
 extern GfxT_ *D_8014EC78;
 extern u8 D_8014D184;
 extern u8 D_8014D188;
@@ -468,7 +472,37 @@ void func_80075858(void) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_13490", func_80075888);
+/* Transforms the mesh vertices by m; vertices whose alpha bit 0 is clear are marked off. */
+void func_80075888(MeshXf75_ *o) {
+    VtxIn75_ *in;
+    VtxOut75_ *out;
+    s32 i;
+    f32 x;
+    f32 y;
+    f32 z;
+
+    if (o->out == NULL) {
+        o->out = ((void * (*)(s32 size))Memory_Alloc)(o->hdr->nVtx * sizeof(VtxOut75_));
+    }
+    out = o->out;
+    in = o->in;
+    for (i = 0; i < o->hdr->nVtx; out++, in++, i++) {
+        if (in->a & 1) {
+            x = in->x;
+            y = in->y;
+            z = in->z;
+            out->x = o->m[0][0] * x + o->m[0][1] * y + o->m[0][2] * z + o->m[0][3];
+            out->y = o->m[1][0] * x + o->m[1][1] * y + o->m[1][2] * z + o->m[1][3];
+            out->z = o->m[2][0] * x + o->m[2][1] * y + o->m[2][2] * z + o->m[2][3];
+            out->r = in->r;
+            out->g = in->g;
+            out->b = in->b;
+            out->on = 1;
+        } else {
+            out->on = 0;
+        }
+    }
+}
 
 void func_800759F0(Node72_ *n) {
     if (n->p44 != 0) {
@@ -526,7 +560,31 @@ void func_80076470(B200_ *src) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_13490", func_80076578);
+void func_80076578(f32 k, u16 *src) {
+    u16 *dst;
+    s32 i;
+    u16 c;
+    f32 r;
+    f32 g;
+    f32 b;
+    u16 rr;
+    u16 gg;
+    u16 bb;
+
+    dst = (u16 *)D_800F2028;
+    for (i = 0; i < 256; i++) {
+        c = *src;
+        r = (c >> 11) / 31.0;
+        g = ((c & 0x7C0) >> 6) / 31.0;
+        b = ((c & 0x3E) >> 1) / 31.0;
+        rr = (u16)(r * k * 255.0f) >> 3;
+        gg = (u16)(g * k * 255.0f) >> 3;
+        bb = (u16)(b * k * 255.0f) >> 3;
+        *dst = (rr << 11) | (gg << 6) | (bb << 1);
+        src++;
+        dst++;
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_13490", func_800766FC);
 

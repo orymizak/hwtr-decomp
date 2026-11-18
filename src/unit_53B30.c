@@ -4,6 +4,13 @@
  * compiled out in release builds; verify against a real cause when one turns up. */
 #define DEBUG_NOP() do { } while (0)
 
+/* TODO (Clean version): Unify Plr53_ with the actual player-data struct at D_80124148.
+ * Fields bits14/bits18 are a split 64-bit unlock mask; consider:
+ *   typedef struct { u8 p0[0x14]; u64 unlockBits; s32 raceUnlocks; u8 sel; } Plr53_;
+ * or use helper accessors:
+ *   #define PLR_IS_UNLOCKED(p, id) \
+ *       ((id) >= 32 ? ((p)->bits18 >> ((id)-32)) & 1 : ((p)->bits14 >> (id)) & 1)
+ */
 /* Player menu state: unlock bitmasks and the selected entry. */
 typedef struct { u8 p0[0x14]; s32 bits14; s32 bits18; s32 bits1C; u8 sel; } Plr53_;
 /* Per-player race result block (0x2C) inside the race state. */
@@ -101,6 +108,15 @@ typedef struct { u8 p0[0x20]; u8 n; u8 p21[3]; NmC0_ *names; ElC0_ *elems; } MnC
 typedef struct { char *s; u8 p4[0xC]; } NmC3_;
 typedef struct { f32 x; f32 y; u8 p8[4]; f32 xC; f32 x10; u8 p14[0x20]; } ElC3_;
 typedef struct { u8 p0[0x20]; u8 n; u8 p21[3]; NmC3_ *names; ElC3_ *elems; } MnC3_;
+extern u8 D_800F6474;
+s32 *func_800C815C(void);
+void func_800C8174(void);
+void func_800BA584(s32 id);
+extern u8 D_800F6475;
+s32 *func_800C8168(void);
+void func_800C81A0(void);
+s32 Config_CheckCheatCode(char *code, void *cfg);
+void func_800BA6F8(s32);
 extern char D_80100FEC[];
 void func_800C3560(s32 x, s32 y);
 extern s32 D_800F5F70;
@@ -229,18 +245,12 @@ extern s32 *D_80141254;
 extern s32 D_80100DBC;
 extern u8 D_80100E74;
 extern ObjG1_ D_800F63A0;
-extern u8 D_801240E4;
-extern u8 D_801240E5;
-extern u8 D_801240E6;
-extern s8 D_801240E7;
+extern Bars4_ D_801240E4;
 extern u8 D_80100F0C;
 extern u8 D_80100F14;
 extern u8 D_80100F1C;
 void func_800B4CC4(s32, s32, s32 *, s32, s32, s32, s32, s32, s32, s32, s32, s32);
-extern u8 D_801240E0;
-extern u8 D_801240E1;
-extern u8 D_801240E2;
-extern s8 D_801240E3;
+extern Bars4_ D_801240E0;
 extern u8 D_80100FA4;
 extern ObjG1_ D_800F63B8;
 extern void (*D_801455A8)(s32, s32);
@@ -278,8 +288,6 @@ void func_800BE288(void);
 extern s32 D_801240F4;
 extern u8 D_80124C95;
 void func_800B4E64(ObjG1_ *o);
-void func_800BA584(s32);
-void func_800BA6F8(s32);
 extern u8 D_800F6476;
 s32 func_800C8134(s32, s32);
 extern u8 D_800F6480;
@@ -395,7 +403,7 @@ s32 func_800C8554(s32);
 extern s32 D_80100DD0;
 extern s8 D_80124144;
 extern s8 D_80124145;
-extern s8 D_80124146;
+extern u8 D_80124146;
 extern s32 D_800F5F20;
 extern s32 D_80100DDC;
 extern s32 D_80100DE4;
@@ -500,6 +508,11 @@ extern s32 D_80138D20;
 extern u32 D_800F6050[];
 extern s32 (*D_80141048)();
 
+/* TODO (Bug potential): Discontinuity in delta time calculation. In func_800B3024, delta > 500 clamps to 0.5f (d / 1000.0f).
+ * Here, if delta > 100, ret is set to 0.1f instead of 1.0f (delta / 100.0f), causing an abrupt 10x drop during lag spikes.
+ * Clean version:
+ *   ret = (delta > 100) ? 1.0f : (f32)delta / 100.0f;
+ */
 f32 func_800B2F30(u8 arg0) {
     u32 now;
     u32 delta;
@@ -562,6 +575,13 @@ void func_800B3168(void) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800B318C);
 
+/* TODO (Clean version): Perspective projection setup with magic constants:
+ *   nearClip = 48.0f, farClip = 5000.0f, fovY = 60.0 deg (1.0471967f rad = M_PI / 3.0f), aspect = 4:3 (1.3333334f).
+ * Propose:
+ *   #define FOV_60_DEGREES  1.0471967f
+ *   #define ASPECT_4_3      (4.0f / 3.0f)
+ *   D_80141038(48.0f, 5000.0f, FOV_60_DEGREES, ASPECT_4_3);
+ */
 void func_800B3264(void) {
     D_80141020(0, 0, 0);
     D_8014102C();
@@ -593,6 +613,17 @@ void func_800B3720(ObB37_ *o) {
     }
 }
 
+/* TODO (Clean version): Replace raw byte indexing on 't' with a typed UI component header:
+ *   typedef struct {
+ *       u8 pad0[0x18];
+ *       u8 count;             // 0x18
+ *       u8 pad19[3];
+ *       E0A4_ *entries;       // 0x1C
+ *       u8 pad20[8];
+ *       u8 sheet;             // 0x28
+ *       u8 r, g, b;           // 0x29, 0x2A, 0x2B
+ *   } UIComponent_;
+ */
 void func_800B3814(u8 *t, u8 mode, u8 c) {
     u8 r = 0;
     u8 g = 0;
@@ -657,6 +688,16 @@ void func_800B3AA4(MnAA4_ *m, u8 idx, u8 col) {
     }
 }
 
+/* TODO (Clean version): Unify per-player camera arrays into a struct and define angle constant:
+ *   #define CAM_DEFAULT_FOV_RAD 2.2689264f // 130.0 degrees in radians (130 * M_PI / 180)
+ *   typedef struct {
+ *       f32 zoomCur; // D_800F60A0
+ *       f32 zoomTgt; // D_800F60A8
+ *       f32 fovCur;  // D_800F60B0
+ *       f32 fovTgt;  // D_800F60B8
+ *       u8  active;  // D_800F60C0
+ *   } PlayerCam;
+ */
 void func_800B3B88(u8 i) {
     D_800F60C0[i] = 0;
     D_800F60B0[i] = 2.2689264f;
@@ -726,6 +767,9 @@ void func_800B3D9C(u8 i, s32 a, s32 b, s32 c) {
 
 
 extern V3f3_ D_80123E58[];
+/* TODO (Bug potential): Missing return value in non-void function. Return type is s32 but control
+ * reaches end without returning a value. Either change signature to void func_800B3E24(...) or return 0.
+ */
 s32 func_800B3E24(s32 arg0, s32 a, s32 b, s32 c) {
     u8 i = arg0;
 
@@ -756,6 +800,11 @@ void func_800B4540(void) {
     D_80123E84 = 2.5307255f;
 }
 
+/* TODO (Clean version): Type punning integer store to clear an f32 variable (D_80123E94 is f32,
+ * assigned 0.75f and 0.5f in func_800B44F4/510). Propose clean assignment:
+ *   D_80123E94 = 0.0f;
+ *   D_80123E98 = 0;
+ */
 void func_800B4578(void) {
     (*(s32 *)&D_80123E94) = 0;
     D_80123E98 = 0;
@@ -826,6 +875,11 @@ void func_800B4E74(Scroll4E_ *t) {
     t->x -= func_800B3024(4) * 45.0f;
 }
 
+/* TODO (Clean version): Fix sprintf prototype and remove int-pointer casts:
+ *   int sprintf(char *str, const char *format, ...);
+ *   sprintf((char *)out, (const char *)&D_80100CA0, name);
+ * Also replace magic bound 18 with ARRAY_COUNT(D_800F61F0).
+ */
 s32 func_800B5010(char *name, u8 *out) {
     u8 i;
     u8 j;
@@ -843,6 +897,18 @@ s32 func_800B5010(char *name, u8 *out) {
     return 0;
 }
 
+/* TODO (Clean version): D_800FA0DC is an array of 41 string pointers (char *table[41]).
+ * Declare properly as:
+ *   extern const char *D_800FA0DC[41];
+ * And refactor accessors cleanly without raw byte pointer arithmetic:
+ *   const char *func_800B5124(u8 id) { return D_800FA0DC[id]; }
+ *   s8 func_800B513C(const char *s) {
+ *       for (u8 i = 0; i < 41; i++) {
+ *           if (D_800FA0DC[i] != NULL && strcmp(s, D_800FA0DC[i]) == 0) return i;
+ *       }
+ *       return -1;
+ *   }
+ */
 s32 func_800B5124(u32 arg0) {
     return *(s32 *)((u8 *)&D_800FA0DC + ((arg0 & 0xFF) * 4));
 }
@@ -859,6 +925,21 @@ s8 func_800B513C(char *s) {
 }
 
 
+/* TODO (Clean version): Structure definition for 0x140-byte player profile / save record:
+ *   typedef struct {
+ *       u8 pad0[8];
+ *       char name[12];           // 0x08 (default "Player %d")
+ *       u32 magic;               // 0x14 (0xB48EE52E)
+ *       s32 unlockMaskLo;        // 0x18 (default 0x10B)
+ *       s32 unlockMaskHi;        // 0x1C (default 0xE3F)
+ *       u8 defaultCar;           // 0x20 (default 0x1D)
+ *       u8 selectedCourse;       // 0x21
+ *       u8 pad22[2];
+ *       s32 records[6];          // 0x24..0x38
+ *       s32 totalTime;           // 0x3C
+ *       u8 controllerCfg[0x100]; // 0x40
+ *   } PlayerProfile; // sizeof = 0x140
+ */
 void func_800B51C0(void *arg0, s32 arg1) {
     u8 *o = arg0;
     s32 buf[4];
@@ -937,6 +1018,12 @@ void func_800B5504(void) {
     func_800C9F18(&D_800F9F70, 0x22);
 }
 
+/* TODO (Clean version): Consolidate repeated 4-controller button polling with a helper macro:
+ *   #define CHECK_ANY_CONTROLLER_BTN(btn) \
+ *       (func_800C8214(0, (btn)) || func_800C8214(1, (btn)) || \
+ *        func_800C8214(2, (btn)) || func_800C8214(3, (btn)))
+ * And define named constants for button events (0xE, 0xF, 0x12) and SFX IDs (0x2E, 0x2F, 0x32).
+ */
 void func_800B5680(void) {
     void (**fp)(s32);
 
@@ -1197,6 +1284,12 @@ void func_800B73A8(void) {
 }
 
 
+/* TODO (Clean version): Simplify 6 consecutive 4-iteration loops with a prioritized table lookup:
+ *   static const struct { u8 status; u8 targetMenuState; } sStatusPriority[] = {
+ *       { 4, 0x1F }, { 9, 0x20 }, { 3, 0x1E }, { 8, 0x25 }, { 2, 0x1D }, { 7, 0x24 }
+ *   };
+ * Also replace magic status integers with an enum (e.g., CONTROLLER_STATUS_REMOVED, MEMCARD_STATUS_CORRUPT).
+ */
 void func_800B7494(void) {
     s32 st[4];
     s32 i;
@@ -1292,6 +1385,15 @@ void func_800B782C(void) {
     D_800F61D5 = 5;
 }
 
+/* TODO (Clean version): Avoid raw offset indexing into game state D_800F641C.
+ * Offsets 0x884 and 0x888 correspond to player profile IDs/hashes in the 0x88C save header:
+ *   typedef struct {
+ *       u8 data[0x884];
+ *       s32 player1Id; // 0x884
+ *       s32 player2Id; // 0x888
+ *   } GameSaveData_;
+ * Also replace ((s32 *)p)[1] with player2->id.
+ */
 void func_800B783C(void) {
     E140b_ buf;
     u8 found;
@@ -1472,6 +1574,13 @@ u8 func_800B7EE8(u8 i) {
     return 0;
 }
 
+/* TODO (Bug potential): Off-by-one bit shift. For id >= 32, this sets bit (id - 31) instead of (id - 32).
+ * In func_800B7DFC, checking id >= 32 reads (bits18 >> (id - 32)) & 1.
+ * As a result, when id == 32, bit 1 is set instead of bit 0, leaving entry 32 permanently locked
+ * and shifting all upper unlocks by 1 bit. Furthermore, id == 62 shifts by 31, and id == 63 shifts by 32 (UB on 32-bit int).
+ * Correct code:
+ *   p->bits18 |= 1 << (id - 32);
+ */
 void func_800B7F74(u8 id, Plr53_ *p) {
     if (id >= 32) {
         p->bits18 |= 1 << (id - 31);
@@ -1518,6 +1627,11 @@ void func_800B8038(u8 player) {
     } while (!(u8)func_800B7DFC(p->sel, (s32)p));
 }
 
+/* TODO (Bug potential): Potential infinite loop if all tracks are locked or invalid.
+ * If func_800B7E48() returns 0 for all 12 indices (0..11), this loop will never terminate.
+ * Propose adding a loop counter / max iterations guard:
+ *   for (u8 count = 0; count < 12; count++) { ... }
+ */
 void func_800B80B0(void) {
     u8 v;
 
@@ -1661,6 +1775,14 @@ void func_800B854C(void) {
     D_800F6468 = D_80141048();
 }
 
+/* TODO (Clean version / Bug check): Idle timeout check (30,000 ms = 30 seconds).
+ * Using (now > start + 30000) causes an early trigger or miss on 32-bit timer overflow (wraps around ~49.7 days).
+ * Standard delta time check is overflow-safe:
+ *   #define IDLE_TIMEOUT_MS 30000
+ *   if ((u32)(D_80141048() - D_800F6468) > IDLE_TIMEOUT_MS) {
+ *       func_800C9F18(&D_800F9F70, 0x38);
+ *   }
+ */
 void func_800B8578(void) {
     if ((u32)D_80141048() > (u32)(D_800F6468 + 30000)) {
         func_800C9F18(&D_800F9F70, 0x38);
@@ -1686,6 +1808,12 @@ void func_800B863C(void) {
     D_80141084();
 }
 
+/* TODO (Clean version): D_801411CC is a loaded configuration/calibration block.
+ * Contiguous scalar globals D_8012406C..D_80124088 (8 words) and D_80124110 (13 words)
+ * should be mapped to structured settings:
+ *   typedef struct { s32 val[8]; } SystemSettings;
+ *   typedef struct { s32 val[13]; } AudioCalibrationSettings;
+ */
 void func_800B8660(void) {
     u8 i;
 
@@ -1765,6 +1893,13 @@ void func_800B8A1C(void) {
     D_80140F94();
 }
 
+/* TODO (Clean version): Millisecond time formatting helpers. Propose unifying into inline helpers or a struct:
+ *   typedef struct { u16 hours; u8 minutes; u8 seconds; u8 centiseconds; } FormattedTime;
+ *   static inline u16 Time_GetHours(u32 ms)        { return (ms / 3600000); }
+ *   static inline u16 Time_GetTotalMinutes(u32 ms) { return (ms / 60000); }
+ *   static inline u32 Time_GetSeconds(u32 ms)      { return (ms / 1000) % 60; }
+ *   static inline u32 Time_GetCentiseconds(u32 ms) { return (ms % 1000) / 10; }
+ */
 u16 func_800B8A40(u32 ms) {
     u32 s = ms / 1000;
     u32 m = s / 60;
@@ -1878,7 +2013,7 @@ void func_800B9040(void) {
 void func_800B9074(void) {
     func_800B3264();
     func_800B8DC4();
-    func_800B4AA8((&D_800F5F08)[6], -1, 0, -1, -1, -1, -1, (u8)D_80124146);
+    func_800B4AA8((&D_800F5F08)[6], -1, 0, -1, -1, -1, -1, D_80124146);
     func_800B32D0();
 }
 
@@ -1909,7 +2044,7 @@ void func_800B9180(void) {
         D_80124C75 = 1;
         D_80140FAC(0x37, 1, 1.0f, 1.0f);
     }
-    func_800B4AA8((&D_800F5F08)[7], -1, 0, -1, -1, -1, -1, (u8)D_80124146);
+    func_800B4AA8((&D_800F5F08)[7], -1, 0, -1, -1, -1, -1, D_80124146);
     func_800B32D0();
 }
 
@@ -2007,7 +2142,7 @@ void func_800B9644(void) {
 void func_800B9668(void) {
     func_800B3264();
     func_800B8DC4();
-    func_800B4AA8((&D_800F5F08)[3], -1, -1, -1, -1, -1, -1, (u8)D_80124146);
+    func_800B4AA8((&D_800F5F08)[3], -1, -1, -1, -1, -1, -1, D_80124146);
     func_800B32D0();
 }
 
@@ -2228,9 +2363,67 @@ INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800BA004);
 
 INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800BA3A8);
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800BA584);
+/* Checks the entered cheat code, then handles player 1's buttons 0x10/0x11 on this menu. */
+void func_800BA584(s32 id) {
+    if ((u8)func_800C8554((u16)id) && (u8)Config_CheckCheatCode((char *)func_800C815C(), (void *)D_80124148)) {
+        D_80140FAC(0x34, 1, 1.0f, 1.0f);
+        func_800C8174();
+    }
+    if (D_80124C94 && ((D_800F61D2 != 0 && D_800F61D2 < 4) || D_800F61D2 == 5)) {
+        if ((u8)func_800C8134(0, 0x10)) {
+            if ((u8)func_800B97D8(0)) {
+                func_800C9F18(&D_800F9F70, 10);
+                func_800B9794(0);
+                func_800B973C(0);
+                D_800F6474 = 1;
+                D_80124C80++;
+            }
+        } else if ((u8)func_800C8134(0, 0x11)) {
+            if ((u8)func_800B97D8(0)) {
+                func_800C9F18(&D_800F9F70, 12);
+                func_800B9794(0);
+                func_800B973C(0);
+                D_800F6474 = 1;
+                D_80124C80++;
+            }
+        } else if (D_800F6474) {
+            func_800B977C();
+            D_800F6474 = 0;
+            D_80124C80 = 0;
+        }
+    }
+}
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800BA6F8);
+/* Checks the entered cheat code, then handles player 2's buttons 0x10/0x11 on this menu. */
+void func_800BA6F8(s32 id) {
+    if ((u8)func_800C891C((u16)id) && (u8)Config_CheckCheatCode((char *)func_800C8168(), (void *)D_8012414C)) {
+        D_80140FAC(0x34, 1, 1.0f, 1.0f);
+        func_800C81A0();
+    }
+    if (D_80124C95 && D_80123EA0 == 2 && D_800F61D2 == 1) {
+        if ((u8)func_800C8134(1, 0x10)) {
+            if ((u8)func_800B97D8(1)) {
+                func_800C9F18(&D_800F9F70, 11);
+                func_800B9794(1);
+                func_800B973C(1);
+                D_800F6475 = 1;
+                D_80124C81++;
+            }
+        } else if ((u8)func_800C8134(1, 0x11)) {
+            if ((u8)func_800B97D8(1)) {
+                func_800C9F18(&D_800F9F70, 13);
+                func_800B9794(1);
+                func_800B973C(1);
+                D_800F6475 = 1;
+                D_80124C81++;
+            }
+        } else if (D_800F6475) {
+            func_800B9788();
+            D_800F6475 = 0;
+            D_80124C81 = 0;
+        }
+    }
+}
 
 void func_800BA864(void) {
     u16 a = 0x43;
@@ -2713,23 +2906,23 @@ void func_800BB960(void) {
     }
     switch ((u8)D_800F61D3) {
     case 3:
-        func_800B4AA8((&D_800F5F08)[9], 6, -1, -1, -1, -1, -1, (u8)D_80124146);
+        func_800B4AA8((&D_800F5F08)[9], 6, -1, -1, -1, -1, -1, D_80124146);
         break;
     case 4:
-        func_800B4AA8((&D_800F5F08)[9], -1, 3, -1, -1, -1, -1, (u8)D_80124146);
+        func_800B4AA8((&D_800F5F08)[9], -1, 3, -1, -1, -1, -1, D_80124146);
         break;
     case 5:
-        func_800B4AA8((&D_800F5F08)[9], 5, -1, -1, -1, -1, -1, (u8)D_80124146);
+        func_800B4AA8((&D_800F5F08)[9], 5, -1, -1, -1, -1, -1, D_80124146);
         break;
     default:
-        func_800B4AA8((&D_800F5F08)[9], -1, D_800F61D3, -1, -1, -1, -1, (u8)D_80124146);
+        func_800B4AA8((&D_800F5F08)[9], -1, D_800F61D3, -1, -1, -1, -1, D_80124146);
         break;
     }
     if (D_80124C94 != 0) {
         func_800B3EAC(0, D_801240E8, D_801240EC, D_801240F0);
     }
     ((s32 (*)())func_800B463C)();
-    if (*(u8 *)&D_80124146 == 0) {
+    if (D_80124146 == 0) {
         func_800B4E74(&(*(u8 *)&D_800F63A0));
     }
     func_800B32D0();
@@ -3056,7 +3249,7 @@ void func_800BD1C4(void) {
 void func_800BD1E8(void) {
     func_800B3264();
     func_800B8DC4();
-    func_800B4AA8((&D_800F5F08)[11], -1, -1, -1, -1, -1, -1, (u8)D_80124146);
+    func_800B4AA8((&D_800F5F08)[11], -1, -1, -1, -1, -1, -1, D_80124146);
     func_800B32D0();
 }
 
@@ -3104,7 +3297,7 @@ void func_800BD470(void) {
 void func_800BD494(void) {
     func_800B3264();
     func_800B8DC4();
-    func_800B4AA8((&D_800F5F08)[12], -1, -1, -1, -1, -1, -1, (u8)D_80124146);
+    func_800B4AA8((&D_800F5F08)[12], -1, -1, -1, -1, -1, -1, D_80124146);
     func_800B32D0();
 }
 
@@ -3153,7 +3346,7 @@ void func_800BD6FC(void) {
 void func_800BD720(void) {
     func_800B3264();
     func_800B8DC4();
-    func_800B4AA8((&D_800F5F08)[13], -1, -1, -1, -1, -1, -1, (u8)D_80124146);
+    func_800B4AA8((&D_800F5F08)[13], -1, -1, -1, -1, -1, -1, D_80124146);
     func_800B32D0();
 }
 
@@ -3258,7 +3451,17 @@ void func_800BDA10(Bars4_ s, s32 x) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800BDCF0);
+/* Draws the stat bars of each player's car: one set in single-player mode, two in two-player mode. */
+void func_800BDCF0(void) {
+    if (D_80123EA0 == 1) {
+        func_800BDA10(D_801240E0, 0x15C);
+    } else {
+        func_800BDA10(D_801240E0, 0x8A);
+        if (D_80123EA0 == 2) {
+            func_800BDA10(D_801240E4, 0x15C);
+        }
+    }
+}
 
 void func_800BDE74(void) {
     D_800F6484 = D_80141048();
@@ -3500,15 +3703,15 @@ void func_800BF66C(void) {
         D_80140FD8();
         *(V12_ *)&D_801240E8 = *(V12_ *)(big + 0x80);
         D_80124C94 = 0;
-        D_801240E0 = big[0x110];
-        D_801240E1 = big[0x112];
-        D_801240E2 = big[0x111];
-        D_801240E3 = big[0x113];
+        D_801240E0.a = big[0x110];
+        D_801240E0.b = big[0x112];
+        D_801240E0.c = big[0x111];
+        D_801240E0.lv = big[0x113];
     } else {
-        D_801240E3 = -1;
-        D_801240E0 = 0;
-        D_801240E1 = 0;
-        D_801240E2 = 0;
+        D_801240E0.lv = -1;
+        D_801240E0.a = 0;
+        D_801240E0.b = 0;
+        D_801240E0.c = 0;
         D_80124C94 = 1;
     }
 }
@@ -3533,15 +3736,15 @@ void func_800BF7EC(void) {
         D_80140FD8();
         *(V12_ *)&D_801240F4 = *(V12_ *)(big + 0x80);
         D_80124C95 = 0;
-        D_801240E4 = big[0x110];
-        D_801240E5 = big[0x112];
-        D_801240E6 = big[0x111];
-        D_801240E7 = big[0x113];
+        D_801240E4.a = big[0x110];
+        D_801240E4.b = big[0x112];
+        D_801240E4.c = big[0x111];
+        D_801240E4.lv = big[0x113];
     } else {
-        D_801240E7 = -1;
-        D_801240E4 = 0;
-        D_801240E5 = 0;
-        D_801240E6 = 0;
+        D_801240E4.lv = -1;
+        D_801240E4.a = 0;
+        D_801240E4.b = 0;
+        D_801240E4.c = 0;
         D_80124C95 = 1;
     }
 }
@@ -3684,8 +3887,8 @@ void func_800BFF54(void) {
     func_800B3264();
     func_800B8DC4();
     t = D_800F61D4;
-    func_800B4AA8((&D_800F5F08)[16], -(t != 8), (s8)t, -1, -1, -1, -1, (u8)D_80124146);
-    if (*(u8 *)&D_80124146 == 0) {
+    func_800B4AA8((&D_800F5F08)[16], -(t != 8), (s8)t, -1, -1, -1, -1, D_80124146);
+    if (D_80124146 == 0) {
         func_800B4E74(&D_800F6370);
     }
     func_800B32D0();
@@ -4037,7 +4240,19 @@ void func_800C1160(void) {
     func_800B2844((*(void * *)&D_800F5F58), 0x14U);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800C11B4);
+/* Draws the four option rows of this menu page (values taken modulo 5). */
+void func_800C11B4(void) {
+    func_800B3264();
+    func_800B8DC4();
+    func_800B4AA8((&D_800F5F08)[17], (s8)(D_8012410B % 5), -1, -1, -1, -1, -1, D_80124146);
+    func_800B4AA8((&D_800F5F08)[19], (s8)(D_8012410B % 5), -1, -1, -1, -1, -1, D_80124146);
+    func_800B4AA8((&D_800F5F08)[18], (s8)(D_8012410C % 5), -1, -1, -1, -1, -1, D_80124146);
+    func_800B4AA8((&D_800F5F08)[20], (s8)(D_8012410C % 5), -1, -1, -1, -1, -1, D_80124146);
+    if (D_80124146 == 0) {
+        func_800B4E74(&D_800F63B8);
+    }
+    func_800B32D0();
+}
 
 void func_800C1360(void) {
     if (D_8012410B != 0) {
@@ -4323,11 +4538,11 @@ void func_800C262C(void) {
             func_800B4AA8(D_800F5F70, -1, *(s8 *)&D_801240B5, -1, -1, -1, -1, 0);
         }
     } else {
-        func_800B4AA8(D_800F5F64, *(s8 *)&D_801240B0, -1, -1, -1, -1, -1, (u8)D_80124146);
+        func_800B4AA8(D_800F5F64, *(s8 *)&D_801240B0, -1, -1, -1, -1, -1, D_80124146);
         if (D_80123EA0 == 2) {
-            func_800B4AA8(D_800F5F68, *(s8 *)&D_801240B1, -1, -1, -1, -1, -1, (u8)D_80124146);
+            func_800B4AA8(D_800F5F68, *(s8 *)&D_801240B1, -1, -1, -1, -1, -1, D_80124146);
         }
-        if (*(u8 *)&D_80124146 == 0) {
+        if (D_80124146 == 0) {
             func_800B4E74(&D_800F63D0);
         }
     }
@@ -4832,8 +5047,8 @@ void func_800C3C58(void) {
 
     func_800B3264();
     func_800B8DC4();
-    func_800B4AA8((&D_800F5F08)[29], -1, -1, -1, -1, -1, -1, (u8)D_80124146);
-    if (*(u8 *)&D_80124146 == 0) {
+    func_800B4AA8((&D_800F5F08)[29], -1, -1, -1, -1, -1, -1, D_80124146);
+    if (D_80124146 == 0) {
         for (i = 0; i < D_801240D6 - 1; i++) {
             if (i == D_801240DC) {
                 D_8014100C(1, 0x9B, D_800F610C[i], D_800F6170[i], i == D_801240D4);
@@ -5080,7 +5295,45 @@ void func_800C4A00(void) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800C4A34);
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800C4BA4);
+/* Moves the cursor of menu page D_800F61D7 to the next selectable entry, wrapping around. */
+void func_800C4BA4(void) {
+    s32 m;
+
+    switch (D_800F61D7) {
+        case 0:
+            if (D_80124100 < 2) {
+                D_80124100++;
+            } else {
+                D_80124100 = 0;
+            }
+            break;
+        case 1:
+            /* TODO(match-debt): the redundant m >= 0 test on a u8 is needed for the bltz/slti pair. */
+            m = D_80124100;
+            if (m >= 0) {
+                if (m < 2) {
+                    do {
+                        do {
+                            if (D_80124101 < 11) {
+                                D_80124101++;
+                            } else {
+                                D_80124101 = 0;
+                            }
+                        } while (!func_800B7E48(D_80124101));
+                    } while (D_800F9FA0[(u8)(D_80124101 / 3)][(u8)(D_80124101 % 3)] == 0);
+                    return;
+                }
+            }
+            do {
+                if (D_80124102 < 2) {
+                    D_80124102++;
+                } else {
+                    D_80124102 = 0;
+                }
+            } while (!func_800B7EE8(D_80124102));
+            break;
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800C4D10);
 
@@ -5177,7 +5430,7 @@ void func_800C5E00(void) {
 void func_800C5E24(void) {
     func_800B3264();
     func_800B8DC4();
-    func_800B4AA8((&D_800F5F08)[32], -1, -1, -1, -1, -1, -1, (u8)D_80124146);
+    func_800B4AA8((&D_800F5F08)[32], -1, -1, -1, -1, -1, -1, D_80124146);
     if (D_80124CFD != -1 || D_80124CFF != D_80124CFD) {
         if (D_80124C94 == 0) {
             D_80124C94 = D_80140FC0(0);
@@ -5209,11 +5462,74 @@ void func_800C5FC8(void) {
 
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800C5FD0);
+typedef struct { char name[12]; u32 value; } SaveRecord;
+typedef struct { SaveRecord e[5]; } SaveRecTable;
+/* Save data (D_800F641C): per-track record tables, 12 tracks. */
+typedef struct { u8 p0[4]; SaveRecTable highA[12]; SaveRecTable times[12]; SaveRecTable highB[12]; } SaveData;
+#define SAVE_DATA ((SaveData *)D_800F641C)
+extern char *D_80141230;
+/* Inserts (name, value) into track's high-value record table (highA); an entry with the placeholder name is overwritten. */
+void func_800C5FD0(char *name, u32 value, u8 track) {
+    SaveRecTable tmp;
+    u8 i;
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800C615C);
+    for (i = 0; i < 5; i++) {
+        if (strcmp(SAVE_DATA->highA[track].e[i].name, D_80141230) == 0) {
+            strcpy((s32 *)SAVE_DATA->highA[track].e[i].name, (s32)name);
+            SAVE_DATA->highA[track].e[i].value = value;
+            return;
+        }
+        if (SAVE_DATA->highA[track].e[i].value < value) {
+            tmp = SAVE_DATA->highA[track];
+            memcpy(&SAVE_DATA->highA[track].e[i + 1], &tmp.e[i], (4 - i) * sizeof(SaveRecord));
+            strcpy((s32 *)SAVE_DATA->highA[track].e[i].name, (s32)name);
+            SAVE_DATA->highA[track].e[i].value = value;
+            return;
+        }
+    }
+}
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800C62E8);
+/* Inserts (name, value) into track's best-time table (times, lower is better); an entry with the placeholder name is overwritten. */
+void func_800C615C(char *name, u32 value, u8 track) {
+    SaveRecTable tmp;
+    u8 i;
+
+    for (i = 0; i < 5; i++) {
+        if (strcmp(SAVE_DATA->times[track].e[i].name, D_80141230) == 0) {
+            strcpy((s32 *)SAVE_DATA->times[track].e[i].name, (s32)name);
+            SAVE_DATA->times[track].e[i].value = value;
+            return;
+        }
+        if (value < SAVE_DATA->times[track].e[i].value) {
+            tmp = SAVE_DATA->times[track];
+            memcpy(&SAVE_DATA->times[track].e[i + 1], &tmp.e[i], (4 - i) * sizeof(SaveRecord));
+            strcpy((s32 *)SAVE_DATA->times[track].e[i].name, (s32)name);
+            SAVE_DATA->times[track].e[i].value = value;
+            return;
+        }
+    }
+}
+
+/* Inserts (name, value) into track's second high-value record table (highB); an entry with the placeholder name is overwritten. */
+void func_800C62E8(char *name, u8 track, u32 value) {
+    SaveRecTable tmp;
+    u8 i;
+
+    for (i = 0; i < 5; i++) {
+        if (strcmp(SAVE_DATA->highB[track].e[i].name, D_80141230) == 0) {
+            strcpy((s32 *)SAVE_DATA->highB[track].e[i].name, (s32)name);
+            SAVE_DATA->highB[track].e[i].value = value;
+            return;
+        }
+        if (SAVE_DATA->highB[track].e[i].value < value) {
+            tmp = SAVE_DATA->highB[track];
+            memcpy(&SAVE_DATA->highB[track].e[i + 1], &tmp.e[i], (4 - i) * sizeof(SaveRecord));
+            strcpy((s32 *)SAVE_DATA->highB[track].e[i].name, (s32)name);
+            SAVE_DATA->highB[track].e[i].value = value;
+            return;
+        }
+    }
+}
 
 void func_800C6474(RaceSt_ *rs) {
     u8 slot;

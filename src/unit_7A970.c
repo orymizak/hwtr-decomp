@@ -6,6 +6,13 @@ typedef struct { ALFilter_ filter; u8 padC[8]; s32 sourceCount; s32 maxSources; 
 
 
 
+/* TODO (Clean version):
+   Standard libultra audio driver alAuxBusPull (auxbus.c).
+   The raw Acmd_ writes represent audio microcode command aClearBuffer:
+       aClearBuffer(ptr++, AL_AUX_L_OUT, outCount << 1); // 0x020006C0
+       aClearBuffer(ptr++, AL_AUX_R_OUT, outCount << 1); // 0x02000800
+   where 0x02 is A_CLEARBUFF, 0x06C0 is AL_AUX_L_OUT, and 0x0800 is AL_AUX_R_OUT.
+*/
 Acmd_ *alAuxBusPull(void *filter, s16 *outp, s32 outCount, s32 sampleOffset, Acmd_ *p) {
     Acmd_ *ptr = p;
     ALBus_ *m = (ALBus_ *)filter;
@@ -20,6 +27,16 @@ Acmd_ *alAuxBusPull(void *filter, s16 *outp, s32 outCount, s32 sampleOffset, Acm
     return ptr;
 }
 
+/* TODO (Clean version):
+   case 2 is AL_FILTER_ADD_SOURCE:
+       switch (paramID) {
+           case AL_FILTER_ADD_SOURCE: // 2
+               sources[m->sourceCount++] = (ALFilter *)param;
+               break;
+           default:
+               break;
+       }
+*/
 s32 alAuxBusParam(void *filter, s32 paramID, void *param) {
     ALBus_ *m = (ALBus_ *)filter;
     ALFilter_ **sources = m->sources;

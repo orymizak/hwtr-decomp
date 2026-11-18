@@ -10,6 +10,8 @@ typedef struct { s32 t; u8 a; u8 b; u8 c; u8 d; s32 pad; } E0Cb_;
 typedef struct { u8 p0[8]; s16 h8; u8 pA[2]; u8 bC; u8 bD; u8 pE[2]; } El10_;
 typedef struct { u8 on; u8 p1[0x27]; } Blk28_;
 typedef struct { s32 t; s32 w4; s32 w8; u8 pC[4]; El10_ el[6]; Blk28_ blk[3]; u8 pE8; u8 flag; u8 bEA; u8 bEB; u8 pEC[4]; } HudF0_;
+extern u8 D_800F3B43;
+extern char D_80100A94[];
 extern HudF0_ D_800F3934[];
 void func_800AAA20(Blk28_ *, El10_ *, s32, s32);
 void func_800AABE4(Blk28_ *, El10_ *, s32, s32);
@@ -47,7 +49,56 @@ s32 func_800A9370(void) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_49CF0", func_800A93B4);
 
-INCLUDE_ASM("asm/nonmatchings/unit_49CF0", func_800A9604);
+void func_800A9604(u8 idx, u8 flag) {
+    u8 buf[80];
+    Car *p;
+    u8 *c;
+    s32 x;
+    s32 y;
+    s32 laps;
+
+    p = func_800960D8((&D_800F3B40)[idx]);
+    if (p->flags & 0x4000) {
+        return;
+    }
+    laps = p->lapsDone;
+    D_801416E0(0xFF, 0xFF, 0xFF);
+    if (flag == 0) {
+        x = 0x103;
+        y = 0xD7;
+    } else {
+        x = 0x103;
+        y = 0xD7;
+        if (idx == 0) {
+            y = 0x6B;
+        }
+    }
+    D_801416DC(1, 0, x, y, 2);
+    if (laps == 0) {
+        D_801416E0(0xFF, 0xFF, 0);
+    } else {
+        D_801416E0(0, 0xFF, 0);
+    }
+    sprintf(buf, D_80100A94, laps + 1, D_800F3B43);
+    if (flag == 0) {
+        x = 0x108;
+        y = 0xD4;
+    } else {
+        x = 0x108;
+        y = 0xD4;
+        if (idx == 0) {
+            y = 0x68;
+        }
+    }
+    for (c = buf; *c != 0; c++) {
+        D_801416DC(1, *c, x, y, 1);
+        if (*c < '0' || *c > '9') {
+            x += 9;
+        } else {
+            x += 13;
+        }
+    }
+}
 
 void func_800A978C(u8 idx, u8 flag) {
     u8 buf[80];
@@ -136,7 +187,51 @@ void func_800A99D0(u8 idx, u8 flag) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_49CF0", func_800A9C00);
 
-INCLUDE_ASM("asm/nonmatchings/unit_49CF0", func_800A9EDC);
+extern char D_80100A90[];
+u32 strlen(const char *);
+
+/* Draws car idx's unk4B0 counter right-aligned on the HUD. */
+void func_800A9EDC(u8 idx, u8 flag) {
+    u8 buf[80];
+    u8 *c;
+    s32 x;
+    s32 y;
+    s8 i;
+
+    D_801416E0(0xFF, 0xFF, 0xFF);
+    if (flag == 0) {
+        x = 0xCB;
+        y = 0x23;
+    } else {
+        x = 0xCB;
+        y = 0x8D;
+        if (idx == 0) {
+            y = 0x23;
+        }
+    }
+    D_801416DC(1, 1, x, y, 2);
+    D_801416E0(0xFF, 0, 0);
+    sprintf(buf, D_80100A90, func_800960D8((&D_800F3B40)[idx])->unk4B0);
+    if (flag == 0) {
+        x = 0x11E;
+        y = 0x20;
+    } else {
+        x = 0x11E;
+        y = 0x8A;
+        if (idx == 0) {
+            y = 0x20;
+        }
+    }
+    i = strlen(buf) - 1;
+    for (c = &buf[i]; i >= 0; i--, c--) {
+        D_801416DC(1, *c, x, y, 1);
+        if (*c < '0' || *c > '9') {
+            x -= 7;
+        } else {
+            x -= 13;
+        }
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_49CF0", func_800AA054);
 

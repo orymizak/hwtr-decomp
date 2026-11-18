@@ -1,3 +1,27 @@
+/* TODO (Clean version):
+   These structs are libultra's private audio-driver types.
+   Replace with the standard SDK typedefs:
+     ALParam8_        → ALParam          (alPlayer.h)
+     StartParamAlt8_  → ALStartParamAlt  (fields: unity, pitch, volume, pan, fxMix, samples, wave)
+     StartParam8_     → ALStartParam
+     PVoice8_         → ALVoice          (pad[0xD8] is sizeof(ALVoice) minus the trailing s32 offset)
+     FreeParam8_      → ALFreeParam
+     Acmd8_           → Acmd             (the RSP audio command word pair from <libaudio.h>)
+     ALFilt8_/ALFilt3_→ ALFilter         (the standard filter vtable: source, handler, setParam, inp, outp, type)
+     EnvMix8_         → ALEnvMixer       (extends ALFilter with envelope state: pan, volume, cvolL/R, dry/wetamt, etc.)
+     ALEnvMix3_       → ALEnvMixer       (3-field variant used in alEnvmixerParam; padC[8] likely hides 'state' pointer + unused)
+
+   The setParam IDs used throughout are AL_FILTER_SET_* enums:
+     1 → AL_FILTER_SET_SOURCE,  3 → AL_FILTER_ADD_UPDATE,  4 → AL_FILTER_RESET
+     5 → AL_FILTER_SET_WAVETABLE,  7 → AL_FILTER_SET_PITCH,  8 → AL_FILTER_SET_UNITY_PITCH
+     9 → AL_FILTER_START
+
+   The ctrlList->type values are AL_FILTER_*_EVT enums:
+     0  → AL_FILTER_FREE_EVT,   11 → AL_FILTER_SET_FXAMT_EVT (actually volume + segEnd)
+     12 → AL_FILTER_SET_PAN,    13 → AL_FILTER_START_VOICE_ALT
+     14 → AL_FILTER_START_VOICE,15 → AL_FILTER_STOP_VOICE
+     16 → AL_FILTER_SET_FXMIX
+*/
 #include "common.h"
 #include "include_asm.h"
 typedef struct ALParam8_ { struct ALParam8_ *next; s32 delta; s16 type; union { f32 f; s32 i; } data; union { f32 f; s32 i; } moredata; } ALParam8_;
@@ -20,6 +44,44 @@ Acmd8_ *_pullSubFrame(void *filter, s16 *inp, s16 *outp, s32 outCount, s32 sampl
 f32 _getVol(f32 ivol, s32 samples, s16 ratem, u16 ratel);
 void _freePVoice(s32 arg0, s32 arg1);
 void __freeParam(void *param);
+/* TODO (Clean version):
+   This is libultra's alEnvmixerPull (envmixer.c).
+   The switch on ctrlList->type uses AL_FILTER event enums:
+     case 13 (AL_FILTER_START_VOICE_ALT):
+       Volume squaring: tmp = (volume * volume) >> 15 is the standard
+       16-bit Q15 fixed-point squaring for perceptual volume curve.
+       D_800FB490[] is the standard libultra pan/volume lookup table
+       (alGlobals.panTable, 129 entries of sin/cos quarter-wave).
+       Replace D_800FB490[pan] / D_800FB490[128 - pan - 1] with:
+         alGlobals.panTable[pan]  / alGlobals.panTable[AL_PAN_RIGHT - pan]
+       The union hack to pass f32 pitch as s32 through setParam is:
+         (*f->source->setParam)(f->source, AL_FILTER_SET_PITCH, *(s32*)&pitch)
+       i.e. a type-punned float→int to fit the void* parameter.
+
+     case 16/12/11 (AL_FILTER_SET_FXMIX / SET_PAN / SET_VOL):
+       After _pullSubFrame, the envelope ramp is recomputed.
+       The cvolL/R == 0 → 1 clamp avoids a zero-volume dead channel (the RSP
+       ENVMIXER microcode treats 0 as silence with no ramp recovery).
+
+     case 14 (AL_FILTER_START_VOICE):
+       Minimal start: sets unity pitch flag + wavetable, no volume envelope.
+
+     case 15 (AL_FILTER_STOP_VOICE):
+       Pulls remaining samples then resets the filter via AL_FILTER_RESET (4).
+
+     case 0 (AL_FILTER_FREE_EVT):
+       D_800FB5B0 is alGlobals.drvr (the ALSynth* driver pointer).
+       _freePVoice releases the physical voice back to the driver's voice pool.
+
+   Replace the magic setParam IDs with the standard enums:
+     #define AL_FILTER_SET_SOURCE     1
+     #define AL_FILTER_ADD_UPDATE     3
+     #define AL_FILTER_RESET          4
+     #define AL_FILTER_SET_WAVETABLE  5
+     #define AL_FILTER_SET_PITCH      7
+     #define AL_FILTER_SET_UNITY_PITCH 8
+     #define AL_FILTER_START          9
+*/
 Acmd8_ *alEnvmixerPull(void *filter, s16 *outp, s32 outCount, s32 sampleOffset, Acmd8_ *p) {
     Acmd8_ *ptr = p;
     EnvMix8_ *e = (EnvMix8_ *)filter;
@@ -150,6 +212,17 @@ Acmd8_ *alEnvmixerPull(void *filter, s16 *outp, s32 outCount, s32 sampleOffset, 
     return ptr;
 }
 
+/* TODO (Clean version):
+   This is alEnvmixerParam (envmixer.c).
+   Replace magic paramID constants with:
+     case 3 → AL_FILTER_ADD_UPDATE:  appends an ALParam node to the control list
+     case 4 → AL_FILTER_RESET:       resets envelope state (first=1, motion=AL_STOPPED, volume=1)
+                                      and propagates reset down the filter chain
+     case 9 → AL_FILTER_START:       sets motion=AL_PLAYING and propagates start
+     case 1 → AL_FILTER_SET_SOURCE:  connects the upstream filter (resampler)
+   The two struct variants ALFilt3_/ALEnvMix3_ should collapse to the standard
+   ALFilter/ALEnvMixer from <libaudio.h>.
+*/
 s32 alEnvmixerParam(void *filter, s32 paramID, void *param) {
     ALFilt3_ *f = (ALFilt3_ *)filter;
     ALEnvMix3_ *e = (ALEnvMix3_ *)filter;
@@ -189,6 +262,41 @@ s32 alEnvmixerParam(void *filter, s32 paramID, void *param) {
 extern s16 D_800FB490[];
 s16 _getRate(f64 vol, f64 tgt, s32 count, u16 *ratel);
 u32 osVirtualToPhysical(void *);
+/* TODO (Clean version):
+   This is _pullSubFrame from envmixer.c — the core RSP audio command emitter.
+   The raw Acmd_ writes should be replaced with libultra audio microcode macros:
+
+   Line 200 (opcode 8 = A_SETBUFF):
+     aSetBuffer(ptr++, A_MAIN, *inp, AL_MAIN_L_OUT + *outp, outCount << 1);
+     where AL_MAIN_L_OUT = 0x440 (1088).
+
+   Line 201 (opcode 8 = A_SETBUFF, flags=8 → A_AUX):
+     aSetBuffer(ptr++, A_AUX, AL_AUX_L_OUT + *outp, AL_AUX_R_OUT + *outp, AL_MAIN_R_OUT + *outp);
+     where AL_AUX_L_OUT=0x580 (1408), AL_AUX_R_OUT=0x6C0 (1728), AL_MAIN_R_OUT=0x800 (2048).
+
+   Lines 208-209 (opcode 9 = A_SETVOL, flags 6=A_VOL|A_LEFT, 4=A_VOL|A_RIGHT):
+     aSetVolume(ptr++, A_VOL | A_LEFT,  cvolL, 0, 0);
+     aSetVolume(ptr++, A_VOL | A_RIGHT, cvolR, 0, 0);
+
+   Lines 210-211 (opcode 9 = A_SETVOL, flags 2=A_RATE|A_LEFT, 0=A_RATE|A_RIGHT):
+     aSetVolume(ptr++, A_RATE | A_LEFT,  ltgt, lratm, lratl);
+     aSetVolume(ptr++, A_RATE | A_RIGHT, rtgt, rratm, rratl);
+
+   Line 212 (opcode 9 = A_SETVOL, flags 8 → A_AUX):
+     aSetVolume(ptr++, A_AUX, dryamt, 0, wetamt);
+
+   Line 213 (opcode 3 = A_ENVMIXER, flags 1|8 = A_INIT|A_AUX):
+     aEnvMixer(ptr++, A_INIT | A_AUX, osVirtualToPhysical(e->state));
+     First call: initializes the RSP ENVMIXER state from the volumes set above.
+
+   Line 215 (opcode 3 = A_ENVMIXER, flags 0|8 = A_AUX, no A_INIT):
+     aEnvMixer(ptr++, A_AUX, osVirtualToPhysical(e->state));
+     Subsequent calls: continues envelope from saved RSP state.
+
+   The flag constants:
+     A_INIT=1, A_AUX=8, A_VOL=4, A_LEFT=2, A_RATE=0, A_RIGHT=0
+     A_MAIN=0, A_SETBUFF=8, A_SETVOL=9, A_ENVMIXER=3
+*/
 Acmd8_ *_pullSubFrame(void *filter, s16 *inp, s16 *outp, s32 outCount, s32 sampleOffset, Acmd8_ *p) {
     Acmd8_ *ptr = p;
     EnvMix8_ *e = (EnvMix8_ *)filter;
@@ -218,6 +326,19 @@ Acmd8_ *_pullSubFrame(void *filter, s16 *inp, s16 *outp, s32 outCount, s32 sampl
     return ptr;
 }
 
+/* TODO (Clean version):
+   This is a software implementation of frexp() (math.h) used because the
+   decompiled code avoids the standard library.
+   The iterative loops can be replaced with the standard:
+     #include <math.h>
+     double frexp(double value, int *eptr);
+   or if the project provides its own libultra math stubs, reference that.
+
+   TODO (Bug potential):
+   The ascending loop `absvalue >= 1.0; absvalue *= 0.5` is O(exponent).
+   For very large values this is slow compared to IEEE-754 bit extraction.
+   This matches the original SDK's _frexpf implementation, so it's intentional.
+*/
 f64 _frexpf(f64 value, s32 *eptr) {
     f64 absvalue;
 
@@ -232,6 +353,16 @@ f64 _frexpf(f64 value, s32 *eptr) {
     return (value > 0.0 ? absvalue : -absvalue);
 }
 
+/* TODO (Bug potential):
+   This is a software ldexp() — multiplies `in` by 2^ex.
+   The implementation `1 << ex` is UNDEFINED BEHAVIOR for ex >= 31 (s32 overflow)
+   and WRONG for negative ex (1 << negative is UB in C).
+   The original SDK _ldexpf only gets called with small positive ex values
+   (3, 4, 30) in _getRate, so this doesn't trigger in practice.
+   Clean version:
+     #include <math.h>
+     double ldexp(double x, int exp);  // handles all cases correctly
+*/
 f64 _ldexpf(f64 in, s32 ex) {
     s32 exp;
 
@@ -242,6 +373,38 @@ f64 _ldexpf(f64 in, s32 ex) {
     return in;
 }
 
+/* TODO (Clean version):
+   This is _getRate from envmixer.c — computes the per-sample volume ramp rate
+   as a Q15.16 fixed-point value (ratem:ratel) such that:
+     vol * rate^(count) ≈ tgt
+   i.e. rate = (tgt/vol)^(1/count), computed via log-table exponentiation.
+
+   The logtab[] array contains pre-computed log2 mantissa corrections for
+   8 equally-spaced mantissa bins (indices 8..15 from frexp output mapped to 0..7).
+   The constant 0.69314718055994530942 is ln(2).
+
+   The algorithm:
+     1. Compute invn = 1/count, scaled to Q2.30 fixed-point (i_invn)
+     2. Decompose tgt/vol into mantissa*2^ex via _frexpf
+     3. Approximate ln(tgt/vol) using logtab + exponent: eps = (logtab[idx-8] + ex) * ln(2)
+     4. Scale eps to Q2.30: eps /= 2^30
+     5. Compute (1+eps)^invn via binary exponentiation (squaring loop on i_invn bits)
+     6. Apply a^16 = a*=a, a*=a, a*=a, a*=a → rate^8 per the RSP ENVMIXER convention
+
+   The final `a *= (a *= (a *= a))` on line 280 chains four squarings to yield
+   rate^(2^4) = rate^16... but the comment in _getVol says "rate values are
+   actually rate^8". This discrepancy is because _getRate produces rate^(1/count)
+   raised to the 16th power, while _getVol divides samples by 8 to compensate.
+   Net effect: rate^(16 * samples/8) = rate^(2*samples), which only matches
+   if the caller accounts for the factor of 2 in segEnd. Worth verifying.
+
+   TODO (Bug potential):
+   Line 280: `a *= (a *= (a *= a))` — the evaluation order of compound
+   assignment with the same lvalue on both sides is unspecified in C89/C99.
+   The compiler likely evaluates right-to-left yielding a^16, but this is
+   technically undefined behavior. A clean version:
+     a = a*a; a = a*a; a = a*a; a = a*a;  // explicit a^16
+*/
 s16 _getRate(f64 vol, f64 tgt, s32 count, u16 *ratel) {
     s16 s;
     f64 invn = 1.0 / count, eps, a, fs, mant;
