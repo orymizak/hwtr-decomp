@@ -42,7 +42,7 @@ void func_800AEE20(u32);
 void func_800A76FC(void);
 u32 func_800AF174(void);
 void func_800AF180(u32);
-void func_800CC2B4(u8);
+void Pause_SetPlayer(u8);
 extern s32 D_800F3740[];
 extern s32 D_80118490;
 extern u8 D_801184AD;
@@ -606,7 +606,7 @@ void func_8008C548(void) {
         D_801184AF = 1;
     }
     if (D_8014C1A8 == 0 && D_801184AC == 0 && D_801184B0 != 0 && (u32)D_800F36F4 < 2) {
-        func_800CC2B4(D_801184AE);
+        Pause_SetPlayer(D_801184AE);
         func_8008CDAC();
         D_8014C1A8 = 1;
     }
@@ -727,7 +727,7 @@ void func_8008D3D4(void) {
     /* TODO (Clean version / Bug check): Simplify range switch cases 0..6 to a bounds check:
     return (i <= 6) ? D_800F3770[i] : D_80141448;
     */
-s32 func_8008D460(u32 i) {
+s32 Jukebox_GetArtist(u32 i) {
     switch (i) {
         case 0:
         case 1:
@@ -742,7 +742,7 @@ s32 func_8008D460(u32 i) {
 }
 
 
-s32 func_8008D48C(u32 i) {
+s32 Jukebox_GetTitle(u32 i) {
     switch (i) {
         case 0:
         case 1:

@@ -62,7 +62,7 @@ extern void *D_801455B0;
 s32 Memory_Free(void *);
 extern void *D_80102208[3];
 extern s32 D_800F0414;
-extern u8 D_800F03F4;
+extern u8 gContPattern;
 s32 nuContRmbForceStop();
 
 INCLUDE_ASM("asm/nonmatchings/unit_0B140", func_8006A540);
@@ -164,7 +164,7 @@ u8 func_8006C0C4(s32 arg0);
 s32 func_8006C218(s32 arg0);
 s32 func_8006C23C(u8 i);
 s32 func_8006C334(void);
-s32 func_8006C33C(void);
+s32 Input_IsPad1Connected(void);
 s32 func_8006C34C(u8 *buf, u8 id);
 s32 func_8006C3D4(u8 *out, u8 ch);
 s32 func_8006C468(void);
@@ -174,7 +174,7 @@ s32 Input_InitTable(void) {
     sysInputIsKeyHeld = Input_IsKeyHeld;
     D_8014556C = func_8006BA98;
     D_80145570 = func_8006BD78;
-    D_801455A4 = func_8006C33C;
+    D_801455A4 = Input_IsPad1Connected;
     D_80145574 = func_8006BDA8;
     D_80145578 = func_8006BE34;
     D_8014557C = func_8006C0A0;
@@ -485,8 +485,8 @@ s32 func_8006C334(void) {
     return 0;
 }
 
-s32 func_8006C33C(void) {
-    return D_800F03F4 & 1;
+s32 Input_IsPad1Connected(void) {
+    return gContPattern & 1;
 }
 
     /* TODO (Clean version):

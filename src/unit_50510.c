@@ -224,7 +224,7 @@ s32 func_800B0024(void) {
     return 1;
 }
 
-u8 *func_800B027C(void) {
+u8 *Save_GetActiveProfile(void) {
     u8 i;
 
     for (i = 0; i < 4; i++) {

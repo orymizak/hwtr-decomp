@@ -159,17 +159,17 @@ extern void *D_801417B4;
 s32 func_8007F514();
 s32 func_8008C08C();
 s32 func_8006C468();
-s32 func_800CA1C0();
+s32 Pause_Init();
 s32 func_8006C488();
-s32 func_800CA1F8(s32);
-s32 func_800CA230();
+s32 Pause_End(s32);
+s32 Pause_Update();
 s32 Font_DrawChar(s32, s32, s32, s32, s32);
 s32 func_800CD600(s32 *);
 extern s32 D_800F015C;
 extern u8 D_800F0105;
-extern f32 D_800EFC70;
+extern f32 gSfxVolume;
 extern f64 D_800FE898;
-extern f32 D_800EFC74;
+extern f32 gVoiceVolume;
 extern f64 D_800FE8A0;
 
 s32 func_80060450(void) {
@@ -236,9 +236,9 @@ void func_8007863C();
 void Camera_Apply();
 void func_80078828();
 void Time_GetMillis();
-void func_80060B8C();
-void func_80060BB8();
-void func_80060BE4();
+void Game_PauseBegin();
+void Game_PauseEnd();
+void Game_PauseUpdate();
 void func_800698C0();
 void func_8006A1E0();
 void func_8006A1F0();
@@ -308,9 +308,9 @@ s32 func_80060458(void) {
     D_801416C8 = &func_80078828;
     D_80141698 = &Time_GetMillis;
     D_8014169C = &Rand_Range;
-    D_80141780 = &func_80060B8C;
-    D_80141784 = &func_80060BB8;
-    D_80141788 = &func_80060BE4;
+    D_80141780 = &Game_PauseBegin;
+    D_80141784 = &Game_PauseEnd;
+    D_80141788 = &Game_PauseUpdate;
     D_8014177C = &func_800698C0;
     D_80141720 = &func_8006A1E0;
     D_80141724 = &func_8006A1F0;
@@ -455,19 +455,19 @@ s32 func_80060B6C(void) {
     return func_8008C08C() & 0xFF;
 }
 
-void func_80060B8C(void) {
+void Game_PauseBegin(void) {
     func_8006C468();
     func_8006495C();
-    func_800CA1C0();
+    Pause_Init();
 }
 
-void func_80060BB8(s32 arg0) {
+void Game_PauseEnd(s32 arg0) {
     func_8006C488();
-    func_800CA1F8(arg0);
+    Pause_End(arg0);
 }
 
-void func_80060BE4(void) {
-    func_800CA230();
+void Game_PauseUpdate(void) {
+    Pause_Update();
 }
 
 s32 func_80060C00(s32 arg0, s32 arg1, s32 arg2, s32 arg3) {
@@ -483,8 +483,8 @@ INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80060C50);
 void func_80061454(s32 unused, u8 count, u8 *info);
 s32 func_800616A0();
 s32 Sfx_Play(u32 id, s32 mode, f32 vol, f32 pitch);
-s32 func_80061A84(u32 track);
-u8 func_80061B88(void);
+s32 Music_PlayTrack(u32 track);
+u8 Music_GetTrack(void);
 s32 func_80061C70();
 s32 func_80062950(void);
 s32 func_80063434(Vec3I_ v);
@@ -525,9 +525,9 @@ s32 func_800610DC(void) {
     D_8014C13C = (s32)func_80061454;
     D_8014C140 = (s32)func_800616A0;
     D_8014C0A8 = (s32)Sfx_Play;
-    D_8014C0AC = (s32)func_80061A84;
+    D_8014C0AC = (s32)Music_PlayTrack;
     D_8014C0B4 = (s32)Music_Stop;
-    D_8014C0B0 = (s32)func_80061B88;
+    D_8014C0B0 = (s32)Music_GetTrack;
     D_8014C0C0 = (s32)func_80061C70;
     D_8014C144 = (s32)func_80062950;
     D_8014C0C4 = (s32)func_80063434;
@@ -676,7 +676,7 @@ s32 Sfx_Play(u32 id, s32 mode, f32 vol, f32 pitch) {
     s32 h;
 
     snd = D_800EFC94[id];
-    v = D_800EFC70 * 128.0f * vol;
+    v = gSfxVolume * 128.0f * vol;
     if (snd == 0) {
         return 0;
     }
@@ -721,7 +721,7 @@ s32 Sfx_Play(u32 id, s32 mode, f32 vol, f32 pitch) {
     }
 }
 
-s32 func_80061A84(u32 track) {
+s32 Music_PlayTrack(u32 track) {
     register s32 song;
     register s32 vol;
 
@@ -747,12 +747,12 @@ s32 Music_Stop(void) {
 }
 
 
-u8 func_80061B88(void) {
+u8 Music_GetTrack(void) {
     return D_800F0105;
 }
 
 s32 func_80061B94(s32 kind) {
-    s32 vol = D_800EFC74 * 255.0f;
+    s32 vol = gVoiceVolume * 255.0f;
     s32 snd = 0;
 
     switch ((u32)kind) {
@@ -798,7 +798,7 @@ s32 func_80062950(void) {
     p4 = func_800CE428(D_800EFF38[i].h[4]);
     p5 = func_800CE428(D_800EFF38[i].h[5]);
     if (p0 || p2 || p3 || p4 || p5 || p1) {
-        vol = D_800EFC70;
+        vol = gSfxVolume;
         x = D_800EFF38[i].f1C;
         zero = 0.0f;
         pan = 0x80;
@@ -875,7 +875,7 @@ s32 func_80062950(void) {
     p4 = func_800CE428(D_800EFF38[i].h[4]);
     p5 = func_800CE428(D_800EFF38[i].h[5]);
     if (p0 || p2 || p3 || p4 || p5 || p1) {
-        vol = D_800EFC70;
+        vol = gSfxVolume;
         x = D_800EFF38[i].f1C;
         zero = 0.0f;
         pan = 0x80;
@@ -1076,7 +1076,7 @@ s32 func_80063EA8(u8 i, s32 k, f32 lvl) {
     }
     off = i * 0x4C;
     pos = (u8 *)D_800EFC94 + 0x2D0 + off;
-    vol = func_80064988(pos) * D_800EFC70;
+    vol = func_80064988(pos) * gSfxVolume;
     pan = func_80064B58(pos);
     pitch = func_800649F8(pos, (u8 *)D_800EFC94 + 0x2DC + off);
     busy = func_800CE428(*(s32 *)(&D_800EFF48 + off));
@@ -1116,7 +1116,7 @@ s32 func_80064058(u8 i, s32 k) {
     }
     off = i * 0x4C;
     pos = (u8 *)D_800EFC94 + 0x2D0 + off;
-    vol = func_80064988(pos) * D_800EFC70;
+    vol = func_80064988(pos) * gSfxVolume;
     pan = func_80064B58(pos);
     pitch = func_800649F8(pos, (u8 *)D_800EFC94 + 0x2DC + off);
     busy = func_800CE428(*(s32 *)(&D_800EFF4C + off));
@@ -1250,21 +1250,21 @@ u8 Audio_GetMusicVolume(void) {
 }
 
 
-void func_8006476C(s32 arg0) {
-    D_800EFC70 = (f32) ((f64) (arg0 & 0xFF) / D_800FE898);
+void Audio_SetSfxVolume(s32 arg0) {
+    gSfxVolume = (f32) ((f64) (arg0 & 0xFF) / D_800FE898);
 }
 
-u8 func_80064798(void) {
-    return D_800EFC70 * 255.0f;
+u8 Audio_GetSfxVolume(void) {
+    return gSfxVolume * 255.0f;
 }
 
 
-void func_800647F8(s32 arg0) {
-    D_800EFC74 = (f32) ((f64) (arg0 & 0xFF) / D_800FE8A0);
+void Audio_SetVoiceVolume(s32 arg0) {
+    gVoiceVolume = (f32) ((f64) (arg0 & 0xFF) / D_800FE8A0);
 }
 
-u8 func_80064824(void) {
-    return D_800EFC74 * 255.0f;
+u8 Audio_GetVoiceVolume(void) {
+    return gVoiceVolume * 255.0f;
 }
 
 

@@ -184,15 +184,15 @@ s8 func_80086F80(s32, u8, u8);
 s32 func_800B0454(u32 i, E140b_ *src);
 extern char D_80100F70[];
 extern s32 *D_80141268;
-s32 *func_8008D460(s32);
-s32 *func_8008D48C(s32);
+s32 *Jukebox_GetArtist(s32);
+s32 *Jukebox_GetTitle(s32);
 void Options_UpdateSongTexts(void);
 extern u8 D_80100DF4;
 extern s32 *D_80141480;
 extern u8 D_80100E08;
 extern ObjG1_ D_800F6358;
 u8 func_800AFD1C(void);
-void *func_800B027C(void);
+void *Save_GetActiveProfile(void);
 s32 func_800B0364(s32);
 extern u8 D_80100DAC;
 extern u8 D_80100D94;
@@ -1207,7 +1207,7 @@ void func_800B5504(void) {
         Fsm_Trigger(&gMenuFsm, 0x23);
         return;
     }
-    D_800F641C = func_800B027C();
+    D_800F641C = Save_GetActiveProfile();
     D_80124148 = func_800B0364(0);
     D_8012414C = func_800B0364(1);
     if (D_800F641C == NULL) {
@@ -4111,8 +4111,8 @@ void Options_UpdateSongTexts(void) {
     } else {
         Menu_SetText((s32)t, 0, (s32 *)&D_80100CC8, 73, 414, 0, 1, 0, 1, 127, 127, 127);
     }
-    Menu_SetText((s32)t, 1, func_8008D460((u8)gMenuSong), 426, 385, 0, 0, 1, 1, 255, 255, 255);
-    Menu_SetText((s32)t, 2, func_8008D48C((u8)gMenuSong), 426, 410, 0, 0, 1, 1, 255, 255, 255);
+    Menu_SetText((s32)t, 1, Jukebox_GetArtist((u8)gMenuSong), 426, 385, 0, 0, 1, 1, 255, 255, 255);
+    Menu_SetText((s32)t, 2, Jukebox_GetTitle((u8)gMenuSong), 426, 410, 0, 0, 1, 1, 255, 255, 255);
 }
 
 void Options_Enter(void) {

@@ -7,12 +7,12 @@ extern char *gTrackNames[4][3];
 s32 strcmp(const char *a, const char *b);
 u8 func_800875A0(void);
 u8 func_80087660(void);
-void func_800C9ED0(void *arg0);
-s32 func_800C9F78(void *arg0);
+void Fsm_Reset(void *arg0);
+s32 Fsm_Update(void *arg0);
 
 s32 func_80087720(void) {
     if (func_800875A0()) {
-        func_800C9ED0(gMenuFsm);
+        Fsm_Reset(gMenuFsm);
         return 1;
     }
     return 0;
@@ -23,7 +23,7 @@ s32 func_80087758(void) {
 }
 
 s32 func_8008777C(void) {
-    return func_800C9F78(gMenuFsm) == 0;
+    return Fsm_Update(gMenuFsm) == 0;
 }
 
 s32 func_800877A0(char *name) {

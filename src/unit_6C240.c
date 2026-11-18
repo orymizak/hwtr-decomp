@@ -1,12 +1,12 @@
 #include "common.h"
 #include "include_asm.h"
-s32 func_8008D460(s32);
-s32 func_8008D48C(s32);
-void func_800CB4D4(s32, s32, s32, s32, s32, s32);
-void func_800CAE10(void);
-void func_800CB034(s32);
-void func_800CB268(void);
-void func_800CB0DC(s32);
+s32 Jukebox_GetArtist(s32);
+s32 Jukebox_GetTitle(s32);
+void PauseUi_DrawText(s32, s32, s32, s32, s32, s32);
+void PauseUi_ResetTextBuffer(void);
+void PauseUi_Load(s32);
+void PauseUi_FadeIn(void);
+void PauseUi_Unload(s32);
     /* TODO (Clean version):
     Replace temporary decomp structures with documented layout:
     typedef struct {
@@ -23,46 +23,46 @@ void func_800CB0DC(s32);
     */
 typedef struct { s16 id; s16 x; } Id4_;
 typedef struct { u8 pad[0xC]; Id4_ *ids; u8 pad2[3]; s8 n; } IdTab_;
-extern s32 D_800FA264;
-extern s32 D_800FA268;
+extern s32 gPauseRepeatLeft;
+extern s32 gPauseRepeatRight;
 extern void (*D_8014C0A8)(s32, s32, f32, f32);
-u8 func_800CCD94(u8);
+u8 Volume_StepUp(u8);
 extern u8 (*sysInputIsKeyHeld)(s32, s32);
-extern u32 D_800FA260;
-extern IdTab_ *D_800FAB90;
+extern u32 gPauseButtons;
+extern IdTab_ *gPauseCurState;
 extern u8 (*D_801455A4)(void);
-s32 func_800CB168();
-s32 func_800CB28C();
-s32 func_800CB2C0(s32,s32);
+s32 PauseUi_BeginFrame();
+s32 PauseUi_EndFrame();
+s32 PauseUi_DrawMenu(s32,s32);
 s32 Fsm_Trigger(void *,s32);
-extern u8 D_800FAB88;
+extern u8 gPauseFsm;
 
-extern s8 D_80125590;
-s32 func_800CA200();
-s32 func_800CA210();
-s32 func_800CACA8(s32);
-extern s32 D_800FA520;
-s32 func_800CA8F0(s32);
+extern s8 gPausePlayer;
+s32 Pause_RequestQuit();
+s32 Pause_RequestRestart();
+s32 PauseUi_Animate(s32);
+extern s32 gPauseConfirmMenu;
+s32 PauseUi_Open(s32);
 extern s8 D_800FA240;
 extern s8 D_800FA241;
-extern s32 D_800FA510;
-extern s32 D_800FA514;
-extern s32 D_800FA518;
-void *func_800B027C();
+extern s32 gPauseMainMenu;
+extern s32 gPauseOptionsMenu;
+extern s32 gPauseAudioMenu;
+void *Save_GetActiveProfile();
 extern s32 (*D_8014105C)(s32);
-u8 func_800CCEFC(u8);
+u8 Volume_StepDown(u8);
 extern s32 (*D_80141064)(s32);
 extern s32 (*sysAudioSetMusicVolume)(s32);
-extern s32 D_800FA51C;
+extern s32 gPauseJukeboxMenu;
 extern s32 (*D_8014C0AC)(s32);
 extern s32 (*D_8014C0B0)();
 extern s32 (*D_8014C0B4)();
 
-s32 func_800CB640(s16 id) {
-    Id4_ *p = D_800FAB90->ids;
+s32 Pause_StateHasEvent(s16 id) {
+    Id4_ *p = gPauseCurState->ids;
     u8 i;
 
-    for (i = 0; i < D_800FAB90->n; i++, p++) {
+    for (i = 0; i < gPauseCurState->n; i++, p++) {
         if (p->id == id) {
             return 1;
         }
@@ -71,224 +71,224 @@ s32 func_800CB640(s16 id) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_6C240", func_800CB694);
+INCLUDE_ASM("asm/nonmatchings/unit_6C240", Pause_Input);
 
     /* TODO (Clean version):
     Indirect call via 'fp' is a matching artifact to pin sysInputIsKeyHeld in a register.
     Logic performs edge detection for buttons 0x10 and 0x11 (bits 1 and 4 represent newly pressed state):
     u32 r = 0;
-    s32 pad = ((u8)D_80125590 != 1);
+    s32 pad = ((u8)gPausePlayer != 1);
     if (sysInputIsKeyHeld(pad, 0x10)) r |= 0x1;
     if (sysInputIsKeyHeld(pad, 0x11)) r |= 0x8;
-    if ((r & 0x1) != (D_800FA260 & 0x1)) r |= 0x2;
-    if ((r & 0x8) != (D_800FA260 & 0x8)) r |= 0x10;
-    D_800FA260 = r;
+    if ((r & 0x1) != (gPauseButtons & 0x1)) r |= 0x2;
+    if ((r & 0x8) != (gPauseButtons & 0x8)) r |= 0x10;
+    gPauseButtons = r;
     return r;
     */
-u32 func_800CC1FC(void) {
+u32 Pause_ReadLeftRight(void) {
     u8 (**fp)(s32, s32);
     s32 pad;
     u32 r;
     u32 old;
 
-    pad = (u8)D_80125590 != 1;
+    pad = (u8)gPausePlayer != 1;
     fp = &sysInputIsKeyHeld;
     r = (*fp)(pad, 0x10) != 0;
     if ((*fp)(pad, 0x11)) {
         r |= 8;
     }
-    old = D_800FA260;
+    old = gPauseButtons;
     r = ((r & 1) != (old & 1)) ? r | 2 : r;
     r = ((r & 8) != (old & 8)) ? r | 0x10 : r;
-    D_800FA260 = r;
+    gPauseButtons = r;
     return r;
 }
 
-void func_800CC2B4(s8 arg0) {
-    D_80125590 = arg0;
+void Pause_SetPlayer(s8 arg0) {
+    gPausePlayer = arg0;
 }
 
-void func_800CC2C0(void) {
-    func_800CA200();
+void Pause_Quit(void) {
+    Pause_RequestQuit();
 }
 
-void func_800CC2DC(void) {
-    func_800CA210();
+void Pause_Restart(void) {
+    Pause_RequestRestart();
 }
 
-void func_800CC2F8(void) {
-    Fsm_Trigger(&D_800FAB88, 0);
+void Pause_Advance(void) {
+    Fsm_Trigger(&gPauseFsm, 0);
 }
 
-void func_800CC31C(void) {
-    func_800CB168();
-    func_800CB2C0(D_800FA520, 1);
-    func_800CB28C();
+void Confirm_DrawYes(void) {
+    PauseUi_BeginFrame();
+    PauseUi_DrawMenu(gPauseConfirmMenu, 1);
+    PauseUi_EndFrame();
 }
 
-void func_800CC350(void) {
-    func_800CB168();
-    func_800CB2C0(D_800FA520, 0);
-    func_800CB28C();
+void Confirm_DrawNo(void) {
+    PauseUi_BeginFrame();
+    PauseUi_DrawMenu(gPauseConfirmMenu, 0);
+    PauseUi_EndFrame();
 }
 
-void func_800CC384(void) {
-    func_800CACA8(D_800FA520);
+void Confirm_Animate(void) {
+    PauseUi_Animate(gPauseConfirmMenu);
 }
 
-void func_800CC3A8(void) {
-    func_800CA8F0(D_800FA520);
+void Confirm_Open(void) {
+    PauseUi_Open(gPauseConfirmMenu);
 }
 
     /* TODO (Clean version):
-    (&D_800FA510)[i] accesses contiguous global variables D_800FA510..D_800FA520.
+    (&gPauseMainMenu)[i] accesses contiguous global variables gPauseMainMenu..gPauseConfirmMenu.
     Declare as an array:
-    extern s32 D_800FA510[5];
-    func_800CB034(D_800FA510[i]);
+    extern s32 gPauseMainMenu[5];
+    PauseUi_Load(gPauseMainMenu[i]);
     */
-void func_800CC3CC(void) {
+void Pause_Load(void) {
     u8 i;
 
-    func_800CAE10();
+    PauseUi_ResetTextBuffer();
     for (i = 0; i < 5; i++) {
-        func_800CB034((&D_800FA510)[i]);
+        PauseUi_Load((&gPauseMainMenu)[i]);
     }
-    func_800CB268();
+    PauseUi_FadeIn();
 }
 
-void func_800CC430(void) {
+void Pause_LoadNop(void) {
 
 }
 
-void func_800CC438(void) {
+void Pause_Unload(void) {
     u8 i;
 
     for (i = 0; i < 5; i++) {
-        func_800CB0DC((&D_800FA510)[i]);
+        PauseUi_Unload((&gPauseMainMenu)[i]);
     }
 }
 
 
-void func_800CC490(void) {
+void Pause_UnloadNop(void) {
 
 }
 
-void func_800CC498(void) {
+void Pause_ClearRequests(void) {
     D_800FA241 = 0;
     D_800FA240 = 0;
 }
 
-void func_800CC4AC(void) {
-    func_800CA8F0(D_800FA510);
+void PauseMain_Open(void) {
+    PauseUi_Open(gPauseMainMenu);
 }
 
-void func_800CC4D0(void) {
-    func_800CACA8(D_800FA510);
+void PauseMain_Animate(void) {
+    PauseUi_Animate(gPauseMainMenu);
 }
 
-void func_800CC4F4(void) {
+void PauseMain_OnContinue(void) {
     if (D_801455A4() != 0) {
-        Fsm_Trigger(&D_800FAB88, 7);
+        Fsm_Trigger(&gPauseFsm, 7);
     } else {
-        Fsm_Trigger(&D_800FAB88, 8);
+        Fsm_Trigger(&gPauseFsm, 8);
     }
 }
 
 
-void func_800CC544(void) {
-    func_800CB168();
-    func_800CB2C0(D_800FA510, 0);
-    func_800CB28C();
+void PauseMain_DrawContinue(void) {
+    PauseUi_BeginFrame();
+    PauseUi_DrawMenu(gPauseMainMenu, 0);
+    PauseUi_EndFrame();
 }
 
-void func_800CC578(void) {
-    func_800CB168();
-    func_800CB2C0(D_800FA510, 1);
-    func_800CB28C();
+void PauseMain_DrawRestart(void) {
+    PauseUi_BeginFrame();
+    PauseUi_DrawMenu(gPauseMainMenu, 1);
+    PauseUi_EndFrame();
 }
 
-void func_800CC5AC(void) {
-    func_800CB168();
-    func_800CB2C0(D_800FA510, 2);
-    func_800CB28C();
+void PauseMain_DrawOptions(void) {
+    PauseUi_BeginFrame();
+    PauseUi_DrawMenu(gPauseMainMenu, 2);
+    PauseUi_EndFrame();
 }
 
-void func_800CC5E0(void) {
-    func_800CB168();
-    func_800CB2C0(D_800FA510, 3);
-    func_800CB28C();
+void PauseMain_DrawQuit(void) {
+    PauseUi_BeginFrame();
+    PauseUi_DrawMenu(gPauseMainMenu, 3);
+    PauseUi_EndFrame();
 }
 
-void func_800CC614(void) {
-    func_800CA8F0(D_800FA514);
+void PauseOptions_Open(void) {
+    PauseUi_Open(gPauseOptionsMenu);
 }
 
-void func_800CC638(void) {
-    func_800CACA8(D_800FA514);
+void PauseOptions_Animate(void) {
+    PauseUi_Animate(gPauseOptionsMenu);
 }
 
-void func_800CC65C(void) {
-    func_800CB168();
-    func_800CB2C0(D_800FA514, 0);
-    func_800CB28C();
+void PauseOptions_DrawAudio(void) {
+    PauseUi_BeginFrame();
+    PauseUi_DrawMenu(gPauseOptionsMenu, 0);
+    PauseUi_EndFrame();
 }
 
-void func_800CC690(void) {
-    func_800CB168();
-    func_800CB2C0(D_800FA514, 1);
-    func_800CB28C();
+void PauseOptions_DrawJukebox(void) {
+    PauseUi_BeginFrame();
+    PauseUi_DrawMenu(gPauseOptionsMenu, 1);
+    PauseUi_EndFrame();
 }
 
-void func_800CC6C4(void) {
-    func_800CA8F0(D_800FA518);
+void PauseAudio_Open(void) {
+    PauseUi_Open(gPauseAudioMenu);
 }
 
-void func_800CC6E8(void) {
-    func_800CACA8(D_800FA518);
+void PauseAudio_Animate(void) {
+    PauseUi_Animate(gPauseAudioMenu);
 }
 
-/* Same edge detection as func_800CC1FC; repeats buttons 0x10/0x11 as menu inputs 0xB/0xA. */
-void func_800CC70C(void) {
+/* Same edge detection as Pause_ReadLeftRight; repeats buttons 0x10/0x11 as menu inputs 0xB/0xA. */
+void Pause_RepeatLeftRight(void) {
     s32 pad;
     u32 r;
     u32 old;
 
-    pad = (u8)D_80125590 != 1;
+    pad = (u8)gPausePlayer != 1;
     r = sysInputIsKeyHeld(pad, 0x10) != 0;
     if (sysInputIsKeyHeld(pad, 0x11)) {
         r |= 8;
     }
-    old = D_800FA260;
+    old = gPauseButtons;
     r = ((r & 1) != (old & 1)) ? r | 2 : r;
     r = ((r & 8) != (old & 8)) ? r | 0x10 : r;
-    D_800FA260 = r;
+    gPauseButtons = r;
     if ((r & 9) == 1) {
         if (r & 2) {
-            Fsm_Trigger(&D_800FAB88, 0xB);
-            D_800FA264 = -8;
-        } else if (D_800FA264++ >= 3) {
-            Fsm_Trigger(&D_800FAB88, 0xB);
-            D_800FA264 = 0;
+            Fsm_Trigger(&gPauseFsm, 0xB);
+            gPauseRepeatLeft = -8;
+        } else if (gPauseRepeatLeft++ >= 3) {
+            Fsm_Trigger(&gPauseFsm, 0xB);
+            gPauseRepeatLeft = 0;
         }
     } else if ((r & 9) == 8) {
         if (r & 0x10) {
-            Fsm_Trigger(&D_800FAB88, 0xA);
-            D_800FA268 = -8;
-        } else if (D_800FA268++ >= 3) {
-            Fsm_Trigger(&D_800FAB88, 0xA);
-            D_800FA268 = 0;
+            Fsm_Trigger(&gPauseFsm, 0xA);
+            gPauseRepeatRight = -8;
+        } else if (gPauseRepeatRight++ >= 3) {
+            Fsm_Trigger(&gPauseFsm, 0xA);
+            gPauseRepeatRight = 0;
         }
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_6C240", func_800CC890);
+INCLUDE_ASM("asm/nonmatchings/unit_6C240", PauseAudio_DrawSfx);
 
-INCLUDE_ASM("asm/nonmatchings/unit_6C240", func_800CCA3C);
+INCLUDE_ASM("asm/nonmatchings/unit_6C240", PauseAudio_DrawVoice);
 
-INCLUDE_ASM("asm/nonmatchings/unit_6C240", func_800CCBE8);
+INCLUDE_ASM("asm/nonmatchings/unit_6C240", PauseAudio_DrawMusic);
 
 /* Raises a 0-255 level to the next 10% step; plays sound 0x31 on change. */
-u8 func_800CCD94(u8 arg0) {
+u8 Volume_StepUp(u8 arg0) {
     s32 v;
     s32 cur;
     s32 target;
@@ -321,7 +321,7 @@ u8 func_800CCD94(u8 arg0) {
 }
 
 /* Lowers a 0-255 level to the previous 10% step; plays sound 0x31 on change. */
-u8 func_800CCEFC(u8 arg0) {
+u8 Volume_StepDown(u8 arg0) {
     s32 v;
     s32 cur;
     s32 target;
@@ -354,7 +354,7 @@ u8 func_800CCEFC(u8 arg0) {
 }
 
     /* TODO (Clean version):
-    Offsets 0x87C, 0x87D, and 0x880 into func_800B027C() represent audio settings.
+    Offsets 0x87C, 0x87D, and 0x880 into Save_GetActiveProfile() represent audio settings.
     Define an options structure:
     typedef struct {
         u8 pad00[0x87C];
@@ -363,125 +363,125 @@ u8 func_800CCEFC(u8 arg0) {
         u8 pad87E[2];
         u8 voice_volume;  // 0x880
     } GameSettings;
-    GameSettings *opt = func_800B027C();
+    GameSettings *opt = Save_GetActiveProfile();
     */
-void func_800CD054(void) {
-    u8 *opt = func_800B027C();
+void PauseAudio_SfxUp(void) {
+    u8 *opt = Save_GetActiveProfile();
     u8 cur = opt[0x87C];
     u8 next;
 
     if (cur != 0xFF) {
-        next = func_800CCD94(cur);
+        next = Volume_StepUp(cur);
         opt[0x87C] = next;
         D_8014105C(next);
     }
 }
 
-void func_800CD0A4(void) {
-    u8 *opt = func_800B027C();
+void PauseAudio_SfxDown(void) {
+    u8 *opt = Save_GetActiveProfile();
     u8 cur = opt[0x87C];
     u8 next;
 
     if (cur != 0) {
-        next = func_800CCEFC(cur);
+        next = Volume_StepDown(cur);
         opt[0x87C] = next;
         D_8014105C(next);
     }
 }
 
-void func_800CD0F0(void) {
-    u8 *opt = func_800B027C();
+void PauseAudio_VoiceUp(void) {
+    u8 *opt = Save_GetActiveProfile();
     u8 cur = opt[0x880];
     u8 next;
 
     if (cur != 0xFF) {
-        next = func_800CCD94(cur);
+        next = Volume_StepUp(cur);
         opt[0x880] = next;
         D_80141064(next);
     }
 }
 
-void func_800CD140(void) {
-    u8 *opt = func_800B027C();
+void PauseAudio_VoiceDown(void) {
+    u8 *opt = Save_GetActiveProfile();
     u8 cur = opt[0x880];
     u8 next;
 
     if (cur != 0) {
-        next = func_800CCEFC(cur);
+        next = Volume_StepDown(cur);
         opt[0x880] = next;
         D_80141064(next);
     }
 }
 
-void func_800CD18C(void) {
-    u8 *opt = func_800B027C();
+void PauseAudio_MusicUp(void) {
+    u8 *opt = Save_GetActiveProfile();
     u8 cur = opt[0x87D];
     u8 next;
 
     if (cur != 0xFF) {
-        next = func_800CCD94(cur);
+        next = Volume_StepUp(cur);
         opt[0x87D] = next;
         sysAudioSetMusicVolume(next);
     }
 }
 
-void func_800CD1DC(void) {
-    u8 *opt = func_800B027C();
+void PauseAudio_MusicDown(void) {
+    u8 *opt = Save_GetActiveProfile();
     u8 cur = opt[0x87D];
     u8 next;
 
     if (cur != 0) {
-        next = func_800CCEFC(cur);
+        next = Volume_StepDown(cur);
         opt[0x87D] = next;
         sysAudioSetMusicVolume(next);
     }
 }
 
-void func_800CD228(void) {
-    func_800CA8F0(D_800FA51C);
+void Jukebox_Open(void) {
+    PauseUi_Open(gPauseJukeboxMenu);
     D_8014C0AC(D_8014C0B0());
 }
 
-void func_800CD26C(void) {
-    func_800CACA8(D_800FA51C);
+void Jukebox_Animate(void) {
+    PauseUi_Animate(gPauseJukeboxMenu);
 }
 
     /* TODO (Clean version):
     'fp' is a matching workaround to cache D_8014C0B0 in a register across calls:
     s32 val = D_8014C0B0();
-    func_800CB168();
-    func_800CB2C0(D_800FA51C, 0);
-    func_800CB4D4(func_8008D460(val), 160, 155, 255, 255, 255);
-    func_800CB4D4(func_8008D48C(val), 160, 175, 255, 255, 255);
-    func_800CB28C();
+    PauseUi_BeginFrame();
+    PauseUi_DrawMenu(gPauseJukeboxMenu, 0);
+    PauseUi_DrawText(Jukebox_GetArtist(val), 160, 155, 255, 255, 255);
+    PauseUi_DrawText(Jukebox_GetTitle(val), 160, 175, 255, 255, 255);
+    PauseUi_EndFrame();
     */
-void func_800CD290(void) {
+void Jukebox_DrawPrev(void) {
     s32 (**fp)() = &D_8014C0B0;
 
-    func_800CB168();
-    func_800CB2C0(D_800FA51C, 0);
-    func_800CB4D4(func_8008D460((*fp)()), 160, 155, 255, 255, 255);
-    func_800CB4D4(func_8008D48C((*fp)()), 160, 175, 255, 255, 255);
-    func_800CB28C();
+    PauseUi_BeginFrame();
+    PauseUi_DrawMenu(gPauseJukeboxMenu, 0);
+    PauseUi_DrawText(Jukebox_GetArtist((*fp)()), 160, 155, 255, 255, 255);
+    PauseUi_DrawText(Jukebox_GetTitle((*fp)()), 160, 175, 255, 255, 255);
+    PauseUi_EndFrame();
 }
 
 
-void func_800CD338(void) {
+void Jukebox_DrawNext(void) {
     s32 (**fp)() = &D_8014C0B0;
 
-    func_800CB168();
-    func_800CB2C0(D_800FA51C, 1);
-    func_800CB4D4(func_8008D460((*fp)()), 160, 155, 255, 255, 255);
-    func_800CB4D4(func_8008D48C((*fp)()), 160, 175, 255, 255, 255);
-    func_800CB28C();
+    PauseUi_BeginFrame();
+    PauseUi_DrawMenu(gPauseJukeboxMenu, 1);
+    PauseUi_DrawText(Jukebox_GetArtist((*fp)()), 160, 155, 255, 255, 255);
+    PauseUi_DrawText(Jukebox_GetTitle((*fp)()), 160, 175, 255, 255, 255);
+    PauseUi_EndFrame();
 }
 
 
-void func_800CD3E0(void) {
+void Jukebox_StopMusic(void) {
     D_8014C0B4();
 }
 
-void func_800CD404(void) {
+void Jukebox_NextTrack(void) {
     s32 next;
 
     next = D_8014C0B0() + 1;
@@ -491,7 +491,7 @@ void func_800CD404(void) {
     D_8014C0AC(next & 0xFF);
 }
 
-void func_800CD45C(void) {
+void Jukebox_PrevTrack(void) {
     s32 t;
     u8 r;
 

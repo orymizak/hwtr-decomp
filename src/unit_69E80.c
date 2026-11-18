@@ -186,7 +186,7 @@ s32 Tuning_Load(void) {
     return 0;
 }
 
-s32 func_800C9ED0(Seq9_ *s) {
+s32 Fsm_Reset(Seq9_ *s) {
     s->c = s->t[s->a];
     s->e = s->t[s->b];
     s->g = -1;
@@ -210,4 +210,4 @@ s32 Fsm_Trigger(Ob9F_ *o, s32 id) {
     return 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_69E80", func_800C9F78);
+INCLUDE_ASM("asm/nonmatchings/unit_69E80", Fsm_Update);

@@ -41,25 +41,25 @@ typedef struct { u8 p0[2]; u8 n; u8 p3; EA6_ *items; u8 p8[0xB]; u8 mode; } TA6_
 typedef struct { u16 x; u16 y; } P2A7_;
 typedef struct { u8 a; u8 pad; P2A7_ p; P2A7_ p2; } EA7_;
 typedef struct { u8 p0[2]; u8 n; u8 p3; EA7_ *items; u8 p8[0xB]; u8 mode; } TA7_;
-void func_800CA7A8(TA7_ *t);
+void PauseUi_PlaceItem2(TA7_ *t);
 extern s32 (*D_8014169C)(s32);
-void func_800CA660(TA6_ *t);
+void PauseUi_PlaceItem(TA6_ *t);
 extern void (*D_801416F0)(s32);
 extern void (*D_801416A4)(void);
 extern void (*D_801416AC)(void);
 extern void (*D_801416C8)(f32, f32, f32, f32);
 extern void (*D_8014178C)(s32, s32, s32, s32);
 void func_800AEB28(s32);
-void func_800CA478(u8 *t);
+void PauseUi_CenterItem2(u8 *t);
 extern s32 (*D_801416D8)(s32, u8);
 s8 func_80086F80(u8 font, u8 a, u8 b);
-void func_800CA290(u8 *t);
-void func_800CAE1C(E18c_ *);
-void func_800CAF28(E18c_ *);
+void PauseUi_CenterItem(u8 *t);
+void PauseUi_BuildText(E18c_ *);
+void PauseUi_BuildText2(E18c_ *);
 
-extern u32 D_80125580;
-extern s8 D_80124D70;
-extern s8 D_80124D71;
+extern u32 gPauseTextUsed;
+extern s8 gPauseFadeTarget;
+extern s8 gPauseFadeAlpha;
 extern s32 (*D_801416A8)();
 extern s32 (*D_801416B0)();
 
@@ -67,9 +67,9 @@ extern s32 (*D_801416B0)();
     1. If character count t[2] is 0, loop conditions and indexing into items[0] cause out-of-bounds access. Add guard:
         if (t[2] == 0) return;
     2. Horizontal text centering: centers text string between min_x (*(s16*)(t+8)) and max_x (*(s16*)(t+0xA)).
-    3. func_800CA478 below is an identical duplicate of this function.
+    3. PauseUi_CenterItem2 below is an identical duplicate of this function.
     */
-void func_800CA290(u8 *t) {
+void PauseUi_CenterItem(u8 *t) {
     u8 i;
     s32 w;
     s32 x;
@@ -97,7 +97,7 @@ void func_800CA290(u8 *t) {
     }
 }
 
-void func_800CA478(u8 *t) {
+void PauseUi_CenterItem2(u8 *t) {
     u8 i;
     s32 w;
     s32 x;
@@ -125,7 +125,7 @@ void func_800CA478(u8 *t) {
     }
 }
 
-void func_800CA660(TA6_ *t) {
+void PauseUi_PlaceItem(TA6_ *t) {
     u8 i;
 
     for (i = 0; i < t->n; i++) {
@@ -145,12 +145,12 @@ void func_800CA660(TA6_ *t) {
     }
 }
 
-    /* TODO (Clean version): func_800CA7A8 is an exact duplicate of func_800CA660. Both animate item positions according to mode:
+    /* TODO (Clean version): PauseUi_PlaceItem2 is an exact duplicate of PauseUi_PlaceItem. Both animate item positions according to mode:
     mode 0: reset to p2
     mode 1: slide in from right (p2.x + 320)
     mode 2: scatter randomly across screen (rand(320), rand(240))
     */
-void func_800CA7A8(TA7_ *t) {
+void PauseUi_PlaceItem2(TA7_ *t) {
     u8 i;
 
     for (i = 0; i < t->n; i++) {
@@ -170,75 +170,75 @@ void func_800CA7A8(TA7_ *t) {
     }
 }
 
-void func_800CA8F0(TCB_ *t) {
+void PauseUi_Open(TCB_ *t) {
     u8 i;
 
     for (i = 0; i < t->n1; i++) {
-        func_800CA290(&t->a1[i]);
-        func_800CA660(&t->a1[i]);
+        PauseUi_CenterItem(&t->a1[i]);
+        PauseUi_PlaceItem(&t->a1[i]);
     }
     for (i = 0; i < t->n2; i++) {
-        func_800CA478(&t->a2[i]);
-        func_800CA7A8(&t->a2[i]);
+        PauseUi_CenterItem2(&t->a2[i]);
+        PauseUi_PlaceItem2(&t->a2[i]);
     }
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_6AE90", func_800CA9B8);
+INCLUDE_ASM("asm/nonmatchings/unit_6AE90", PauseUi_StepItem);
 
-INCLUDE_ASM("asm/nonmatchings/unit_6AE90", func_800CAB30);
+INCLUDE_ASM("asm/nonmatchings/unit_6AE90", PauseUi_StepItem2);
 
-extern u32 D_800FA230;
+extern u32 gPauseUiTime;
 extern u32 (*D_80141698)(void);
-void func_800CA9B8(E18c_ *, f32);
-void func_800CAB30(E18c_ *, f32);
+void PauseUi_StepItem(E18c_ *, f32);
+void PauseUi_StepItem2(E18c_ *, f32);
 
 /* Steps both element lists by elapsed ticks / 100 (0.15 on the first call, 0.1 after a gap of more than 100 ticks). */
-void func_800CACA8(TCB_ *t) {
+void PauseUi_Animate(TCB_ *t) {
     f32 dt;
     u32 now;
     u32 d;
     u8 i;
 
-    if (D_800FA230 == 0) {
+    if (gPauseUiTime == 0) {
         dt = 0.15f;
-        D_800FA230 = D_80141698();
+        gPauseUiTime = D_80141698();
     } else {
         now = D_80141698();
-        d = now - D_800FA230;
+        d = now - gPauseUiTime;
         if (d > 100) {
             dt = 0.1f;
         } else {
             dt = d / 100.0f;
         }
-        D_800FA230 = now;
+        gPauseUiTime = now;
     }
     for (i = 0; i < t->n1; i++) {
-        func_800CA9B8(&t->a1[i], dt);
+        PauseUi_StepItem(&t->a1[i], dt);
     }
     for (i = 0; i < t->n2; i++) {
-        func_800CAB30(&t->a2[i], dt);
+        PauseUi_StepItem2(&t->a2[i], dt);
     }
 }
 
-void func_800CAE10(void) {
-    D_80125580 = 0;
+void PauseUi_ResetTextBuffer(void) {
+    gPauseTextUsed = 0;
 }
 
 extern char *gLangText[];
-extern u8 D_80124D80[];
+extern u8 gPauseTextBuf[];
 extern u8 D_800FCA20[]; /* ctype table; bit 2 = lowercase */
 u32 strlen(const char *);
 
 /* Takes size bytes from the 0x800-byte text buffer; NULL when it runs out. */
 static inline u8 *Buf_Alloc(u32 size) {
-    u8 *p = D_80124D80 + D_80125580;
+    u8 *p = gPauseTextBuf + gPauseTextUsed;
 
-    D_80125580 += size;
-    return (D_80125580 < 0x800) ? p : NULL;
+    gPauseTextUsed += size;
+    return (gPauseTextUsed < 0x800) ? p : NULL;
 }
 /* Builds the uppercase copy of the element's string the first time it is needed. */
-void func_800CAE1C(E18c_ *t) {
+void PauseUi_BuildText(E18c_ *t) {
     s32 i;
     u8 c;
 
@@ -256,8 +256,8 @@ void func_800CAE1C(E18c_ *t) {
     }
 }
 
-/* Same as func_800CAE1C, for the second list. */
-void func_800CAF28(E18c_ *t) {
+/* Same as PauseUi_BuildText, for the second list. */
+void PauseUi_BuildText2(E18c_ *t) {
     s32 i;
     u8 c;
 
@@ -275,19 +275,19 @@ void func_800CAF28(E18c_ *t) {
     }
 }
 
-void func_800CB034(TCB_ *t) {
+void PauseUi_Load(TCB_ *t) {
     u8 i;
 
     for (i = 0; i < t->n1; i++) {
-        func_800CAE1C(&t->a1[i]);
+        PauseUi_BuildText(&t->a1[i]);
     }
     for (i = 0; i < t->n2; i++) {
-        func_800CAF28(&t->a2[i]);
+        PauseUi_BuildText2(&t->a2[i]);
     }
 }
 
 
-void func_800CB0DC(TCB_ *t) {
+void PauseUi_Unload(TCB_ *t) {
     u8 i;
 
     for (i = 0; i < t->n1; i++) {
@@ -301,10 +301,10 @@ void func_800CB0DC(TCB_ *t) {
     /* TODO (Clean version): Projection matrix and screen fade step:
     - D_801416C8(48.0f, 5000.0f, 1.0471967f, 1.3333334f) sets camera perspective:
         near=48.0f, far=5000.0f, fov=60 deg (pi/3), aspect=4:3.
-    - D_80124D70 is target alpha, D_80124D71 is current fade alpha (fade in by +15/frame, fade out by -1/frame).
+    - gPauseFadeTarget is target alpha, gPauseFadeAlpha is current fade alpha (fade in by +15/frame, fade out by -1/frame).
     - D_8014178C draws a full-screen black overlay with current alpha.
     */
-void func_800CB168(void) {
+void PauseUi_BeginFrame(void) {
     u8 a;
     u8 b;
 
@@ -313,34 +313,34 @@ void func_800CB168(void) {
     D_801416AC();
     func_800AEB28(0);
     D_801416C8(48.0f, 5000.0f, 1.0471967f, 1.3333334f);
-    a = D_80124D71;
-    b = D_80124D70;
+    a = gPauseFadeAlpha;
+    b = gPauseFadeTarget;
     if (a > b) {
-        D_80124D71 = a - 1;
+        gPauseFadeAlpha = a - 1;
     } else if (a < b) {
-        D_80124D71 = a + 15;
-        if (b < (u8)D_80124D71) {
-            D_80124D71 = b;
+        gPauseFadeAlpha = a + 15;
+        if (b < (u8)gPauseFadeAlpha) {
+            gPauseFadeAlpha = b;
         }
     }
-    D_8014178C(0, 0, 0, (u8)D_80124D71);
+    D_8014178C(0, 0, 0, (u8)gPauseFadeAlpha);
 }
 
-    /* TODO (Clean version): Declare D_80124D70 as u8 instead of s8 to avoid ugly byte cast `*(u8 *)&D_80124D70 = 0x80`. */
-void func_800CB268(void) {
-    *(u8 *)&D_80124D70 = 0x80;
-    D_80124D71 = 0;
+    /* TODO (Clean version): Declare gPauseFadeTarget as u8 instead of s8 to avoid ugly byte cast `*(u8 *)&gPauseFadeTarget = 0x80`. */
+void PauseUi_FadeIn(void) {
+    *(u8 *)&gPauseFadeTarget = 0x80;
+    gPauseFadeAlpha = 0;
 }
 
-void func_800CB280(void) {
-    D_80124D70 = 0;
+void PauseUi_FadeOut(void) {
+    gPauseFadeTarget = 0;
 }
 
-void func_800CB28C(void) {
+void PauseUi_EndFrame(void) {
     D_801416B0();
     D_801416A8();
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_6AE90", func_800CB2C0);
+INCLUDE_ASM("asm/nonmatchings/unit_6AE90", PauseUi_DrawMenu);
 
-INCLUDE_ASM("asm/nonmatchings/unit_6AE90", func_800CB4D4);
+INCLUDE_ASM("asm/nonmatchings/unit_6AE90", PauseUi_DrawText);
