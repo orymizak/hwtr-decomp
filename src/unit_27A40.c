@@ -6,7 +6,7 @@ typedef struct { Kern2_ *list; u8 n; u8 ch; u8 has; u8 pad; } Kern1_;
 typedef struct { Kern1_ *tbl; u16 n; u8 pad[2]; } KernFont_;
 typedef struct { u8 flag; u8 p1[3]; char *str; } Ln74_;
 typedef struct { Ln74_ *lines; s32 a4; s32 a8; s32 top; s32 bottom; s32 start; f32 pos; s32 count; } Scr74_;
-void func_80087260(char *, s32, s32, s32, s32);
+void Scroller_DrawLine(char *, s32, s32, s32, s32);
 f32 Menu_DeltaSeconds(u8);
 extern u8 D_80116C70[];
 extern s32 (*sysFileLoad)(char *, void *);
@@ -78,7 +78,7 @@ void func_80086F78(void) {
 
 }
 
-s8 func_80086F80(u8 font, u8 a, u8 b) {
+s8 Font_GetKerning(u8 font, u8 a, u8 b) {
     s16 lo;
     s16 hi;
     s16 mid;
@@ -133,7 +133,7 @@ s8 func_80086F80(u8 font, u8 a, u8 b) {
     return r;
 }
 
-s32 func_8008711C(u8 font, u8 a, u8 pct) {
+s32 Font_ScaleKerning(u8 font, u8 a, u8 pct) {
     s16 lo;
     s16 hi;
     s16 mid;
@@ -171,13 +171,13 @@ s32 func_8008711C(u8 font, u8 a, u8 pct) {
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_27A40", func_80087260);
+INCLUDE_ASM("asm/nonmatchings/unit_27A40", Scroller_DrawLine);
 
-void func_8008744C(Scr74_ *s) {
+void Scroller_Reset(Scr74_ *s) {
     s->pos = s->start;
 }
 
-void func_8008745C(Scr74_ *s, u8 fast) {
+void Scroller_Draw(Scr74_ *s, u8 fast) {
     s32 i;
     s32 y;
     s32 drawn;
@@ -187,7 +187,7 @@ void func_8008745C(Scr74_ *s, u8 fast) {
     for (i = 0; i < s->count; i++) {
         y = (s32)s->pos + i * 20;
         if (s->top < y && y < s->bottom) {
-            func_80087260(s->lines[i].str, s->a4, s->a8, y, s->lines[i].flag == 0);
+            Scroller_DrawLine(s->lines[i].str, s->a4, s->a8, y, s->lines[i].flag == 0);
             drawn++;
         }
     }
@@ -200,17 +200,17 @@ void func_8008745C(Scr74_ *s, u8 fast) {
     }
 }
 
-void func_800876D4(void **tbl, u32 size);
-s32 func_800875A0(void) {
-    func_800876D4((void **)&sysBootCheck, 0xFC);
+void Table_FillStubs(void **tbl, u32 size);
+s32 Tables_InstallAll(void) {
+    Table_FillStubs((void **)&sysBootCheck, 0xFC);
     if (Sys_InitTable() == 0) {
         return 0;
     }
-    func_800876D4((void **)&sysInputIsKeyHeldAny, 0x4C);
+    Table_FillStubs((void **)&sysInputIsKeyHeldAny, 0x4C);
     if (Input_InitTable() != 0) {
-        func_800876D4((void **)&audSfxPlay, 0xAC);
+        Table_FillStubs((void **)&audSfxPlay, 0xAC);
         if (Audio_InstallApi() != 0) {
-            func_800876D4((void **)&svcTimeGetMillis, 0x124);
+            Table_FillStubs((void **)&svcTimeGetMillis, 0x124);
             if (Svc_Install() != 0) {
                 return 1;
             }
@@ -223,7 +223,7 @@ s32 func_800875A0(void) {
 }
 
 
-s32 func_80087660(void) {
+s32 Tables_UninstallAll(void) {
     register s32 failed;
     s8 n;
 
@@ -241,17 +241,17 @@ s32 func_80087660(void) {
     return (u8)n == 0;
 }
 
-s32 func_8008770C(void);
-void func_800876D4(void **tbl, u32 size) {
+s32 Table_Stub(void);
+void Table_FillStubs(void **tbl, u32 size) {
     s32 i;
     s32 n = size >> 2;
 
     for (i = 0; i < n; i++) {
-        *tbl++ = func_8008770C;
+        *tbl++ = Table_Stub;
     }
 }
 
 
-s32 func_8008770C(void) {
+s32 Table_Stub(void) {
     return 0;
 }

@@ -56,8 +56,8 @@ void Gfx_ClearFrame(u8 arg0, u8 arg1, u8 arg2, u16 arg3, u16 arg4);
 void Bg_SetPalette(void *arg0);
 void Bg_FadePalette(f32 arg0, void *arg1);
 void Bg_DrawImage(void *arg0, s32 arg1, s32 arg2);
-void func_800802C0(void);
-void func_80080360(void);
+void SortQueue_Init(void);
+void SortQueue_Shutdown(void);
 u8 Screen_BeginFrame(s32 arg0);
 void Camera_SetProjection(f32 arg0, f32 arg1, f32 arg2, f32 arg3);
 
@@ -91,7 +91,7 @@ s32 Screen_Init(void) {
     D_800F2124 = 1.33333302f;
     Camera_CalcFrustum();
     Light_Reset();
-    func_800802C0();
+    SortQueue_Init();
     D_800F2174 = 1;
     D_800F2178 = 1;
     D_800F217C = 0;
@@ -102,7 +102,7 @@ s32 Screen_Init(void) {
 }
 
 s32 Screen_Shutdown(void) {
-    func_80080360();
+    SortQueue_Shutdown();
     return 1;
 }
 
@@ -165,12 +165,12 @@ u8 Screen_BeginFrame(s32 arg0) {
 
 INCLUDE_ASM("asm/nonmatchings/screen", Screen_EndFrame);
 
-void func_800804B4(void);
-void func_80080500(void);
+void SortQueue_Flush(void);
+void SortQueue_Swap(void);
 void GfxPools_Swap(s32);
 s32 Screen_FlushFrame(void) {
-    func_800804B4();
-    func_80080500();
+    SortQueue_Flush();
+    SortQueue_Swap();
 
     /* TODO (Clean version):
     Manually injecting raw display list commands and bit-shifting macros (`0xE9`, `0xDF`) 

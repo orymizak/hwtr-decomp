@@ -10,7 +10,7 @@ typedef struct { s32 a; u8 p4[0x10]; } SbA00_;
 typedef struct { u8 p0[0x18]; u8 n; u8 p19[3]; SbA00_ *sub; u8 b20; u8 p21[7]; s32 w28; } TrA00_;
 typedef struct { char *buf; s16 len; u8 p6[0xB]; u8 b11; u8 p12[2]; } FldX_;
 typedef struct { u8 p0[0x18]; u8 n; u8 p19[3]; FldX_ *f; } MenuX_;
-void func_800C96DC(void);
+void MenuFields_AllocBuffers(void);
 s32 func_800C9590();
 extern char D_80101080[];
 extern s32 (*sysFileGetSize)(char *);
@@ -25,16 +25,16 @@ s32 Memory_Alloc(s32);
 s32 func_800C9280();
 extern void *gMenuObjs;
 s32 Memory_Free(s32);
-extern s32 D_800F9F90;
-extern s32 D_800F9F94;
-extern s32 D_800F9F98;
+extern s32 gTrackSfxCount;
+extern s32 gTrackSfxDefs;
+extern s32 gTrackSfxHandles;
 
 INCLUDE_ASM("asm/nonmatchings/unit_69E80", func_800C9280);
 
 INCLUDE_ASM("asm/nonmatchings/unit_69E80", func_800C9590);
 
 /* Allocates every menu text field that has no buffer yet and fills it with '_'. */
-void func_800C96DC(void) {
+void MenuFields_AllocBuffers(void) {
     s32 i;
     s32 j;
     s32 k;
@@ -65,10 +65,10 @@ void MenuObjs_Alloc(void) {
             *(s32 *)((u8 *)(&gMenuObjs)[i] + 0x28) = Memory_Alloc(t[0x20] * 0x34);
         }
     }
-    func_800C96DC();
+    MenuFields_AllocBuffers();
 }
 
-void func_800C9A00(void) {
+void Menu_FreeAll(void) {
     s32 i;
     s32 j;
 
@@ -89,28 +89,28 @@ void func_800C9A00(void) {
     }
 }
 
-void func_800C9AF0(s32 n, s32 b) {
-    D_800F9F90 = n;
+void TrackSfx_Init(s32 n, s32 b) {
+    gTrackSfxCount = n;
     if (n != 0) {
-        D_800F9F94 = b;
-        D_800F9F98 = Memory_Alloc(n * 2);
-        memset((void *)D_800F9F98, 0, D_800F9F90 * 2);
+        gTrackSfxDefs = b;
+        gTrackSfxHandles = Memory_Alloc(n * 2);
+        memset((void *)gTrackSfxHandles, 0, gTrackSfxCount * 2);
     }
 }
 
 
-void func_800C9B40(void) {
-    if (D_800F9F90 != 0) {
-        Memory_Free(D_800F9F98);
-        D_800F9F98 = 0;
-        D_800F9F94 = 0;
-        D_800F9F90 = 0;
+void TrackSfx_Shutdown(void) {
+    if (gTrackSfxCount != 0) {
+        Memory_Free(gTrackSfxHandles);
+        gTrackSfxHandles = 0;
+        gTrackSfxDefs = 0;
+        gTrackSfxCount = 0;
     }
 }
 
-void func_800C9B84(s32 i) {
-    E0Cc_ *e = &((E0Cc_ *)D_800F9F94)[i];
-    u8 *s = (u8 *)D_800F9F98 + i * 2;
+void TrackSfx_Trigger(s32 i) {
+    E0Cc_ *e = &((E0Cc_ *)gTrackSfxDefs)[i];
+    u8 *s = (u8 *)gTrackSfxHandles + i * 2;
     V12_ v;
     u16 f = e->flags;
 
@@ -137,9 +137,9 @@ void func_800C9B84(s32 i) {
     }
 }
 
-void func_800C9D00(s32 i) {
-    E0Cc_ *e = &((E0Cc_ *)D_800F9F94)[i];
-    u8 *s = (u8 *)D_800F9F98 + i * 2;
+void TrackSfx_Stop(s32 i) {
+    E0Cc_ *e = &((E0Cc_ *)gTrackSfxDefs)[i];
+    u8 *s = (u8 *)gTrackSfxHandles + i * 2;
 
     if (e->flags & 2) {
         if (e->flags & 0x10) {
@@ -157,10 +157,10 @@ void func_800C9D00(s32 i) {
 
 void RaceSfx_SetPosition(u8, V12_);
 
-void func_800C9DA0(s32 i) {
+void TrackSfx_UpdatePos(s32 i) {
     V12_ v;
-    E0Cc_ *e = &((E0Cc_ *)D_800F9F94)[i];
-    u8 *s = &((u8 *)D_800F9F98)[i * 2];
+    E0Cc_ *e = &((E0Cc_ *)gTrackSfxDefs)[i];
+    u8 *s = &((u8 *)gTrackSfxHandles)[i * 2];
 
     if (e->flags & 2) {
         if (e->flags & 0x10) {

@@ -33,7 +33,7 @@ void GfxPools_Init(void);
 void Screen_InitGfx(void);
 void Screen_Init(void);
 void World_InitSlots(void);
-void func_8007F420(void);
+void Rand_Seed(void);
 void func_80087720(void);
 void func_8008777C(void);
 void nuGfxFuncSet(void (*callback)(s32));
@@ -42,7 +42,7 @@ void nuGfxDisplayOff(void);
 void nuGfxDisplayOn(void);
 
 void func_80078BA4(s32 arg0);
-void func_80078BD0(void);
+void Game_Shutdown(void);
 
 inline void Video_Init(void) {
     u32 i;
@@ -88,7 +88,7 @@ void Game_Init(void) {
     Video_Init();
     Input_Init();
     Screen_InitGfx();
-    func_8007F420();
+    Rand_Seed();
     Memory_InitMain();
     GfxPools_Init();
     FileTable_Init();
@@ -97,7 +97,7 @@ void Game_Init(void) {
     Font_Init();
     World_InitSlots();
     Screen_Init();
-    nuGfxPreNMIFuncSet(func_80078BD0);
+    nuGfxPreNMIFuncSet(Game_Shutdown);
     func_80087720();
     Explosions_Init();
     EnvMap_Init();
@@ -111,7 +111,7 @@ void func_80078BA4(s32 arg0) {
     }
 }
 
-void func_80078BD0(void) {
+void Game_Shutdown(void) {
     Input_RumbleStopAll();
     nuGfxDisplayOff();
 }

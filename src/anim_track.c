@@ -84,8 +84,8 @@ extern u32 gAnimTrackClock;
 u32 RaceClock_Get(void);
 u32 RaceClock_GetPreStart(void);
 void AnimTrack_Evaluate(s32 index);
-void func_800C9D00(s32);
-void func_800C9DA0(s32);
+void TrackSfx_Stop(s32);
+void TrackSfx_UpdatePos(s32);
 void AnimTrack_Update(void) {
     u32 now;
     u32 prev;
@@ -114,9 +114,9 @@ void AnimTrack_Update(void) {
                             AnimTrack_Evaluate(i);
                         }
                         if (t->seekTime == 0) {
-                            func_800C9D00(t->seekMode);
+                            TrackSfx_Stop(t->seekMode);
                         } else {
-                            func_800C9DA0(t->seekMode);
+                            TrackSfx_UpdatePos(t->seekMode);
                         }
                     }
                 } else {

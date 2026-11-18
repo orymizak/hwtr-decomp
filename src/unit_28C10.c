@@ -344,7 +344,7 @@ void Pickup_Update(void) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_28C10", Trick_Evaluate);
 
-void func_8008B9FC(u16 i, char *out) {
+void Trick_GetName(u16 i, char *out) {
     if (i < 49) {
         sprintf(out, D_8010080C, gLangText[D_800F316C[i].w[svcRandRange(D_800F316C[i].b)]]);
     }

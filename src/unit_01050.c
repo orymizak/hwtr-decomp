@@ -37,7 +37,7 @@ s32 Snd3D_GetPan(void *);
 extern u8 D_80138AAE;
 extern u8 D_80138AAF;
 extern u8 D_80138AB1;
-void func_8007F4D0(void);
+void Video_EnterRaceMode(void);
 void func_8007C080(void);
 void World_SetupLod(s32, u8);
 u8 Race_Init(Cfg9_ *);
@@ -156,7 +156,7 @@ extern void *svcRacePostLoad;
 extern void *svcRacePreUnload;
 extern void *svcRacePostUnload;
 
-s32 func_8007F514();
+s32 Video_LeaveRaceMode();
 s32 Game_RunState();
 s32 Input_RumbleStopAll();
 s32 Pause_Init();
@@ -255,7 +255,7 @@ void Track_SetEntityVisible();
 s32 Svc_RacePreLoadNop(void);
 s32 Svc_RacePostLoadNop(void);
 s32 Svc_RacePreUnloadNop(void);
-s32 Svc_RacePostUnloadNop(void);
+s32 Race_PostUnload(void);
 extern void *svcFileGetSize;
 void File_GetSize();
 extern void *svcFileLoad;
@@ -323,7 +323,7 @@ s32 Svc_Install(void) {
     svcRacePreLoad = &Svc_RacePreLoadNop;
     svcRacePostLoad = &Svc_RacePostLoadNop;
     svcRacePreUnload = &Svc_RacePreUnloadNop;
-    svcRacePostUnload = &Svc_RacePostUnloadNop;
+    svcRacePostUnload = &Race_PostUnload;
     svcFileGetSize = &File_GetSize;
     svcFileLoad = &File_Load;
     svcDraw2DBeginPrim = &Draw2D_BeginPrim;
@@ -387,8 +387,8 @@ s32 Svc_RacePreUnloadNop(void) {
     return 1;
 }
 
-s32 Svc_RacePostUnloadNop(void) {
-    func_8007F514();
+s32 Race_PostUnload(void) {
+    Video_LeaveRaceMode();
     return 1;
 }
 
@@ -396,7 +396,7 @@ u8 Game_StartRace(Cfg9_ *c) {
     s32 n = 0;
     s32 i;
 
-    func_8007F4D0();
+    Video_EnterRaceMode();
     func_8007C080();
     for (i = 0; i < c->n18; i++) {
         if (c->e[i].w == 1) {

@@ -52,7 +52,7 @@ extern void (*svcDraw2DBeginPrim)(s32, s32, s32, s32);
 void RaceView_DrawScene(s32);
 void PauseUi_CenterItem2(u8 *t);
 extern s32 (*svcFontGetCharWidth)(s32, u8);
-s8 func_80086F80(u8 font, u8 a, u8 b);
+s8 Font_GetKerning(u8 font, u8 a, u8 b);
 void PauseUi_CenterItem(u8 *t);
 void PauseUi_BuildText(E18c_ *);
 void PauseUi_BuildText2(E18c_ *);
@@ -83,7 +83,7 @@ void PauseUi_CenterItem(u8 *t) {
     x = (*(s16 *)(t + 8) + *(s16 *)(t + 0xA)) / 2;
     y = *(s16 *)(t + 0xC);
     for (; i < t[2] - 1; i++) {
-        w += svcFontGetCharWidth(0, (*(E0A5_ **)(t + 4))[i].a) + func_80086F80(0, (*(E0A5_ **)(t + 4))[i].a, (*(E0A5_ **)(t + 4))[i + 1].a);
+        w += svcFontGetCharWidth(0, (*(E0A5_ **)(t + 4))[i].a) + Font_GetKerning(0, (*(E0A5_ **)(t + 4))[i].a, (*(E0A5_ **)(t + 4))[i + 1].a);
     }
     w += svcFontGetCharWidth(0, (*(E0A5_ **)(t + 4))[i].a);
     w /= 2;
@@ -91,7 +91,7 @@ void PauseUi_CenterItem(u8 *t) {
     (*(E0A5_ **)(t + 4))[0].x2 = x;
     (*(E0A5_ **)(t + 4))[0].y2 = y;
     for (i = 1; i < t[2]; i++) {
-        x += svcFontGetCharWidth(0, (*(E0A5_ **)(t + 4))[i - 1].a) + func_80086F80(0, (*(E0A5_ **)(t + 4))[i - 1].a, (*(E0A5_ **)(t + 4))[i].a);
+        x += svcFontGetCharWidth(0, (*(E0A5_ **)(t + 4))[i - 1].a) + Font_GetKerning(0, (*(E0A5_ **)(t + 4))[i - 1].a, (*(E0A5_ **)(t + 4))[i].a);
         (*(E0A5_ **)(t + 4))[i].x2 = x;
         (*(E0A5_ **)(t + 4))[i].y2 = y;
     }
@@ -111,7 +111,7 @@ void PauseUi_CenterItem2(u8 *t) {
     x = (*(s16 *)(t + 8) + *(s16 *)(t + 0xA)) / 2;
     y = *(s16 *)(t + 0xC);
     for (; i < t[2] - 1; i++) {
-        w += svcFontGetCharWidth(0, (*(E0A5_ **)(t + 4))[i].a) + func_80086F80(0, (*(E0A5_ **)(t + 4))[i].a, (*(E0A5_ **)(t + 4))[i + 1].a);
+        w += svcFontGetCharWidth(0, (*(E0A5_ **)(t + 4))[i].a) + Font_GetKerning(0, (*(E0A5_ **)(t + 4))[i].a, (*(E0A5_ **)(t + 4))[i + 1].a);
     }
     w += svcFontGetCharWidth(0, (*(E0A5_ **)(t + 4))[i].a);
     w /= 2;
@@ -119,7 +119,7 @@ void PauseUi_CenterItem2(u8 *t) {
     (*(E0A5_ **)(t + 4))[0].x2 = x;
     (*(E0A5_ **)(t + 4))[0].y2 = y;
     for (i = 1; i < t[2]; i++) {
-        x += svcFontGetCharWidth(0, (*(E0A5_ **)(t + 4))[i - 1].a) + func_80086F80(0, (*(E0A5_ **)(t + 4))[i - 1].a, (*(E0A5_ **)(t + 4))[i].a);
+        x += svcFontGetCharWidth(0, (*(E0A5_ **)(t + 4))[i - 1].a) + Font_GetKerning(0, (*(E0A5_ **)(t + 4))[i - 1].a, (*(E0A5_ **)(t + 4))[i].a);
         (*(E0A5_ **)(t + 4))[i].x2 = x;
         (*(E0A5_ **)(t + 4))[i].y2 = y;
     }

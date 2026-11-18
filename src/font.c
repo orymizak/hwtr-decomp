@@ -37,7 +37,7 @@ s32 File_Load(char *name, void *dst);
 s32 File_GetSize(char *name);
 char *strcpy(char *dst, const char *src);
 char *strcat(char *dst, const char *src);
-void func_8007F570(Glyph *glyph);
+void Texture_Relocate(Glyph *glyph);
 void Draw2D_Begin();
 void Image_DrawRGBA16Scaled(s32 x, s32 y, u32 data, u8 width, s32 height, f32 scaleX, f32 scaleY);
 void Image_DrawRGBA16(s32 x, s32 y, u32 data, u8 width, s32 height);
@@ -70,7 +70,7 @@ s32 Font_Load(u8 id, char *name) {
         n += f->glyphIndex[i] != 0xFF;
     }
     for (i = 0; i < n; i++) {
-        func_8007F570(g);
+        Texture_Relocate(g);
         f->glyphs[i] = g;
         if (g->format == 0) {
             g = (GlyphFL_ *)(g->data + g->width * g->height * 2);

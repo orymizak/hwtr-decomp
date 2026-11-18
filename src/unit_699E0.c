@@ -10,7 +10,7 @@ void func_800C8DE0(void);
 
 extern u8 D_800F64F0[];
 extern u8 (*sysFontGetCharWidth)(u8, u8);
-s8 func_80086F80(u8 font, u8 a, u8 b);
+s8 Font_GetKerning(u8 font, u8 a, u8 b);
 extern inline u8 Chr_Index(u8 c) {
     u8 i;
 
@@ -36,14 +36,14 @@ extern inline u8 Chr_Width(u8 font, u8 c) {
     }
     return sysFontGetCharWidth(font, c);
 }
-s32 func_8008711C(u8 font, u8 a, u8 pct);
+s32 Font_ScaleKerning(u8 font, u8 a, u8 pct);
 
-/* Passes every character of the table with its width to func_8008711C. */
+/* Passes every character of the table with its width to Font_ScaleKerning. */
 void func_800C8DE0(void) {
     u8 i;
 
     for (i = 0; i < 75; i++) {
-        func_8008711C(0, D_800F64F0[i], Chr_Width(0, Chr_At(Chr_Index(D_800F64F0[i]))));
+        Font_ScaleKerning(0, D_800F64F0[i], Chr_Width(0, Chr_At(Chr_Index(D_800F64F0[i]))));
     }
 }
 
@@ -57,7 +57,7 @@ s32 MenuFont_Kerning(u8 font, u8 a, u8 b) {
     if (ia == 0xFF || ib == 0xFF) {
         return 0;
     }
-    k = func_80086F80(0, a, b);
+    k = Font_GetKerning(0, a, b);
     return k + Chr_Width(font, Chr_At(ia));
 }
 

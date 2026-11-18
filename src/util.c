@@ -25,7 +25,7 @@ void GfxPools_Shutdown(void);
 void Video_SetLowRes(void);
 void Video_SetHighRes(void);
 
-s32 func_8007F420(void) {
+s32 Rand_Seed(void) {
     srand(osGetCount());
     return 1;
 }
@@ -40,7 +40,7 @@ u32 Rand_Range(u32 max) {
     return rand() % max;
 }
 
-s32 func_8007F4D0(void) {
+s32 Video_EnterRaceMode(void) {
     D_800F2190 = D_800F2194;
     Video_SetLowRes();
     Memory_EnableSecondary();
@@ -48,7 +48,7 @@ s32 func_8007F4D0(void) {
     return 1;
 }
 
-s32 func_8007F514(void) {
+s32 Video_LeaveRaceMode(void) {
     D_800F2190 = D_800F2198;
     GfxPools_Shutdown();
     Memory_DisableSecondary();
@@ -56,7 +56,7 @@ s32 func_8007F514(void) {
     return 1;
 }
 
-s32 func_8007F550(u32 value) {
+s32 Math_Log2(u32 value) {
     s32 log2 = 0;
 
     value >>= 1;
@@ -67,7 +67,7 @@ s32 func_8007F550(u32 value) {
     return log2;
 }
 
-void func_8007F570(Texture *texture) {
+void Texture_Relocate(Texture *texture) {
     texture->data = texture + 1;
 }
 
@@ -90,11 +90,11 @@ Texture *Texture_Create(s32 width, s32 height) {
     return texture;
 }
 
-INCLUDE_ASM("asm/nonmatchings/util", func_8007F61C);
+INCLUDE_ASM("asm/nonmatchings/util", Gfx_LoadTexture);
 
 typedef struct { u8 w; u8 h; u8 fmt; u8 pad; void *data; } Img7F_;
 /* Fills an image with one of its texels (the first one for 16-bit images). */
-void func_8007FB38(Img7F_ *img) {
+void Image_FillSolid(Img7F_ *img) {
     u32 n;
     u32 mid;
     u32 i;

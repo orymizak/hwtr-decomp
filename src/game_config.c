@@ -5,13 +5,13 @@ extern u8 gMenuFsm[];
 extern char *gTrackNames[4][3];
 
 s32 strcmp(const char *a, const char *b);
-u8 func_800875A0(void);
-u8 func_80087660(void);
+u8 Tables_InstallAll(void);
+u8 Tables_UninstallAll(void);
 void Fsm_Reset(void *arg0);
 s32 Fsm_Update(void *arg0);
 
 s32 func_80087720(void) {
-    if (func_800875A0()) {
+    if (Tables_InstallAll()) {
         Fsm_Reset(gMenuFsm);
         return 1;
     }
@@ -19,7 +19,7 @@ s32 func_80087720(void) {
 }
 
 s32 func_80087758(void) {
-    return func_80087660() != 0;
+    return Tables_UninstallAll() != 0;
 }
 
 s32 func_8008777C(void) {

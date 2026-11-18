@@ -180,7 +180,7 @@ extern s32 (*sysGameStartRace)(void *);
 void *memcpy(void *, const void *, size_t);
 extern u8 *gLangText[];
 extern s32 (*sysFontGetCharWidth)(s32, u8);
-s8 func_80086F80(s32, u8, u8);
+s8 Font_GetKerning(s32, u8, u8);
 s32 SaveSlot_Add(u32 i, E140b_ *src);
 extern char D_80100F70[];
 extern s32 *D_80141268;
@@ -263,7 +263,7 @@ extern void (*D_80141064)(s32);
 extern void (*D_8014107C)(void);
 extern void (*sysScreenFreeBg)(void);
 void MenuFont_FreeAll(void);
-void func_800C9A00(void);
+void Menu_FreeAll(void);
 extern u32 D_800F6078[];
 u8 Input_PressedOnce(u8 i, s32 k);
 extern void (*D_80141068)(s32);
@@ -346,7 +346,7 @@ extern u8 gKeyboardText;
 extern u8 D_800F64A4;
 extern s8 gControlsRemapP2;
 extern s8 gControlsRemapP1;
-s32 func_8008744C(void *);
+s32 Scroller_Reset(void *);
 extern u8 D_800F2FA0;
 extern u8 D_800F2FC0;
 extern s8 D_800F61D6;
@@ -1076,7 +1076,7 @@ void Menu_DrawTicker(Scroll4E_ *t) {
             n++;
         }
         if (s[1] != 0) {
-            x += sysFontGetCharWidth(0, *s) + func_80086F80(0, *s, s[1]);
+            x += sysFontGetCharWidth(0, *s) + Font_GetKerning(0, *s, s[1]);
         } else {
             x += sysFontGetCharWidth(0, *s);
         }
@@ -2085,7 +2085,7 @@ void Menu_ExitToGame(void) {
     D_80141064(gActiveSave[0x880]);
     D_80141068(0xFF);
     MenuFont_FreeAll();
-    func_800C9A00();
+    Menu_FreeAll();
     D_8014107C();
     sysScreenFreeBg();
     Menu_UnloadWorlds();
@@ -4382,8 +4382,8 @@ void Credits_Enter(void) {
     Menu_StartFadeIn();
     Menu_StartEnter(D_800F5F60);
     D_800F61D6 = 0;
-    func_8008744C(&D_800F2FA0);
-    func_8008744C(&D_800F2FC0);
+    Scroller_Reset(&D_800F2FA0);
+    Scroller_Reset(&D_800F2FC0);
     Menu_ResetTicker(&D_800F63E8);
 }
 

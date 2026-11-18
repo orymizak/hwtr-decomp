@@ -10,12 +10,12 @@ extern u8 gCollIdUsed[];
 extern void (*svcWorldSetCollLevel)(void *);
 s32 func_8008182C(void);
 u8 Coll_LoadLevel(u8 *);
-void func_800C9AF0(s32 n, s32 b);
+void TrackSfx_Init(s32 n, s32 b);
 extern s32 gCollMovers;
 extern s32 gCollCars;
 extern s32 D_8011B348;
 extern s32 D_8011B34C;
-void func_800C9B40(void);
+void TrackSfx_Shutdown(void);
 typedef struct { s32 a; s32 b; s32 c; } V12_;
 typedef struct { s32 a; s32 b; s32 c; s32 d; } V16_;
 typedef struct { u8 pad[0x18]; V12_ v[6]; V16_ q[1]; } Cam41_;
@@ -89,7 +89,7 @@ extern u32 D_8011C830[];
 void Lap_PassCheckpoint(u8, u8, s32);
 void Car_Boost(u8 *);
 void Car_DirectionalBoost(u8 *, u16, u8);
-void func_800C9B84(u16);
+void TrackSfx_Trigger(u16);
 void Coll_ApplyRoomFlags(RObj_ *o, u16 idx, s32 arg2);
 u16 Coll_FindRoom(Vec3f pos);
 void Coll_Register(RObj_ *o);
@@ -114,7 +114,7 @@ s32 Coll_Init(u8 *o) {
         return 0;
     }
     svcWorldSetCollLevel(gCollLevel);
-    func_800C9AF0(gCollLevel->x10, gCollLevel->xD0);
+    TrackSfx_Init(gCollLevel->x10, gCollLevel->xD0);
     memset(gCollIdUsed, 0, 0x80);
     return 1;
 }
@@ -122,7 +122,7 @@ s32 Coll_Init(u8 *o) {
 
 void CollList_Clear(Nd3_ **list);
 s32 Coll_Shutdown(void) {
-    func_800C9B40();
+    TrackSfx_Shutdown();
     CollList_Clear((Nd3_ **)&(*(s32 *)&gCollAll));
     CollList_Clear((Nd3_ **)&gCollMovers);
     CollList_Clear((Nd3_ **)&(*(s32 *)&gCollRacers));
@@ -1190,7 +1190,7 @@ void Coll_ApplyRoomFlags(RObj_ *o, u16 idx, s32 arg2) {
                 }
             }
             if (r->flags & 2) {
-                func_800C9B84(r->param.val);
+                TrackSfx_Trigger(r->param.val);
             }
         }
     }

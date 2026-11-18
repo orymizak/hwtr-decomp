@@ -85,7 +85,7 @@ void GfxPools_ReserveVtx(s32);
 s32 Mtx_New(f32 (*)[4]);
 u8 Frustum_TestSphere(f32 (*)[4], f32 (*)[4], f32);
 void Mtx34_Mul(f32 (*)[4], f32 (*)[4], f32 (*)[4]);
-Gfx *func_8007F61C(Gfx *, PDefC4_ *);
+Gfx *Gfx_LoadTexture(Gfx *, PDefC4_ *);
 void Quat_FromAxisAngle(Quat *, f32, Vec3f);
 void Quat_ToMtx3(Quat, f32 (*)[3]);
 extern PDef_ *D_800F2330[];
@@ -266,7 +266,7 @@ void Particles_Draw(PoolPC4_ *pool, f32 (*m)[4]) {
                 changed = 1;
             }
             if (changed == 1) {
-                gDisplayListHead = func_8007F61C(gDisplayListHead, cur);
+                gDisplayListHead = Gfx_LoadTexture(gDisplayListHead, cur);
                 changed = 0;
             }
             if (p->flags & 2) {
