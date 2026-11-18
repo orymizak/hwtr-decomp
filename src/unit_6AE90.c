@@ -1,50 +1,18 @@
 #include "common.h"
 #include "math.h"
 #include "include_asm.h"
-    /* TODO (Clean version): Unify duplicate structs (EA6_/EA7_, TA6_/TA7_) and define proper text layout structures:
-    typedef struct {
-        u8 glyph;
-        u8 pad;
-        s16 x;
-        s16 y;
-        s16 x2;
-        s16 y2;
-    } TextGlyphPos; // E0A5_
-
-    typedef struct {
-        u16 x;
-        u16 y;
-    } Point2u16;
-
-    typedef struct {
-        u8 glyph;
-        u8 pad;
-        Point2u16 cur_pos;
-        Point2u16 orig_pos;
-    } TextAnimItem;
-
-    typedef struct {
-        u8 pad0[2];
-        u8 num_items;
-        u8 pad3;
-        TextAnimItem *items;
-        u8 pad8[11];
-        u8 anim_mode;
-    } TextAnimController;
-    */
 /* Text element: string id and an uppercase copy of the string (10 bytes per character). */
 typedef struct { u16 id; u8 len; u8 p3; u8 *buf; u8 pad[0x10]; } E18c_;
 typedef struct { u8 pad[8]; u8 n1; u8 p1[3]; E18c_ *a1; u8 n2; u8 p2[3]; E18c_ *a2; } TCB_;
-typedef struct { u8 a; u8 pad; u16 x; u16 y; u16 x2; u16 y2; } E0A5_;
-typedef struct { u16 x; u16 y; } P2A6_;
-typedef struct { u8 a; u8 pad; P2A6_ p; P2A6_ p2; } EA6_;
-typedef struct { u8 p0[2]; u8 n; u8 p3; EA6_ *items; u8 p8[0xB]; u8 mode; } TA6_;
-typedef struct { u16 x; u16 y; } P2A7_;
-typedef struct { u8 a; u8 pad; P2A7_ p; P2A7_ p2; } EA7_;
-typedef struct { u8 p0[2]; u8 n; u8 p3; EA7_ *items; u8 p8[0xB]; u8 mode; } TA7_;
-void PauseUi_PlaceItem2(TA7_ *t);
+/* Pause menu text: one positioned glyph per character (current and home position). */
+typedef struct { u8 a; u8 pad; u16 x; u16 y; u16 x2; u16 y2; } TextGlyphPos;
+typedef struct { u16 x; u16 y; } Point2u16;
+typedef struct { u8 a; u8 pad; Point2u16 p; Point2u16 p2; } TextAnimItem;
+/* mode: 0 = at home, 1 = slide in from the right, 2 = scattered. */
+typedef struct { u8 p0[2]; u8 n; u8 p3; TextAnimItem *items; u8 p8[0xB]; u8 mode; } TextAnim;
+void PauseUi_PlaceItem2(TextAnim *t);
 extern s32 (*svcRandRange)(s32);
-void PauseUi_PlaceItem(TA6_ *t);
+void PauseUi_PlaceItem(TextAnim *t);
 extern void (*svcWorldUpdate)(s32);
 extern void (*svcScreenBeginFrame)(void);
 extern void (*D_801416AC)(void);
@@ -59,12 +27,13 @@ void PauseUi_BuildText(E18c_ *);
 void PauseUi_BuildText2(E18c_ *);
 
 extern u32 gPauseTextUsed;
-extern s8 gPauseFadeTarget;
+extern u8 gPauseFadeTarget;
 extern s8 gPauseFadeAlpha;
 extern s32 (*svcScreenEndFrame)();
 extern s32 (*D_801416B0)();
 
-    /* TODO (Bug check / Clean version):
+    /* TODO (Bug check / Clean version): [evaluated 2026-11-18: point 3 tried as a wrapper over
+    an inline PauseUi_CenterItem: changes the ROM; the guard of point 1 too]
     1. If character count t[2] is 0, loop conditions and indexing into items[0] cause out-of-bounds access. Add guard:
         if (t[2] == 0) return;
     2. Horizontal text centering: centers text string between min_x (*(s16*)(t+8)) and max_x (*(s16*)(t+0xA)).
@@ -84,17 +53,17 @@ void PauseUi_CenterItem(u8 *t) {
     x = (*(s16 *)(t + 8) + *(s16 *)(t + 0xA)) / 2;
     y = *(s16 *)(t + 0xC);
     for (; i < t[2] - 1; i++) {
-        w += svcFontGetCharWidth(0, (*(E0A5_ **)(t + 4))[i].a) + Font_GetKerning(0, (*(E0A5_ **)(t + 4))[i].a, (*(E0A5_ **)(t + 4))[i + 1].a);
+        w += svcFontGetCharWidth(0, (*(TextGlyphPos **)(t + 4))[i].a) + Font_GetKerning(0, (*(TextGlyphPos **)(t + 4))[i].a, (*(TextGlyphPos **)(t + 4))[i + 1].a);
     }
-    w += svcFontGetCharWidth(0, (*(E0A5_ **)(t + 4))[i].a);
+    w += svcFontGetCharWidth(0, (*(TextGlyphPos **)(t + 4))[i].a);
     w /= 2;
     x -= w;
-    (*(E0A5_ **)(t + 4))[0].x2 = x;
-    (*(E0A5_ **)(t + 4))[0].y2 = y;
+    (*(TextGlyphPos **)(t + 4))[0].x2 = x;
+    (*(TextGlyphPos **)(t + 4))[0].y2 = y;
     for (i = 1; i < t[2]; i++) {
-        x += svcFontGetCharWidth(0, (*(E0A5_ **)(t + 4))[i - 1].a) + Font_GetKerning(0, (*(E0A5_ **)(t + 4))[i - 1].a, (*(E0A5_ **)(t + 4))[i].a);
-        (*(E0A5_ **)(t + 4))[i].x2 = x;
-        (*(E0A5_ **)(t + 4))[i].y2 = y;
+        x += svcFontGetCharWidth(0, (*(TextGlyphPos **)(t + 4))[i - 1].a) + Font_GetKerning(0, (*(TextGlyphPos **)(t + 4))[i - 1].a, (*(TextGlyphPos **)(t + 4))[i].a);
+        (*(TextGlyphPos **)(t + 4))[i].x2 = x;
+        (*(TextGlyphPos **)(t + 4))[i].y2 = y;
     }
 }
 
@@ -112,21 +81,21 @@ void PauseUi_CenterItem2(u8 *t) {
     x = (*(s16 *)(t + 8) + *(s16 *)(t + 0xA)) / 2;
     y = *(s16 *)(t + 0xC);
     for (; i < t[2] - 1; i++) {
-        w += svcFontGetCharWidth(0, (*(E0A5_ **)(t + 4))[i].a) + Font_GetKerning(0, (*(E0A5_ **)(t + 4))[i].a, (*(E0A5_ **)(t + 4))[i + 1].a);
+        w += svcFontGetCharWidth(0, (*(TextGlyphPos **)(t + 4))[i].a) + Font_GetKerning(0, (*(TextGlyphPos **)(t + 4))[i].a, (*(TextGlyphPos **)(t + 4))[i + 1].a);
     }
-    w += svcFontGetCharWidth(0, (*(E0A5_ **)(t + 4))[i].a);
+    w += svcFontGetCharWidth(0, (*(TextGlyphPos **)(t + 4))[i].a);
     w /= 2;
     x -= w;
-    (*(E0A5_ **)(t + 4))[0].x2 = x;
-    (*(E0A5_ **)(t + 4))[0].y2 = y;
+    (*(TextGlyphPos **)(t + 4))[0].x2 = x;
+    (*(TextGlyphPos **)(t + 4))[0].y2 = y;
     for (i = 1; i < t[2]; i++) {
-        x += svcFontGetCharWidth(0, (*(E0A5_ **)(t + 4))[i - 1].a) + Font_GetKerning(0, (*(E0A5_ **)(t + 4))[i - 1].a, (*(E0A5_ **)(t + 4))[i].a);
-        (*(E0A5_ **)(t + 4))[i].x2 = x;
-        (*(E0A5_ **)(t + 4))[i].y2 = y;
+        x += svcFontGetCharWidth(0, (*(TextGlyphPos **)(t + 4))[i - 1].a) + Font_GetKerning(0, (*(TextGlyphPos **)(t + 4))[i - 1].a, (*(TextGlyphPos **)(t + 4))[i].a);
+        (*(TextGlyphPos **)(t + 4))[i].x2 = x;
+        (*(TextGlyphPos **)(t + 4))[i].y2 = y;
     }
 }
 
-void PauseUi_PlaceItem(TA6_ *t) {
+void PauseUi_PlaceItem(TextAnim *t) {
     u8 i;
 
     for (i = 0; i < t->n; i++) {
@@ -146,12 +115,13 @@ void PauseUi_PlaceItem(TA6_ *t) {
     }
 }
 
-    /* TODO (Clean version): PauseUi_PlaceItem2 is an exact duplicate of PauseUi_PlaceItem. Both animate item positions according to mode:
+    /* TODO (Clean version): [evaluated 2026-11-18: a wrapper over an inline PauseUi_PlaceItem
+    changes the ROM; the copy stays] PauseUi_PlaceItem2 is an exact duplicate of PauseUi_PlaceItem. Both animate item positions according to mode:
     mode 0: reset to p2
     mode 1: slide in from right (p2.x + 320)
     mode 2: scatter randomly across screen (rand(320), rand(240))
     */
-void PauseUi_PlaceItem2(TA7_ *t) {
+void PauseUi_PlaceItem2(TextAnim *t) {
     u8 i;
 
     for (i = 0; i < t->n; i++) {
@@ -299,12 +269,8 @@ void PauseUi_Unload(TCB_ *t) {
     }
 }
 
-    /* TODO (Clean version): Projection matrix and screen fade step:
-    - svcCameraSetPerspective(48.0f, 5000.0f, 1.0471967f, 1.3333334f) sets camera perspective:
-        near=48.0f, far=5000.0f, fov=60 deg (pi/3), aspect=4:3.
-    - gPauseFadeTarget is target alpha, gPauseFadeAlpha is current fade alpha (fade in by +15/frame, fade out by -1/frame).
-    - svcDraw2DBeginPrim draws a full-screen black overlay with current alpha.
-    */
+/* Draws the race behind the pause menu and steps the black overlay alpha toward
+ * gPauseFadeTarget (+15 per frame when darkening, -1 when clearing). */
 void PauseUi_BeginFrame(void) {
     u8 a;
     u8 b;
@@ -327,9 +293,8 @@ void PauseUi_BeginFrame(void) {
     svcDraw2DBeginPrim(0, 0, 0, (u8)gPauseFadeAlpha);
 }
 
-    /* TODO (Clean version): Declare gPauseFadeTarget as u8 instead of s8 to avoid ugly byte cast `*(u8 *)&gPauseFadeTarget = 0x80`. */
 void PauseUi_FadeIn(void) {
-    *(u8 *)&gPauseFadeTarget = 0x80;
+    gPauseFadeTarget = 0x80;
     gPauseFadeAlpha = 0;
 }
 

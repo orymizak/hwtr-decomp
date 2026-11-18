@@ -1,4 +1,5 @@
 #include "common.h"
+#include "profile.h"
 #include "include_asm.h"
 
 extern u8 gMenuFsm[];
@@ -26,31 +27,30 @@ s32 Game_MenuFrame(void) {
     return Fsm_Update(gMenuFsm) == 0;
 }
 
+/* Tracks are grouped in four cups of three (gTrackNames[cup][track]). */
+#define NUM_CUPS 4
+#define TRACKS_PER_CUP 3
+
 s32 Track_FindByName(char *name) {
     u8 i;
     u8 j;
 
-    for (i = 0; i < 4; i++) {
-        for (j = 0; j < 3; j++) {
-            /* TODO (Clean version):
-            Magic dimensions (4 and 3) used for the 2D array lookup should be defined 
-            using constants or macros (e.g., `#define MENU_ROWS 4`, `#define MENU_COLS 3`) 
-            to prevent hardcoding issues if the grid size changes.
-            */
+    for (i = 0; i < NUM_CUPS; i++) {
+        for (j = 0; j < TRACKS_PER_CUP; j++) {
             if (strcmp(name, gTrackNames[i][j]) == 0) {
-                return i * 3 + j;
+                return i * TRACKS_PER_CUP + j;
             }
         }
     }
     return -1;
 }
 
-typedef struct { u8 p0[0x14]; u32 unk14; u32 unk18; u8 p1C[0x20]; u32 unk3C; } CheatCfg_;
 extern char *gCheatButtonCodes[];
 extern char *D_800F3008[];
 extern char *D_800F300C[];
 s8 CarModel_FindByName(char *s);
-    /* TODO (Clean version):
+    /* TODO (Clean version): [evaluated 2026-11-18: kept as two inline helpers; a shared table
+    walker changes the ROM]
     Both `func_find` and `func_find2` perform table lookups for cheat codes but modify 
     different configuration fields. They could be unified into a single lookup function 
     that iterates over a unified table of cheat definitions, or handled via a generalized 
@@ -66,40 +66,36 @@ s8 CarModel_FindByName(char *s);
         return 0;
     }
     */
-static inline u8 func_find(char *code, CheatCfg_ *cfg) {
+static inline u8 func_find(char *code, Profile *cfg) {
     u32 i;
 
     for (i = 0; i < 10; i++) {
         if (strcmp(code, gCheatButtonCodes[i]) == 0) {
-            cfg->unk3C = 1 << i;
+            cfg->cheats = 1 << i;
             return 1;
         }
     }
     return 0;
 }
-static inline u8 func_find2(char *code, CheatCfg_ *cfg) {
+static inline u8 func_find2(char *code, Profile *cfg) {
     s32 j;
     s8 bit;
 
     for (j = 0; j < 1; j++) {
-        /* TODO (Clean version):
+        /* TODO (Clean version): [evaluated 2026-11-18: a direct check without the loop changes
+        the ROM]
         The loop `for (j = 0; j < 1; j++)` iterates only once and is redundant. 
         It can be refactored into a direct condition check or structured to handle 
         multiple entries cleanly if the array size expands.
         */
         if (strcmp(code, D_800F3008[j]) == 0) {
-            /* TODO (Clean version):
-            The bitfield distribution between `unk14` and `unk18` handles more than 32 active flags.
-            This can be refactored into a unified bitset array or an explicit enum-based flags struct:
-            typedef struct {
-                u32 flags[2]; // Replaces unk14 and unk18
-            } CleanCheatFlags;
-            */
+            /* For bit >= 32, 1 << bit is undefined in C, but MIPS sllv only uses the low five bits,
+               so this sets bit (bit - 32) as intended. */
             bit = CarModel_FindByName(D_800F300C[j]);
             if (bit < 32) {
-                cfg->unk14 |= 1 << bit;
+                cfg->carUnlocks[0] |= 1 << bit;
             } else {
-                cfg->unk18 |= 1 << bit;
+                cfg->carUnlocks[1] |= 1 << bit;
             }
             return 1;
         }
@@ -109,8 +105,8 @@ static inline u8 func_find2(char *code, CheatCfg_ *cfg) {
 
 /* Trucos de botones del menú de opciones: cada código son 8 dígitos ASCII, uno por botón
  * ('1' C-arriba, '2' C-abajo, '3' Z, '4' R, '5' C-izquierda, '6' C-derecha). El código coincidente
- * pone su bit en cfg->unk3C. Las entradas con "77777777" no se pueden teclear (truco desactivado). */
-s32 Config_CheckCheatCode(char *code, CheatCfg_ *cfg) {
+ * pone su bit en cfg->cheats. Las entradas con "77777777" no se pueden teclear (truco desactivado). */
+s32 Config_CheckCheatCode(char *code, Profile *cfg) {
     if (func_find(code, cfg)) {
         return 1;
     }
