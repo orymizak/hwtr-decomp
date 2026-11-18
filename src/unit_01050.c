@@ -227,7 +227,7 @@ void Font_GetCharWidth();
 extern void *D_801416DC;
 s32 func_80060C00(s32, s32, s32, s32);
 extern void *D_801416E0;
-void func_80076BB0();
+void Draw2D_SetColor();
 extern void *D_801416A4;
 void func_80078320();
 void func_80078388();
@@ -261,7 +261,7 @@ extern void *D_8014179C;
 void File_GetSize();
 extern void *D_801417A0;
 void File_Load();
-void func_80077E5C();
+void Draw2D_BeginPrim();
 
 /* Fills the service table at D_80141698..D_801417B4 (font, file, timer and game callbacks);
  * func_80060840 clears it again. */
@@ -299,7 +299,7 @@ s32 func_80060458(void) {
     D_801416D4 = &Font_Free;
     D_801416D8 = &Font_GetCharWidth;
     D_801416DC = &func_80060C00;
-    D_801416E0 = &func_80076BB0;
+    D_801416E0 = &Draw2D_SetColor;
     D_801416A4 = &func_80078320;
     D_801416A8 = &func_80078388;
     D_801416B4 = &func_80078624;
@@ -327,7 +327,7 @@ s32 func_80060458(void) {
     D_801417B4 = &func_800609A8;
     D_8014179C = &File_GetSize;
     D_801417A0 = &File_Load;
-    D_8014178C = &func_80077E5C;
+    D_8014178C = &Draw2D_BeginPrim;
     return 1;
 }
 

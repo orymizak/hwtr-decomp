@@ -38,9 +38,9 @@ s32 File_GetSize(char *name);
 char *strcpy(char *dst, const char *src);
 char *strcat(char *dst, const char *src);
 void func_8007F570(Glyph *glyph);
-void func_80076BCC();
-void func_80076D6C(s32 x, s32 y, u32 data, u8 width, s32 height, f32 scaleX, f32 scaleY);
-void func_80076CF8(s32 x, s32 y, u32 data, u8 width, s32 height);
+void Draw2D_Begin();
+void Image_DrawRGBA16Scaled(s32 x, s32 y, u32 data, u8 width, s32 height, f32 scaleX, f32 scaleY);
+void Image_DrawRGBA16(s32 x, s32 y, u32 data, u8 width, s32 height);
 
 s32 Font_Init(void) {
     s32 i;
@@ -132,8 +132,8 @@ s32 func_8006F528(u8 id, u8 c, f32 x, f32 y, f32 scale) {
             FONT_ASSERT(glyph != NULL);
             x = (x - 500.0f) * gScreenWidth * 0.9 / 1000.0 + gScreenWidth / 2;
             y = (500.0f - y) * gScreenHeight * 0.95 / 1000.0 + gScreenHeight / 2;
-            func_80076BCC();
-            func_80076D6C(x, y, glyph->data, glyph->width, glyph->height, scale, scale);
+            Draw2D_Begin();
+            Image_DrawRGBA16Scaled(x, y, glyph->data, glyph->width, glyph->height, scale, scale);
         }
     }
     return 0;
@@ -154,8 +154,8 @@ u8 Font_DrawChar(u8 id, u8 c, s32 x, s32 y) {
         return 0;
     }
     glyph = font->glyphs[index];
-    func_80076BCC();
-    func_80076CF8(x, y, glyph->data, glyph->width, glyph->height);
+    Draw2D_Begin();
+    Image_DrawRGBA16(x, y, glyph->data, glyph->width, glyph->height);
     return glyph->width;
 }
 
@@ -166,8 +166,8 @@ u8 Font_DrawChar2(u8 id, u8 c, s32 x, s32 y) {
 
     if (index != FONT_NO_GLYPH) {
         glyph = font->glyphs[index];
-        func_80076BCC();
-        func_80076CF8(x, y, glyph->data, glyph->width, glyph->height);
+        Draw2D_Begin();
+        Image_DrawRGBA16(x, y, glyph->data, glyph->width, glyph->height);
         return glyph->width;
     }
     return 0;

@@ -17,7 +17,7 @@ s32 Mtx_New(void *);
 s32 Frustum_TestSphere(s32, s32, s32);
 void func_80072EE0(u8 *, void *, s32, s32, s32);
 void func_8007AFD4(s32, s32, void *);
-void func_80076D6C(s32, s32, s32, s32, s32, f32, f32);
+void Image_DrawRGBA16Scaled(s32, s32, s32, s32, s32, f32, f32);
 extern u16 gScreenWidth;
 extern u16 gScreenHeight;
 extern u8 D_800F2090;
@@ -28,7 +28,7 @@ typedef struct { u8 d[0x200]; } B200_;
 typedef struct Node72_ { u8 pad[0x30]; s32 flags; s32 id; s32 p38; s32 p3C; s32 p40; s32 p44; s32 p48; struct Node72_ *next; struct Node72_ *child; } Node72_;
 typedef struct { u8 p0[0x2C]; Item74_ *inst; } Model13_;
 extern u8 D_800F1FA8[];
-void func_80072928(f32 *);
+void Mtx34_Orthonormalize(f32 *);
 extern s32 D_800F1EA0;
 extern s32 D_800F2028;
 extern s32 D_800F1EA4;
@@ -63,7 +63,7 @@ extern s8 D_800F1FA0;
 extern s8 D_800F1FA1;
 extern s8 D_800F1FA2;
 
-void func_80072890(Node72_ *n, Node72_ *nodes, s32 mats) {
+void SceneNode_Relocate(Node72_ *n, Node72_ *nodes, s32 mats) {
     if (n->p3C != -1) {
         n->p3C = mats + n->p3C * 0x34;
     } else {
@@ -94,7 +94,7 @@ static inline void V3o_Cross(Vec3f *r, Vec3f *a, Vec3f *b) {
     r->z = a->x * b->y - b->x * a->y;
 }
 /* Re-orthonormalises the rotation part of a 3x4 matrix, keeping the direction of its first column. */
-void func_80072928(f32 *m) {
+void Mtx34_Orthonormalize(f32 *m) {
     Vec3f a;
     Vec3f b;
     Vec3f c;
@@ -128,7 +128,7 @@ void func_80072928(f32 *m) {
     m[10] = c.z;
 }
 
-void func_80072BAC(Node72_ *n, s32 arg1, s32 arg2, s32 arg3) {
+void SceneNode_Draw(Node72_ *n, s32 arg1, s32 arg2, s32 arg3) {
     f32 m[12];
     f32 one;
     f32 zero;
@@ -140,7 +140,7 @@ void func_80072BAC(Node72_ *n, s32 arg1, s32 arg2, s32 arg3) {
             if (n->flags & 0x40) {
                 if ((Frustum_TestSphere(arg1, (s32) n, n->p38) & 0xFF) == 1) {
                     if (n->child != NULL) {
-                        func_80072BAC(n->child, arg1, arg2, arg3);
+                        SceneNode_Draw(n->child, arg1, arg2, arg3);
                     }
                     if (n->p3C != 0) {
                         func_8007AFD4(arg1, (s32) n, m);
@@ -161,7 +161,7 @@ void func_80072BAC(Node72_ *n, s32 arg1, s32 arg2, s32 arg3) {
                             ((s32 *) m)[8] = 0;
                             ((s32 *) m)[9] = 0;
                             m[10] = one;
-                            func_80072928(m);
+                            Mtx34_Orthonormalize(m);
                         }
                         if (n->flags & 4) {
                             m[9] = zero;
@@ -512,7 +512,7 @@ void func_80075858(void) {
 }
 
 /* Transforms the mesh vertices by m; vertices whose alpha bit 0 is clear are marked off. */
-void func_80075888(MeshXf75_ *o) {
+void Mesh_TransformVerts(MeshXf75_ *o) {
     Vtx *in;
     VtxOut75_ *out;
     s32 i;
@@ -552,7 +552,7 @@ void func_800759F0(Node72_ *n) {
 }
 
 /* Copies the colors of the visible transformed vertices back to the input vertices. */
-void func_80075A38(MeshXf75_ *o) {
+void Mesh_StoreColors(MeshXf75_ *o) {
     s32 i;
     VtxOut75_ *out;
     Vtx *in;
@@ -574,7 +574,7 @@ void func_80075A38(MeshXf75_ *o) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_13490", func_80075ABC);
 
-void func_80076020(s32 w, s32 h) {
+void Gfx_SetupRDP(s32 w, s32 h) {
     GFX_RESERVE(6);
     gSPSegment(gDisplayListHead++, 0, 0);
     gSPLoadGeometryMode(gDisplayListHead++, 0);
@@ -627,27 +627,27 @@ void func_80076578(f32 k, u16 *src) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_13490", func_800766FC);
 
-void func_80076BB0(s8 arg0, s8 arg1, s8 arg2) {
+void Draw2D_SetColor(s8 arg0, s8 arg1, s8 arg2) {
     D_800F1FA0 = arg0;
     D_800F1FA1 = arg1;
     D_800F1FA2 = arg2;
 }
 
 extern u8 D_800F2030[];
-void func_80076BCC(void) {
+void Draw2D_Begin(void) {
     GFX_RESERVE(3);
     gSPDisplayList(gDisplayListHead++, D_800F2030);
     gDPPipeSync(gDisplayListHead++);
     gDPSetPrimColor(gDisplayListHead++, 0, 0, (u8)D_800F1FA0, (u8)D_800F1FA1, (u8)D_800F1FA2, 0xFF);
 }
 
-void func_80076CF8(s32 a, s32 b, s32 c, s32 d, s32 e) {
+void Image_DrawRGBA16(s32 a, s32 b, s32 c, s32 d, s32 e) {
     if (d >= -a && e >= -b && a < gScreenWidth && b < gScreenHeight) {
-        func_80076D6C(a, b, c, d, e, 1.0f, 1.0f);
+        Image_DrawRGBA16Scaled(a, b, c, d, e, 1.0f, 1.0f);
     }
 }
 
-void func_80076D6C(s32 px, s32 py, s32 timg, s32 w, s32 h, f32 sx, f32 sy) {
+void Image_DrawRGBA16Scaled(s32 px, s32 py, s32 timg, s32 w, s32 h, f32 sx, f32 sy) {
     s32 n;
     s32 x;
     s32 y;
@@ -681,12 +681,12 @@ void func_80076D6C(s32 px, s32 py, s32 timg, s32 w, s32 h, f32 sx, f32 sy) {
     }
 }
 
-void func_80077228(void) {
+void Image_BeginCI8(void) {
     GFX_RESERVE(1);
     gSPDisplayList(gDisplayListHead++, &D_800F2060);
 }
 
-void func_800772F4(s32 px, s32 py, u32 timg, s32 w, s32 h, f32 sx, f32 sy) {
+void Image_DrawCI8Scaled(s32 px, s32 py, u32 timg, s32 w, s32 h, f32 sx, f32 sy) {
     s32 n;
     s32 x;
     s32 y;
@@ -724,12 +724,12 @@ void func_800772F4(s32 px, s32 py, u32 timg, s32 w, s32 h, f32 sx, f32 sy) {
     gDPSetTextureLUT(gDisplayListHead++, G_TT_NONE);
 }
 
-void func_800778A4(void) {
+void Image_BeginIA4(void) {
     GFX_RESERVE(1);
     gSPDisplayList(gDisplayListHead++, &D_800F2090);
 }
 
-void func_80077970(s32 px, s32 py, u32 timg, s32 w, s32 h, f32 sx, f32 sy) {
+void Image_DrawIA4Scaled(s32 px, s32 py, u32 timg, s32 w, s32 h, f32 sx, f32 sy) {
     s32 n;
     s32 x;
     s32 y;
@@ -764,7 +764,7 @@ void func_80077970(s32 px, s32 py, u32 timg, s32 w, s32 h, f32 sx, f32 sy) {
 }
 
 extern u8 D_800F20C0[];
-void func_80077E5C(s32 r, s32 g, s32 b, s32 a) {
+void Draw2D_BeginPrim(s32 r, s32 g, s32 b, s32 a) {
     GFX_RESERVE(3);
     gDPPipeSync(gDisplayListHead++);
     gDPSetPrimColor(gDisplayListHead++, 0, 0, r, g, b, a);

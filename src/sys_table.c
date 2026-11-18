@@ -73,7 +73,7 @@ void Font_Load();
 void Font_Free();
 void Font_GetCharWidth();
 void Font_DrawChar2();
-void func_80076BB0();
+void Draw2D_SetColor();
 void func_80078140();
 void func_8007815C();
 void func_80078238();
@@ -142,7 +142,7 @@ s32 func_8007EBF8(void) {
     D_80141004 = &Font_Free;
     D_80141008 = &Font_GetCharWidth;
     D_8014100C = &Font_DrawChar2;
-    D_80141010 = &func_80076BB0;
+    D_80141010 = &Draw2D_SetColor;
     D_80141020 = &func_80078140;
     D_80141024 = &func_8007815C;
     D_80141028 = &func_80078238;
