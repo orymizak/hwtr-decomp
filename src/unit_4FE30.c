@@ -33,7 +33,7 @@ typedef struct { u8 pad0[8]; u8 state; u8 pad9[3]; Vec3i pos; u8 pad18[0xC]; f32
 typedef struct { u8 pad0[4]; u32 flags; u8 pad8[4]; Vec3i pos; u8 pad18[0x70]; } E88b_;
 typedef struct { u32 flags; u8 pad4[3]; u8 b7; u8 pad8[3]; u8 bB; } Inf12b_;
 extern void (*svcTrackSmashObject[])(s32, Vec3f);
-u8 func_8008E38C(Vec3i, u8, u8, s32);
+u8 RaceSfx_Play(Vec3i, u8, u8, s32);
 extern u32 (*svcTrackGetLinkCount)(void);
 extern Vec3f D_80100B00;
 void *Memory_Alloc(s32 size);
@@ -205,7 +205,7 @@ void func_800AF820(E88b_ *e, Vec3f v) {
     e->flags |= 1;
     svcTrackSmashObject[0](idx, v);
     if (inf->flags & 4) {
-        func_8008E38C(e->pos, inf->b7, inf->bB, 0);
+        RaceSfx_Play(e->pos, inf->b7, inf->bB, 0);
     }
 }
 

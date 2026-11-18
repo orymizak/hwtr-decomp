@@ -493,14 +493,14 @@ extern PairAB_ D_8011B560[];
 extern u8 D_800F38E4[];
 extern void (*svcFxCarScrape)(EntAB_ *, f32);
 void func_8009B0AC(void);
-void func_8008DF18(EntAB_ *);
+void RaceAudio_OnContact(EntAB_ *);
 void func_80091DC4(PlAB_ *);
 void Car_ReportImpact(EntAB_ *);
 void func_800A66C0(EntAB_ *);
 void func_80096954(PlAB_ *, EntAB_ *);
-s32 func_800A76D8(void);
+s32 RaceClock_Get(void);
 f32 func_800AD774(EntAB_ *, f32);
-void func_8008E0BC(PairAB_ *);
+void RaceAudio_OnCollision(PairAB_ *);
 void func_80098E84(PairAB_ *, s32);
 void func_800A6850(PairAB_ *, s32);
 void func_800ADE1C(PairAB_ *);
@@ -528,7 +528,7 @@ void func_8009ABC8(void) {
     for (i = 0, e = D_8011B358; i < D_8011B350; e++, i++) {
         changed = e->obj->frame != D_8011B330;
         if (changed) {
-            func_8008DF18(e);
+            RaceAudio_OnContact(e);
         }
         isRacer = e->obj->type == 3;
         isCar = 0;
@@ -551,7 +551,7 @@ void func_8009ABC8(void) {
             if (pl->b710 && e->pos.x * pl->n720.x + e->pos.y * pl->n720.y + e->pos.z * pl->n720.z > 0.866f) {
                 func_80096954(pl, e);
             }
-            pl->w770 = func_800A76D8();
+            pl->w770 = RaceClock_Get();
         }
         e->obj->frame = D_8011B330;
         e->obj->pos = e->pos;
@@ -573,7 +573,7 @@ void func_8009ABC8(void) {
         if (pr->b->type == 3 || pr->b->type == 4) {
             pb = pr->b->pl;
         }
-        func_8008E0BC(pr);
+        RaceAudio_OnCollision(pr);
         if (pa != NULL) {
             if (pa->flags & 1) {
                 func_80098E84(pr, 0);

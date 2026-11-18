@@ -15,7 +15,7 @@ extern f32 D_8011582C;
 extern f32 D_80115830;
 extern u32 D_80115854;
 u8 func_80080AD0(BlkG_ *, u8);
-u32 func_800A76D8(void);
+u32 RaceClock_Get(void);
 extern Slot85_ D_80114830[];
 extern s32 D_80115824;
 extern f32 D_80115820;

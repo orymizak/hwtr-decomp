@@ -25,7 +25,7 @@ extern u8 D_800F3B42;
 extern E240_ D_800F3951[];
 extern E240_ D_800F3961[];
 extern s32 (*svcFontFree)(s32);
-s32 func_800A76D8(s32);
+s32 RaceClock_Get(s32);
 extern u8 D_800F3938;
 extern u8 D_800F393C;
 extern u8 D_800F3A1E;
@@ -118,7 +118,7 @@ void func_800A978C(u8 idx, u8 flag) {
     }
     svcFontDrawChar(1, 1, x, color, 2);
     svcDraw2DSetColor(0, 0xFF, 0);
-    t = D_800F3B30 - (((s32 (*)(void))func_800A76D8)() - p->unk440);
+    t = D_800F3B30 - (((s32 (*)(void))RaceClock_Get)() - p->unk440);
     if (t < 0) {
         t = 0;
     }
@@ -162,7 +162,7 @@ void func_800A99D0(u8 idx, u8 flag) {
     }
     svcFontDrawChar(1, 1, x, color, 2);
     svcDraw2DSetColor(0, 0xFF, 0);
-    t = ((s32 (*)(void))func_800A76D8)() - p->lapStart[p->lap - 1];
+    t = ((s32 (*)(void))RaceClock_Get)() - p->lapStart[p->lap - 1];
     sprintf(buf, D_80100A9C, t / 60000, (t % 60000) / 1000, ((t % 60000) % 1000) / 100, (((t % 60000) % 1000) % 100) / 10);
     if (flag == 0) {
         x = 0xCF;
@@ -325,7 +325,7 @@ void func_800AB8AC(u8 p) {
     }
     if (D_800F3934[p].t == 0) {
         if (e0->bC || e2->bC || e4->bC || e1->bC || e3->bC || e5->bC) {
-            D_800F3934[p].t = ((s32 (*)(void))func_800A76D8)();
+            D_800F3934[p].t = ((s32 (*)(void))RaceClock_Get)();
             e0->h8 = 0;
             e2->h8 = 0;
             e4->h8 = 0;
@@ -333,7 +333,7 @@ void func_800AB8AC(u8 p) {
             e3->h8 = 0;
             e5->h8 = 0;
         }
-    } else if ((u32)(((s32 (*)(void))func_800A76D8)() - D_800F3934[p].t) > 1000) {
+    } else if ((u32)(((s32 (*)(void))RaceClock_Get)() - D_800F3934[p].t) > 1000) {
         e0->h8 = -20;
         e2->h8 = -20;
         e4->h8 = -20;
@@ -387,14 +387,14 @@ void func_800ABEC8(u8 i, s32 v, s8 b) {
     D_800F3934[i].bEB = b;
     D_800F3934[i].bEA = 1;
     D_800F3934[i].w4 = v;
-    D_800F3934[i].w8 = func_800A76D8(i);
+    D_800F3934[i].w8 = RaceClock_Get(i);
 }
 
 INCLUDE_ASM("asm/nonmatchings/unit_49CF0", func_800ABF2C);
 
 void func_800AC6EC(u8 i, s32 n) {
     if (i < D_800F3B42) {
-        D_800F3B18[i].t = ((s32 (*)(void))func_800A76D8)();
+        D_800F3B18[i].t = ((s32 (*)(void))RaceClock_Get)();
         D_800F3B18[i].a = Car_Get((&D_800F3B40)[i])->n6CC;
         D_800F3B18[i].b = n;
         if (D_800F3B18[i].a + (u8)n >= 11) {

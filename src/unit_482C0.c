@@ -3,7 +3,7 @@
 #include "car.h"
 typedef struct { s32 flags; u8 p4[0x13]; u8 b17; u8 p18; u8 b19; u8 b1A; } TrkCfg_;
 typedef struct { u8 p0[0x440]; s32 w440; u8 b444[0xC]; s32 w450[8]; s32 w470; u8 p474[4]; u8 b478; u8 b479; } CrA76_;
-extern void (*D_801416E4)(s32);
+extern void (*svcHudCountdown)(s32);
 s32 func_8008182C(void);
 extern s32 D_800F3914;
 s32 Car_IsPlayer(s32);
@@ -16,26 +16,26 @@ extern u8 D_800F3918;
 extern u8 D_800F3919;
 extern u8 D_800F391A;
 
-extern s32 D_800F3900;
+extern s32 gRaceClock;
 extern s32 D_800F3904;
 
-void func_800A76C0(s32 arg0) {
-    D_800F3900 += arg0;
+void RaceClock_Advance(s32 arg0) {
+    gRaceClock += arg0;
 }
 
-s32 func_800A76D8(void) {
-    return D_800F3900;
+s32 RaceClock_Get(void) {
+    return gRaceClock;
 }
 
 s32 func_800A76E4(void) {
     return D_800F3904;
 }
 
-void func_800A76F0(void) {
-    D_800F3900 = 0;
+void RaceClock_Reset(void) {
+    gRaceClock = 0;
 }
 
-void func_800A76FC(void) {
+void RaceClock_Start(void) {
     u8 i;
     u8 j;
     s32 z;
@@ -43,10 +43,10 @@ void func_800A76FC(void) {
 
     D_800F3914 = func_8008182C();
     audSfxPlay(9, 1, 1.0f, 1.0f);
-    D_801416E4(0);
+    svcHudCountdown(0);
     z = 0;
-    D_800F3904 = D_800F3900;
-    D_800F3900 = 0;
+    D_800F3904 = gRaceClock;
+    gRaceClock = 0;
     for (i = 0; i < 6; i++) {
         c = Car_Get(i);
         c->w440 = z;
@@ -115,7 +115,7 @@ s32 func_800A780C(u8 ch, u8 cp) {
         if ((u8)Car_IsPlayer(ch) != 0) {
             audSfxPlay(12, 0, 1.0f, 1.0f);
         }
-        t = D_800F3900;
+        t = gRaceClock;
         if (D_800F3918 == 1) {
             if (c->bestLap == 0 || t - c->lapStart[0] < c->bestLap) {
                 c->bestLap = t - c->lapStart[0];
@@ -178,7 +178,7 @@ s32 func_800A7C2C(void) {
     return 1;
 }
 
-s32 func_800A7C34(u8 i) {
+s32 Car_CheckFinished(u8 i) {
     Car *p = Car_Get(i);
 
     if (p->finished != 0) {

@@ -371,7 +371,7 @@ void Menu_StartFadeOut(void);
 void Menu_StartFadeIn(void);
 s32 Tuning_Load(void);
 extern s8 gMenuMusicStarted;
-s32 func_8008D4B8(u32);
+s32 Music_GetSongTrack(u32);
 extern s8 gMenuSong;
 extern u8 gMenuFsm;
 extern u8 gCarModelNames;
@@ -1905,7 +1905,7 @@ void Song_PickRandom(void) {
 
 
 void Song_PickForTrack(void) {
-    gMenuSong = func_8008D4B8((u32) (*(u8 *)((u8 *)((*(void * *)&gProfileP1)) + 0x21)));
+    gMenuSong = Music_GetSongTrack((u32) (*(u8 *)((u8 *)((*(void * *)&gProfileP1)) + 0x21)));
 }
 
 void Song_Next(void) {

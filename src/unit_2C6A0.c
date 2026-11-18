@@ -22,49 +22,49 @@ typedef struct { u8 id; u8 b; u8 pad[2]; s32 c; } Ent8b_;
 typedef struct { u8 id; u8 pad[0xF]; } E10g_;
 extern void (*audCarSndStopEngine[])(u8);
 extern void (*audMusicStop)(void);
-void func_8008E700(void);
-extern void (*D_801416E4)(s32);
+void RaceAudio_Pause(void);
+extern void (*svcHudCountdown)(s32);
 extern void (*svcWorldUpdate)(u32);
-extern u8 (*D_80145568)(s32);
-extern void (*D_80145598)(void);
+extern u8 (*sysInputIsKeyHeldAny)(s32);
+extern void (*sysInputRumbleStopAll)(void);
 u8 func_80098BF4(void);
-void func_8008D060(u8);
+void Race_ReadPlayerControls(u8);
 void func_80093998(s32);
 void func_800AF67C(void);
 void func_800A59B8(s32);
 void func_8008EA6C(s32);
 void func_8008AD04(void);
-void func_800A76C0(s32);
-void func_8008D9A0(s32);
+void RaceClock_Advance(s32);
+void RaceAudio_Update(s32);
 void func_80087B08(void);
 void func_800ABC80(u8, s32, u8);
 void func_800AEE20(u32);
-void func_800A76FC(void);
+void RaceClock_Start(void);
 u32 func_800AF174(void);
 void func_800AF180(u32);
 void Pause_SetPlayer(u8);
 extern s32 D_800F3740[];
-extern s32 D_80118490;
-extern u8 D_801184AD;
+extern s32 gRaceEndTime;
+extern u8 gRaceSkipArmed;
 void func_800AEFF8(void);
 void func_800A7C8C(u8, u32 *, u32 *);
 void func_800ABEA8(u8, u8);
 void func_800ABEBC(u8);
-void func_8008E5B8(void);
-extern u8 D_8011849A[];
+void RaceAudio_Silence(void);
+extern u8 gHumanRacer[];
 extern u8 D_801184A8;
 extern u8 D_801184A9;
 extern u8 D_801184AA;
-extern u8 D_801184AC;
-extern u8 D_801184AE;
-extern s32 D_801184A4;
-extern s32 D_800F36E0;
-extern u8 (*D_801417A8)(u8 *);
+extern u8 gRaceIsDemo;
+extern u8 gRacePausePlayer;
+extern s32 gRaceStartDelay;
+extern s32 gRaceAudioTick;
+extern u8 (*svcRacePreLoad)(u8 *);
 extern u8 (*svcTrackLoad)(u8 *);
-extern u8 (*D_801417AC)(u8 *);
-extern void (*D_8014559C)(void);
-u8 func_8008D5EC(void);
-void func_800A76F0(void);
+extern u8 (*svcRacePostLoad)(u8 *);
+extern void (*sysInputRumbleResume)(void);
+u8 RaceAudio_Load(void);
+void RaceClock_Reset(void);
 void func_800908E8(void);
 s32 func_800908A8(void);
 void func_80090934(void);
@@ -88,25 +88,25 @@ extern void (*audCarSndPlayOneShot)(u8, s32, f32);
 extern u32 (*svcGamePauseUpdate)(void);
 extern void (*svcGamePauseEnd)(s32);
 extern s32 (*svcTimeGetMillis)(void);
-extern void (*D_801417B8)(s32);
-extern u8 D_801184B0;
-extern u8 D_801184AF;
-extern u8 D_801184AB;
-extern s32 D_800F36DC;
-extern s32 D_800F36D8;
-extern u8 (*D_801417B0)(u8 *);
-extern u8 (*D_801417B4)(u8 *);
+extern void (*svcRacePhaseChanged)(s32);
+extern u8 gRacePauseRequested;
+extern u8 gRacePauseReleased;
+extern u8 gRaceShowResults;
+extern s32 gRaceSimTime;
+extern s32 gRaceLastTime;
+extern u8 (*svcRacePreUnload)(u8 *);
+extern u8 (*svcRacePostUnload)(u8 *);
 extern u8 (*svcTrackUnload)();
-extern u32 D_80118494;
-extern u8 D_8011849C[];
-extern s32 D_800F36F0;
+extern u32 gRacerCount;
+extern u8 gRacePoints[];
+extern s32 gRaceOutcome;
 u8 func_800AEFBC(u8 *);
 u8 func_800A5950(u8 *);
 u8 func_800A7C2C(u8 *);
 u8 func_80089848(u8 *);
 u8 func_800AF5B4(u8 *);
 u8 func_8008EA64(u8 *);
-u8 func_8008D848(u8 *);
+u8 RaceAudio_Unload(u8 *);
 u8 func_80091BA0(u8 *);
 u8 func_800858E8(u8 *);
 u8 func_800AEAFC(u8 *);
@@ -122,13 +122,13 @@ extern void (*audCarSndStartEngine)(u8, s32);
 extern void (*audSndSrcPlay)(u8, s32, s32, s32);
 extern s32 (*audMusicGetTrack)();
 extern void (*audMusicPlayTrack)(s32);
-extern u8 D_800F36E8;
-extern u32 D_800F36EC;
-extern u32 D_800F36E4;
-extern u8 D_80118498[];
-u32 func_800A76D8(void);
-u8 func_800A7C34(u8);
-extern Ent8_ D_80118538[];
+extern u8 gRaceHasTimeLimit;
+extern u32 gRaceTimeLimit;
+extern u32 gHumanCount;
+extern u8 gHumanFinished[];
+u32 RaceClock_Get(void);
+u8 Car_CheckFinished(u8);
+extern Ent8_ gRaceSfx[];
 extern void (*audSndSrcStop)(s32);
 extern s32 D_800F378C[];
 extern s32 D_800F3770[];
@@ -136,24 +136,24 @@ extern s32 D_80141448;
 extern s32 gGameStateFuncs[];
 extern s32 gGameState;
 
-extern s32 D_800F36F4;
-extern s32 D_801184B4;
-extern s32 D_801184B8;
-extern s32 (*D_801416A0)(s32);
+extern s32 gRacePhase;
+extern s32 gRaceLoadSteps;
+extern s32 gRaceLoadStep;
+extern s32 (*svcLoadingProgress)(s32);
 extern s32 D_8011852C;
 extern u8 D_80118530;
 extern u32 D_80118534;
 
-void func_8008D3B8(u8 *arg0);
-void func_8008D3D4(void);
-s32 func_8008D4E4(u8 *t);
+void Race_LoadProgressInit(u8 *arg0);
+void Race_LoadProgressStep(void);
+s32 RaceAudio_Init(u8 *t);
     /* TODO (Clean version / Bug check): Define a unified GameConfig struct for 'cfg' instead of raw byte offsets:
     typedef struct {
         u32 flags;              // 0x00: bit 0: is_practice, bit 2: has_time_limit
         u8 pad04[0x14];
-        u8 racer_count;         // 0x18: D_80118494
+        u8 racer_count;         // 0x18: gRacerCount
         u8 pad19[7];
-        u32 time_limit;         // 0x20: D_800F36EC
+        u32 time_limit;         // 0x20: gRaceTimeLimit
         u8 pad24[12];
         struct {
             s32 kind;           // 0x00: 1 = player racer
@@ -162,52 +162,52 @@ s32 func_8008D4E4(u8 *t);
             u8 pad06[14];
         } racers[6];            // 0x30
     } GameConfig;
-    Also remove the redundant function pointer cast on func_8008D4E4(cfg).
+    Also remove the redundant function pointer cast on RaceAudio_Init(cfg).
     */
 s32 Race_Init(u8 *cfg) {
     u8 i;
 
-    D_800F36F0 = 0;
-    D_80118494 = cfg[0x18];
-    D_800F36E4 = 0;
-    for (i = 0; i < D_80118494; i++) {
-        D_8011849C[i] = 0;
+    gRaceOutcome = 0;
+    gRacerCount = cfg[0x18];
+    gHumanCount = 0;
+    for (i = 0; i < gRacerCount; i++) {
+        gRacePoints[i] = 0;
         if (((Cfg8B_ *)cfg)->ent[i].kind == 1) {
-            D_8011849A[((Cfg8B_ *)cfg)->ent[i].slot] = i;
-            D_800F36E4++;
+            gHumanRacer[((Cfg8B_ *)cfg)->ent[i].slot] = i;
+            gHumanCount++;
         }
     }
     for (i = 0; i < 2; i++) {
-        D_80118498[i] = 0;
+        gHumanFinished[i] = 0;
     }
     if (*(s32 *)cfg & 4) {
-        D_800F36EC = *(s32 *)(cfg + 0x20);
-        D_800F36E8 = 1;
+        gRaceTimeLimit = *(s32 *)(cfg + 0x20);
+        gRaceHasTimeLimit = 1;
     } else {
-        D_800F36E8 = 0;
+        gRaceHasTimeLimit = 0;
     }
-    D_801184AC = *(s32 *)cfg & 1;
+    gRaceIsDemo = *(s32 *)cfg & 1;
     D_801184AA = 0;
     D_801184A9 = 0;
     D_801184A8 = 0;
-    D_801184AB = 0;
-    D_801184AF = 1;
-    D_801184AE = 0;
-    D_801184B0 = 0;
-    if (!D_801417A8(cfg)) {
+    gRaceShowResults = 0;
+    gRacePauseReleased = 1;
+    gRacePausePlayer = 0;
+    gRacePauseRequested = 0;
+    if (!svcRacePreLoad(cfg)) {
         return 0;
     }
-    func_8008D3B8(cfg);
-    func_8008D3D4();
+    Race_LoadProgressInit(cfg);
+    Race_LoadProgressStep();
     if (!func_800A90F0(cfg)) {
         return 0;
     }
-    func_8008D3D4();
-    func_8008D3D4();
+    Race_LoadProgressStep();
+    Race_LoadProgressStep();
     if (!svcTrackLoad(cfg)) {
         return 0;
     }
-    func_8008D3D4();
+    Race_LoadProgressStep();
     if (!func_80087990(cfg)) {
         return 0;
     }
@@ -220,7 +220,7 @@ s32 Race_Init(u8 *cfg) {
     if (!func_8009930C(cfg)) {
         return 0;
     }
-    func_8008D3D4();
+    Race_LoadProgressStep();
     if (!func_800AEA40(cfg)) {
         return 0;
     }
@@ -230,7 +230,7 @@ s32 Race_Init(u8 *cfg) {
     if (!func_80091210(cfg)) {
         return 0;
     }
-    if (!((u8 (*)(u8 *))func_8008D4E4)(cfg)) {
+    if (!((u8 (*)(u8 *))RaceAudio_Init)(cfg)) {
         return 0;
     }
     if (!func_8008E8F0(cfg)) {
@@ -251,52 +251,52 @@ s32 Race_Init(u8 *cfg) {
     if (!func_800AEF80(cfg)) {
         return 0;
     }
-    if (!func_8008D5EC()) {
+    if (!RaceAudio_Load()) {
         return 0;
     }
-    func_8008D3D4();
-    if (!D_801417AC(cfg)) {
+    Race_LoadProgressStep();
+    if (!svcRacePostLoad(cfg)) {
         return 0;
     }
     gGameState = 0;
-    D_800F36F4 = 0;
-    D_801417B8(0);
-    func_800A76F0();
+    gRacePhase = 0;
+    svcRacePhaseChanged(0);
+    RaceClock_Reset();
     func_800908E8();
-    if (D_800F36E4 == 1 && D_80118494 == 6) {
-        D_801184A4 = func_800908A8();
+    if (gHumanCount == 1 && gRacerCount == 6) {
+        gRaceStartDelay = func_800908A8();
     } else {
-        D_801184A4 = 0;
+        gRaceStartDelay = 0;
         func_80090934();
     }
-    D_800F36DC = 0;
-    D_800F36D8 = 0;
-    D_800F36E0 = svcTimeGetMillis();
+    gRaceSimTime = 0;
+    gRaceLastTime = 0;
+    gRaceAudioTick = svcTimeGetMillis();
     func_8009ABC8();
     func_80085780();
-    D_8014559C();
+    sysInputRumbleResume();
     return 1;
 }
 
     /* TODO (Clean version / Bug check): Replace raw buffer 'o' with a structured RaceSummary struct:
     typedef struct {
-        s32 race_result_code;   // 0x00: D_800F36F0
+        s32 race_result_code;   // 0x00: gRaceOutcome
         u8 pad04[0x2C];
         struct {
             u8 pad00[0x12];
-            u8 points;          // 0x12: D_8011849C[i]
+            u8 points;          // 0x12: gRacePoints[i]
             u8 pad13[0x19];
         } racers[6];            // 0x30, stride 0x2C
     } RaceSummary;
     Also consider replacing cascading 'err += func() == 0' with a boolean failure accumulator:
-    bool ok = D_801417B0(o) && func_800AEFBC(o) && ... && D_801417B4(o);
+    bool ok = svcRacePreUnload(o) && func_800AEFBC(o) && ... && svcRacePostUnload(o);
     */
-u8 func_8008BE7C(u8 *o) {
+u8 Race_Shutdown(u8 *o) {
     s32 err;
     u8 i;
 
     memset(o, 0, 0x124);
-    if (D_801417B0(o) == 0) {
+    if (svcRacePreUnload(o) == 0) {
         return 0;
     }
     err = func_800AEFBC(o) == 0;
@@ -305,7 +305,7 @@ u8 func_8008BE7C(u8 *o) {
     err += func_80089848(o) == 0;
     err += func_800AF5B4(o) == 0;
     err += func_8008EA64(o) == 0;
-    err += func_8008D848(o) == 0;
+    err += RaceAudio_Unload(o) == 0;
     err += func_80091BA0(o) == 0;
     err += func_800858E8(o) == 0;
     err += func_800AEAFC(o) == 0;
@@ -315,13 +315,13 @@ u8 func_8008BE7C(u8 *o) {
     err += func_80087AD4(o) == 0;
     err += svcTrackUnload() == 0;
     err += func_800A9370(o) == 0;
-    if (D_801417B4(o) == 0) {
+    if (svcRacePostUnload(o) == 0) {
         return 0;
     }
-    for (i = 0; i < D_80118494; i++) {
-        ((T8B_ *)o)->e[i].b = D_8011849C[i];
+    for (i = 0; i < gRacerCount; i++) {
+        ((T8B_ *)o)->e[i].b = gRacePoints[i];
     }
-    *(s32 *)o = D_800F36F0;
+    *(s32 *)o = gRaceOutcome;
     return err == 0;
 }
 
@@ -354,9 +354,9 @@ s32 Game_RunState(void) {
         r[i] = r[b];
         r[b] = tmp;
     }
-    D_8011849C[p->id] = (p->time != 0 && (u32)i < 6) ? sPointsTable[i] : 0;
+    gRacePoints[p->id] = (p->time != 0 && (u32)i < 6) ? sPointsTable[i] : 0;
     */
-void func_8008C0D4(void) {
+void Race_ComputeResults(void) {
     Res8C_ r[6];
     Res8C_ tmp;
     s8 i;
@@ -365,14 +365,14 @@ void func_8008C0D4(void) {
     Res8C_ *p;
 
     func_800AEFF8();
-    D_80118490 = D_800F36D8;
-    for (i = 0; i < (s8)D_80118494; i++) {
+    gRaceEndTime = gRaceLastTime;
+    for (i = 0; i < (s8)gRacerCount; i++) {
         func_800A7C8C(i, &r[i].time, &r[i].best);
         r[i].id = i;
     }
-    for (i = 0; i < (s8)D_80118494; i++) {
+    for (i = 0; i < (s8)gRacerCount; i++) {
         b = i;
-        for (j = i + 1; j < (s8)D_80118494; j++) {
+        for (j = i + 1; j < (s8)gRacerCount; j++) {
             if (r[j].time != 0 && (r[j].time < r[b].time || r[b].time == 0)) {
                 b = j;
             }
@@ -393,33 +393,33 @@ void func_8008C0D4(void) {
         if (p->time != 0) {
             switch (i) {
             case 0:
-                D_8011849C[r[i].id] = 10;
+                gRacePoints[r[i].id] = 10;
                 break;
             case 1:
-                D_8011849C[r[i].id] = 8;
+                gRacePoints[r[i].id] = 8;
                 break;
             case 2:
-                D_8011849C[r[i].id] = 7;
+                gRacePoints[r[i].id] = 7;
                 break;
             case 3:
-                D_8011849C[r[i].id] = 6;
+                gRacePoints[r[i].id] = 6;
                 break;
             case 4:
-                D_8011849C[r[i].id] = 5;
+                gRacePoints[r[i].id] = 5;
                 break;
             case 5:
-                D_8011849C[r[i].id] = 4;
+                gRacePoints[r[i].id] = 4;
                 break;
             default:
-                D_8011849C[p->id] = 0;
+                gRacePoints[p->id] = 0;
                 break;
             }
         } else {
-            D_8011849C[p->id] = 0;
+            gRacePoints[p->id] = 0;
         }
     }
     b = -1;
-    for (j = 0; j < (s8)D_80118494; j++) {
+    for (j = 0; j < (s8)gRacerCount; j++) {
         if (r[j].best != 0 && (b == -1 || r[j].best < r[b].best || r[b].best == 0)) {
             b = j;
         }
@@ -427,12 +427,12 @@ void func_8008C0D4(void) {
     if (b != -1) {
         func_800ABEBC(r[b].id);
     }
-    func_8008E5B8();
-    D_801184AD = 0;
+    RaceAudio_Silence();
+    gRaceSkipArmed = 0;
 }
 
-void func_8008CDAC(void);
-u8 func_8008CF90(void);
+void Race_PauseBegin(void);
+u8 Race_IsFinished(void);
     /* TODO (Clean version / Bug check): Factor out duplicate car freeze/reset logic into an inline helper:
     static inline void freeze_car(Car *c) {
         if (c->flags & 3) {
@@ -446,7 +446,7 @@ u8 func_8008CF90(void);
     }
     And define constants for countdown timer thresholds (1200ms, 2550ms, 3800ms, 5000ms).
     */
-void func_8008C548(void) {
+void Race_Update(void) {
     u32 now;
     u32 delta;
     s32 prev;
@@ -456,21 +456,21 @@ void func_8008C548(void) {
     s32 unused[2];
 
     now = svcTimeGetMillis();
-    prev = D_800F36D8;
+    prev = gRaceLastTime;
     delta = now - prev;
     if (prev + 100 < now) {
-        D_800F36D8 = now - 100;
-        D_800F36DC += D_800F36D8 - prev;
+        gRaceLastTime = now - 100;
+        gRaceSimTime += gRaceLastTime - prev;
     }
-    while (D_800F36DC < now) {
-        D_801184AE = func_80098BF4();
-        if ((u32)D_800F36F4 < 2) {
-            for (i = 0; i < D_800F36E4; i++) {
-                func_8008D060(i);
+    while (gRaceSimTime < now) {
+        gRacePausePlayer = func_80098BF4();
+        if ((u32)gRacePhase < 2) {
+            for (i = 0; i < gHumanCount; i++) {
+                Race_ReadPlayerControls(i);
             }
         }
-        if (D_801184AB == 0) {
-            if (D_800F36F4 != 0) {
+        if (gRaceShowResults == 0) {
+            if (gRacePhase != 0) {
                 func_80093998(10);
                 func_8009ABC8();
                 func_800AF67C();
@@ -479,74 +479,74 @@ void func_8008C548(void) {
             func_8008EA6C(10);
             func_8008AD04();
         }
-        func_800A76C0(10);
-        D_800F36DC += 10;
+        RaceClock_Advance(10);
+        gRaceSimTime += 10;
     }
-    if (D_800F36E0 < now) {
-        if (D_800F36F4 != 3) {
-            func_8008D9A0(100);
+    if (gRaceAudioTick < now) {
+        if (gRacePhase != 3) {
+            RaceAudio_Update(100);
         }
-        while (D_800F36E0 < now) {
-            D_800F36E0 += 100;
+        while (gRaceAudioTick < now) {
+            gRaceAudioTick += 100;
         }
     }
-    if (D_801184AB == 0) {
+    if (gRaceShowResults == 0) {
         func_80087B08();
     }
-    if (D_800F36F4 == 1) {
-        for (i = 0; i < D_800F36E4; i++) {
-            if (D_80118498[i] == 0) {
-                func_800ABC80(i, 1, D_8011849A[i]);
+    if (gRacePhase == 1) {
+        for (i = 0; i < gHumanCount; i++) {
+            if (gHumanFinished[i] == 0) {
+                func_800ABC80(i, 1, gHumanRacer[i]);
             } else {
-                func_800ABC80(i, 3, D_8011849A[i]);
+                func_800ABC80(i, 3, gHumanRacer[i]);
             }
         }
-    } else if (D_800F36F4 == 2 || D_800F36F4 == 3) {
-        for (i = 0; i < D_800F36E4; i++) {
-            func_800ABC80(i, 3, D_8011849A[i]);
+    } else if (gRacePhase == 2 || gRacePhase == 3) {
+        for (i = 0; i < gHumanCount; i++) {
+            func_800ABC80(i, 3, gHumanRacer[i]);
         }
     }
-    svcWorldUpdate(D_801184AB == 0 ? delta : 0);
+    svcWorldUpdate(gRaceShowResults == 0 ? delta : 0);
     func_800AEE20(delta);
-    D_800F36D8 = now;
-    switch ((u32)D_800F36F4) {
+    gRaceLastTime = now;
+    switch ((u32)gRacePhase) {
     case 0:
-        if (func_800A76D8() >= D_801184A4) {
+        if (RaceClock_Get() >= gRaceStartDelay) {
             func_80090934();
-        } else if (D_80145568(0x12)) {
-            D_801184A4 = func_800A76D8();
+        } else if (sysInputIsKeyHeldAny(0x12)) {
+            gRaceStartDelay = RaceClock_Get();
         }
-        if (func_800A76D8() >= D_801184A4 + 1200 && D_801184A8 == 0) {
+        if (RaceClock_Get() >= gRaceStartDelay + 1200 && D_801184A8 == 0) {
             audSfxPlay(6, 1, 1.0f, 1.0f);
-            D_801416E4(3);
+            svcHudCountdown(3);
             D_801184A8 = 1;
-        } else if (func_800A76D8() >= D_801184A4 + 2550 && D_801184A9 == 0) {
+        } else if (RaceClock_Get() >= gRaceStartDelay + 2550 && D_801184A9 == 0) {
             audSfxPlay(7, 1, 1.0f, 1.0f);
-            D_801416E4(2);
+            svcHudCountdown(2);
             D_801184A9 = 1;
-        } else if (func_800A76D8() >= D_801184A4 + 3800 && D_801184AA == 0) {
+        } else if (RaceClock_Get() >= gRaceStartDelay + 3800 && D_801184AA == 0) {
             audSfxPlay(8, 1, 1.0f, 1.0f);
-            D_801416E4(1);
+            svcHudCountdown(1);
             D_801184AA = 1;
-        } else if (func_800A76D8() >= D_801184A4 + 5000) {
+        } else if (RaceClock_Get() >= gRaceStartDelay + 5000) {
             func_800AEFF8();
-            func_800A76FC();
-            D_800F36F4 = 1;
-            D_801417B8(1);
+            RaceClock_Start();
+            gRacePhase = 1;
+            svcRacePhaseChanged(1);
             D_801184A8 = 0;
             D_801184A9 = 0;
             D_801184AA = 0;
         }
         break;
     case 1:
-        if (func_8008CF90()) {
-            if (D_801184AC == 0) {
-                D_80145598();
-                func_8008C0D4();
-                D_800F36F4 = 3;
-                D_801417B8(2);
-                D_800F36F0 = 1;
-                for (i = 0; i < D_80118494; i++) {
+        if (Race_IsFinished()) {
+            if (gRaceIsDemo == 0) {
+                sysInputRumbleStopAll();
+                Race_ComputeResults();
+                gRacePhase = 3;
+                svcRacePhaseChanged(2);
+                gRaceOutcome = 1;
+                for (i = 0; i < gRacerCount; i++) {
                     c = Car_Get(i);
                     if (c->flags & 3) {
                         c->yaw = 1.0f;
@@ -563,10 +563,10 @@ void func_8008C548(void) {
         }
         break;
     case 2:
-        D_80145598();
-        func_8008C0D4();
-        D_800F36F4 = 3;
-        for (i = 0; i < D_80118494; i++) {
+        sysInputRumbleStopAll();
+        Race_ComputeResults();
+        gRacePhase = 3;
+        for (i = 0; i < gRacerCount; i++) {
             c = Car_Get(i);
             if (c->flags & 3) {
                 c->yaw = 1.0f;
@@ -577,151 +577,151 @@ void func_8008C548(void) {
                 c->unk027 = 0;
             }
         }
-        D_80118490 = D_800F36D8 - 4000;
+        gRaceEndTime = gRaceLastTime - 4000;
         break;
     case 3:
-        if (D_801184AD == 0) {
-            D_801184AD = D_80145568(0x12) == 0;
+        if (gRaceSkipArmed == 0) {
+            gRaceSkipArmed = sysInputIsKeyHeldAny(0x12) == 0;
         }
-        if (now - D_80118490 > 4000) {
-            if (D_801184AB == 0) {
-                D_801417B8(3);
+        if (now - gRaceEndTime > 4000) {
+            if (gRaceShowResults == 0) {
+                svcRacePhaseChanged(3);
             }
-            D_801184AB = 1;
+            gRaceShowResults = 1;
             n = func_800AF174();
             if (n != 0) {
-                i = (now - D_80118490 - 4000) / 2000;
+                i = (now - gRaceEndTime - 4000) / 2000;
                 func_800AF180(i % n);
             }
-            if (now - D_80118490 > 30000 || (D_801184AD != 0 && D_80145568(0x12)) || D_80145568(0x1A)) {
+            if (now - gRaceEndTime > 30000 || (gRaceSkipArmed != 0 && sysInputIsKeyHeldAny(0x12)) || sysInputIsKeyHeldAny(0x1A)) {
                 gGameState = 2;
             }
         }
         break;
     }
-    if (D_801184AF != 0 && D_801184AE != 0) {
-        D_801184B0 = 1;
+    if (gRacePauseReleased != 0 && gRacePausePlayer != 0) {
+        gRacePauseRequested = 1;
     }
-    if (D_801184AE == 0 && D_801184AF == 0) {
-        D_801184AF = 1;
+    if (gRacePausePlayer == 0 && gRacePauseReleased == 0) {
+        gRacePauseReleased = 1;
     }
-    if (gGameState == 0 && D_801184AC == 0 && D_801184B0 != 0 && (u32)D_800F36F4 < 2) {
-        Pause_SetPlayer(D_801184AE);
-        func_8008CDAC();
+    if (gGameState == 0 && gRaceIsDemo == 0 && gRacePauseRequested != 0 && (u32)gRacePhase < 2) {
+        Pause_SetPlayer(gRacePausePlayer);
+        Race_PauseBegin();
         gGameState = 1;
     }
 }
 
-void func_8008CDAC(void) {
-    func_8008E700();
+void Race_PauseBegin(void) {
+    RaceAudio_Pause();
     svcGamePauseBegin();
     audSfxPlay(0xE, 0, 1.0f, 1.0f);
 }
 
 
-void func_8008E80C(void);
+void RaceAudio_Resume(void);
     /* TODO (Clean version / Bug check): Hoist shared pause-exit state updates out of the switch cases:
     svcGamePauseEnd(choice);
-    D_801184B0 = 0;
-    D_801184AF = 0;
+    gRacePauseRequested = 0;
+    gRacePauseReleased = 0;
     v = svcTimeGetMillis();
-    D_800F36DC = v;
-    D_800F36D8 = v;
+    gRaceSimTime = v;
+    gRaceLastTime = v;
     switch (choice) { ... }
     */
-void func_8008CDFC(void) {
+void Race_PauseUpdate(void) {
     s32 v;
 
     switch (svcGamePauseUpdate()) {
         case 1:
             svcGamePauseEnd(1);
-            func_8008E80C();
-            D_801184B0 = 0;
-            D_801184AF = 0;
+            RaceAudio_Resume();
+            gRacePauseRequested = 0;
+            gRacePauseReleased = 0;
             v = svcTimeGetMillis();
-            D_800F36DC = v;
-            D_800F36D8 = v;
+            gRaceSimTime = v;
+            gRaceLastTime = v;
             gGameState = 0;
             break;
         case 2:
             svcGamePauseEnd(2);
-            D_801184B0 = 0;
-            D_801184AF = 0;
+            gRacePauseRequested = 0;
+            gRacePauseReleased = 0;
             v = svcTimeGetMillis();
-            D_800F36DC = v;
-            D_800F36D8 = v;
+            gRaceSimTime = v;
+            gRaceLastTime = v;
             gGameState = 2;
-            D_800F36F0 = 2;
+            gRaceOutcome = 2;
             break;
         case 3:
             svcGamePauseEnd(3);
-            D_801184B0 = 0;
-            D_801184AF = 0;
+            gRacePauseRequested = 0;
+            gRacePauseReleased = 0;
             v = svcTimeGetMillis();
-            D_800F36DC = v;
-            D_800F36D8 = v;
-            if (D_800F36F4 == 0) {
+            gRaceSimTime = v;
+            gRaceLastTime = v;
+            if (gRacePhase == 0) {
                 gGameState = 2;
             } else {
                 gGameState = 0;
-                D_800F36F4 = 2;
-                D_801417B8(3);
-                D_801184AB = 1;
+                gRacePhase = 2;
+                svcRacePhaseChanged(3);
+                gRaceShowResults = 1;
             }
-            D_800F36F0 = 3;
+            gRaceOutcome = 3;
             break;
     }
 }
 
     /* TODO (Clean version / Bug check): Define named timeout constant and simplify boolean return:
     #define RACE_TIMEOUT_MS 1799999 // 0x1B773F (~30 minutes)
-    if (func_800A76D8() > RACE_TIMEOUT_MS) {
+    if (RaceClock_Get() > RACE_TIMEOUT_MS) {
         return 1;
     }
-    if (D_800F36E8 != 0) {
-        return func_800A76D8() >= D_800F36EC;
+    if (gRaceHasTimeLimit != 0) {
+        return RaceClock_Get() >= gRaceTimeLimit;
     }
     */
-u8 func_8008CF90(void) {
+u8 Race_IsFinished(void) {
     u8 ok = 1;
     u8 i;
 
-    if (func_800A76D8() > 0x1B773F) {
+    if (RaceClock_Get() > 0x1B773F) {
         return 1;
     }
-    if (D_800F36E8 != 0) {
-        ok = !(func_800A76D8() < D_800F36EC);
+    if (gRaceHasTimeLimit != 0) {
+        ok = !(RaceClock_Get() < gRaceTimeLimit);
     } else {
-        for (i = 0; i < D_800F36E4; i++) {
-            u8 v = func_800A7C34(i);
+        for (i = 0; i < gHumanCount; i++) {
+            u8 v = Car_CheckFinished(i);
 
             if (v == 0) {
                 ok = 0;
             }
-            D_80118498[i] = v;
+            gHumanFinished[i] = v;
         }
     }
     return ok;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", func_8008D060);
+INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", Race_ReadPlayerControls);
 
-s32 func_8008D3AC(void) {
-    return D_800F36F4;
+s32 Race_GetPhase(void) {
+    return gRacePhase;
 }
 
-void func_8008D3B8(u8 *arg0) {
-    D_801184B4 = arg0[0x18] + 6;
-    D_801184B8 = 0;
+void Race_LoadProgressInit(u8 *arg0) {
+    gRaceLoadSteps = arg0[0x18] + 6;
+    gRaceLoadStep = 0;
 }
 
     /* TODO (Clean version / Bug check): Express percentage calculation with named macro:
     #define CALC_PROGRESS_PCT(curr, total) (((curr) * 100) / ((total) - 1))
-    D_801416A0(CALC_PROGRESS_PCT(D_801184B8, D_801184B4));
+    svcLoadingProgress(CALC_PROGRESS_PCT(gRaceLoadStep, gRaceLoadSteps));
     */
-void func_8008D3D4(void) {
-    D_801416A0((s32) (D_801184B8 * 0x64) / (s32) (D_801184B4 - 1));
-    D_801184B8 += 1;
+void Race_LoadProgressStep(void) {
+    svcLoadingProgress((s32) (gRaceLoadStep * 0x64) / (s32) (gRaceLoadSteps - 1));
+    gRaceLoadStep += 1;
 }
 
     /* TODO (Clean version / Bug check): Simplify range switch cases 0..6 to a bounds check:
@@ -756,7 +756,7 @@ s32 Jukebox_GetTitle(u32 i) {
     return D_80141448;
 }
 
-s32 func_8008D4B8(u32 i) {
+s32 Music_GetSongTrack(u32 i) {
     i &= 0xFF;
     if (i < 12) {
         return D_800F3740[i];
@@ -771,7 +771,7 @@ s32 func_8008D4B8(u32 i) {
     D_801184C8[D_801184C2].b0 = i;
     D_801184C2++;
     */
-s32 func_8008D4E4(u8 *t) {
+s32 RaceAudio_Init(u8 *t) {
     u8 n;
     u8 i;
 
@@ -792,13 +792,13 @@ s32 func_8008D4E4(u8 *t) {
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", func_8008D5EC);
+INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", RaceAudio_Load);
 
-INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", func_8008D848);
+INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", RaceAudio_Unload);
 
-INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", func_8008D9A0);
+INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", RaceAudio_Update);
 
-INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", func_8008DF18);
+INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", RaceAudio_OnContact);
 
     /* TODO (Clean version / Bug check): Replace raw byte offset dereferencing with proper Vector3 and Entity structs:
     typedef struct {
@@ -811,7 +811,7 @@ INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", func_8008DF18);
     f32 dist = sqrtf(diff.x * diff.x + diff.y * diff.y + diff.z * diff.z);
     audCarSndPlayOneShot(*s, (dist < 352.0f) ? 2 : (dist < 880.0f) ? 3 : 4, dist / (dist < 352.0f ? 352.0f : dist < 880.0f ? 880.0f : 2304.0f));
     */
-void func_8008E0BC(u8 **pair) {
+void RaceAudio_OnCollision(u8 **pair) {
     u8 *s;
     u8 *t;
     f32 d;
@@ -851,12 +851,12 @@ void func_8008E0BC(u8 **pair) {
     }
 }
 
-void func_8008E2B0(void) {
+void RaceSfx_Init(void) {
     u32 i;
 
-    memset(D_80118538, 0, 16);
+    memset(gRaceSfx, 0, 16);
     for (i = 0; i < 2; i++) {
-        D_80118538[i].id = audSndSrcCreate();
+        gRaceSfx[i].id = audSndSrcCreate();
     }
 }
 
@@ -864,22 +864,22 @@ void func_8008E2B0(void) {
     audSndSrcStop(e->id);
     audSndSrcDestroy(e->id); // fp[-2] accesses the pointer at (audSndSrcStop - 2 * sizeof(void*)). Group these into an audio driver vtable.
     */
-void func_8008E310(void) {
+void RaceSfx_Shutdown(void) {
     u32 i;
     Ent8b_ *e;
     void (**fp)(s32);
 
-    for (i = 0, fp = &audSndSrcStop, e = ((Ent8b_ *)&D_80118538); i < 2; i++, e++) {
+    for (i = 0, fp = &audSndSrcStop, e = ((Ent8b_ *)&gRaceSfx); i < 2; i++, e++) {
         fp[0](e->id);
         fp[-2](e->id);
     }
-    memset(((Ent8b_ *)&D_80118538), 0, 16);
+    memset(((Ent8b_ *)&gRaceSfx), 0, 16);
 }
 
 extern void (*audSndSrcSetPosition)(u8, Vec3f);
 extern void (*audSndSrcSetVolume)(u8, f32);
 /* Plays a sound on the free channel used least recently; returns the channel or 0xFF. */
-u8 func_8008E38C(Vec3f pos, u8 bank, u8 vol, u8 loop) {
+u8 RaceSfx_Play(Vec3f pos, u8 bank, u8 vol, u8 loop) {
     u32 now;
     u32 best;
     u32 i;
@@ -890,9 +890,9 @@ u8 func_8008E38C(Vec3f pos, u8 bank, u8 vol, u8 loop) {
         return 0xFF;
     }
     slot = 10000;
-    now = func_800A76D8();
+    now = RaceClock_Get();
     best = now;
-    for (i = 0, e = D_80118538; i < 2; i++, e++) {
+    for (i = 0, e = gRaceSfx; i < 2; i++, e++) {
         if (e->b == 0 && (u32)e->c < best) {
             best = e->c;
             slot = i;
@@ -901,7 +901,7 @@ u8 func_8008E38C(Vec3f pos, u8 bank, u8 vol, u8 loop) {
     if (best == now || slot == 1000) {
         return 0xFF;
     }
-    e = &D_80118538[slot];
+    e = &gRaceSfx[slot];
     audSndSrcStop(e->id);
     audSndSrcSetPosition(e->id, pos);
     audSndSrcSetVolume(e->id, vol / 255.0f);
@@ -913,8 +913,8 @@ u8 func_8008E38C(Vec3f pos, u8 bank, u8 vol, u8 loop) {
     return slot;
 }
 
-void func_8008E510(u8 i) {
-    Ent8_ *e = &D_80118538[i];
+void RaceSfx_Stop(u8 i) {
+    Ent8_ *e = &gRaceSfx[i];
 
     audSndSrcStop(e->id);
     e->b = 0;
@@ -922,10 +922,10 @@ void func_8008E510(u8 i) {
 }
 
 
-void func_8008E558(s32 a, Vec3f b) {
+void RaceSfx_SetPosition(s32 a, Vec3f b) {
 }
 
-void func_8008E568(s32 arg0) {
+void RaceAudio_QueueAnnouncer(s32 arg0) {
     if ((arg0 == 3) || ((D_80118530 != 0) && ((u32) D_80118534 >= 0x3E9U))) {
         D_80118530 = 0;
         D_8011852C = arg0;
@@ -933,13 +933,13 @@ void func_8008E568(s32 arg0) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", func_8008E5B8);
+INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", RaceAudio_Silence);
 
     /* TODO (Clean version / Bug check): Remove convoluted pointer cast '(*(E10g_ * *)&D_800F3704)[i].id':
     Both E10_ and E10g_ have the id byte at offset 0. Use direct member access:
     audSndSrcStop(D_800F3704[i].b0);
     */
-void func_8008E700(void) {
+void RaceAudio_Pause(void) {
     u8 i;
     void (**fp)(u8);
 
@@ -962,7 +962,7 @@ void func_8008E700(void) {
     audMusicStop();
 }
 
-void func_8008E80C(void) {
+void RaceAudio_Resume(void) {
     u8 i;
 
     for (i = 0; i < D_801184C1; i++) {

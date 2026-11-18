@@ -26,7 +26,7 @@ extern void (*audSfxPlay)(s32, s32, f32, f32);
 u8 func_800977AC(u8 *);
 void func_800949E4(u8 *);
 void func_80092534(u8 *);
-u32 func_800A76D8(void);
+u32 RaceClock_Get(void);
 void func_800AEFF8(void);
 void func_80095804(u8 *);
 void func_80091E30(Car *, f32);
@@ -37,9 +37,9 @@ B88_ *func_8008637C(u8 *);
 void func_800ACDC8(void *, f32);
 void func_8007A9E0(void *);
 extern void (*D_8014556C)(s32);
-extern s32 (*D_80145570)(s32, s32);
+extern s32 (*sysInputGetControl)(s32, s32);
 extern void (*D_8014558C)(s32, s32, s32);
-s32 func_8008D3AC(void);
+s32 Race_GetPhase(void);
 void Car_GetSpeedAndGrip(u8, u8 *, u8 *);
 extern u8 D_800F38A0[];
 extern s32 (*svcTimeGetMillis)();
@@ -50,7 +50,7 @@ extern s32 D_8011B318;
 
 INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_80091210);
 
-void func_8008E568(s32);
+void RaceAudio_QueueAnnouncer(s32);
 
 /* Adds to the car's counter at 0x6CC, capped at 10; returns how much was added. */
 u8 func_80091B20(Car *c, s32 add) {
@@ -64,7 +64,7 @@ u8 func_80091B20(Car *c, s32 add) {
     }
     /* TODO(match-debt): n6CC == 10 && unk6CD == 0 is read as one word. */
     if ((*(u32 *)&c->n6CC & 0xFFFF0000) == 0x0A000000) {
-        func_8008E568(3);
+        RaceAudio_QueueAnnouncer(3);
         c->unk6CD = 1;
     }
     return added;
@@ -197,9 +197,9 @@ void func_80091E30(Car *p, f32 dt) {
             if (pts != 0) {
                 if ((p->flags & 1) && (pts > 1000 || svcRandRange(8) == 0)) {
                     if (svcRandRange(2) != 0) {
-                        func_8008E568(1);
+                        RaceAudio_QueueAnnouncer(1);
                     } else {
-                        func_8008E568(2);
+                        RaceAudio_QueueAnnouncer(2);
                     }
                 }
                 if (D_8011B31C == 0) {
@@ -216,7 +216,7 @@ void func_80091E30(Car *p, f32 dt) {
                     p->n6CC = 10;
                 }
                 if ((*(u32 *)((u8 *)p + 0x6CC) & 0xFFFF0000) == 0x0A000000) {
-                    func_8008E568(3);
+                    RaceAudio_QueueAnnouncer(3);
                     p->unk6CD = 1;
                 }
                 z = c;
@@ -303,7 +303,7 @@ void func_80093164(Car *p, f32 dt) {
     }
     f = 0;
     if ((p->flags & 1) && p->timerFlag != 0 && p->unk4A0 > 500 && p->vel.z > 0.0f) {
-        f = func_800A76D8() - p->unk770 > 500;
+        f = RaceClock_Get() - p->unk770 > 500;
     }
     func_800ACDC8((u8 *)&p->m2C, dt);
     if (f && p->vel.z < 0.0f && svcRandRange(2) == 0) {
@@ -334,7 +334,7 @@ void func_80093164(Car *p, f32 dt) {
     } else {
         p->flags2 &= ~4;
     }
-    if (p->unk014 > 0.5f && (p->yaw < 0.0f ? -p->yaw : p->yaw) > 0.5f && p->cnt3E7 == p->nPoints && p->fBC < 88.0f && func_800A76D8() - p->unk770 < 100) {
+    if (p->unk014 > 0.5f && (p->yaw < 0.0f ? -p->yaw : p->yaw) > 0.5f && p->cnt3E7 == p->nPoints && p->fBC < 88.0f && RaceClock_Get() - p->unk770 < 100) {
         p->unk76C += 10;
     } else {
         p->unk76C = 0;
@@ -513,7 +513,7 @@ void Car_GetState(u8 id, Vec3f *pos, Mtx3f *rot, Vec3f *vel, u32 *flags, u8 *out
     rot->m[2][2] = c->rot.m[2][2];
     *vel = c->vel;
     *flags = c->flags;
-    *out = func_8008D3AC() ? c->b13C : 1;
+    *out = Race_GetPhase() ? c->b13C : 1;
 }
 
 INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_80095D5C);
@@ -946,7 +946,7 @@ s32 func_80098BF4(void) {
     for (i = 0; i < 2; i++) {
         e = Car_Get(i);
         if (e != NULL && (((s32 *) e)[1] & 1)) {
-            if (func_8008D3AC() == 1) {
+            if (Race_GetPhase() == 1) {
                 Car_GetSpeedAndGrip(i, &a, &b);
                 D_8014558C(i, a, b);
             }
@@ -957,14 +957,14 @@ s32 func_80098BF4(void) {
     (*p)(0);
     (*p)(1);
     if (n == 2) {
-        if ((u8) D_80145570(0, 0xD)) {
+        if ((u8) sysInputGetControl(0, 0xD)) {
             return 1;
         }
-        if ((u8) D_80145570(1, 0xD)) {
+        if ((u8) sysInputGetControl(1, 0xD)) {
             return 2;
         }
     } else if (n == 1) {
-        if ((u8) D_80145570(0, 0xD)) {
+        if ((u8) sysInputGetControl(0, 0xD)) {
             return 1;
         }
     }

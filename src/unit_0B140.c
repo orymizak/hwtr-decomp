@@ -15,8 +15,8 @@ typedef struct { s32 mode; s32 k[15]; u8 pad[0x54 - 0x40]; } Bind6C_;
 s32 func_8006BA98();
 s32 func_8006C274();
 extern void *sysInputIsKeyHeld;
-extern void *D_80145598;
-extern void *D_8014559C;
+extern void *sysInputRumbleStopAll;
+extern void *sysInputRumbleResume;
 extern void *D_801455A8;
 extern void *D_801455AC;
 extern s32 D_800F03E8;
@@ -44,9 +44,9 @@ extern void nuContDataGetAll(Pad_ *);
 extern u8 D_800F0403;
 extern s32 D_800F0390[];
 extern u8 D_800F03EB;
-extern void *D_80145568;
+extern void *sysInputIsKeyHeldAny;
 extern void *D_8014556C;
-extern void *D_80145570;
+extern void *sysInputGetControl;
 extern void *D_80145574;
 extern void *D_80145578;
 extern void *D_8014557C;
@@ -154,8 +154,8 @@ void func_8006B1AC(void) {
 INCLUDE_ASM("asm/nonmatchings/unit_0B140", func_8006B2A0);
 
 s32 Input_IsKeyHeld(u8 ch, s32 key);
-s32 func_8006B894(s32 key);
-u8 func_8006BD78(u8 a, s32 b);
+s32 Input_IsKeyHeldAny(s32 key);
+u8 Input_GetControl(u8 a, s32 b);
 s32 func_8006BDA8(u8 ch, s32 slot);
 s32 func_8006BE34(u8 ch, s32 slot);
 u8 func_8006C0A0(void);
@@ -167,13 +167,13 @@ s32 func_8006C334(void);
 s32 Input_IsPad1Connected(void);
 s32 func_8006C34C(u8 *buf, u8 id);
 s32 func_8006C3D4(u8 *out, u8 ch);
-s32 func_8006C468(void);
-s32 func_8006C488(void);
+s32 Input_RumbleStopAll(void);
+s32 Input_RumbleResume(void);
 s32 Input_InitTable(void) {
-    D_80145568 = func_8006B894;
+    sysInputIsKeyHeldAny = Input_IsKeyHeldAny;
     sysInputIsKeyHeld = Input_IsKeyHeld;
     D_8014556C = func_8006BA98;
-    D_80145570 = func_8006BD78;
+    sysInputGetControl = Input_GetControl;
     D_801455A4 = Input_IsPad1Connected;
     D_80145574 = func_8006BDA8;
     D_80145578 = func_8006BE34;
@@ -182,8 +182,8 @@ s32 Input_InitTable(void) {
     D_80145584 = func_8006C0C4;
     D_80145588 = func_8006C0EC;
     D_801455B0 = func_8006C218;
-    D_80145598 = func_8006C468;
-    D_8014559C = func_8006C488;
+    sysInputRumbleStopAll = Input_RumbleStopAll;
+    sysInputRumbleResume = Input_RumbleResume;
     D_8014558C = func_8006C23C;
     D_80145590 = func_8006C274;
     D_80145594 = func_8006C334;
@@ -196,9 +196,9 @@ s32 Input_InitTable(void) {
     D_80145584 y D_80145588 se asignan a 0 dos veces mientras que las variables void* no se limpian. (Original behavior.)
     */
 s32 Input_ClearTable(void) {
-    D_80145568 = NULL;
+    sysInputIsKeyHeldAny = NULL;
     D_8014556C = NULL;
-    D_80145570 = NULL;
+    sysInputGetControl = NULL;
     D_801455A4 = NULL;
     D_80145574 = NULL;
     D_80145578 = NULL;
@@ -295,7 +295,7 @@ void func_8006B838(void) {
     }
 }
 
-s32 func_8006B894(s32 key) {
+s32 Input_IsKeyHeldAny(s32 key) {
     Pad_ pad[4];
     u16 mask;
 
@@ -366,7 +366,7 @@ s32 func_8006B894(s32 key) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_0B140", func_8006BA98);
 
-u8 func_8006BD78(u8 a, s32 b) {
+u8 Input_GetControl(u8 a, s32 b) {
     return D_800F043C[a].c[b];
 }
 
@@ -533,12 +533,12 @@ s32 func_8006C3D4(u8 *out, u8 ch) {
     return 1;
 }
 
-s32 func_8006C468(void) {
+s32 Input_RumbleStopAll(void) {
     nuContRmbForceStop();
     return 1;
 }
 
-s32 func_8006C488(void) {
+s32 Input_RumbleResume(void) {
     nuContRmbForceStopEnd();
     memset(D_800F0548, 0, 2);
     return 1;

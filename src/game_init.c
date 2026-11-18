@@ -25,7 +25,7 @@ void func_80060C30(void);
 void Audio_Init(void);
 void World_Init(void);
 void func_8006B2A0(void);
-void func_8006C468(void);
+void Input_RumbleStopAll(void);
 void func_8006DA88(void);
 void func_8006DC90(void);
 void Font_Init(void);
@@ -112,6 +112,6 @@ void func_80078BA4(s32 arg0) {
 }
 
 void func_80078BD0(void) {
-    func_8006C468();
+    Input_RumbleStopAll();
     nuGfxDisplayOff();
 }

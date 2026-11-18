@@ -28,7 +28,7 @@ s32 func_80089FC4(u8 *);
 extern Evt18_ *D_800F3020;
 extern u32 D_800F3024;
 extern void (*svcTrackSetEntityVisible)(u8, s32, f32);
-s32 func_800A76D8(void);
+s32 RaceClock_Get(void);
 extern Lnk89_ **D_80118470[];
 void func_800A82F8(Lnk89_ **, s32 *);
 void Memory_Free(void *);
@@ -267,7 +267,7 @@ s32 func_8008AA9C(u8 *o, u8 *q) {
 
     if (n == 0) {
         nt = Memory_Alloc(0xC);
-        nt->t = func_800A76D8();
+        nt->t = RaceClock_Get();
         nt->def = d;
         nt->hold = d[0xAC];
         nt->pad8 = *(s32 *) (d + 0x30);
@@ -298,7 +298,7 @@ s32 func_8008AA9C(u8 *o, u8 *q) {
             audSfxPlay(0x18, 0, 1.0f, 1.0f);
         }
     }
-    *(s32 *) (q + 0xC) = func_800A76D8();
+    *(s32 *) (q + 0xC) = RaceClock_Get();
     q[0x10] = 0;
     return 1;
 }
@@ -312,7 +312,7 @@ void func_8008AD04(void) {
     Tmr89_ *t;
     Car *p;
 
-    now = func_800A76D8();
+    now = RaceClock_Get();
     for (i = 0; i < 6; i++) {
         p = Car_Get(i);
         l = *D_80118470[i];
@@ -322,7 +322,7 @@ void func_8008AD04(void) {
             next = l->next;
             n++;
             if (t->hold == 1) {
-                t->t = func_800A76D8();
+                t->t = RaceClock_Get();
             } else if ((u32) (now - t->t) > (u32) (*(s32 *) (t->def + 0x2C) * 1000)) {
                 func_80088558(t->def, p);
                 func_800A82F8(D_80118470[i], (s32 *) t);

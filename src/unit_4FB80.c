@@ -1,7 +1,7 @@
 #include "common.h"
 #include "include_asm.h"
 extern s32 D_801206B0;
-s32 func_800A76D8(void);
+s32 RaceClock_Get(void);
 s32 func_80098300(u8 *, s32);
 s32 func_800AF8EC(u8 *, s32);
 s32 func_80087FF4(u8 *, s32);
@@ -55,7 +55,7 @@ void func_800AEFF8(void) {
     */
     s32 hdr = 0x18;
 
-    if (D_8011F6A0 != 0 && (u32)(func_800A76D8() - D_801206B0) < 1000) {
+    if (D_8011F6A0 != 0 && (u32)(RaceClock_Get() - D_801206B0) < 1000) {
         return;
     }
     room = 0x1000 - D_8011F6A4;
@@ -95,7 +95,7 @@ void func_800AEFF8(void) {
     ((s32 *)h)[5] = (q - hdr) - h;
     D_8011F6A0++;
     D_8011F6A4 += 0x18 + ((s32 *)h)[5];
-    D_801206B0 = func_800A76D8();
+    D_801206B0 = RaceClock_Get();
 }
 
 s32 func_800AF174(void) {

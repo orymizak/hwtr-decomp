@@ -18,8 +18,8 @@ extern s32 (*sysFileLoad)(char *, void *);
 extern u8 D_80138D38[];
 void func_80087F7C(u16, u16, s32);
 void func_80087EA4(u16, V12_ *);
-u8 func_8008E38C(V12_, u8, u8, s32);
-s32 func_8008E510(u8);
+u8 RaceSfx_Play(V12_, u8, u8, s32);
+s32 RaceSfx_Stop(u8);
 
 s32 Memory_Alloc(s32);
 s32 func_800C9280();
@@ -121,17 +121,17 @@ void func_800C9B84(s32 i) {
         func_80087F7C(e->a, e->c, i);
         func_80087EA4(e->a, &v);
         if (e->flags & 0x28) {
-            func_8008E38C(v, e->d8, e->dA, 0);
+            RaceSfx_Play(v, e->d8, e->dA, 0);
         } else if (e->flags & 0x10) {
-            s[0] = func_8008E38C(v, e->d8, e->dA, 1);
+            s[0] = RaceSfx_Play(v, e->d8, e->dA, 1);
         }
         if (e->flags & 4) {
             func_80087F7C(e->b, e->c, i);
             func_80087EA4(e->b, &v);
             if (e->flags & 0x28) {
-                func_8008E38C(v, e->d9, e->dB, 0);
+                RaceSfx_Play(v, e->d9, e->dB, 0);
             } else if (e->flags & 0x10) {
-                s[1] = func_8008E38C(v, e->d9, e->dB, 1);
+                s[1] = RaceSfx_Play(v, e->d9, e->dB, 1);
             }
         }
     }
@@ -144,18 +144,18 @@ void func_800C9D00(s32 i) {
     if (e->flags & 2) {
         if (e->flags & 0x10) {
             if (s[0] != 0xFF) {
-                func_8008E510(s[0]);
+                RaceSfx_Stop(s[0]);
             }
             if (e->flags & 4) {
                 if (s[1] != 0xFF) {
-                    func_8008E510(s[1]);
+                    RaceSfx_Stop(s[1]);
                 }
             }
         }
     }
 }
 
-void func_8008E558(u8, V12_);
+void RaceSfx_SetPosition(u8, V12_);
 
 void func_800C9DA0(s32 i) {
     V12_ v;
@@ -166,11 +166,11 @@ void func_800C9DA0(s32 i) {
         if (e->flags & 0x10) {
             if (s[0] != 0xFF) {
                 func_80087EA4(e->a, &v);
-                func_8008E558(s[0], v);
+                RaceSfx_SetPosition(s[0], v);
             }
             if ((e->flags & 4) && s[1] != 0xFF) {
                 func_80087EA4(e->b, &v);
-                func_8008E558(s[1], v);
+                RaceSfx_SetPosition(s[1], v);
             }
         }
     }

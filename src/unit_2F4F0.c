@@ -40,7 +40,7 @@ typedef struct { u8 p0[4]; Vec3f_ pos; Vec3f_ vel; f32 m[3][3]; f32 fov; s32 mod
 typedef struct { s32 mode; Vec3f_ ofs; f32 dist; } CamT_;
 extern u8 D_80118550;
 extern u8 D_80138D43;
-s32 func_8008D3AC(void);
+s32 Race_GetPhase(void);
 void func_8009099C(CamE_ *);
 void func_8009013C(Vec3f_, Vec3f_, Vec3f_, Vec3f_ *, f32, f32, f32, f32);
 void func_800A4198(u8, Vec3f_ *);
@@ -128,7 +128,7 @@ void func_8008EA6C(u32 dt) {
         m[2][2] = car->rot.m[2][2];
         vel = car->vel;
         flags = car->flags;
-        if (func_8008D3AC() != 0) {
+        if (Race_GetPhase() != 0) {
             vis = car->b13C;
         }
         b3E7 = car->cnt3E7;

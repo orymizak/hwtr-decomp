@@ -16,7 +16,7 @@ extern char D_800FFAC0[];
 extern KernFont_ D_800F2800[];
 extern s32 D_800F2808;
 extern u8 sysBootCheck;
-extern u8 D_80145568;
+extern u8 sysInputIsKeyHeldAny;
 extern u8 audSfxPlay;
 extern u8 svcTimeGetMillis;
 u8 Sys_InitTable(void);
@@ -206,7 +206,7 @@ s32 func_800875A0(void) {
     if (Sys_InitTable() == 0) {
         return 0;
     }
-    func_800876D4((void **)&D_80145568, 0x4C);
+    func_800876D4((void **)&sysInputIsKeyHeldAny, 0x4C);
     if (Input_InitTable() != 0) {
         func_800876D4((void **)&audSfxPlay, 0xAC);
         if (Audio_InstallApi() != 0) {

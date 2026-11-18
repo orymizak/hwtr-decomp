@@ -81,7 +81,7 @@ s32 func_80087AD4(void) {
 }
 
 extern u32 D_800F3018;
-u32 func_800A76D8(void);
+u32 RaceClock_Get(void);
 u32 func_800A76E4(void);
 void func_80087C28(s32 index);
 void func_800C9D00(s32);
@@ -95,7 +95,7 @@ void func_80087B08(void) {
     AnimTrack *t;
 
     if (D_800F3014 != NULL) {
-        now = func_800A76D8();
+        now = RaceClock_Get();
         now += func_800A76E4();
         prev = D_800F3018;
         D_800F3018 = now;

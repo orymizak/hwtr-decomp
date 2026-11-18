@@ -7,7 +7,7 @@ void *Memory_Alloc(s32);
 extern void *gWaveTblBuffer;
 extern u8 D_80138AB0;
 void func_8006B838(void);
-u8 func_8008BE7C(s32);
+u8 Race_Shutdown(s32);
 void Particles_FreeAll(void);
 void func_80078980(s32);
 typedef struct Node64_ { u8 pad[0xC]; f32 v; u8 pad2[4]; struct Node64_ *next; u8 pad3[2]; u8 id; } Node64_;
@@ -151,16 +151,16 @@ extern void *svcGamePauseBegin;
 extern void *svcGamePauseEnd;
 extern void *svcGamePauseUpdate;
 extern void *svcDraw2DBeginPrim;
-extern void *D_801417A8;
-extern void *D_801417AC;
-extern void *D_801417B0;
-extern void *D_801417B4;
+extern void *svcRacePreLoad;
+extern void *svcRacePostLoad;
+extern void *svcRacePreUnload;
+extern void *svcRacePostUnload;
 
 s32 func_8007F514();
 s32 Game_RunState();
-s32 func_8006C468();
+s32 Input_RumbleStopAll();
 s32 Pause_Init();
-s32 func_8006C488();
+s32 Input_RumbleResume();
 s32 Pause_End(s32);
 s32 Pause_Update();
 s32 Font_DrawChar(s32, s32, s32, s32, s32);
@@ -262,7 +262,7 @@ extern void *svcFileLoad;
 void File_Load();
 void Draw2D_BeginPrim();
 
-/* Fills the service table at svcTimeGetMillis..D_801417B4 (font, file, timer and game callbacks);
+/* Fills the service table at svcTimeGetMillis..svcRacePostUnload (font, file, timer and game callbacks);
  * Svc_Uninstall clears it again. */
 s32 Svc_Install(void) {
     svcTrackLoad = &Track_Load;
@@ -320,10 +320,10 @@ s32 Svc_Install(void) {
     svcTrackGetEntity = &Track_GetEntity;
     svcTrackGetEntityCount = &Track_GetEntityCount;
     svcTrackSetEntityVisible = &Track_SetEntityVisible;
-    D_801417A8 = &func_80060990;
-    D_801417AC = &func_80060998;
-    D_801417B0 = &func_800609A0;
-    D_801417B4 = &func_800609A8;
+    svcRacePreLoad = &func_80060990;
+    svcRacePostLoad = &func_80060998;
+    svcRacePreUnload = &func_800609A0;
+    svcRacePostUnload = &func_800609A8;
     svcFileGetSize = &File_GetSize;
     svcFileLoad = &File_Load;
     svcDraw2DBeginPrim = &Draw2D_BeginPrim;
@@ -359,10 +359,10 @@ s32 Svc_Uninstall(void) {
     D_801416CC = 0;
     svcTimeGetMillis = 0;
     svcRandRange = 0;
-    D_801417A8 = 0;
-    D_801417AC = 0;
-    D_801417B0 = 0;
-    D_801417B4 = 0;
+    svcRacePreLoad = 0;
+    svcRacePostLoad = 0;
+    svcRacePreUnload = 0;
+    svcRacePostUnload = 0;
     svcFxCarScrape = 0;
     svcGamePauseBegin = 0;
     svcGamePauseEnd = 0;
@@ -438,13 +438,13 @@ u8 Game_EndRace(s32 a) {
     u8 *p = &D_80138AB0;
     u8 r;
 
-    func_8006C468();
+    Input_RumbleStopAll();
     Music_Stop();
     if (*p != 0) {
         func_8006B838();
     }
     *p = 0;
-    r = func_8008BE7C(a);
+    r = Race_Shutdown(a);
     Particles_FreeAll();
     func_80078980(0);
     return r;
@@ -456,13 +456,13 @@ s32 Game_Update(void) {
 }
 
 void Game_PauseBegin(void) {
-    func_8006C468();
+    Input_RumbleStopAll();
     Audio_FadeOutAll();
     Pause_Init();
 }
 
 void Game_PauseEnd(s32 arg0) {
-    func_8006C488();
+    Input_RumbleResume();
     Pause_End(arg0);
 }
 
