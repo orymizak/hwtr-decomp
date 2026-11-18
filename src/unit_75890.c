@@ -1,26 +1,18 @@
 #include "common.h"
+#include "n_audio.h"
 #include "include_asm.h"
-typedef struct ALParamD_ { struct ALParamD_ *next; s32 delta; s16 type; union { f32 f; s32 i; } data; } ALParamD_;
-typedef struct { u8 p0[0x88]; s32 unk88; } SndD_;
-typedef struct { u8 p0[8]; SndD_ *unk8; } ObjD_;
-typedef struct { u8 p0[0x1C]; s32 unk1C; } DrvE_;
-extern DrvE_ *D_800FB174;
-ALParamD_ *func_800D52B8(void);
-void func_800D3158(SndD_ *s, s32 a, ALParamD_ *p);
 
+void func_800D4C90(N_ALVoice *v, f32 pitch) {
+    ALParam *update;
 
-
-void func_800D4C90(ObjD_ *o, f32 val) {
-    ALParamD_ *p;
-
-    if (o->unk8 != 0) {
-        p = func_800D52B8();
-        if (p != 0) {
-            p->delta = D_800FB174->unk1C + o->unk8->unk88;
-            p->type = 7;
-            p->data.f = val;
-            p->next = 0;
-            func_800D3158(o->unk8, 3, p);
+    if (v->pvoice != NULL) {
+        update = (ALParam *)func_800D52B8();
+        if (update != NULL) {
+            update->delta = D_800FB174->paramSamples + v->pvoice->offset;
+            update->type = AL_FILTER_SET_PITCH;
+            update->data.f = pitch;
+            update->next = NULL;
+            func_800D3158(v->pvoice, AL_FILTER_ADD_UPDATE, update);
         }
     }
 }
