@@ -13,13 +13,13 @@ typedef struct { u32 pad0 : 30; u32 b1 : 1; u32 b0 : 1; u8 pad[0x14]; } Slot18_;
 typedef struct { u8 pad[0x30]; s32 flags; u8 pad2[0x20]; } Item54_;
 typedef struct { u16 count; u8 pad[0x2A]; Item54_ *items; } ItemList_;
 typedef struct { union { u32 flags; struct { u32 pad:30; u32 b1:1; u32 b0:1; } b; } u; f32 f[4]; u8 r; u8 g; u8 b; u8 p17; } SlotM_;
-s32 func_80070BA4(void *);
-s32 func_800717C8(s32, s32, s32);
+s32 Mtx_New(void *);
+s32 Frustum_TestSphere(s32, s32, s32);
 void func_80072EE0(u8 *, void *, s32, s32, s32);
 void func_8007AFD4(s32, s32, void *);
 void func_80076D6C(s32, s32, s32, s32, s32, f32, f32);
-extern u16 D_800F20FA;
-extern u16 D_800F20FC;
+extern u16 gScreenWidth;
+extern u16 gScreenHeight;
 extern u8 D_800F2090;
 typedef struct { u8 pad[8]; u8 b8; u8 pad2[0xB]; s32 *p14; u8 pad3[0x18]; s32 w30; } Obj74_;
 typedef struct { u8 pad[0x30]; s32 flags; u8 pad2[8]; Obj74_ *p3C; u8 pad3[0x14]; } Item74_;
@@ -138,7 +138,7 @@ void func_80072BAC(Node72_ *n, s32 arg1, s32 arg2, s32 arg3) {
         zero = 0.0f;
         do {
             if (n->flags & 0x40) {
-                if ((func_800717C8(arg1, (s32) n, n->p38) & 0xFF) == 1) {
+                if ((Frustum_TestSphere(arg1, (s32) n, n->p38) & 0xFF) == 1) {
                     if (n->child != NULL) {
                         func_80072BAC(n->child, arg1, arg2, arg3);
                     }
@@ -174,7 +174,7 @@ void func_80072BAC(Node72_ *n, s32 arg1, s32 arg2, s32 arg3) {
                             m[5] = one;
                             m[0] = one;
                         }
-                        func_80072EE0((u8 *) n, m, func_80070BA4(m), arg2, arg3);
+                        func_80072EE0((u8 *) n, m, Mtx_New(m), arg2, arg3);
                     }
                 } else if (n->id != arg2) {
                     n->flags &= ~0x80;
@@ -196,7 +196,7 @@ void func_80072D5C(Node72_ *n) {
 s32 func_80072D6C(u8 *a0, s32 a1, s32 a2, s32 a3, s32 a4) {
     u8 buf[0x30];
 
-    if ((func_800717C8(a1, a2, *(s32 *)(a0 + 0x38)) & 0xFF) != 1) {
+    if ((Frustum_TestSphere(a1, a2, *(s32 *)(a0 + 0x38)) & 0xFF) != 1) {
         if (*(s32 *)(a0 + 0x34) != a3) {
             *(s32 *)(a0 + 0x30) &= ~0x80;
         }
@@ -204,7 +204,7 @@ s32 func_80072D6C(u8 *a0, s32 a1, s32 a2, s32 a3, s32 a4) {
     }
     if (*(s32 *)(a0 + 0x3C) != 0) {
         func_8007AFD4(a1, a2, buf);
-        func_80072EE0(a0, buf, func_80070BA4(buf), a3, a4);
+        func_80072EE0(a0, buf, Mtx_New(buf), a3, a4);
     }
     return 1;
 }
@@ -576,12 +576,12 @@ INCLUDE_ASM("asm/nonmatchings/unit_13490", func_80075ABC);
 
 void func_80076020(s32 w, s32 h) {
     GFX_RESERVE(6);
-    gSPSegment(D_8014EC78++, 0, 0);
-    gSPLoadGeometryMode(D_8014EC78++, 0);
-    gSPTexture(D_8014EC78++, 0, 0, 0, G_TX_RENDERTILE, G_OFF);
-    gDPPipeSync(D_8014EC78++);
-    gDPSetScissor(D_8014EC78++, G_SC_NON_INTERLACE, 0, 0, w - 1, h - 1);
-    gSPDisplayList(D_8014EC78++, D_800F1FA8);
+    gSPSegment(gDisplayListHead++, 0, 0);
+    gSPLoadGeometryMode(gDisplayListHead++, 0);
+    gSPTexture(gDisplayListHead++, 0, 0, 0, G_TX_RENDERTILE, G_OFF);
+    gDPPipeSync(gDisplayListHead++);
+    gDPSetScissor(gDisplayListHead++, G_SC_NON_INTERLACE, 0, 0, w - 1, h - 1);
+    gSPDisplayList(gDisplayListHead++, D_800F1FA8);
 }
 
 INCLUDE_ASM("asm/nonmatchings/unit_13490", func_800761D4);
@@ -636,13 +636,13 @@ void func_80076BB0(s8 arg0, s8 arg1, s8 arg2) {
 extern u8 D_800F2030[];
 void func_80076BCC(void) {
     GFX_RESERVE(3);
-    gSPDisplayList(D_8014EC78++, D_800F2030);
-    gDPPipeSync(D_8014EC78++);
-    gDPSetPrimColor(D_8014EC78++, 0, 0, (u8)D_800F1FA0, (u8)D_800F1FA1, (u8)D_800F1FA2, 0xFF);
+    gSPDisplayList(gDisplayListHead++, D_800F2030);
+    gDPPipeSync(gDisplayListHead++);
+    gDPSetPrimColor(gDisplayListHead++, 0, 0, (u8)D_800F1FA0, (u8)D_800F1FA1, (u8)D_800F1FA2, 0xFF);
 }
 
 void func_80076CF8(s32 a, s32 b, s32 c, s32 d, s32 e) {
-    if (d >= -a && e >= -b && a < D_800F20FA && b < D_800F20FC) {
+    if (d >= -a && e >= -b && a < gScreenWidth && b < gScreenHeight) {
         func_80076D6C(a, b, c, d, e, 1.0f, 1.0f);
     }
 }
@@ -671,10 +671,10 @@ void func_80076D6C(s32 px, s32 py, s32 timg, s32 w, s32 h, f32 sx, f32 sy) {
             if (h - y < th) {
                 th = h - y;
             }
-            gDPLoadTextureTile(D_8014EC78++, timg, G_IM_FMT_RGBA, G_IM_SIZ_16b, w, h, x, y, x + tw - 1, y + th - 1, 0,
+            gDPLoadTextureTile(gDisplayListHead++, timg, G_IM_FMT_RGBA, G_IM_SIZ_16b, w, h, x, y, x + tw - 1, y + th - 1, 0,
                                G_TX_WRAP | G_TX_NOMIRROR, G_TX_WRAP | G_TX_NOMIRROR, G_TX_NOMASK, G_TX_NOMASK,
                                G_TX_NOLOD, G_TX_NOLOD);
-            gSPTextureRectangle(D_8014EC78++, (px + (s32)(sx * x)) << 2, (py + (s32)(sy * y)) << 2,
+            gSPTextureRectangle(gDisplayListHead++, (px + (s32)(sx * x)) << 2, (py + (s32)(sy * y)) << 2,
                                 (px + (s32)(sx * x) + (s32)(sx * tw)) << 2, (py + (s32)(sy * y) + (s32)(sy * th)) << 2,
                                 G_TX_RENDERTILE, x << 5, y << 5, (u32)dsdx, (u32)dtdy);
         }
@@ -683,7 +683,7 @@ void func_80076D6C(s32 px, s32 py, s32 timg, s32 w, s32 h, f32 sx, f32 sy) {
 
 void func_80077228(void) {
     GFX_RESERVE(1);
-    gSPDisplayList(D_8014EC78++, &D_800F2060);
+    gSPDisplayList(gDisplayListHead++, &D_800F2060);
 }
 
 void func_800772F4(s32 px, s32 py, u32 timg, s32 w, s32 h, f32 sx, f32 sy) {
@@ -701,8 +701,8 @@ void func_800772F4(s32 px, s32 py, u32 timg, s32 w, s32 h, f32 sx, f32 sy) {
     dtdy = (1.0f / sy) * 1024.0f;
     n = ((w + 63) / tw) * ((h + 31) / th) * 10;
     GFX_RESERVE(n + 8);
-    gDPLoadTLUT_pal256(D_8014EC78++, timg);
-    gDPSetTextureLUT(D_8014EC78++, G_TT_RGBA16);
+    gDPLoadTLUT_pal256(gDisplayListHead++, timg);
+    gDPSetTextureLUT(gDisplayListHead++, G_TT_RGBA16);
     timg += 0x200;
     for (x = 0; x < w; x += tw) {
         if (w - x < tw) {
@@ -713,20 +713,20 @@ void func_800772F4(s32 px, s32 py, u32 timg, s32 w, s32 h, f32 sx, f32 sy) {
             if (h - y < th) {
                 th = h - y;
             }
-            gDPLoadTextureTile(D_8014EC78++, timg, G_IM_FMT_CI, G_IM_SIZ_8b, w, h, x, y, x + tw - 1, y + th - 1, 0,
+            gDPLoadTextureTile(gDisplayListHead++, timg, G_IM_FMT_CI, G_IM_SIZ_8b, w, h, x, y, x + tw - 1, y + th - 1, 0,
                                G_TX_WRAP | G_TX_NOMIRROR, G_TX_WRAP | G_TX_NOMIRROR, G_TX_NOMASK, G_TX_NOMASK,
                                G_TX_NOLOD, G_TX_NOLOD);
-            gSPTextureRectangle(D_8014EC78++, (px + (s32)(sx * x)) << 2, (py + (s32)(sy * y)) << 2,
+            gSPTextureRectangle(gDisplayListHead++, (px + (s32)(sx * x)) << 2, (py + (s32)(sy * y)) << 2,
                                 (px + (s32)(sx * x) + (s32)(sx * tw)) << 2, (py + (s32)(sy * y) + (s32)(sy * th)) << 2,
                                 G_TX_RENDERTILE, x << 5, y << 5, (u32)dsdx, (u32)dtdy);
         }
     }
-    gDPSetTextureLUT(D_8014EC78++, G_TT_NONE);
+    gDPSetTextureLUT(gDisplayListHead++, G_TT_NONE);
 }
 
 void func_800778A4(void) {
     GFX_RESERVE(1);
-    gSPDisplayList(D_8014EC78++, &D_800F2090);
+    gSPDisplayList(gDisplayListHead++, &D_800F2090);
 }
 
 void func_80077970(s32 px, s32 py, u32 timg, s32 w, s32 h, f32 sx, f32 sy) {
@@ -753,10 +753,10 @@ void func_80077970(s32 px, s32 py, u32 timg, s32 w, s32 h, f32 sx, f32 sy) {
             if (h - y < th) {
                 th = h - y;
             }
-            gDPLoadTextureTile_4b(D_8014EC78++, timg, G_IM_FMT_IA, w, h, x, y, x + tw - 1, y + th - 1, 0,
+            gDPLoadTextureTile_4b(gDisplayListHead++, timg, G_IM_FMT_IA, w, h, x, y, x + tw - 1, y + th - 1, 0,
                                   G_TX_WRAP | G_TX_NOMIRROR, G_TX_WRAP | G_TX_NOMIRROR, G_TX_NOMASK, G_TX_NOMASK,
                                   G_TX_NOLOD, G_TX_NOLOD);
-            gSPTextureRectangle(D_8014EC78++, (px + (s32)(sx * x)) << 2, (py + (s32)(sy * y)) << 2,
+            gSPTextureRectangle(gDisplayListHead++, (px + (s32)(sx * x)) << 2, (py + (s32)(sy * y)) << 2,
                                 (px + (s32)(sx * x) + (s32)(sx * tw)) << 2, (py + (s32)(sy * y) + (s32)(sy * th)) << 2,
                                 G_TX_RENDERTILE, x << 5, y << 5, (u32)dsdx, (u32)dtdy);
         }
@@ -766,7 +766,7 @@ void func_80077970(s32 px, s32 py, u32 timg, s32 w, s32 h, f32 sx, f32 sy) {
 extern u8 D_800F20C0[];
 void func_80077E5C(s32 r, s32 g, s32 b, s32 a) {
     GFX_RESERVE(3);
-    gDPPipeSync(D_8014EC78++);
-    gDPSetPrimColor(D_8014EC78++, 0, 0, r, g, b, a);
-    gSPDisplayList(D_8014EC78++, D_800F20C0);
+    gDPPipeSync(gDisplayListHead++);
+    gDPSetPrimColor(gDisplayListHead++, 0, 0, r, g, b, a);
+    gSPDisplayList(gDisplayListHead++, D_800F20C0);
 }

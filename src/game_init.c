@@ -16,7 +16,7 @@ typedef struct {
 
 extern s32 osTvType; /* osTvType */
 extern ViMode D_800FB920[];
-extern s32 D_801380B0;
+extern s32 gViModeIndex;
 extern s32 D_800F2190;
 
 s32 FileTable_Init(void);
@@ -61,7 +61,7 @@ inline void Video_Init(void) {
     */
     osViSwapBuffer(FRAMEBUFFER);
     osViGetCurrentMode();
-    osViSetMode(&D_800FB920[D_801380B0]);
+    osViSetMode(&D_800FB920[gViModeIndex]);
     osViBlack(1);
 }
 
@@ -69,13 +69,13 @@ void Game_Init(void) {
     func_80060C30();
     switch (osTvType) {
         case OS_TV_NTSC:
-            D_801380B0 = 0;
+            gViModeIndex = 0;
             break;
         case OS_TV_PAL:
-            D_801380B0 = 14;
+            gViModeIndex = 14;
             break;
         case OS_TV_MPAL:
-            D_801380B0 = 28;
+            gViModeIndex = 28;
             break;
     }
     /* TODO (Clean version):

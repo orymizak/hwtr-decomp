@@ -33,7 +33,7 @@ extern u8 D_800F0318[];
 extern u8 D_800F0338[];
 void func_8006B1AC(void);
 void func_8007AFD4(s32, f32 (*)[4], f32 (*)[4]);
-s32 func_80070BA4(f32 (*)[4]);
+s32 Mtx_New(f32 (*)[4]);
 extern Row6B_ D_800F043C[];
 extern KeySet_ D_800F0404[];
 void nuContDataGet(Pad_ *, s32);
@@ -90,15 +90,15 @@ s32 func_8006AA84(s32 cam, f32 *pos) {
     m[0][0] = m[1][1] = m[2][2] = 1.0f;
     func_8006B1AC();
     GFX_RESERVE(9);
-    gSPClipRatio(D_8014EC78++, FRUSTRATIO_1);
-    gSPDisplayList(D_8014EC78++, D_800F0338);
-    gDPPipeSync(D_8014EC78++);
-    gDPSetPrimColor(D_8014EC78++, 0, 0, D_80101E94, D_80101E95, D_80101E96, 0xC0);
-    gDPSetDepthSource(D_8014EC78++, G_ZS_PRIM);
-    gDPSetPrimDepth(D_8014EC78++, -4, 0);
+    gSPClipRatio(gDisplayListHead++, FRUSTRATIO_1);
+    gSPDisplayList(gDisplayListHead++, D_800F0338);
+    gDPPipeSync(gDisplayListHead++);
+    gDPSetPrimColor(gDisplayListHead++, 0, 0, D_80101E94, D_80101E95, D_80101E96, 0xC0);
+    gDPSetDepthSource(gDisplayListHead++, G_ZS_PRIM);
+    gDPSetPrimDepth(gDisplayListHead++, -4, 0);
     for (i = 0; i < 3; i++) {
         GFX_RESERVE(7);
-        gDPLoadTextureBlock_4b(D_8014EC78++, D_80102208[i], G_IM_FMT_I, 32, 32, 0, G_TX_WRAP | G_TX_NOMIRROR,
+        gDPLoadTextureBlock_4b(gDisplayListHead++, D_80102208[i], G_IM_FMT_I, 32, 32, 0, G_TX_WRAP | G_TX_NOMIRROR,
                                G_TX_WRAP | G_TX_NOMIRROR, G_TX_NOMASK, G_TX_NOMASK, G_TX_NOLOD, G_TX_NOLOD);
         for (j = 0, e = D_80101EA8; j < D_80101E90; e++, j++) {
             if (e->type == i) {
@@ -112,20 +112,20 @@ s32 func_8006AA84(s32 cam, f32 *pos) {
                     o[0][3] *= D_800F02D0;
                     o[1][3] *= D_800F02D0;
                     o[2][3] *= D_800F02D0;
-                    mtx = func_80070BA4(o);
+                    mtx = Mtx_New(o);
                     GFX_RESERVE(2);
-                    gSPMatrix(D_8014EC78++, mtx, G_MTX_MODELVIEW | G_MTX_LOAD | G_MTX_NOPUSH);
-                    gSPDisplayList(D_8014EC78++, D_800F0318);
+                    gSPMatrix(gDisplayListHead++, mtx, G_MTX_MODELVIEW | G_MTX_LOAD | G_MTX_NOPUSH);
+                    gSPDisplayList(gDisplayListHead++, D_800F0318);
                     n += 2;
                 }
             }
         }
     }
     GFX_RESERVE(7);
-    gSPClipRatio(D_8014EC78++, FRUSTRATIO_3);
-    gDPPipeSync(D_8014EC78++);
-    gDPSetColorDither(D_8014EC78++, G_CD_MAGICSQ);
-    gDPSetDepthSource(D_8014EC78++, G_ZS_PIXEL);
+    gSPClipRatio(gDisplayListHead++, FRUSTRATIO_3);
+    gDPPipeSync(gDisplayListHead++);
+    gDPSetColorDither(gDisplayListHead++, G_CD_MAGICSQ);
+    gDPSetDepthSource(gDisplayListHead++, G_ZS_PIXEL);
     return n;
 }
 

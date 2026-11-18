@@ -19,18 +19,18 @@ typedef struct {
     /* 0x8C */ u32 chunkCount;
 } MtxPool; /* size = 0x90 */
 
-extern VtxPool D_80140E48[2];
-extern MtxPool D_8014EB58[2];
+extern VtxPool gVtxPools[2];
+extern MtxPool gMtxPools[2];
 extern Gfx D_80134FD0[2][0x301];
 extern Vtx D_801347C0[2][0x40];
 extern Mtx D_801480A0[2][0x80];
-extern Vtx *D_8014445C;
-extern Mtx *D_8014108C;
+extern Vtx *gVtxHead;
+extern Mtx *gMtxHead;
 
 void *Memory_Alloc(u32 size);
 void Memory_Free(void *ptr);
-void func_8006FA7C(Gfx *list, s32 size, s32 arg2, s32 arg3);
-void func_80071924(void);
+void Gfx_SendTask(Gfx *list, s32 size, s32 arg2, s32 arg3);
+void Gfx_WaitTasks(void);
 s32 func_800784F0(void);
 
 inline void GfxPool_Init(GfxPool *pool, u32 capacity, Gfx *buffer) {
@@ -90,7 +90,7 @@ void GfxPool_Submit(GfxPool *pool, s32 arg) {
         gSPDisplayList(g++, (u32)pool->chunks[i] - 0x80000000); /* K0 to physical */
     }
     gSPEndDisplayList(g++);
-    func_8006FA7C(pool->head, (g - pool->head) * sizeof(Gfx), 0, arg);
+    Gfx_SendTask(pool->head, (g - pool->head) * sizeof(Gfx), 0, arg);
 }
 
 inline void VtxPool_Init(VtxPool *pool, u32 capacity, Vtx *buffer) {
@@ -187,28 +187,28 @@ inline void MtxPool_Reset(MtxPool *pool) {
 INCLUDE_ASM("asm/nonmatchings/gfx_pools", GfxPools_Init);
 
 void GfxPools_ReserveVtx(u32 required) {
-    VtxPool *pool = &D_80140E48[D_8014C540];
+    VtxPool *pool = &gVtxPools[gGfxPoolIndex];
 
-    D_80140E48[D_8014C540].ptr = D_8014445C;
+    gVtxPools[gGfxPoolIndex].ptr = gVtxHead;
     VtxPool_Reserve(pool, required);
-    D_8014445C = D_80140E48[D_8014C540].ptr;
+    gVtxHead = gVtxPools[gGfxPoolIndex].ptr;
 }
 
 INCLUDE_ASM("asm/nonmatchings/gfx_pools", GfxPools_Swap);
 
 void GfxPools_Shutdown(void) {
-    func_80071924();
+    Gfx_WaitTasks();
     func_800784F0();
-    func_80071924();
-    GfxPool_Reset(&D_8014C740[0]);
+    Gfx_WaitTasks();
+    GfxPool_Reset(&gGfxPools[0]);
     /* TODO (Clean version):
-    The function `func_80071924()` is called twice consecutively around `func_800784F0()`. 
+    The function `Gfx_WaitTasks()` is called twice consecutively around `func_800784F0()`. 
     This redundancy is likely a legacy artifact of hardware state synchronization 
     or pipeline flushing, but could be cleaned up into a single pre/post sequence if safe.
     */
-    VtxPool_Reset(&D_80140E48[0]);
-    MtxPool_Reset(&D_8014EB58[0]);
-    GfxPool_Reset(&D_8014C740[1]);
-    VtxPool_Reset(&D_80140E48[1]);
-    MtxPool_Reset(&D_8014EB58[1]);
+    VtxPool_Reset(&gVtxPools[0]);
+    MtxPool_Reset(&gMtxPools[0]);
+    GfxPool_Reset(&gGfxPools[1]);
+    VtxPool_Reset(&gVtxPools[1]);
+    MtxPool_Reset(&gMtxPools[1]);
 }

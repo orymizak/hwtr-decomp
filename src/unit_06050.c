@@ -118,7 +118,7 @@ s32 GfxPools_Shutdown();
 s32 func_800741D8(s32);
 extern Model_ *D_80138174[6];
 s32 func_80066D80(s32);
-s32 func_800709CC(s32 *);
+s32 Gfx_SetLookAt(s32 *);
 extern s32 D_800F2138;
 
 extern u8 D_80138AAD;
@@ -459,7 +459,7 @@ s32 func_80066B94(u8 i) {
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80066BD4);
 
 void func_80066C64(s32 arg0) {
-    func_800709CC(&D_800F2138);
+    Gfx_SetLookAt(&D_800F2138);
     func_80066D80(arg0 & 0xFF);
 }
 

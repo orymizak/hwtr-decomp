@@ -69,7 +69,7 @@ typedef struct { s32 w[12]; } Vtx3C4_;
 typedef struct { u8 kind; u8 frames; u8 p2[2]; f32 scale; } PDefC4_;
 typedef struct { Quat q; Vec3f axis; f32 angle; f32 f20; u8 pad24[0x1C]; Vec3f pos; f32 vx; f32 vy; f32 vz; f32 f58; f32 f5C; PDefC4_ *def; u16 life; u8 flags; u8 r; u8 g; u8 b; u8 kind; u8 frames; u16 h6C; s16 h6E; } PrtC4_;
 typedef struct { u32 cap; s32 tail; s32 head; PrtC4_ *buf; } PoolPC4_;
-extern Vtx *D_8014445C;
+extern Vtx *gVtxHead;
 extern PDefC4_ *D_801380C8[];
 extern Vtx3C4_ D_800F23C0;
 extern u8 D_800F23A8[];
@@ -82,8 +82,8 @@ extern u8 D_800F2508[];
 extern u8 D_800F25B0[];
 extern u8 D_800F25C8[];
 void GfxPools_ReserveVtx(s32);
-s32 func_80070BA4(f32 (*)[4]);
-u8 func_800717C8(f32 (*)[4], f32 (*)[4], f32);
+s32 Mtx_New(f32 (*)[4]);
+u8 Frustum_TestSphere(f32 (*)[4], f32 (*)[4], f32);
 void func_8007AFD4(f32 (*)[4], f32 (*)[4], f32 (*)[4]);
 Gfx *func_8007F61C(Gfx *, PDefC4_ *);
 void func_800A8670(Quat *, f32, Vec3f);
@@ -160,7 +160,7 @@ void func_8007C434(PoolPC4_ *pool, f32 (*m)[4]) {
         cur = NULL;
         changed = 0;
         last = NULL;
-        gDPPipeSync(D_8014EC78++);
+        gDPPipeSync(gDisplayListHead++);
         for (i = pool->tail; ; i++) {
             if (i == pool->cap) {
                 i = 0;
@@ -186,7 +186,7 @@ void func_8007C434(PoolPC4_ *pool, f32 (*m)[4]) {
             a[2][1] = 0.0f;
             a[2][2] = 1.0f;
             a[2][3] = p->pos.z;
-            if (func_800717C8(m, a, p->f5C) != 1) {
+            if (Frustum_TestSphere(m, a, p->f5C) != 1) {
                 continue;
             }
             if (p->flags & 1) {
@@ -250,10 +250,10 @@ void func_8007C434(PoolPC4_ *pool, f32 (*m)[4]) {
                 b[1][3] = m[1][0] * a[0][3] + m[1][1] * a[1][3] + m[1][2] * a[2][3] + m[1][3];
                 b[2][3] = m[2][0] * a[0][3] + m[2][1] * a[1][3] + m[2][2] * a[2][3] + m[2][3];
             }
-            mtx = func_80070BA4(b);
+            mtx = Mtx_New(b);
             GFX_RESERVE(14);
-            gSPMatrix(D_8014EC78++, mtx - 0x80000000, G_MTX_MODELVIEW | G_MTX_LOAD | G_MTX_NOPUSH);
-            gDPPipeSync(D_8014EC78++);
+            gSPMatrix(gDisplayListHead++, mtx - 0x80000000, G_MTX_MODELVIEW | G_MTX_LOAD | G_MTX_NOPUSH);
+            gDPPipeSync(gDisplayListHead++);
             if (!(p->flags & 0x80)) {
                 k = p->kind;
                 tex = D_801380C8[k];
@@ -266,7 +266,7 @@ void func_8007C434(PoolPC4_ *pool, f32 (*m)[4]) {
                 changed = 1;
             }
             if (changed == 1) {
-                D_8014EC78 = func_8007F61C(D_8014EC78, cur);
+                gDisplayListHead = func_8007F61C(gDisplayListHead, cur);
                 changed = 0;
             }
             if (p->flags & 2) {
@@ -290,45 +290,45 @@ void func_8007C434(PoolPC4_ *pool, f32 (*m)[4]) {
             }
             if (last != dl) {
                 last = dl;
-                gSPDisplayList(D_8014EC78++, (u32) last - 0x80000000);
+                gSPDisplayList(gDisplayListHead++, (u32) last - 0x80000000);
             }
-            gDPPipeSync(D_8014EC78++);
-            gDPSetPrimColor(D_8014EC78++, 0, 0, p->r, p->g, p->b, p->h6C >> 8);
+            gDPPipeSync(gDisplayListHead++);
+            gDPSetPrimColor(gDisplayListHead++, 0, 0, p->r, p->g, p->b, p->h6C >> 8);
             if (p->flags & 2) {
                 GfxPools_ReserveVtx(4);
                 /* TODO (Clean version):
                 Copia en bloque de vértices mediante casteo forzado a structs temporales (Vtx4C4_ y Vtx3C4_) de 64 y 48 bytes directamente desde la partícula o plantilla en lugar de usar un array de Vtx o memcpy. Se mantiene para el match.
                 */
-                *(Vtx4C4_ *) D_8014445C = *(Vtx4C4_ *) p;
-                gSPVertex(D_8014EC78++, (u32) D_8014445C - 0x80000000, 4, 0);
-                D_8014445C += 4;
+                *(Vtx4C4_ *) gVtxHead = *(Vtx4C4_ *) p;
+                gSPVertex(gDisplayListHead++, (u32) gVtxHead - 0x80000000, 4, 0);
+                gVtxHead += 4;
             } else if (p->flags & 0x20) {
                 GfxPools_ReserveVtx(3);
-                *(Vtx3C4_ *) D_8014445C = D_800F23C0;
-                D_8014445C[1].v.ob[0] = 1;
-                D_8014445C[0].v.ob[0] = 0;
-                D_8014445C[0].v.ob[1] = 0;
-                D_8014445C[0].v.ob[2] = 0;
-                D_8014445C[1].v.ob[1] = 1;
-                D_8014445C[1].v.ob[2] = 1;
-                D_8014445C[2].v.ob[0] = p->vx * p->q.x;
-                D_8014445C[2].v.ob[1] = p->vy * p->q.x;
-                D_8014445C[2].v.ob[2] = p->vz * p->q.x;
-                D_8014445C[1].v.cn[0] = D_8014445C[0].v.cn[0] = p->r;
-                D_8014445C[1].v.cn[1] = D_8014445C[0].v.cn[1] = p->g;
-                D_8014445C[1].v.cn[2] = D_8014445C[0].v.cn[2] = p->b;
-                D_8014445C[1].v.cn[3] = D_8014445C[0].v.cn[3] = p->h6C >> 8;
-                D_8014445C[2].v.cn[0] = p->r;
-                D_8014445C[2].v.cn[1] = 0;
-                D_8014445C[2].v.cn[2] = 0;
-                D_8014445C[2].v.cn[3] = p->h6C >> 8;
-                gSPVertex(D_8014EC78++, (u32) D_8014445C - 0x80000000, 3, 0);
-                D_8014445C += 3;
+                *(Vtx3C4_ *) gVtxHead = D_800F23C0;
+                gVtxHead[1].v.ob[0] = 1;
+                gVtxHead[0].v.ob[0] = 0;
+                gVtxHead[0].v.ob[1] = 0;
+                gVtxHead[0].v.ob[2] = 0;
+                gVtxHead[1].v.ob[1] = 1;
+                gVtxHead[1].v.ob[2] = 1;
+                gVtxHead[2].v.ob[0] = p->vx * p->q.x;
+                gVtxHead[2].v.ob[1] = p->vy * p->q.x;
+                gVtxHead[2].v.ob[2] = p->vz * p->q.x;
+                gVtxHead[1].v.cn[0] = gVtxHead[0].v.cn[0] = p->r;
+                gVtxHead[1].v.cn[1] = gVtxHead[0].v.cn[1] = p->g;
+                gVtxHead[1].v.cn[2] = gVtxHead[0].v.cn[2] = p->b;
+                gVtxHead[1].v.cn[3] = gVtxHead[0].v.cn[3] = p->h6C >> 8;
+                gVtxHead[2].v.cn[0] = p->r;
+                gVtxHead[2].v.cn[1] = 0;
+                gVtxHead[2].v.cn[2] = 0;
+                gVtxHead[2].v.cn[3] = p->h6C >> 8;
+                gSPVertex(gDisplayListHead++, (u32) gVtxHead - 0x80000000, 3, 0);
+                gVtxHead += 3;
             }
-            gSPDisplayList(D_8014EC78++, (u32) dl2 - 0x80000000);
+            gSPDisplayList(gDisplayListHead++, (u32) dl2 - 0x80000000);
         }
         GFX_RESERVE(1);
-        gDPPipeSync(D_8014EC78++);
+        gDPPipeSync(gDisplayListHead++);
     }
 }
 

@@ -28,8 +28,8 @@ typedef struct {
 } FontTable;
 
 extern FontTable D_801415C0;
-extern u16 D_800F20FA;
-extern u16 D_800F20FC;
+extern u16 gScreenWidth;
+extern u16 gScreenHeight;
 
 void *Memory_Alloc(u32 size);
 void Memory_Free(void *ptr);
@@ -130,8 +130,8 @@ s32 func_8006F528(u8 id, u8 c, f32 x, f32 y, f32 scale) {
         if (index != 0xFF) {
             glyph = font->glyphs[index];
             FONT_ASSERT(glyph != NULL);
-            x = (x - 500.0f) * D_800F20FA * 0.9 / 1000.0 + D_800F20FA / 2;
-            y = (500.0f - y) * D_800F20FC * 0.95 / 1000.0 + D_800F20FC / 2;
+            x = (x - 500.0f) * gScreenWidth * 0.9 / 1000.0 + gScreenWidth / 2;
+            y = (500.0f - y) * gScreenHeight * 0.95 / 1000.0 + gScreenHeight / 2;
             func_80076BCC();
             func_80076D6C(x, y, glyph->data, glyph->width, glyph->height, scale, scale);
         }

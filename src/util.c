@@ -22,8 +22,8 @@ void Memory_DisableSecondary(void);
 s32 File_GetSize(char *name);
 s32 File_Load(char *name, void *dst);
 void GfxPools_Shutdown(void);
-void func_80071940(void);
-void func_80071A40(void);
+void Video_SetLowRes(void);
+void Video_SetHighRes(void);
 
 s32 func_8007F420(void) {
     srand(osGetCount());
@@ -42,7 +42,7 @@ u32 func_8007F498(u32 max) {
 
 s32 func_8007F4D0(void) {
     D_800F2190 = D_800F2194;
-    func_80071940();
+    Video_SetLowRes();
     Memory_EnableSecondary();
     srand(osGetCount());
     return 1;
@@ -52,7 +52,7 @@ s32 func_8007F514(void) {
     D_800F2190 = D_800F2198;
     GfxPools_Shutdown();
     Memory_DisableSecondary();
-    func_80071A40();
+    Video_SetHighRes();
     return 1;
 }
 

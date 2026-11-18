@@ -7,12 +7,12 @@
 
 
 extern void *D_800F20F0;
-extern u8 D_800F20F4;
-extern u8 D_800F20F5;
+extern u8 gLightsEnabled;
+extern u8 gLowRes;
 extern u8 D_800F20F6;
-extern u8 D_800F20F8;
-extern u16 D_800F20FA;
-extern u16 D_800F20FC;
+extern u8 gLightsDirty;
+extern u16 gScreenWidth;
+extern u16 gScreenHeight;
 extern u8 D_800F20FE;
 extern u8 D_800F20FF;
 extern u8 D_800F2100;
@@ -42,16 +42,16 @@ void Memory_Free(void *ptr);
 s32 File_Load(char *name, void *dst);
 char *strcpy(char *dst, const char *src);
 char *strcat(char *dst, const char *src);
-void func_8006FBF0(void);
-void func_8006FDB8(void);
+void Gfx_Init(void);
+void Light_SetCount(void);
 void func_8006FE2C(u8 arg0, u8 arg1, u8 arg2);
-void func_8006FF00(s32 arg0, u8 arg1, u8 arg2, u8 arg3);
-void func_8006FF90(s32 arg0, u8 arg1, u8 arg2, u8 arg3);
-void func_80070148(void);
-void func_80070E58(void);
+void Light_SetDir(s32 arg0, u8 arg1, u8 arg2, u8 arg3);
+void Light_SetColor(s32 arg0, u8 arg1, u8 arg2, u8 arg3);
+void Light_Reset(void);
+void Camera_CalcFrustum(void);
 void func_80070F38(void);
 void func_80071530(void);
-void func_80071A40(void);
+void Video_SetHighRes(void);
 void func_800761D4(u8 arg0, u8 arg1, u8 arg2, u16 arg3, u16 arg4);
 void func_80076470(void *arg0);
 void func_80076578(f32 arg0, void *arg1);
@@ -62,16 +62,16 @@ u8 func_80078320(s32 arg0);
 void func_80078878(f32 arg0, f32 arg1, f32 arg2, f32 arg3);
 
 s32 func_80077FB0(void) {
-    func_8006FBF0();
+    Gfx_Init();
     return 1;
 }
 
 s32 func_80077FD0(void) {
-    D_800F20F8 = 1;
-    D_800F20F5 = 1;
+    gLightsDirty = 1;
+    gLowRes = 1;
     D_800F2102 = 0xFF;
     D_800F210C = 320;
-    D_800F20F4 = 0;
+    gLightsEnabled = 0;
     D_800F20F6 = 0;
     D_800F20FE = 0;
     D_800F20FF = 0;
@@ -89,15 +89,15 @@ s32 func_80077FD0(void) {
     D_800F2114 = 1e7f;
     D_800F2120 = 1.09f;
     D_800F2124 = 1.33333302f;
-    func_80070E58();
-    func_80070148();
+    Camera_CalcFrustum();
+    Light_Reset();
     func_800802C0();
     D_800F2174 = 1;
     D_800F2178 = 1;
     D_800F217C = 0;
     D_800F2180 = 0;
     D_800F2184 = 0;
-    func_80071A40();
+    Video_SetHighRes();
     return 1;
 }
 
@@ -155,7 +155,7 @@ s32 func_80078300(void) {
 }
 
 u8 func_80078320(s32 arg0) {
-    func_800761D4(D_800F20FE, D_800F20FF, D_800F2100, D_800F20FA, D_800F20FC);
+    func_800761D4(D_800F20FE, D_800F20FF, D_800F2100, gScreenWidth, gScreenHeight);
     if (D_800F2104 != NULL) {
         func_800766FC(D_800F2104, 640, 480);
     }
@@ -178,11 +178,11 @@ s32 func_800784F0(void) {
     for readability and platform maintenance.
     */
     GFX_RESERVE(2);
-    gDPFullSync(D_8014EC78++);
-    gSPEndDisplayList(D_8014EC78++);
+    gDPFullSync(gDisplayListHead++);
+    gSPEndDisplayList(gDisplayListHead++);
     GfxPools_Swap(0);
-    D_800F20F8 = 1;
-    D_800F20F4 = 0;
+    gLightsDirty = 1;
+    gLightsEnabled = 0;
     D_800F2168 = 0;
     D_800F216C[0] = 0;
     D_800F2170 = 0;
@@ -192,25 +192,25 @@ s32 func_800784F0(void) {
 }
 
 u16 func_80078624(void) {
-    return D_800F20FA;
+    return gScreenWidth;
 }
 
 u16 func_80078630(void) {
-    return D_800F20FC;
+    return gScreenHeight;
 }
 
 void func_8007863C(s16 x, s16 y, s16 width, s16 height) {
     D_800F2108 = x;
     D_800F210C = width;
     D_800F210E = height;
-    D_800F210A = (D_800F20FC - y) - height;
+    D_800F210A = (gScreenHeight - y) - height;
     func_80070F38();
 }
 
 extern Mtx34f D_800F2138;
-s32 func_80070BA4(Mtx34f *);
+s32 Mtx_New(Mtx34f *);
     /* TODO (Clean version):
-    Passing model-view matrices through custom transformation pipelines (`func_80070BA4`) 
+    Passing model-view matrices through custom transformation pipelines (`Mtx_New`) 
     and manually writing low-level display list commands with hardware offsets (`0xDA380003`) 
     should be encapsulated into a clean matrix stack helper (e.g., `Matrix_LoadModelView(...)`).
     */
@@ -218,9 +218,9 @@ void func_80078684(Mtx34f *m) {
     Mtx34f t;
     D_800F2138 = *m;
     t = *m;
-    D_800F216C[0] = func_80070BA4(&t);
+    D_800F216C[0] = Mtx_New(&t);
     GFX_RESERVE(1);
-    gSPMatrix(D_8014EC78++, D_800F216C[0] - 0x80000000, G_MTX_MODELVIEW | G_MTX_LOAD | G_MTX_NOPUSH);
+    gSPMatrix(gDisplayListHead++, D_800F216C[0] - 0x80000000, G_MTX_MODELVIEW | G_MTX_LOAD | G_MTX_NOPUSH);
 }
 
     /* TODO (Clean version):
@@ -252,7 +252,7 @@ void func_80078878(f32 arg0, f32 arg1, f32 arg2, f32 arg3) {
     if (changedA | changedB) {
         D_800F211C = arg1;
         D_800F2120 = arg2;
-        func_80070E58();
+        Camera_CalcFrustum();
     }
 }
 
@@ -261,15 +261,15 @@ void func_800788F8(u8 arg0, u8 arg1, u8 arg2) {
 }
 
 void func_8007891C(s32 arg0, u8 arg1, u8 arg2, u8 arg3) {
-    func_8006FF00(arg0, arg1, arg2, arg3);
+    Light_SetDir(arg0, arg1, arg2, arg3);
 }
 
 void func_80078940(s32 arg0, u8 arg1, u8 arg2, u8 arg3) {
-    func_8006FF90(arg0, arg1, arg2, arg3);
+    Light_SetColor(arg0, arg1, arg2, arg3);
 }
 
 void func_80078964(void) {
-    func_8006FDB8();
+    Light_SetCount();
 }
 
 void func_80078980(u8 arg0) {
