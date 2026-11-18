@@ -3,6 +3,7 @@
 #include "pak.h"
 #include "save.h"
 #include "race.h"
+#include "profile.h"
 
 /* Key newly pressed on any of the four pads. */
 #define INPUT_PRESSED_ANY_PAD(key) \
@@ -15,15 +16,6 @@
  * compiled out in release builds; verify against a real cause when one turns up. */
 #define DEBUG_NOP() do { } while (0)
 
-/* TODO (Clean version): Unify Plr53_ with the actual player-data struct at gProfileP1.
- * Fields bits14/bits18 are a split 64-bit unlock mask; consider:
- *   typedef struct { u8 p0[0x14]; u64 unlockBits; s32 raceUnlocks; u8 sel; } Plr53_;
- * or use helper accessors:
- *   #define PLR_IS_UNLOCKED(p, id) \
- *       ((id) >= 32 ? ((p)->bits18 >> ((id)-32)) & 1 : ((p)->bits14 >> (id)) & 1)
- */
-/* Player menu state: unlock bitmasks and the selected entry. */
-typedef struct { u8 p0[0x14]; s32 bits14; s32 bits18; s32 bits1C; u8 sel; } Plr53_;
 /* Per-player race result block (0x2C) inside the race state. */
 typedef struct { s32 lapTime; u8 lap; u8 p5[3]; s32 raceTime; u8 pC[0x20]; } RaceRes_;
 typedef struct { u8 p0[0x3C]; RaceRes_ res[2]; } RaceSt_;
@@ -82,7 +74,6 @@ void Menu_LoadModels(s32);
 s32 KeyRepeat_IsDue(u8 i);
 s32 Pak_AnyChanged(void);
 extern u8 gRaceResult;
-typedef struct { u8 pad[0x23]; u8 b23; s32 w24[6]; } Blk23_;
 extern s32 D_800F60E8[];
 u8 Save_Probe(void);
 void KeyRepeat_Accelerate(u8 i);
@@ -91,11 +82,9 @@ extern u8 D_80100F88[];
 typedef struct { u8 p0[0x10]; s32 unk10; f32 unk14; } ObjG1_;
 typedef struct { s32 d[0x88C / 4]; } Big88C_;
 typedef struct { u8 a; u8 pad; s16 x; s16 y; u8 pad2[4]; } E0A4_;
-typedef struct { s32 d[0x50]; } Big140_;
 typedef struct { char *name; u8 pad[0xC]; } N10_;
 typedef struct { f32 x; f32 y; f32 z; f32 x2; f32 y2; u8 pad[0x1C]; u16 h30; u16 h32; } E34b_;
 typedef struct { u8 pad[0x20]; u8 n; u8 p[3]; N10_ *names; E34b_ *objs; } TBL_;
-typedef struct { u8 pad[8]; char name[0xC]; s32 w14; s32 w18; s32 w1C; u8 pad2[0x120]; } E140b_;
 typedef struct { u16 idx; u8 pad[2]; s32 lo; s32 hi; s32 y; s32 reset; f32 x; } Scroll4E_;
 typedef struct { u8 a; u8 b; u8 c; s8 lv; } Bars4_;
 typedef struct { u8 b0; u8 p1[0x17]; u8 b18; u8 p19[0x13]; } It2C_;
@@ -166,7 +155,7 @@ extern u8 D_800F648E;
 void HighScores_PickRandom(void);
 extern u8 D_80100BD8;
 void MenuList_Reset(s32 arg0);
-s32 Car_IsUnlocked(u8 i, s32 p);
+s32 Car_IsUnlocked(u8 i, Profile *p);
 extern void (*sysWorldDraw)(u8);
 extern void (*sysFontLoad)(s32, void *);
 extern u8 D_80100F94;
@@ -187,7 +176,7 @@ void *memcpy(void *, const void *, size_t);
 extern u8 *gLangText[];
 extern s32 (*sysFontGetCharWidth)(s32, u8);
 s8 Font_GetKerning(s32, u8, u8);
-s32 SaveSlot_Add(u32 i, E140b_ *src);
+s32 SaveSlot_Add(u32 i, Profile *src);
 extern char D_80100F70[];
 extern s32 *D_80141268;
 s32 *Jukebox_GetArtist(s32);
@@ -280,7 +269,7 @@ void Records_SaveRaceResult(void *);
 void Track_SelectPrev(void);
 extern u8 gPasswordP1;
 extern u8 gPasswordP2;
-s32 Password_Apply(void *, s32);
+s32 Password_Apply(void *, Profile *);
 void Password_Get(s32, s32 *);
 void Track_SelectNext(void);
 extern s32 D_8014122C;
@@ -470,10 +459,10 @@ extern s32 D_800F6488;
 extern s32 D_800F5F40;
 extern s32 D_800F5F44;
 extern u8 gGarageCarP1;
-extern s32 gProfileP1;
+extern Profile *gProfileP1;
 extern u8 gNumPlayers;
 extern u8 gGarageCarP2;
-extern s32 gProfileP2;
+extern Profile *gProfileP2;
 extern s32 D_800F5F48;
 extern s32 D_800F6370;
 extern s32 D_80100F78;
@@ -1113,21 +1102,11 @@ s8 CarModel_FindByName(char *s) {
 }
 
 
-/* TODO (Clean version): Structure definition for 0x140-byte player profile / save record:
- *   typedef struct {
- *       u8 pad0[8];
- *       char name[12];           // 0x08 (default "Player %d")
- *       u32 magic;               // 0x14 (0xB48EE52E)
- *       s32 unlockMaskLo;        // 0x18 (default 0x10B)
- *       s32 unlockMaskHi;        // 0x1C (default 0xE3F)
- *       u8 defaultCar;           // 0x20 (default 0x1D)
- *       u8 selectedCourse;       // 0x21
- *       u8 pad22[2];
- *       s32 records[6];          // 0x24..0x38
- *       s32 totalTime;           // 0x3C
- *       u8 controllerCfg[0x100]; // 0x40
- *   } PlayerProfile; // sizeof = 0x140
- */
+/* Fills a profile (Profile, profile.h) with the defaults for player i: name "Player <i+1>",
+ * the initial car and track unlocks, the default key bindings and car 0x1D.
+ * TODO (Clean version): [evaluated 2026-11-18: writing it through Profile fields lets gcc load
+ * sysInputSaveBindings before the stores (struct stores cannot alias it), which changes the
+ * ROM; the byte offsets stay. The proposed "magic" at 0x14 is really carUnlocks[0].] */
 void Profile_InitDefault(void *arg0, s32 arg1) {
     u8 *o = arg0;
     s32 buf[4];
@@ -1183,25 +1162,25 @@ void Save_Load(void) {
         return;
     }
     gActiveSave = Save_GetActiveProfile();
-    gProfileP1 = SaveSlot_FindPlayer(0);
-    gProfileP2 = SaveSlot_FindPlayer(1);
+    gProfileP1 = (Profile *)SaveSlot_FindPlayer(0);
+    gProfileP2 = (Profile *)SaveSlot_FindPlayer(1);
     if (gActiveSave == NULL) {
         gActiveSave = (GameSave *)&D_80124160;
-        gProfileP1 = (s32)&D_801249F0;
-        gProfileP2 = (s32)&D_80124B30;
+        gProfileP1 = (Profile *)&D_801249F0;
+        gProfileP2 = (Profile *)&D_80124B30;
         Fsm_Trigger(&gMenuFsm, 0x23);
         return;
     }
     if (gProfileP1 == 0) {
-        gProfileP1 = (s32)&D_801249F0;
+        gProfileP1 = (Profile *)&D_801249F0;
     }
     if (gProfileP2 == 0) {
-        gProfileP2 = (s32)&D_80124B30;
+        gProfileP2 = (Profile *)&D_80124B30;
     }
     sysAudioSetSfxVolume(0xFF);
     fp = &sysInputLoadBindings;
-    (*fp)(gProfileP1 + 0x40, 0);
-    (*fp)(gProfileP2 + 0x40, 1);
+    (*fp)((s32)gProfileP1->bindings, 0);
+    (*fp)((s32)gProfileP2->bindings, 1);
     gSaveLoaded = 1;
     Fsm_Trigger(&gMenuFsm, 0x22);
 }
@@ -1585,7 +1564,7 @@ void PakDialog_SelectBottom(void) {
 }
 
 void Save_CreateNew(void) {
-    E140b_ buf;
+    Profile buf;
     u8 found;
     u8 slot;
     u8 i;
@@ -1611,10 +1590,10 @@ void Save_CreateNew(void) {
     SaveSlot_Add(slot, &buf);
     Profile_InitDefault(&buf, 1);
     SaveSlot_Add(slot, &buf);
-    gProfileP1 = (s32)SaveSlot_Get(slot, 0);
+    gProfileP1 = SaveSlot_Get(slot, 0);
     p = SaveSlot_Get(slot, 1);
-    gActiveSave->player1Id = *(s32 *)(gProfileP1 + 4);
-    gProfileP2 = (s32)p;
+    gActiveSave->player1Id = gProfileP1->id;
+    gProfileP2 = p;
     gActiveSave->player2Id = ((s32 *)p)[1];
     Save_Commit();
     gSaveLoaded = 1;
@@ -1643,9 +1622,9 @@ void Save_NewGame(void) {
     gSaveLoaded = 0;
     gActiveSave = (GameSave *)&D_80124160;
     Save_InitDefault(&D_80124160);
-    gProfileP1 = (s32)&D_801249F0;
+    gProfileP1 = (Profile *)&D_801249F0;
     Profile_InitDefault(&D_801249F0, 0);
-    gProfileP2 = (s32)&D_80124B30;
+    gProfileP2 = (Profile *)&D_80124B30;
     Profile_InitDefault(&D_80124B30, 1);
     sysAudioSetSfxVolume(0xFF);
 }
@@ -1656,12 +1635,12 @@ void Save_CommitLoaded(void) {
 
     gSaveLoaded = 0;
     *(Big88C_ *)&D_80124160 = *(Big88C_ *)gActiveSave;
-    *(Big140_ *)&D_801249F0 = *(Big140_ *)gProfileP1;
-    *(Big140_ *)&D_80124B30 = *(Big140_ *)gProfileP2;
+    *(Profile *)&D_801249F0 = *gProfileP1;
+    *(Profile *)&D_80124B30 = *gProfileP2;
     x = D_80100DBC;
     gActiveSave = (GameSave *)&D_80124160;
-    gProfileP1 = (s32)&D_801249F0;
-    gProfileP2 = (s32)&D_80124B30;
+    gProfileP1 = (Profile *)&D_801249F0;
+    gProfileP2 = (Profile *)&D_80124B30;
     *(s32 *)&gPasswordP1 = x;
     if (gNumPlayers == 2) {
         *(s32 *)&gPasswordP2 = x;
@@ -1678,22 +1657,22 @@ void PakDialog_Resolve(void) {
 
 
 void Save_ApplyProfiles(void) {
-    if (((s32 *)gProfileP1)[5] == 0) {
-        Profile_InitDefault((void *)gProfileP1, 0);
+    if (gProfileP1->carUnlocks[0] == 0) {
+        Profile_InitDefault(gProfileP1, 0);
     }
-    if (((s32 *)gProfileP2)[5] == 0) {
-        Profile_InitDefault((void *)gProfileP2, 1);
+    if (gProfileP2->carUnlocks[0] == 0) {
+        Profile_InitDefault(gProfileP2, 1);
     }
     if ((u8)Save_Commit() != 0) {
-    if (((s32 *)gProfileP1)[1] == 0) {
+    if (gProfileP1->id == 0) {
         Fsm_Trigger(&gMenuFsm, 0x31);
     } else {
-        Password_Get(gProfileP1, (s32 *)&gPasswordP1);
+        Password_Get((s32)gProfileP1, (s32 *)&gPasswordP1);
     }
-    if (gNumPlayers == 2 && ((s32 *)gProfileP2)[1] == 0) {
+    if (gNumPlayers == 2 && gProfileP2->id == 0) {
         Fsm_Trigger(&gMenuFsm, 0x31);
     } else {
-        Password_Get(gProfileP2, (s32 *)&gPasswordP2);
+        Password_Get((s32)gProfileP2, (s32 *)&gPasswordP2);
     }
     Fsm_Trigger(&gMenuFsm, 0x33);
     } else {
@@ -1720,14 +1699,14 @@ void PakCheck_Dispatch(void) {
     Fsm_Trigger((s32) &gMenuFsm, 0x21);
 }
 
-s32 Car_IsUnlocked(u8 i, s32 p) {
+s32 Car_IsUnlocked(u8 i, Profile *p) {
     if (gCarModelNames[i] == NULL) {
         return 0;
     }
     if (i >= 32) {
-        return (*(u32 *)(p + 0x18) >> (i - 32)) & 1;
+        return (p->carUnlocks[1] >> (i - 32)) & 1;
     }
-    return (*(u32 *)(p + 0x14) >> i) & 1;
+    return (p->carUnlocks[0] >> i) & 1;
 }
 
 u8 Track_IsUnlocked(u8 i) {
@@ -1737,7 +1716,7 @@ u8 Track_IsUnlocked(u8 i) {
         return 0;
     }
     r = 0;
-    if (((((u32 *)gProfileP1)[7] >> i) & 1) || ((((u32 *)gProfileP2)[7] >> i) & 1)) {
+    if (((gProfileP1->trackUnlocks >> i) & 1) || ((gProfileP2->trackUnlocks >> i) & 1)) {
         r = 1;
     }
     return r;
@@ -1752,7 +1731,7 @@ u8 Cup_IsUnlocked(u8 i) {
         case 0:
             return 1;
         case 1:
-            w = ((u32 *)gProfileP1)[7];
+            w = gProfileP1->trackUnlocks;
             r = 0;
             if ((w >> 7) & 1) {
                 r = (w >> 8) & 1;
@@ -1769,52 +1748,52 @@ u8 Cup_IsUnlocked(u8 i) {
  * As a result, when id == 32, bit 1 is set instead of bit 0, leaving entry 32 permanently locked
  * and shifting all upper unlocks by 1 bit. Furthermore, id == 62 shifts by 31, and id == 63 shifts by 32 (UB on 32-bit int).
  * Correct code:
- *   p->bits18 |= 1 << (id - 32);
+ *   p->carUnlocks[1] |= 1 << (id - 32);
  */
-void Car_Unlock(u8 id, Plr53_ *p) {
+void Car_Unlock(u8 id, Profile *p) {
     if (id >= 32) {
-        p->bits18 |= 1 << (id - 31);
+        p->carUnlocks[1] |= 1 << (id - 31);
         return;
     }
-    p->bits14 |= 1 << id;
+    p->carUnlocks[0] |= 1 << id;
 }
 
-void Track_Unlock(s32 id, Plr53_ *p) {
-    p->bits1C |= 1 << id;
+void Track_Unlock(s32 id, Profile *p) {
+    p->trackUnlocks |= 1 << id;
 }
 
 void Player_NextCar(u8 player) {
-    Plr53_ *p;
+    Profile *p;
 
     if (!player) {
-        p = (Plr53_ *)gProfileP1;
+        p = gProfileP1;
     } else {
-        p = (Plr53_ *)gProfileP2;
+        p = gProfileP2;
     }
     do {
-        if (p->sel < 40) {
-            p->sel++;
+        if (p->car < 40) {
+            p->car++;
         } else {
-            p->sel = 0;
+            p->car = 0;
         }
-    } while (!(u8)Car_IsUnlocked(p->sel, (s32)p));
+    } while (!(u8)Car_IsUnlocked(p->car, p));
 }
 
 void Player_PrevCar(u8 player) {
-    Plr53_ *p;
+    Profile *p;
 
     if (!player) {
-        p = (Plr53_ *)gProfileP1;
+        p = gProfileP1;
     } else {
-        p = (Plr53_ *)gProfileP2;
+        p = gProfileP2;
     }
     do {
-        if (p->sel != 0) {
-            p->sel--;
+        if (p->car != 0) {
+            p->car--;
         } else {
-            p->sel = 40;
+            p->car = 40;
         }
-    } while (!(u8)Car_IsUnlocked(p->sel, (s32)p));
+    } while (!(u8)Car_IsUnlocked(p->car, p));
 }
 
 /* TODO (Bug potential): Potential infinite loop if all tracks are locked or invalid.
@@ -1826,20 +1805,20 @@ void Track_SelectNext(void) {
     u8 v;
 
     for (;;) {
-        if (((u8 *)gProfileP1)[0x21] < 11) {
-            ((u8 *)gProfileP1)[0x21]++;
+        if (gProfileP1->track < 11) {
+            gProfileP1->track++;
         } else {
-            ((u8 *)gProfileP1)[0x21] = 0;
+            gProfileP1->track = 0;
         }
-        if (Track_IsUnlocked(((u8 *)gProfileP1)[0x21]) == 0) {
+        if (Track_IsUnlocked(gProfileP1->track) == 0) {
             continue;
         }
-        v = ((u8 *)gProfileP1)[0x21];
+        v = gProfileP1->track;
         if (gTrackNames[(u8)(v / 3)][(u8)(v % 3)] != 0) {
             break;
         }
     }
-    ((u8 *)gProfileP2)[0x21] = v;
+    gProfileP2->track = v;
 }
 
 
@@ -1847,20 +1826,20 @@ void Track_SelectPrev(void) {
     u8 v;
 
     for (;;) {
-        if (((u8 *)gProfileP1)[0x21] != 0) {
-            ((u8 *)gProfileP1)[0x21]--;
+        if (gProfileP1->track != 0) {
+            gProfileP1->track--;
         } else {
-            ((u8 *)gProfileP1)[0x21] = 11;
+            gProfileP1->track = 11;
         }
-        if (Track_IsUnlocked(((u8 *)gProfileP1)[0x21]) == 0) {
+        if (Track_IsUnlocked(gProfileP1->track) == 0) {
             continue;
         }
-        v = ((u8 *)gProfileP1)[0x21];
+        v = gProfileP1->track;
         if (gTrackNames[(u8)(v / 3)][(u8)(v % 3)] != 0) {
             break;
         }
     }
-    ((u8 *)gProfileP2)[0x21] = v;
+    gProfileP2->track = v;
 }
 
 
@@ -1870,7 +1849,7 @@ void Song_PickRandom(void) {
 
 
 void Song_PickForTrack(void) {
-    gMenuSong = Music_GetSongTrack((u32) (*(u8 *)((u8 *)((*(void * *)&gProfileP1)) + 0x21)));
+    gMenuSong = Music_GetSongTrack((u32) gProfileP1->track);
 }
 
 void Song_Next(void) {
@@ -2271,8 +2250,8 @@ void Welcome_CheckNames(void) {
 
     gNameChangedP1 = 0;
     gNameChangedP2 = 0;
-    Password_Get(gProfileP1, a);
-    Password_Get(gProfileP2, b);
+    Password_Get((s32)gProfileP1, a);
+    Password_Get((s32)gProfileP2, b);
     if (strcmp((char *)&gPasswordP1, (char *)&D_80100CC8) == 0) {
         strcpy((s32 *)&gPasswordP1, (s32)a);
     }
@@ -2308,13 +2287,13 @@ void Password_Enter(void) {
     Menu_LoadBg(NULL);
     Menu_StartFadeIn();
     if (gNameChangedP1 != 0) {
-        sprintf((char *)a, (char *)&D_80100DF4, gProfileP1 + 8);
+        sprintf((char *)a, (char *)&D_80100DF4, gProfileP1->name);
         src = &gPasswordP1;
         gNameChangedP1 = 0;
         D_80124C7E = 1;
         D_80124C7F = 0;
     } else {
-        sprintf((char *)a, (char *)&D_80100DF4, gProfileP2 + 8);
+        sprintf((char *)a, (char *)&D_80100DF4, gProfileP2->name);
         src = &gPasswordP2;
         gNameChangedP2 = 0;
         D_80124C7E = 0;
@@ -2502,8 +2481,8 @@ void CarPreview_LoadP1(void) {
     u8 buf[0x40];
     u8 big[0x118];
 
-    sysModelLoadAsync(0, gCarModelNames[((u8 *)gProfileP1)[0x20]], 0);
-    sysCarInfoLoad(gCarModelNames[((u8 *)gProfileP1)[0x20]], big, buf);
+    sysModelLoadAsync(0, gCarModelNames[gProfileP1->car], 0);
+    sysCarInfoLoad(gCarModelNames[gProfileP1->car], big, buf);
     D_80140FD8();
     *(V12_ *)&D_801240E8 = *(V12_ *)(big + 0x80);
     D_80124C94 = 0;
@@ -2513,8 +2492,8 @@ void CarPreview_LoadP2(void) {
     u8 buf[0x40];
     u8 big[0x118];
 
-    sysModelLoadAsync(1, gCarModelNames[((u8 *)gProfileP2)[0x20]], 0);
-    sysCarInfoLoad(gCarModelNames[((u8 *)gProfileP2)[0x20]], big, buf);
+    sysModelLoadAsync(1, gCarModelNames[gProfileP2->car], 0);
+    sysCarInfoLoad(gCarModelNames[gProfileP2->car], big, buf);
     D_80140FD8();
     *(V12_ *)&D_801240F4 = *(V12_ *)(big + 0x80);
     D_80124C95 = 0;
@@ -2533,7 +2512,7 @@ void CarPreview_FreeP2(void) {
 
 void TrackPreview_Load(void) {
     s8 k = NameList_Add(&D_80100E10);
-    u8 v = ((u8 *)gProfileP1)[0x21];
+    u8 v = gProfileP1->track;
 
     if (k > 0) {
         sysWorldLoad(k, gTrackNames[(u8)(v / 3)][(u8)(v % 3)]);
@@ -2560,7 +2539,7 @@ INCLUDE_ASM("asm/nonmatchings/unit_53B30", MainMenu_Draw);
 
 /* Checks the entered cheat code, then handles player 1's buttons 0x10/0x11 on this menu. */
 void MainMenu_InputP1(s32 id) {
-    if ((u8)Menu_HandlePad1((u16)id) && (u8)Config_CheckCheatCode((char *)Cheat_GetBufferP1(), (void *)gProfileP1)) {
+    if ((u8)Menu_HandlePad1((u16)id) && (u8)Config_CheckCheatCode((char *)Cheat_GetBufferP1(), gProfileP1)) {
         sysSfxPlay(0x34, 1, 1.0f, 1.0f);
         Cheat_ClearP1();
     }
@@ -2591,7 +2570,7 @@ void MainMenu_InputP1(s32 id) {
 
 /* Checks the entered cheat code, then handles player 2's buttons 0x10/0x11 on this menu. */
 void MainMenu_InputP2(s32 id) {
-    if ((u8)Menu_HandlePad2((u16)id) && (u8)Config_CheckCheatCode((char *)Cheat_GetBufferP2(), (void *)gProfileP2)) {
+    if ((u8)Menu_HandlePad2((u16)id) && (u8)Config_CheckCheatCode((char *)Cheat_GetBufferP2(), gProfileP2)) {
         sysSfxPlay(0x34, 1, 1.0f, 1.0f);
         Cheat_ClearP2();
     }
@@ -2913,8 +2892,8 @@ void Profile_Select(void) {
             Fsm_Trigger(&gMenuFsm, 0x49);
             break;
         case 1:
-            D_80124150 = ((s32 *)gProfileP1)[1];
-            D_80124154 = ((s32 *)gProfileP2)[1];
+            D_80124150 = gProfileP1->id;
+            D_80124154 = gProfileP2->id;
             Fsm_Trigger(&gMenuFsm, 0x4A);
             break;
         case 2:
@@ -2999,8 +2978,8 @@ s32 Cup_GetPosition(s32 player) {
     j = 0;
     do {
         j = i & 0xFF;
-        if (j != p && ((a = *(s32 *)((u8 *)(j * 4 + gProfileP1) + 0x24),
-                        b = *(s32 *)((u8 *)(p * 4 + gProfileP1) + 0x24), b < a) ||
+        if (j != p && ((a = gProfileP1->cupPoints[j],
+                        b = gProfileP1->cupPoints[p], b < a) ||
                        ((a == b) & (j < p)))) {
             rank++;
         }
@@ -3010,12 +2989,12 @@ s32 Cup_GetPosition(s32 player) {
 }
 
 u8 Cup_GetPositionNoTies(u8 n) {
-    Blk23_ *p = (Blk23_ *)gProfileP1;
+    Profile *p = gProfileP1;
     u8 r = 0;
     u8 i;
 
     for (i = 0; i < 6; i++) {
-        if (i != n && (u32)p->w24[i] > (u32)p->w24[n]) {
+        if (i != n && (u32)p->cupPoints[i] > (u32)p->cupPoints[n]) {
             r++;
         }
     }
@@ -3065,23 +3044,23 @@ void Championship_Enter(void) {
 void Cup_ResetProgress(void) {
     u8 i;
 
-    ((Blk23_ *)gProfileP1)->b23 = 0;
+    gProfileP1->cupRace = 0;
     for (i = 0; i < 6; i++) {
-        ((Blk23_ *)gProfileP1)->w24[i] = 0;
+        gProfileP1->cupPoints[i] = 0;
         D_800F60E8[i] = 0;
     }
 }
 
 void Cup_ValidateSelection(void) {
-    if (((u8) (*(u8 *)((u8 *)((*(void * *)&gProfileP1)) + 0x22)) >= 3U) || ((u8) (*(u8 *)((u8 *)((*(void * *)&gProfileP1)) + 0x23)) >= 6U)) {
-        (*(u8 *)((u8 *)((*(void * *)&gProfileP1)) + 0x22)) = 0U;
+    if (((u8) gProfileP1->cup >= 3U) || ((u8) gProfileP1->cupRace >= 6U)) {
+        gProfileP1->cup = 0U;
         Cup_ResetProgress();
     }
 }
 
 void CupTrackPreview_Load(void) {
     s8 k = NameList_Add(&D_80100E10);
-    u8 v = D_800F60D4[((u8 *)gProfileP1)[0x22]][((u8 *)gProfileP1)[0x23]];
+    u8 v = D_800F60D4[gProfileP1->cup][gProfileP1->cupRace];
 
     if (k > 0) {
         sysWorldLoad(k, gTrackNames[(u8)(v / 3)][(u8)(v % 3)]);
@@ -3149,7 +3128,7 @@ void Championship_Input(void) {
         }
         Menu_HandlePad1(mask);
         if ((*(u8 *)&gChampionshipSel) == 2 || (*(u8 *)&gChampionshipSel) == 3
-            || ((*(u8 *)&gChampionshipSel) == 5 && (*(u8 * *)&gProfileP1)[0x23] == 0 && ((Cup_IsUnlocked(1) & 0xFF) || (Cup_IsUnlocked(2) & 0xFF)))) {
+            || ((*(u8 *)&gChampionshipSel) == 5 && gProfileP1->cupRace == 0 && ((Cup_IsUnlocked(1) & 0xFF) || (Cup_IsUnlocked(2) & 0xFF)))) {
             if (Menu_IsKeyHeld(0, 0x10) & 0xFF) {
                 if (KeyRepeat_IsDue(0) & 0xFF) {
                     Fsm_Trigger(&(*(s32 *)&gMenuFsm), 0xA);
@@ -3176,7 +3155,7 @@ void Championship_Input(void) {
 }
 
 void Cup_NextRace(void) {
-    (*(u8 *)((u8 *)((*(void * *)&gProfileP1)) + 0x23)) = (u8) ((*(u8 *)((u8 *)((*(void * *)&gProfileP1)) + 0x23)) + 1);
+    gProfileP1->cupRace = (u8) (gProfileP1->cupRace + 1);
 }
 
 void Championship_Nop(void) {
@@ -3201,7 +3180,7 @@ void ChampProfile_Select(void) {
             Fsm_Trigger(&gMenuFsm, 0x49);
             break;
         case 1:
-            D_80124150 = ((s32 *)gProfileP1)[1];
+            D_80124150 = gProfileP1->id;
             Fsm_Trigger(&gMenuFsm, 0x4A);
             break;
         case 2:
@@ -3326,29 +3305,29 @@ void Championship_Select(void) {
 
 
 void Cup_Prev(void) {
-    if (((u8 *)gProfileP1)[0x23] == 0) {
+    if (gProfileP1->cupRace == 0) {
         sysSfxPlay(0x30, 1, 1.0f, 1.0f);
         do {
-            if (((u8 *)gProfileP1)[0x22] != 0) {
-                ((u8 *)gProfileP1)[0x22]--;
+            if (gProfileP1->cup != 0) {
+                gProfileP1->cup--;
             } else {
-                ((u8 *)gProfileP1)[0x22] = 2;
+                gProfileP1->cup = 2;
             }
-        } while (Cup_IsUnlocked(((u8 *)gProfileP1)[0x22]) == 0);
+        } while (Cup_IsUnlocked(gProfileP1->cup) == 0);
         Cup_ResetProgress();
     }
 }
 
 void Cup_Next(void) {
-    if (((u8 *)gProfileP1)[0x23] == 0) {
+    if (gProfileP1->cupRace == 0) {
         sysSfxPlay(0x31, 1, 1.0f, 1.0f);
         do {
-            if (((u8 *)gProfileP1)[0x22] < 2) {
-                ((u8 *)gProfileP1)[0x22]++;
+            if (gProfileP1->cup < 2) {
+                gProfileP1->cup++;
             } else {
-                ((u8 *)gProfileP1)[0x22] = 0;
+                gProfileP1->cup = 0;
             }
-        } while (Cup_IsUnlocked(((u8 *)gProfileP1)[0x22]) == 0);
+        } while (Cup_IsUnlocked(gProfileP1->cup) == 0);
         Cup_ResetProgress();
     }
 }
@@ -3475,7 +3454,7 @@ void RaceWin_SetupTexts(void) {
 
     sprintf((char *)buf, fmt, D_80141504);
     Menu_SetText(gMenuObjs[12], 0, buf, 320, 210, 0, 2, 1, 1, 255, 255, 255);
-    sprintf((char *)buf, (char *)&D_80100EB4, gProfileP1 + 8, D_80141508);
+    sprintf((char *)buf, (char *)&D_80100EB4, gProfileP1->name, D_80141508);
     Menu_SetText(gMenuObjs[12], 1, buf, 320, 240, 0, 2, 1, 1, 255, 255, 255);
     sprintf((char *)buf, fmt, D_8014150C);
     Menu_SetText(gMenuObjs[12], 2, buf, 320, 270, 0, 2, 1, 1, 255, 255, 255);
@@ -3523,7 +3502,7 @@ void RaceLose_SetupTexts(void) {
 
     sprintf((char *)buf, (char *)&D_80100F0C);
     Menu_SetText(gMenuObjs[13], 0, buf, 320, 210, 0, 2, 1, 1, 255, 255, 255);
-    sprintf((char *)buf, (char *)&D_80100F14, gProfileP1 + 8);
+    sprintf((char *)buf, (char *)&D_80100F14, gProfileP1->name);
     Menu_SetText(gMenuObjs[13], 1, buf, 320, 240, 0, 2, 1, 1, 255, 255, 255);
     sprintf((char *)buf, (char *)&D_80100F1C);
     Menu_SetText(gMenuObjs[13], 2, buf, 320, 270, 0, 2, 1, 1, 255, 255, 255);
@@ -3760,7 +3739,7 @@ void Garage1_Enter(void) {
     gGarageDirtyP1 = 1;
     gKeyRepeatCountP1 = 0;
     Menu_StartEnter(D_800F5F40);
-    gGarageCarP1 = (*(u8 *)((u8 *)((*(void * *)&gProfileP1)) + 0x20));
+    gGarageCarP1 = gProfileP1->car;
 }
 
 void Garage_Enter(void) {
@@ -3780,8 +3759,8 @@ void Garage_Enter(void) {
     gGarageDirtyP2 = 1;
     Menu_StartEnter(D_800F5F40);
     Menu_StartEnter(D_800F5F44);
-    gGarageCarP1 = (*(u8 *)((u8 *)((*(void * *)&gProfileP1)) + 0x20));
-    gGarageCarP2 = (*(u8 *)((u8 *)((*(void * *)&gProfileP2)) + 0x20));
+    gGarageCarP1 = gProfileP1->car;
+    gGarageCarP2 = gProfileP2->car;
 }
 
 void Garage_InputP1(u16 id) {
@@ -3902,7 +3881,7 @@ void Garage_CancelP2(void) {
 
 void Garage_ConfirmP1(void) {
     if ((u8)Car_IsUnlocked(gGarageCarP1, gProfileP1) != 0) {
-        ((u8 *)gProfileP1)[0x20] = gGarageCarP1;
+        gProfileP1->car = gGarageCarP1;
         gGarageReadyP1 = 1;
         if (gNumPlayers == 2) {
             MenuCar_MoveTo(0, 325, 650, 0);
@@ -3917,7 +3896,7 @@ void Garage_ConfirmP1(void) {
 void Garage_ConfirmP2(void) {
     if (gNumPlayers != 1) {
         if ((u8)Car_IsUnlocked(gGarageCarP2, gProfileP2) != 0) {
-            ((u8 *)gProfileP2)[0x20] = gGarageCarP2;
+            gProfileP2->car = gGarageCarP2;
             gGarageReadyP2 = 1;
             MenuCar_MoveTo(1, 675, 650, 0);
             MenuCar_ScaleTo100(1);
@@ -4452,8 +4431,8 @@ void Controls_Enter(void) {
     Menu_LoadBg((s32 *)&D_80100FA4);
     Menu_StartFadeIn();
     fp = &sysInputLoadBindings;
-    (*fp)(gProfileP1 + 0x40, 0);
-    (*fp)(gProfileP2 + 0x40, 1);
+    (*fp)((s32)gProfileP1->bindings, 0);
+    (*fp)((s32)gProfileP2->bindings, 1);
     gControlsRemapP1 = 0;
     gControlsRemapP2 = 0;
     Menu_StartEnter(gMenuObjs[17]);
@@ -4548,8 +4527,8 @@ void Controls_Leave(void) {
     Menu_StartLeave(D_800F5F58);
     Menu_StartFadeOut();
     fp = &sysInputSaveBindings;
-    (*fp)(gProfileP1 + 0x40, 0);
-    (*fp)(gProfileP2 + 0x40, 1);
+    (*fp)((s32)gProfileP1->bindings, 0);
+    (*fp)((s32)gProfileP2->bindings, 1);
 }
 
 
@@ -5094,9 +5073,9 @@ void Keyboard_OpenPlayerName(void) {
     }
     Keyboard_ClearText();
     if (gLoadPlayer == 0) {
-        player = gProfileP1;
+        player = (s32)gProfileP1;
     } else {
-        player = gProfileP2;
+        player = (s32)gProfileP2;
     }
     strcpy(&gKeyboardText, player + 8);
     D_801240D7 = 10;
@@ -5195,7 +5174,7 @@ void Register_LayoutTexts(void) {
 INCLUDE_ASM("asm/nonmatchings/unit_53B30", Register_Enter);
 
 void Register_ApplyChoice(void) {
-    E140b_ l;
+    Profile l;
     s32 p;
 
     switch ((u32)D_801240D8) {
@@ -5211,16 +5190,16 @@ void Register_ApplyChoice(void) {
         case 1:
             if (gLoadPlayer == 0) {
                 Profile_InitDefault(&l, 0);
-                l.w14 |= ((E140b_ *)gProfileP1)->w14;
-                l.w18 |= ((E140b_ *)gProfileP1)->w18;
-                l.w1C |= ((E140b_ *)gProfileP1)->w1C;
+                l.carUnlocks[0] |= gProfileP1->carUnlocks[0];
+                l.carUnlocks[1] |= gProfileP1->carUnlocks[1];
+                l.trackUnlocks |= gProfileP1->trackUnlocks;
                 strcpy((s32 *)l.name, (s32)&gKeyboardText);
                 SaveSlot_Add(gLoadPakP1, &l);
             } else {
                 Profile_InitDefault(&l, 0);
-                l.w14 |= ((E140b_ *)gProfileP2)->w14;
-                l.w18 |= ((E140b_ *)gProfileP2)->w18;
-                l.w1C |= ((E140b_ *)gProfileP2)->w1C;
+                l.carUnlocks[0] |= gProfileP2->carUnlocks[0];
+                l.carUnlocks[1] |= gProfileP2->carUnlocks[1];
+                l.trackUnlocks |= gProfileP2->trackUnlocks;
                 strcpy((s32 *)l.name, (s32)&gKeyboardText);
                 SaveSlot_Add(gLoadPakP2, &l);
             }
@@ -5367,10 +5346,10 @@ void Register_Confirm(void) {
 
     if (Password_Apply(&gKeyboardText, gLoadPlayer == 0 ? gProfileP1 : gProfileP2) == 0) {
         if (gLoadPlayer == 0) {
-            Password_Get(gProfileP1, buf);
+            Password_Get((s32)gProfileP1, buf);
             strcpy((s32 *)&gPasswordP1, (s32)buf);
         } else {
-            Password_Get(gProfileP2, buf);
+            Password_Get((s32)gProfileP2, buf);
             strcpy((s32 *)&gPasswordP2, (s32)buf);
         }
         Fsm_Trigger(&gMenuFsm, 0x7A);
@@ -5788,9 +5767,9 @@ void Records_AddRaceTimes(RaceSt_ *rs) {
     u8 slot;
 
     slot = D_80123EBF + D_80123EBE * 3 - 1;
-    Records_InsertHighA(gProfileP1 + 8, rs->res[0].raceTime, slot);
+    Records_InsertHighA(gProfileP1->name, rs->res[0].raceTime, slot);
     if (gNumPlayers == 2) {
-        Records_InsertHighA(gProfileP2 + 8, rs->res[1].raceTime, slot);
+        Records_InsertHighA(gProfileP2->name, rs->res[1].raceTime, slot);
     }
 }
 
@@ -5799,10 +5778,10 @@ void Records_AddLapTimes(RaceSt_ *rs) {
 
     slot = D_80123EBF + D_80123EBE * 3 - 1;
     if (rs->res[0].lap == D_80123EC1) {
-        Records_InsertTime(gProfileP1 + 8, rs->res[0].lapTime, slot);
+        Records_InsertTime(gProfileP1->name, rs->res[0].lapTime, slot);
     }
     if (gNumPlayers == 2 && rs->res[1].lap == D_80123EC1) {
-        Records_InsertTime(gProfileP2 + 8, rs->res[1].lapTime, slot);
+        Records_InsertTime(gProfileP2->name, rs->res[1].lapTime, slot);
     }
 }
 
@@ -5894,8 +5873,8 @@ void Demo_RunRace(void) {
 
 
 void Race_CopyPlayerNames(void) {
-    strcpy(&D_80138D20, gProfileP1 + 8);
-    strcpy(&D_801345B8, gProfileP2 + 8);
+    strcpy(&D_80138D20, gProfileP1->name);
+    strcpy(&D_801345B8, gProfileP2->name);
 }
 
 s32 Cheat_GetColorShiftFlag(u32 arg0) {
@@ -5927,8 +5906,8 @@ void Race_ReturnPractice(void) {
             break;
     }
     Music_StopTrack();
-    ((s32 *)gProfileP1)[15] = 0;
-    ((s32 *)gProfileP2)[15] = 0;
+    gProfileP1->cheats = 0;
+    gProfileP2->cheats = 0;
 }
 
 
@@ -5960,8 +5939,8 @@ void Race_ReturnExhibition(void) {
             break;
     }
     Music_StopTrack();
-    ((s32 *)gProfileP1)[15] = 0;
-    ((s32 *)gProfileP2)[15] = 0;
+    gProfileP1->cheats = 0;
+    gProfileP2->cheats = 0;
 }
 
 
@@ -5993,8 +5972,8 @@ void Race_ReturnAirtime(void) {
             break;
     }
     Music_StopTrack();
-    ((s32 *)gProfileP1)[15] = 0;
-    ((s32 *)gProfileP2)[15] = 0;
+    gProfileP1->cheats = 0;
+    gProfileP2->cheats = 0;
 }
 
 
@@ -6022,13 +6001,13 @@ void Race_StartCup(void) {
     Menu_FreeBg();
     Race_CopyPlayerNames();
     memset(D_80124D10, 1, 0x29);
-    strcpy((s32 *)gRaceSetup.p[0].name, (s32 *)gCarModelNames[((u8 *)gProfileP1)[0x20]]);
-    gRaceSetup.p[0].car = ((u8 *)gProfileP1)[0x20];
+    strcpy((s32 *)gRaceSetup.p[0].name, (s32 *)gCarModelNames[gProfileP1->car]);
+    gRaceSetup.p[0].car = gProfileP1->car;
     gRaceSetup.p[0].kind = 1;
     gRaceSetup.p[0].player = 0;
     gRaceSetup.p[0].grid = Cup_GetPosition(0);
-    D_80124D10[((u8 *)gProfileP1)[0x20]] = 0;
-    if (((u8 *)gProfileP1)[0x22] == 2) {
+    D_80124D10[gProfileP1->car] = 0;
+    if (gProfileP1->cup == 2) {
         gRaceSetup.count = 3;
         gRaceSetup.f9C = 0xFF;
         gRaceSetup.p[0].grid = 2;
@@ -6061,31 +6040,31 @@ void Race_StartCup(void) {
             gRaceSetup.p[i].grid = Cup_GetPosition(i);
         }
     }
-    c = D_800F60D4[((u8 *)gProfileP1)[0x22]][((u8 *)gProfileP1)[0x23]];
+    c = D_800F60D4[gProfileP1->cup][gProfileP1->cupRace];
     gRaceSetup.cup = c / 3;
     gRaceSetup.track = c % 3 + 1;
     strcpy((s32 *)gRaceSetup.name, D_800F9FD0[gRaceSetup.cup]);
     gRaceSetup.f19 = 6;
     gRaceSetup.f1A = D_800FA010[gRaceSetup.cup][gRaceSetup.track - 1];
     gRaceSetup.timeLimit = 0;
-    if (*(s32 *)(gProfileP1 + 0x3C) != 0) {
-        gRaceSetup.cheats = *(s32 *)(gProfileP1 + 0x3C);
-    } else if (*(s32 *)(gProfileP2 + 0x3C) != 0) {
-        gRaceSetup.cheats = *(s32 *)(gProfileP2 + 0x3C);
+    if (gProfileP1->cheats != 0) {
+        gRaceSetup.cheats = gProfileP1->cheats;
+    } else if (gProfileP2->cheats != 0) {
+        gRaceSetup.cheats = gProfileP2->cheats;
     } else {
         gRaceSetup.cheats = 0;
     }
     g = &gRaceSetup;
     g->flags = 0x20;
-    a = Cheat_GetColorShiftFlag(*(s32 *)(gProfileP1 + 0x3C));
-    b = Cheat_GetColorShiftFlag(*(s32 *)(gProfileP2 + 0x3C));
-    d = Cheat_GetMirrorFlag(*(s32 *)(gProfileP1 + 0x3C));
-    g->flags |= a | b | d | Cheat_GetMirrorFlag(*(s32 *)(gProfileP2 + 0x3C));
-    if (((u8 *)gProfileP1)[0x22] == 1) {
+    a = Cheat_GetColorShiftFlag(gProfileP1->cheats);
+    b = Cheat_GetColorShiftFlag(gProfileP2->cheats);
+    d = Cheat_GetMirrorFlag(gProfileP1->cheats);
+    g->flags |= a | b | d | Cheat_GetMirrorFlag(gProfileP2->cheats);
+    if (gProfileP1->cup == 1) {
         g->flags |= 0x100;
-        sprintf((char *)buf, (char *)&D_8010105C, ((u8 *)gProfileP1)[0x23] + 1);
+        sprintf((char *)buf, (char *)&D_8010105C, gProfileP1->cupRace + 1);
         strcpy((s32 *)g->sub, (s32)buf);
-    } else if (((u8 *)gProfileP1)[0x22] == 2) {
+    } else if (gProfileP1->cup == 2) {
         g->flags |= 0x100;
         sprintf((char *)buf, (char *)&D_80101064);
         strcpy((s32 *)g->sub, (s32)buf);
