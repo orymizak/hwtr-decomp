@@ -270,7 +270,7 @@ extern void (*D_80141068)(s32);
 void func_800C90DC(void);
 void MenuObjs_Alloc(void);
 Big88C_ *func_800B02E4(s32);
-void func_800C65AC(void *);
+void Records_SaveRaceResult(void *);
 void Track_SelectPrev(void);
 extern u8 D_800F6424;
 extern u8 D_800F6444;
@@ -2103,7 +2103,7 @@ void Menu_ReturnFromGame(void) {
     if (gSaveLoaded == 0) {
         *(Big88C_ *)&D_80124160 = *func_800B02E4(0);
     }
-    func_800C65AC(&gRaceResult);
+    Records_SaveRaceResult(&gRaceResult);
 }
 
 
@@ -3217,7 +3217,7 @@ void Championship_Nop(void) {
 
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800BBC58);
+INCLUDE_ASM("asm/nonmatchings/unit_53B30", Cup_SetupRace);
 
 INCLUDE_ASM("asm/nonmatchings/unit_53B30", Championship_SetupTexts);
 
@@ -3251,7 +3251,7 @@ void Championship_ResetSel(void) {
     gInChampionship = 0;
 }
 
-void func_800BC3FC(void) {
+void Championship_LeaveNop(void) {
 
 }
 
@@ -4742,7 +4742,7 @@ void ControlsConflict_Input(void) {
     }
 }
 
-void func_800C1DB0(void) {
+void Controls_FadeIn(void) {
     Menu_StartFadeIn();
 }
 
@@ -4974,7 +4974,7 @@ void LoadGame_ApplySlot(void) {
     Menu_Advance();
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800C2B78);
+INCLUDE_ASM("asm/nonmatchings/unit_53B30", LoadGame_SyncProfiles);
 
 void LoadGame_Leave(void) {
     Menu_StartLeave(D_800F5F64);
@@ -5389,7 +5389,7 @@ void Register_MoveDown(void) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800C3F9C);
+INCLUDE_ASM("asm/nonmatchings/unit_53B30", Register_PressKey);
 
 void Register_Leave(void) {
     Menu_StartFadeOut();
@@ -5635,7 +5635,7 @@ void HighScores_LeaveFrame(void) {
     Menu_Nop(D_800F5F80);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800C5218);
+INCLUDE_ASM("asm/nonmatchings/unit_53B30", Cup_AwardWin);
 
 void Unlocks_CheckNew(void) {
     if (D_80124CE4 != 0 || D_80124CE8 != 0 || D_80124CEC != 0 || D_80124CF0 != 0 || D_80124CF4 != 0 ||
@@ -5647,7 +5647,7 @@ void Unlocks_CheckNew(void) {
 }
 
 
-s32 func_800C5480(u32 *m) {
+s32 Bits_PopLowest(u32 *m) {
     u32 v = *m;
     u8 i = 0;
 
@@ -5680,7 +5680,7 @@ void Unlocks_FreeModel(void) {
     }
 }
 
-void func_800C55CC(u8 i) {
+void Unlocks_ShowCar(u8 i) {
     u8 buf[0x40];
     u8 big[0x118];
 
@@ -5695,7 +5695,7 @@ void func_800C55CC(u8 i) {
     MenuCar_MoveTo(0, 510, 525, 0);
 }
 
-void func_800C569C(u8 i) {
+void Unlocks_ShowTrack(u8 i) {
     sysWorldLoad(NameList_Add(&D_80100E10), gTrackNames[(u8)(i / 3)][(u8)(i % 3)]);
     MenuGlobe_Reset();
     MenuGlobe_SpinLarge();
@@ -5704,7 +5704,7 @@ void func_800C569C(u8 i) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800C5758);
+INCLUDE_ASM("asm/nonmatchings/unit_53B30", Unlocks_ShowNext);
 
 void Unlocks_ResetTexts(void) {
     Menu_ResetTexts(D_800F5F88);
@@ -5756,7 +5756,7 @@ typedef struct { u8 p0[4]; SaveRecTable highA[12]; SaveRecTable times[12]; SaveR
 #define SAVE_DATA ((SaveData *)gActiveSave)
 extern char *D_80141230;
 /* Inserts (name, value) into track's high-value record table (highA); an entry with the placeholder name is overwritten. */
-void func_800C5FD0(char *name, u32 value, u8 track) {
+void Records_InsertHighA(char *name, u32 value, u8 track) {
     SaveRecTable tmp;
     u8 i;
 
@@ -5777,7 +5777,7 @@ void func_800C5FD0(char *name, u32 value, u8 track) {
 }
 
 /* Inserts (name, value) into track's best-time table (times, lower is better); an entry with the placeholder name is overwritten. */
-void func_800C615C(char *name, u32 value, u8 track) {
+void Records_InsertTime(char *name, u32 value, u8 track) {
     SaveRecTable tmp;
     u8 i;
 
@@ -5798,7 +5798,7 @@ void func_800C615C(char *name, u32 value, u8 track) {
 }
 
 /* Inserts (name, value) into track's second high-value record table (highB); an entry with the placeholder name is overwritten. */
-void func_800C62E8(char *name, u8 track, u32 value) {
+void Records_InsertHighB(char *name, u8 track, u32 value) {
     SaveRecTable tmp;
     u8 i;
 
@@ -5818,29 +5818,29 @@ void func_800C62E8(char *name, u8 track, u32 value) {
     }
 }
 
-void func_800C6474(RaceSt_ *rs) {
+void Records_AddRaceTimes(RaceSt_ *rs) {
     u8 slot;
 
     slot = D_80123EBF + D_80123EBE * 3 - 1;
-    func_800C5FD0(gProfileP1 + 8, rs->res[0].raceTime, slot);
+    Records_InsertHighA(gProfileP1 + 8, rs->res[0].raceTime, slot);
     if (gNumPlayers == 2) {
-        func_800C5FD0(gProfileP2 + 8, rs->res[1].raceTime, slot);
+        Records_InsertHighA(gProfileP2 + 8, rs->res[1].raceTime, slot);
     }
 }
 
-void func_800C6500(RaceSt_ *rs) {
+void Records_AddLapTimes(RaceSt_ *rs) {
     u8 slot;
 
     slot = D_80123EBF + D_80123EBE * 3 - 1;
     if (rs->res[0].lap == D_80123EC1) {
-        func_800C615C(gProfileP1 + 8, rs->res[0].lapTime, slot);
+        Records_InsertTime(gProfileP1 + 8, rs->res[0].lapTime, slot);
     }
     if (gNumPlayers == 2 && rs->res[1].lap == D_80123EC1) {
-        func_800C615C(gProfileP2 + 8, rs->res[1].lapTime, slot);
+        Records_InsertTime(gProfileP2 + 8, rs->res[1].lapTime, slot);
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800C65AC);
+INCLUDE_ASM("asm/nonmatchings/unit_53B30", Records_SaveRaceResult);
 
 void Help_Enter(void) {
     s32 buf[8];
@@ -6039,7 +6039,7 @@ void Airtime_RunRace(void) {
 }
 
 
-u32 func_800C7A70(u32 arg0) {
+u32 Car_WrapIndex(u32 arg0) {
     return ((arg0 & 0xFF) % 41) & 0xFF;
 }
 
@@ -6080,7 +6080,7 @@ void Race_StartCup(void) {
         gRaceSetup.cnt = 6;
         gRaceSetup.f9C = gActiveSave[0x87E];
         for (i = 1; i < 6; i++) {
-            r = (u8)func_800C7A70(((u8 *)gProfileP1 + i)[7]);
+            r = (u8)Car_WrapIndex(((u8 *)gProfileP1 + i)[7]);
             do {
                 r++;
                 if (r >= 0x29) {
