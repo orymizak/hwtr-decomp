@@ -5,8 +5,8 @@ extern void (*D_80140FAC)(s32, s32, f32, f32);
 u8 func_800C891C(u16 mask);
 extern void (*D_8014556C)(s32);
 extern u8 D_800F64B0[][14];
-s32 func_800C9F18(void *,s32);
-extern u8 D_800F9F70;
+s32 Fsm_Trigger(void *,s32);
+extern u8 gMenuFsm;
 
 extern s32 (*D_801455A0)(s32);
 extern s32 D_80124D48;
@@ -15,8 +15,8 @@ extern s32 D_80124D40;
 extern s32 (*sysTimeGetMillis)();
 extern s32 D_80124D44;
 
-void func_800C8110(void) {
-    func_800C9F18(&D_800F9F70, 0x11);
+void Menu_Advance(void) {
+    Fsm_Trigger(&gMenuFsm, 0x11);
 }
 
 s32 func_800C8134(s32 arg0) {
@@ -65,7 +65,7 @@ void func_800C81CC(u8 player, s8 c) {
     buf[8] = 0;
 }
 
-u8 func_800C8214(u8 i, s32 k) {
+u8 Input_PressedOnce(u8 i, s32 k) {
     s32 j = k - 14;
 
     if ((u8)D_801455A0(i) != 0) {
@@ -85,7 +85,7 @@ void func_800C82B4(void) {
 
     if ((u32)((*fp)() - D_80124D44) >= 1000) {
         D_80124D44 = (*fp)();
-        func_800C9F18(&D_800F9F70, 0x7C);
+        Fsm_Trigger(&gMenuFsm, 0x7C);
     }
 }
 
@@ -94,7 +94,7 @@ void func_800C8320(void) {
 
     if ((u32)((*fp)() - D_80124D44) >= 3000) {
         D_80124D44 = (*fp)();
-        func_800C9F18(&D_800F9F70, 0x2D);
+        Fsm_Trigger(&gMenuFsm, 0x2D);
     }
 }
 
@@ -104,7 +104,7 @@ void func_800C838C(void) {
 
     if ((u32)((*fp)() - D_80124D44) >= 5000) {
         D_80124D44 = (*fp)();
-        func_800C9F18(&D_800F9F70, 0x18);
+        Fsm_Trigger(&gMenuFsm, 0x18);
     }
 }
 
@@ -114,20 +114,20 @@ void func_800C83F8(void) {
 
     if ((u32)((*fp)() - D_80124D44) >= 30000) {
         D_80124D44 = (*fp)();
-        func_800C9F18(&D_800F9F70, 0x2E);
+        Fsm_Trigger(&gMenuFsm, 0x2E);
     }
 }
 
 
 void func_800C8464(void) {
     if ((u32) (sysTimeGetMillis() - D_80124D40) >= 0x1388U) {
-        func_800C9F18(&D_800F9F70, 0x10);
+        Fsm_Trigger(&gMenuFsm, 0x10);
     }
 }
 
 void func_800C84B0(void) {
     if ((u32) (sysTimeGetMillis() - D_80124D40) >= 0x7530U) {
-        func_800C9F18(&D_800F9F70, 0x38);
+        Fsm_Trigger(&gMenuFsm, 0x38);
     }
 }
 
@@ -145,71 +145,71 @@ u8 func_800C8554(u16 mask) {
     u8 hit = 0;
 
     D_8014556C(0);
-    if (func_800C8214(0, 0xE) && (mask & 0x1)) {
+    if (Input_PressedOnce(0, 0xE) && (mask & 0x1)) {
         func_800C84FC();
         hit = 1;
         D_80140FAC(0x2E, 1, 1.0f, 1.0f);
-        func_800C9F18(&D_800F9F70, 6);
+        Fsm_Trigger(&gMenuFsm, 6);
     }
-    if (func_800C8214(0, 0xF) && (mask & 0x2)) {
+    if (Input_PressedOnce(0, 0xF) && (mask & 0x2)) {
         func_800C84FC();
         hit = 1;
         D_80140FAC(0x2F, 1, 1.0f, 1.0f);
-        func_800C9F18(&D_800F9F70, 8);
+        Fsm_Trigger(&gMenuFsm, 8);
     }
-    if (func_800C8214(0, 0x12) && (mask & 0x10)) {
+    if (Input_PressedOnce(0, 0x12) && (mask & 0x10)) {
         func_800C84FC();
         hit = 1;
         D_80140FAC(0x32, 1, 1.0f, 1.0f);
-        func_800C9F18(&D_800F9F70, 2);
+        Fsm_Trigger(&gMenuFsm, 2);
     }
-    if (func_800C8214(0, 0x13) && (mask & 0x20)) {
+    if (Input_PressedOnce(0, 0x13) && (mask & 0x20)) {
         func_800C84FC();
         hit = 1;
         D_80140FAC(0x33, 1, 1.0f, 1.0f);
-        func_800C9F18(&D_800F9F70, 0);
+        Fsm_Trigger(&gMenuFsm, 0);
     }
-    if (func_800C8214(0, 0x11) && (mask & 0x8)) {
+    if (Input_PressedOnce(0, 0x11) && (mask & 0x8)) {
         func_800C84FC();
         hit = 1;
         D_80140FAC(0x31, 1, 1.0f, 1.0f);
-        func_800C9F18(&D_800F9F70, 12);
+        Fsm_Trigger(&gMenuFsm, 12);
     }
-    if (func_800C8214(0, 0x10) && (mask & 0x4)) {
+    if (Input_PressedOnce(0, 0x10) && (mask & 0x4)) {
         func_800C84FC();
         hit = 1;
         D_80140FAC(0x30, 1, 1.0f, 1.0f);
-        func_800C9F18(&D_800F9F70, 10);
+        Fsm_Trigger(&gMenuFsm, 10);
     }
-    if (func_800C8214(0, 0x1A) && (mask & 0x40)) {
+    if (Input_PressedOnce(0, 0x1A) && (mask & 0x40)) {
         func_800C84FC();
         hit = 1;
         D_80140FAC(0x32, 1, 1.0f, 1.0f);
-        func_800C9F18(&D_800F9F70, 4);
+        Fsm_Trigger(&gMenuFsm, 4);
     }
-    if (func_800C8214(0, 0x14)) {
+    if (Input_PressedOnce(0, 0x14)) {
         hit = 1;
         func_800C81CC(0, 0x31);
     }
-    if (func_800C8214(0, 0x15)) {
+    if (Input_PressedOnce(0, 0x15)) {
         hit = 1;
         func_800C81CC(0, 0x32);
     }
-    if (func_800C8214(0, 0x16)) {
+    if (Input_PressedOnce(0, 0x16)) {
         hit = 1;
         func_800C81CC(0, 0x33);
-        func_800C9F18(&D_800F9F70, 0xE);
+        Fsm_Trigger(&gMenuFsm, 0xE);
     }
-    if (func_800C8214(0, 0x17)) {
+    if (Input_PressedOnce(0, 0x17)) {
         hit = 1;
         func_800C81CC(0, 0x34);
-        func_800C9F18(&D_800F9F70, 0x62);
+        Fsm_Trigger(&gMenuFsm, 0x62);
     }
-    if (func_800C8214(0, 0x18)) {
+    if (Input_PressedOnce(0, 0x18)) {
         hit = 1;
         func_800C81CC(0, 0x35);
     }
-    if (func_800C8214(0, 0x19)) {
+    if (Input_PressedOnce(0, 0x19)) {
         hit = 1;
         func_800C81CC(0, 0x36);
     }
@@ -222,71 +222,71 @@ u8 func_800C891C(u16 mask) {
     u8 hit = 0;
 
     D_8014556C(1);
-    if (func_800C8214(1, 0xE) && (mask & 0x1)) {
+    if (Input_PressedOnce(1, 0xE) && (mask & 0x1)) {
         func_800C84FC();
         hit = 1;
         D_80140FAC(0x2E, 1, 1.0f, 1.0f);
-        func_800C9F18(&D_800F9F70, 7);
+        Fsm_Trigger(&gMenuFsm, 7);
     }
-    if (func_800C8214(1, 0xF) && (mask & 0x2)) {
+    if (Input_PressedOnce(1, 0xF) && (mask & 0x2)) {
         func_800C84FC();
         hit = 1;
         D_80140FAC(0x2F, 1, 1.0f, 1.0f);
-        func_800C9F18(&D_800F9F70, 9);
+        Fsm_Trigger(&gMenuFsm, 9);
     }
-    if (func_800C8214(1, 0x12) && (mask & 0x10)) {
+    if (Input_PressedOnce(1, 0x12) && (mask & 0x10)) {
         func_800C84FC();
         hit = 1;
         D_80140FAC(0x32, 1, 1.0f, 1.0f);
-        func_800C9F18(&D_800F9F70, 3);
+        Fsm_Trigger(&gMenuFsm, 3);
     }
-    if (func_800C8214(1, 0x13) && (mask & 0x20)) {
+    if (Input_PressedOnce(1, 0x13) && (mask & 0x20)) {
         func_800C84FC();
         hit = 1;
         D_80140FAC(0x33, 1, 1.0f, 1.0f);
-        func_800C9F18(&D_800F9F70, 1);
+        Fsm_Trigger(&gMenuFsm, 1);
     }
-    if (func_800C8214(1, 0x11) && (mask & 0x8)) {
+    if (Input_PressedOnce(1, 0x11) && (mask & 0x8)) {
         func_800C84FC();
         hit = 1;
         D_80140FAC(0x31, 1, 1.0f, 1.0f);
-        func_800C9F18(&D_800F9F70, 13);
+        Fsm_Trigger(&gMenuFsm, 13);
     }
-    if (func_800C8214(1, 0x10) && (mask & 0x4)) {
+    if (Input_PressedOnce(1, 0x10) && (mask & 0x4)) {
         func_800C84FC();
         hit = 1;
         D_80140FAC(0x30, 1, 1.0f, 1.0f);
-        func_800C9F18(&D_800F9F70, 11);
+        Fsm_Trigger(&gMenuFsm, 11);
     }
-    if (func_800C8214(1, 0x1A) && (mask & 0x40)) {
+    if (Input_PressedOnce(1, 0x1A) && (mask & 0x40)) {
         func_800C84FC();
         hit = 1;
         D_80140FAC(0x32, 1, 1.0f, 1.0f);
-        func_800C9F18(&D_800F9F70, 5);
+        Fsm_Trigger(&gMenuFsm, 5);
     }
-    if (func_800C8214(1, 0x14)) {
+    if (Input_PressedOnce(1, 0x14)) {
         hit = 1;
         func_800C81CC(1, 0x31);
     }
-    if (func_800C8214(1, 0x15)) {
+    if (Input_PressedOnce(1, 0x15)) {
         hit = 1;
         func_800C81CC(1, 0x32);
     }
-    if (func_800C8214(1, 0x16)) {
+    if (Input_PressedOnce(1, 0x16)) {
         hit = 1;
         func_800C81CC(1, 0x33);
-        func_800C9F18(&D_800F9F70, 0xF);
+        Fsm_Trigger(&gMenuFsm, 0xF);
     }
-    if (func_800C8214(1, 0x17)) {
+    if (Input_PressedOnce(1, 0x17)) {
         hit = 1;
         func_800C81CC(1, 0x34);
-        func_800C9F18(&D_800F9F70, 0x63);
+        Fsm_Trigger(&gMenuFsm, 0x63);
     }
-    if (func_800C8214(1, 0x18)) {
+    if (Input_PressedOnce(1, 0x18)) {
         hit = 1;
         func_800C81CC(1, 0x35);
     }
-    if (func_800C8214(1, 0x19)) {
+    if (Input_PressedOnce(1, 0x19)) {
         hit = 1;
         func_800C81CC(1, 0x36);
     }
@@ -317,5 +317,5 @@ void func_800C8D40(void) {
             }
         }
     }
-    func_800C9F18(&D_800F9F70, 0x11);
+    Fsm_Trigger(&gMenuFsm, 0x11);
 }

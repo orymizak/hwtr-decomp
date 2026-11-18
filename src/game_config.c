@@ -1,7 +1,7 @@
 #include "common.h"
 #include "include_asm.h"
 
-extern u8 D_800F9F70[];
+extern u8 gMenuFsm[];
 extern char *D_800F9FA0[4][3];
 
 s32 strcmp(const char *a, const char *b);
@@ -12,7 +12,7 @@ s32 func_800C9F78(void *arg0);
 
 s32 func_80087720(void) {
     if (func_800875A0()) {
-        func_800C9ED0(D_800F9F70);
+        func_800C9ED0(gMenuFsm);
         return 1;
     }
     return 0;
@@ -23,7 +23,7 @@ s32 func_80087758(void) {
 }
 
 s32 func_8008777C(void) {
-    return func_800C9F78(D_800F9F70) == 0;
+    return func_800C9F78(gMenuFsm) == 0;
 }
 
 s32 func_800877A0(char *name) {

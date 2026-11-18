@@ -23,7 +23,7 @@ s32 func_8008E510(u8);
 
 s32 Memory_Alloc(s32);
 s32 func_800C9280();
-extern void *D_800F5F08;
+extern void *gMenuObjs;
 s32 Memory_Free(s32);
 extern s32 D_800F9F90;
 extern s32 D_800F9F94;
@@ -40,13 +40,13 @@ void func_800C96DC(void) {
     s32 k;
 
     for (i = 0; i < 33; i++) {
-        for (j = 0; j < ((MenuX_ **)&D_800F5F08)[i]->n; j++) {
-            if (((MenuX_ **)&D_800F5F08)[i]->f[j].buf == NULL) {
-                ((MenuX_ **)&D_800F5F08)[i]->f[j].buf = (char *)Memory_Alloc(((MenuX_ **)&D_800F5F08)[i]->f[j].len);
-                for (k = 0; k < ((MenuX_ **)&D_800F5F08)[i]->f[j].len; k++) {
-                    ((MenuX_ **)&D_800F5F08)[i]->f[j].buf[k] = '_';
+        for (j = 0; j < ((MenuX_ **)&gMenuObjs)[i]->n; j++) {
+            if (((MenuX_ **)&gMenuObjs)[i]->f[j].buf == NULL) {
+                ((MenuX_ **)&gMenuObjs)[i]->f[j].buf = (char *)Memory_Alloc(((MenuX_ **)&gMenuObjs)[i]->f[j].len);
+                for (k = 0; k < ((MenuX_ **)&gMenuObjs)[i]->f[j].len; k++) {
+                    ((MenuX_ **)&gMenuObjs)[i]->f[j].buf[k] = '_';
                 }
-                ((MenuX_ **)&D_800F5F08)[i]->f[j].b11 = 0;
+                ((MenuX_ **)&gMenuObjs)[i]->f[j].b11 = 0;
             }
         }
     }
@@ -54,15 +54,15 @@ void func_800C96DC(void) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_69E80", func_800C9848);
 
-void func_800C9978(void) {
+void MenuObjs_Alloc(void) {
     s32 i;
     u8 *t;
 
     func_800C9280();
     for (i = 0; i < 33; i++) {
-        t = (&D_800F5F08)[i];
+        t = (&gMenuObjs)[i];
         if (t[0x20] != 0 && *(s32 *)(t + 0x28) == 0) {
-            *(s32 *)((u8 *)(&D_800F5F08)[i] + 0x28) = Memory_Alloc(t[0x20] * 0x34);
+            *(s32 *)((u8 *)(&gMenuObjs)[i] + 0x28) = Memory_Alloc(t[0x20] * 0x34);
         }
     }
     func_800C96DC();
@@ -74,16 +74,16 @@ void func_800C9A00(void) {
 
     func_800C9590();
     for (i = 0; i < 33; i++) {
-        if (((TrA00_ **)&D_800F5F08)[i]->b20) {
-            Memory_Free(((TrA00_ **)&D_800F5F08)[i]->w28);
-            ((TrA00_ **)&D_800F5F08)[i]->w28 = 0;
+        if (((TrA00_ **)&gMenuObjs)[i]->b20) {
+            Memory_Free(((TrA00_ **)&gMenuObjs)[i]->w28);
+            ((TrA00_ **)&gMenuObjs)[i]->w28 = 0;
         }
     }
     for (i = 0; i < 33; i++) {
-        for (j = 0; j < ((TrA00_ **)&D_800F5F08)[i]->n; j++) {
-            if (((TrA00_ **)&D_800F5F08)[i]->sub[j].a != 0) {
-                Memory_Free(((TrA00_ **)&D_800F5F08)[i]->sub[j].a);
-                ((TrA00_ **)&D_800F5F08)[i]->sub[j].a = 0;
+        for (j = 0; j < ((TrA00_ **)&gMenuObjs)[i]->n; j++) {
+            if (((TrA00_ **)&gMenuObjs)[i]->sub[j].a != 0) {
+                Memory_Free(((TrA00_ **)&gMenuObjs)[i]->sub[j].a);
+                ((TrA00_ **)&gMenuObjs)[i]->sub[j].a = 0;
             }
         }
     }
@@ -196,7 +196,7 @@ s32 func_800C9ED0(Seq9_ *s) {
 }
 
 
-s32 func_800C9F18(Ob9F_ *o, s32 id) {
+s32 Fsm_Trigger(Ob9F_ *o, s32 id) {
     s32 i;
 
     if (o->cur == -1) {

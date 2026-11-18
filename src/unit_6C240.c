@@ -34,7 +34,7 @@ extern u8 (*D_801455A4)(void);
 s32 func_800CB168();
 s32 func_800CB28C();
 s32 func_800CB2C0(s32,s32);
-s32 func_800C9F18(void *,s32);
+s32 Fsm_Trigger(void *,s32);
 extern u8 D_800FAB88;
 
 extern s8 D_80125590;
@@ -117,7 +117,7 @@ void func_800CC2DC(void) {
 }
 
 void func_800CC2F8(void) {
-    func_800C9F18(&D_800FAB88, 0);
+    Fsm_Trigger(&D_800FAB88, 0);
 }
 
 void func_800CC31C(void) {
@@ -188,9 +188,9 @@ void func_800CC4D0(void) {
 
 void func_800CC4F4(void) {
     if (D_801455A4() != 0) {
-        func_800C9F18(&D_800FAB88, 7);
+        Fsm_Trigger(&D_800FAB88, 7);
     } else {
-        func_800C9F18(&D_800FAB88, 8);
+        Fsm_Trigger(&D_800FAB88, 8);
     }
 }
 
@@ -264,18 +264,18 @@ void func_800CC70C(void) {
     D_800FA260 = r;
     if ((r & 9) == 1) {
         if (r & 2) {
-            func_800C9F18(&D_800FAB88, 0xB);
+            Fsm_Trigger(&D_800FAB88, 0xB);
             D_800FA264 = -8;
         } else if (D_800FA264++ >= 3) {
-            func_800C9F18(&D_800FAB88, 0xB);
+            Fsm_Trigger(&D_800FAB88, 0xB);
             D_800FA264 = 0;
         }
     } else if ((r & 9) == 8) {
         if (r & 0x10) {
-            func_800C9F18(&D_800FAB88, 0xA);
+            Fsm_Trigger(&D_800FAB88, 0xA);
             D_800FA268 = -8;
         } else if (D_800FA268++ >= 3) {
-            func_800C9F18(&D_800FAB88, 0xA);
+            Fsm_Trigger(&D_800FAB88, 0xA);
             D_800FA268 = 0;
         }
     }

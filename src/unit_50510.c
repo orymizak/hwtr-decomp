@@ -24,7 +24,7 @@ typedef struct { s32 pad0; s16 a; s16 b; s16 c; u8 kind; u8 padB; u16 d; u16 pad
 typedef struct { f32 p[3]; f32 q[3]; f32 v[3]; f32 w[3]; u16 e; u16 f; } Dst34_;
 typedef struct { s32 d[0x88C / 4]; } Big88C_;
 typedef struct { s32 d[0x140 / 4]; } Blk140_;
-extern u8 *D_800F5F08[];
+extern u8 *gMenuObjs[];
 typedef struct { u8 a; u8 pad; s16 x; s16 y; s16 x2; s16 y2; } E0A7_;
 u8 func_800B2C94(P16b_, P16b_);
 f32 func_800B12C4(s32 ms);
@@ -497,14 +497,14 @@ void func_800B1824(void) {
     u32 i;
 
     for (k = 0; k < 33; k++) {
-        for (i = 0; i < D_800F5F08[k][0]; i++) {
-            func_800B133C(*(u8 **)(D_800F5F08[k] + 4) + i * 0x2C);
+        for (i = 0; i < gMenuObjs[k][0]; i++) {
+            func_800B133C(*(u8 **)(gMenuObjs[k] + 4) + i * 0x2C);
         }
-        for (i = 0; i < D_800F5F08[k][8]; i++) {
-            func_800B14F8(*(u8 **)(D_800F5F08[k] + 0xC) + i * 0x18);
+        for (i = 0; i < gMenuObjs[k][8]; i++) {
+            func_800B14F8(*(u8 **)(gMenuObjs[k] + 0xC) + i * 0x18);
         }
-        for (i = 0; i < D_800F5F08[k][0x10]; i++) {
-            func_800B1694(*(u8 **)(D_800F5F08[k] + 0x14) + i * 0x18);
+        for (i = 0; i < gMenuObjs[k][0x10]; i++) {
+            func_800B1694(*(u8 **)(gMenuObjs[k] + 0x14) + i * 0x18);
         }
     }
 }
@@ -672,11 +672,11 @@ void func_800B20A4(void) {
     u32 i;
 
     for (k = 0; k < 33; k++) {
-        for (i = 0; i < D_800F5F08[k][8]; i++) {
-            func_800B1B60(*(u8 **)(D_800F5F08[k] + 0xC) + i * 0x18);
+        for (i = 0; i < gMenuObjs[k][8]; i++) {
+            func_800B1B60(*(u8 **)(gMenuObjs[k] + 0xC) + i * 0x18);
         }
-        for (i = 0; i < D_800F5F08[k][0x10]; i++) {
-            func_800B1D30(*(u8 **)(D_800F5F08[k] + 0x14) + i * 0x18);
+        for (i = 0; i < gMenuObjs[k][0x10]; i++) {
+            func_800B1D30(*(u8 **)(gMenuObjs[k] + 0x14) + i * 0x18);
         }
     }
 }
@@ -891,7 +891,7 @@ void func_800B2BAC(u8 *t) {
     }
 }
 
-void func_800B2C1C(void) {
+void Menu_ResetState(void) {
     u8 i;
 
     func_800C90DC();
