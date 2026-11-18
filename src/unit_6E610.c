@@ -113,7 +113,7 @@ INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CDA10);
 typedef struct { s32 unk0; s32 unk4; s32 unk8; s32 unkC; s32 unk10; s32 unk14; s32 unk18; s32 unk1C; s32 unk20; s32 unk24; u8 p28[0x18]; s32 unk40; } AudCfgB_;
 typedef struct { u8 p0[0xC9]; u8 unkC9; u8 pCA[0x72]; } VoiceIB_;
 typedef struct { u16 a; u16 b; u8 c; } AudMsgB_;
-extern s32 D_80000300;
+extern s32 osTvType;
 extern s32 D_80138144;
 extern s32 D_80145564;
 extern s32 D_80127920;
@@ -145,7 +145,7 @@ void func_800CDB5C(AudCfgB_ *c) {
     D_80138144 = c->unk40;
     D_80145564 = c->unk0;
     D_80127934 = c->unk4 + 4;
-    if (D_80000300 == 0) {
+    if (osTvType == 0) {
         D_80127944 = 50;
     } else {
         D_80127944 = 60;

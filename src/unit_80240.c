@@ -1,23 +1,22 @@
 #include "common.h"
 #include "include_asm.h"
-extern u64 D_801415B0;
-extern u32 D_801345C4;
-u32 __osDisableInt(void);
-void __osRestoreInt(u32);
-u32 osGetCount(void);
+#include "PR/os_internal.h"
+#include "PR/ultraerror.h"
+#include "PRinternal/osint.h"
+#include "PRinternal/viint.h"
 
 
-
-u64 osGetTime(void) {
+OSTime osGetTime(void) {
     u32 tmptime;
     u32 elapseCount;
-    u64 currentCount;
+    OSTime currentCount;
     register u32 saveMask;
+
 
     saveMask = __osDisableInt();
     tmptime = osGetCount();
-    elapseCount = tmptime - D_801345C4;
-    currentCount = D_801415B0;
+    elapseCount = tmptime - __osBaseCounter;
+    currentCount = __osCurrentTime;
     __osRestoreInt(saveMask);
     return currentCount + elapseCount;
 }

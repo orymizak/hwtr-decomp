@@ -1,29 +1,30 @@
 #include "common.h"
 #include "include_asm.h"
-typedef struct { u16 type; u8 pri; u8 status; void *retQueue; void *dramAddr; u32 devAddr; u32 size; void *piHandle; } IoMesgE_;
-extern s32 D_800FB2A0;
-s32 osJamMesg(void *, void *, s32);
-s32 osSendMesg(void *, void *, s32);
-void *osPiGetCmdQueue(void);
+#include "PRinternal/piint.h"
+#include "PR/ultraerror.h"
 
 
-
-s32 osEPiStartDma(void *pihandle, IoMesgE_ *mb, s32 direction) {
+s32 osEPiStartDma(OSPiHandle* pihandle, OSIoMesg* mb, s32 direction) {
     register s32 ret;
 
-    if (!D_800FB2A0) {
+    if (!__osPiDevMgr.active) {
         return -1;
     }
+
+
     mb->piHandle = pihandle;
-    if (direction == 0) {
-        mb->type = 15;
+
+    if (direction == OS_READ) {
+        mb->hdr.type = OS_MESG_TYPE_EDMAREAD;
     } else {
-        mb->type = 16;
+        mb->hdr.type = OS_MESG_TYPE_EDMAWRITE;
     }
-    if (mb->pri == 1) {
-        ret = osJamMesg(osPiGetCmdQueue(), mb, 0);
+
+    if (mb->hdr.pri == OS_MESG_PRI_HIGH) {
+        ret = osJamMesg(osPiGetCmdQueue(), (OSMesg)mb, OS_MESG_NOBLOCK);
     } else {
-        ret = osSendMesg(osPiGetCmdQueue(), mb, 0);
+        ret = osSendMesg(osPiGetCmdQueue(), (OSMesg)mb, OS_MESG_NOBLOCK);
     }
+
     return ret;
 }

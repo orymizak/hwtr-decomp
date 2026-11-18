@@ -4,9 +4,9 @@ typedef struct { u32 inst1; u32 inst2; u32 inst3; u32 inst4; } ExcVecI_;
 extern ExcVecI_ __osException;
 extern u32 D_8014C6F8;
 extern u64 D_800FC7F0;
-extern s32 D_800FC7F8;
+extern s32 osViClock;
 extern s32 D_8000030C;
-extern s32 D_80000300;
+extern s32 osTvType;
 extern u8 D_8000031C[];
 u32 __osGetSR(void);
 void __osSetSR(u32);
@@ -80,12 +80,12 @@ void osInitialize(void) {
     if (D_8000030C == 0) {
         bzero(D_8000031C, 0x40);
     }
-    if (D_80000300 == 0) {
-        D_800FC7F8 = 0x2F5B2D2;
-    } else if (D_80000300 == 2) {
-        D_800FC7F8 = 0x2E6025C;
+    if (osTvType == 0) {
+        osViClock = 0x2F5B2D2;
+    } else if (osTvType == 2) {
+        osViClock = 0x2E6025C;
     } else {
-        D_800FC7F8 = 0x2E6D354;
+        osViClock = 0x2E6D354;
     }
     if (__osGetCause() & 0x1000) {
         while (1) {

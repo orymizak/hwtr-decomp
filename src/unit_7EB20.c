@@ -1,12 +1,20 @@
 #include "common.h"
 #include "include_asm.h"
-typedef struct { void *mtqueue; void *fullqueue; s32 validCount; s32 first; s32 msgCount; void *msg; } OSMesgQueue_;
+#include "PR/os_internal.h"
+#include "PR/ultraerror.h"
+#include "PRinternal/osint.h"
 
-extern s32 __osThreadTail;
+void osCreateMesgQueue(OSMesgQueue* mq, OSMesg* msg, s32 msgCount) {
 
-void osCreateMesgQueue(OSMesgQueue_ *mq, void *msg, s32 msgCount) {
-    mq->mtqueue = &__osThreadTail;
-    mq->fullqueue = &__osThreadTail;
+#ifdef _DEBUG
+    if (msgCount <= 0) {
+        __osError(ERR_OSCREATEMESGQUEUE, 1, msgCount);
+        return;
+    }
+#endif
+
+    mq->mtqueue = (OSThread*)&__osThreadTail.next;
+    mq->fullqueue = (OSThread*)&__osThreadTail.next;
     mq->validCount = 0;
     mq->first = 0;
     mq->msgCount = msgCount;

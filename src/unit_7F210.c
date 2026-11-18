@@ -1,19 +1,20 @@
 #include "common.h"
 #include "include_asm.h"
-typedef struct { u32 type; u32 flags; } OSTaskHdr_;
-s32 __osSpGetStatus(void);
+#include "PR/os_internal.h"
+#include "PR/sptask.h"
+#include "PR/rcp.h"
 
-
-
-u32 osSpTaskYielded(OSTaskHdr_ *tp) {
+OSYieldResult osSpTaskYielded(OSTask* tp) {
     u32 status;
-    u32 result;
+    OSYieldResult result;
 
     status = __osSpGetStatus();
-    result = (status & 0x100) ? 1 : 0;
-    if (status & 0x80) {
-        tp->flags |= result;
-        tp->flags &= ~2;
+    result = (status & SP_STATUS_YIELDED) ? OS_TASK_YIELDED : 0;
+
+    if (status & SP_STATUS_YIELD) {
+        tp->t.flags |= result;
+        tp->t.flags &= ~(OS_TASK_DP_WAIT);
     }
+
     return result;
 }

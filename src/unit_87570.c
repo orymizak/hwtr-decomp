@@ -1,8 +1,14 @@
 #include "common.h"
 #include "include_asm.h"
+#include "PR/os_internal.h"
+#include "PRinternal/siint.h"
 
+int __osSiDeviceBusy(void) {
+    register u32 stat = IO_READ(SI_STATUS_REG);
 
-
-s32 __osSiDeviceBusy(void) {
-    return (*(volatile s32 *)0xA4800018 & 3) != 0;
+    if (stat & (SI_STATUS_DMA_BUSY | SI_STATUS_RD_BUSY)) {
+        return TRUE;
+    } else {
+        return FALSE;
+    }
 }

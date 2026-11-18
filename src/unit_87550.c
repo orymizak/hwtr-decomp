@@ -1,15 +1,14 @@
 #include "common.h"
 #include "include_asm.h"
+#include "PR/os_internal.h"
+#include "PR/rcp.h"
 
+int __osDpDeviceBusy(void) {
+    register u32 stat = IO_READ(DPC_STATUS_REG);
 
-
-s32 __osDpDeviceBusy(void) {
-    register u32 stat = *(volatile u32 *)0xA410000C;
-
-    if (stat & 0x100) {
-        return 1;
+    if (stat & DPC_STATUS_DMA_BUSY) {
+        return TRUE;
     } else {
-        return 0;
+        return FALSE;
     }
 }
-

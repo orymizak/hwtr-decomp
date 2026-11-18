@@ -1,30 +1,23 @@
 #include "common.h"
 #include "include_asm.h"
-typedef struct OSThread_ { struct OSThread_ *next; s32 priority; struct OSThread_ **queue; struct OSThread_ *tlnext; u16 state; } OSThread_;
-extern OSThread_ *__osRunningThread;
-extern OSThread_ *D_800FB60C;
-u32 __osDisableInt(void);
-void __osRestoreInt(u32);
-void __osDequeueThread(OSThread_ **queue, OSThread_ *t);
-void __osDispatchThread(void);
+#include "PR/os_internal.h"
+#include "PRinternal/osint.h"
 
-
-
-void osDestroyThread(OSThread_ *t) {
+void osDestroyThread(OSThread *t) {
     register u32 saveMask;
-    register OSThread_ *pred;
-    register OSThread_ *succ;
+    register OSThread *pred;
+    register OSThread *succ;
 
     saveMask = __osDisableInt();
-    if (t == 0) {
+    if (t == NULL) {
         t = __osRunningThread;
-    } else if (t->state != 1) {
+    } else if (t->state != OS_STATE_STOPPED) {
         __osDequeueThread(t->queue, t);
     }
-    if (D_800FB60C == t) {
-        D_800FB60C = D_800FB60C->tlnext;
+    if (__osActiveQueue == t) {
+        __osActiveQueue = __osActiveQueue->tlnext;
     } else {
-        pred = D_800FB60C;
+        pred = __osActiveQueue;
         while (pred->priority != -1) {
             succ = pred->tlnext;
             if (succ == t) {
@@ -39,4 +32,3 @@ void osDestroyThread(OSThread_ *t) {
     }
     __osRestoreInt(saveMask);
 }
-

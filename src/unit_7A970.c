@@ -1,51 +1,68 @@
 #include "common.h"
 #include "include_asm.h"
-typedef struct { u32 w0; u32 w1; } Acmd_;
-typedef struct ALFilter_ { struct ALFilter_ *source; Acmd_ *(*handler)(void *, s16 *, s32, s32, Acmd_ *); s32 (*setParam)(void *, s32, void *); } ALFilter_;
-typedef struct { ALFilter_ filter; u8 padC[8]; s32 sourceCount; s32 maxSources; ALFilter_ **sources; } ALBus_;
+/*====================================================================
+ * auxbus.c
+ *
+ * Copyright 1993, Silicon Graphics, Inc.
+ * All Rights Reserved.
+ *
+ * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Silicon Graphics,
+ * Inc.; the contents of this file may not be disclosed to third
+ * parties, copied or duplicated in any form, in whole or in part,
+ * without the prior written permission of Silicon Graphics, Inc.
+ *
+ * RESTRICTED RIGHTS LEGEND:
+ * Use, duplication or disclosure by the Government is subject to
+ * restrictions as set forth in subdivision (c)(1)(ii) of the Rights
+ * in Technical Data and Computer Software clause at DFARS
+ * 252.227-7013, and/or in similar or successor clauses in the FAR,
+ * DOD or NASA FAR Supplement. Unpublished - rights reserved under the
+ * Copyright Laws of the United States.
+ *====================================================================*/
 
-    /* TODO (Clean version):
-    Standard libultra audio driver alAuxBusPull (auxbus.c).
-    The raw Acmd_ writes represent audio microcode command aClearBuffer:
-        aClearBuffer(ptr++, AL_AUX_L_OUT, outCount << 1); // 0x020006C0
-        aClearBuffer(ptr++, AL_AUX_R_OUT, outCount << 1); // 0x02000800
-    where 0x02 is A_CLEARBUFF, 0x06C0 is AL_AUX_L_OUT, and 0x0800 is AL_AUX_R_OUT.
-    */
-Acmd_ *alAuxBusPull(void *filter, s16 *outp, s32 outCount, s32 sampleOffset, Acmd_ *p) {
-    Acmd_ *ptr = p;
-    ALBus_ *m = (ALBus_ *)filter;
-    ALFilter_ **sources = m->sources;
-    s32 i;
+#include <libaudio.h>
+#include "audio/synthInternals.h"
 
-    { Acmd_ *_a = ptr++; _a->w0 = 0x020006C0; _a->w1 = (u32)(outCount << 1); }
-    { Acmd_ *_a = ptr++; _a->w0 = 0x02000800; _a->w1 = (u32)(outCount << 1); }
+
+Acmd *alAuxBusPull(void *filter, s16 *outp, s32 outCount, s32 sampleOffset,
+                   Acmd *p) 
+{
+    Acmd        *ptr = p;
+    ALAuxBus     *m = (ALAuxBus *)filter;
+    ALFilter    **sources = m->sources;
+    s32         i;
+
+    /*
+     * clear the output buffers here
+     */
+    aClearBuffer(ptr++, AL_AUX_L_OUT, outCount<<1);
+    aClearBuffer(ptr++, AL_AUX_R_OUT, outCount<<1);
+
     for (i = 0; i < m->sourceCount; i++) {
-        ptr = (sources[i]->handler)(sources[i], outp, outCount, sampleOffset, ptr);
+        ptr = (sources[i]->handler)(sources[i], outp, outCount, sampleOffset,
+                                    ptr);
     }
+    
     return ptr;
 }
 
-    /* TODO (Clean version):
-    case 2 is AL_FILTER_ADD_SOURCE:
-        switch (paramID) {
-            case AL_FILTER_ADD_SOURCE: // 2
-                sources[m->sourceCount++] = (ALFilter *)param;
-                break;
-            default:
-                break;
-        }
-    */
-s32 alAuxBusParam(void *filter, s32 paramID, void *param) {
-    ALBus_ *m = (ALBus_ *)filter;
-    ALFilter_ **sources = m->sources;
 
+s32 alAuxBusParam(void *filter, s32 paramID, void *param)
+{
+    ALAuxBus     *m = (ALAuxBus *) filter;
+    ALFilter    **sources = m->sources;
+    
     switch (paramID) {
-        case 2:
-            sources[m->sourceCount++] = (ALFilter_ *)param;
+
+        case (AL_FILTER_ADD_SOURCE):
+            sources[m->sourceCount++] = (ALFilter *) param;
             break;
+            
         default:
+            /* ??? */
             break;
     }
-    return 0;
-}
 
+    return 0;
+    
+}

@@ -1,77 +1,103 @@
 #include "common.h"
 #include "include_asm.h"
-typedef struct { s32 status; void *queue; s32 channel; u8 id[32]; u8 label[32]; s32 version; s32 dir_size; s32 inode_table; s32 minode_table; s32 dir_table; s32 inode_start_page; u8 banks; u8 activebank; } PfsD_;
-typedef union { struct { u8 bank; u8 page; } inode_t; u16 ipage; } InodeUnitD_;
-typedef struct { u32 game_code; u16 company_code; InodeUnitD_ start_page; u8 status; s8 reserved; u16 data_sum; u8 ext_name[4]; u8 game_name[16]; } PfsDirD_;
-typedef struct { InodeUnitD_ inode_page[128]; } InodeD_;
-void bzero(void *, s32);
-s32 osPfsFindFile(PfsD_ *, u16, u32, u8 *, u8 *, s32 *);
-s32 __osPfsSelectBank(PfsD_ *, s32);
-s32 __osContRamRead(void *, s32, u16, u8 *);
-s32 __osPfsRWInode(PfsD_ *, InodeD_ *, s32, s32);
-s32 __osContRamWrite(void *, s32, u16, u8 *, s32);
-typedef union { struct { u8 bank; u8 page; } t; u16 ipage; } InodeUnit_;
-typedef struct { u8 pad[0x60]; s32 inode_start_page; } Pfs_;
-typedef struct { InodeUnit_ page[128]; } Inode_;
+#include "PRinternal/macros.h"
+#include "PR/os_internal.h"
+#include "PRinternal/controller.h"
 
-
-
-s32 osPfsDeleteFile(PfsD_ *pfs, u16 company_code, u32 game_code, u8 *game_name, u8 *ext_name) {
+s32 osPfsDeleteFile(OSPfs* pfs, u16 company_code, u32 game_code, u8* game_name, u8* ext_name) {
     s32 file_no;
+#if BUILD_VERSION < VERSION_J
+    int k;
+#endif
     s32 ret;
-    InodeD_ inode;
-    PfsDirD_ dir;
-    InodeUnitD_ last_page;
+    __OSInode inode;
+    __OSDir dir;
+#if BUILD_VERSION < VERSION_J
+    u16 sum = 0;
+#endif
+    __OSInodeUnit last_page;
     u8 startpage;
     u8 bank;
 
-    if ((company_code == 0) || (game_code == 0)) {
-        return 5;
+    if (company_code == 0 || game_code == 0) {
+        return PFS_ERR_INVALID;
     }
-    if ((ret = osPfsFindFile(pfs, company_code, game_code, game_name, ext_name, &file_no)) != 0) {
-        return ret;
+
+#if BUILD_VERSION >= VERSION_J
+    ERRCK(osPfsFindFile(pfs, company_code, game_code, game_name, ext_name, &file_no));
+    SET_ACTIVEBANK_TO_ZERO();
+#else
+    PFS_CHECK_STATUS();
+    PFS_CHECK_ID();
+    SET_ACTIVEBANK_TO_ZERO();
+    ERRCK(osPfsFindFile(pfs, company_code, game_code, game_name, ext_name, &file_no));
+    
+    if (file_no == -1) {
+        return PFS_ERR_INVALID;
     }
-    if (pfs->activebank != 0 && (ret = __osPfsSelectBank(pfs, 0)) != 0) {
-        return ret;
-    }
-    if ((ret = __osContRamRead(pfs->queue, pfs->channel, (u16)(pfs->dir_table + file_no), (u8 *)&dir)) != 0) {
-        return ret;
-    }
+#endif
+    ERRCK(__osContRamRead(pfs->queue, pfs->channel, pfs->dir_table + file_no, (u8*)&dir));
+
     startpage = dir.start_page.inode_t.page;
+
     for (bank = dir.start_page.inode_t.bank; bank < pfs->banks;) {
-        if ((ret = __osPfsRWInode(pfs, &inode, 0, bank)) != 0) {
-            return ret;
-        }
-        if ((ret = __osPfsReleasePages((Pfs_ *)pfs, (Inode_ *)&inode, startpage, bank, (InodeUnit_ *)&last_page)) != 0) {
-            return ret;
-        }
-        if ((ret = __osPfsRWInode(pfs, &inode, 1, bank)) != 0) {
-            return ret;
-        }
-        if (last_page.ipage == 1) {
+        ERRCK(__osPfsRWInode(pfs, &inode, PFS_READ, bank));
+#if BUILD_VERSION >= VERSION_J
+        ERRCK(__osPfsReleasePages(pfs, &inode, startpage, bank, &last_page));
+#else
+        ERRCK(__osPfsReleasePages(pfs, &inode, startpage, &sum, bank, &last_page, TRUE));
+#endif
+        ERRCK(__osPfsRWInode(pfs, &inode, PFS_WRITE, bank));
+
+        if (last_page.ipage == PFS_EOF) {
             break;
         }
+
         bank = last_page.inode_t.bank;
         startpage = last_page.inode_t.page;
     }
+
     if (bank >= pfs->banks) {
-        return 3;
+        return PFS_ERR_INCONSISTENT;
     }
-    bzero(&dir, sizeof(PfsDirD_));
-    ret = __osContRamWrite(pfs->queue, pfs->channel, (u16)(pfs->dir_table + file_no), (u8 *)&dir, 0);
+
+#if BUILD_VERSION >= VERSION_J
+    bzero(&dir, sizeof(__OSDir));
+#else
+    dir.game_code = 0;
+    dir.company_code = 0;
+    dir.start_page.ipage = 0;
+    dir.data_sum = 0;
+    for (k = 0; k < ARRLEN(dir.game_name); k++)
+    {
+        dir.game_name[k] = 0;
+    }
+    for (k = 0; k < ARRLEN(dir.ext_name); k++)
+    {
+        dir.ext_name[k] = 0;
+    }
+    dir.status = DIR_STATUS_EMPTY;
+#endif
+
+    ret = __osContRamWrite(pfs->queue, pfs->channel, pfs->dir_table + file_no, (u8*)&dir, FALSE);
+
     return ret;
 }
 
-s32 __osPfsReleasePages(Pfs_ *pfs, Inode_ *inode, u8 start_page, u8 bank, InodeUnit_ *final_page) {
-    InodeUnit_ next;
-    InodeUnit_ prev;
+s32 __osPfsReleasePages(OSPfs* pfs, __OSInode* inode, u8 start_page, u8 bank, __OSInodeUnit* last_page) {
+    __OSInodeUnit next_page;
+    __OSInodeUnit old_page;
+    s32 ret = 0;
 
-    next.ipage = (u16)((bank << 8) + start_page);
+    next_page.ipage = (bank << 8) + start_page;
+
     do {
-        prev = next;
-        next = inode->page[prev.t.page];
-        inode->page[prev.t.page].ipage = 3;
-    } while (next.ipage >= pfs->inode_start_page && next.t.bank == bank);
-    *final_page = next;
-    return 0;
+        old_page = next_page;
+        next_page = inode->inode_page[next_page.inode_t.page];
+        inode->inode_page[old_page.inode_t.page].ipage = PFS_PAGE_NOT_USED;
+    } while (next_page.ipage >= pfs->inode_start_page && next_page.inode_t.bank == bank);
+
+    *last_page = next_page;
+
+    return ret;
 }

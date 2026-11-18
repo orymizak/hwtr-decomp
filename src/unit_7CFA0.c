@@ -1,8 +1,9 @@
 #include "common.h"
 #include "include_asm.h"
+#include "audio/synthInternals.h"
 
 
-
-void alSynDelete(s32 *arg0) {
-    *arg0 = 0;
+void alSynDelete(ALSynth *drvr)
+{
+    drvr->head = 0;
 }

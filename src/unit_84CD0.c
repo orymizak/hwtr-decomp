@@ -5,7 +5,7 @@ u32 osVirtualToPhysical(void *);
 
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_84CD0", func_800E40D0);
+INCLUDE_ASM("asm/nonmatchings/unit_84CD0", bcmp);
 
 typedef struct { union { s64 ll; f64 ld; } v; u8 *s; s32 n0; s32 nz0; s32 n1; s32 nz1; s32 n2; s32 nz2; s32 prec; s32 width; u32 nchar; u32 flags; char qual; } Pft_;
 #define __va_rounded_size(__TYPE) (((sizeof(__TYPE) + sizeof(s32) - 1) / sizeof(s32)) * sizeof(s32))

@@ -1,66 +1,80 @@
 #include "common.h"
 #include "include_asm.h"
-void __osPackReadData(void);
-typedef struct { u8 dummy; u8 txsize; u8 rxsize; u8 cmd; u16 button; s8 stick_x; s8 stick_y; } ContReadFormat_;
-typedef struct { u16 button; s8 stick_x; s8 stick_y; u8 errnum; } OSContPad_;
-extern u8 D_80141590;
-s32 __osSiGetAccess();
-s32 __osSiRawStartDma(s32, void *);
-s32 __osSiRelAccess();
-s32 __osPackRequestData();
-s32 osRecvMesg(s32,s32,s32);
-extern u8 D_80137FE0;
-extern u8 D_80145498;
+#include "PR/os_internal.h"
+#include "PRinternal/controller.h"
+#include "PRinternal/siint.h"
+#include "PRinternal/macros.h"
+#include "PR/os_internal.h"
+#include "PRinternal/controller.h"
+#include "PRinternal/siint.h"
 
-s32 __osContGetInitData(s32 *, s32);
+static void __osPackReadData(void);
 
-s32 osContStartQuery(s32 mq) {
-    s32 ret;
+
+/**
+ * Starts to read the values for SI device status and type which are connected to the controller port and joyport
+ * connector.
+ */
+s32 osContStartQuery(OSMesgQueue* mq) {
+    s32 ret = 0;
 
     __osSiGetAccess();
-    if (D_80145498 != 0) {
-        __osPackRequestData(0);
-        __osSiRawStartDma(1, &D_80137FE0);
-        osRecvMesg(mq, 0, 1);
+
+    if (__osContLastCmd != CONT_CMD_REQUEST_STATUS) {
+        __osPackRequestData(CONT_CMD_REQUEST_STATUS);
+        ret = __osSiRawStartDma(OS_WRITE, __osContPifRam.ramarray);
+        osRecvMesg(mq, NULL, OS_MESG_BLOCK);
     }
-    ret = __osSiRawStartDma(0, &D_80137FE0);
-    D_80145498 = 0;
+
+    ret = __osSiRawStartDma(OS_READ, __osContPifRam.ramarray);
+    __osContLastCmd = CONT_CMD_REQUEST_STATUS;
     __osSiRelAccess();
     return ret;
 }
 
-void osContGetQuery(s32 arg0) {
-    s32 sp10;
 
-    __osContGetInitData(&sp10, arg0);
+/**
+ * Returns the values from osContStartQuery to status. Both functions must be paired for use.
+ */
+void osContGetQuery(OSContStatus* data) {
+    u8 pattern;
+    __osContGetInitData(&pattern, data);
 }
 
-s32 osContStartReadData(s32 mq) {
-    s32 ret;
+
+
+s32 osContStartReadData(OSMesgQueue* mq) {
+    s32 ret = 0;
 
     __osSiGetAccess();
-    if (D_80145498 != 1) {
+
+    if (__osContLastCmd != CONT_CMD_READ_BUTTON) {
         __osPackReadData();
-        __osSiRawStartDma(1, &D_80137FE0);
-        osRecvMesg(mq, 0, 1);
+        ret = __osSiRawStartDma(OS_WRITE, __osContPifRam.ramarray);
+        osRecvMesg(mq, NULL, OS_MESG_BLOCK);
     }
-    ret = __osSiRawStartDma(0, &D_80137FE0);
-    D_80145498 = 1;
+
+    ret = __osSiRawStartDma(OS_READ, __osContPifRam.ramarray);
+    __osContLastCmd = CONT_CMD_READ_BUTTON;
     __osSiRelAccess();
+
     return ret;
 }
 
-void osContGetReadData(OSContPad_ *data) {
-    u8 *ptr = &D_80137FE0;
-    ContReadFormat_ readformat;
-    s32 i;
 
-    for (i = 0; i < D_80141590; i++, ptr += sizeof(ContReadFormat_), data++) {
-        readformat = *(ContReadFormat_ *)ptr;
-        data->errnum = (readformat.rxsize & 0xC0) >> 4;
-        if (data->errnum != 0) {
+void osContGetReadData(OSContPad* data) {
+    u8* ptr = (u8*)__osContPifRam.ramarray;
+    __OSContReadFormat readformat;
+    int i;
+
+    for (i = 0; i < __osMaxControllers; i++, ptr += sizeof(__OSContReadFormat), data++) {
+        readformat = *(__OSContReadFormat*)ptr;
+        data->errno = CHNL_ERR(readformat);
+
+        if (data->errno != 0) {
             continue;
         }
+
         data->button = readformat.button;
         data->stick_x = readformat.stick_x;
         data->stick_y = readformat.stick_y;
@@ -68,25 +82,28 @@ void osContGetReadData(OSContPad_ *data) {
 }
 
 
-void __osPackReadData(void) {
-    u8 *ptr = &D_80137FE0;
-    ContReadFormat_ readformat;
-    s32 i;
+static void __osPackReadData(void) {
+    u8* ptr = (u8*)__osContPifRam.ramarray;
+    __OSContReadFormat readformat;
+    int i;
 
-    for (i = 0; i < 15; i++) {
-        ((u32 *)&D_80137FE0)[i] = 0;
+    for (i = 0; i < ARRLEN(__osContPifRam.ramarray); i++) {
+        __osContPifRam.ramarray[i] = 0;
     }
-    ((u32 *)&D_80137FE0)[15] = 1;
-    readformat.dummy = 0xFF;
-    readformat.txsize = 1;
-    readformat.rxsize = 4;
-    readformat.cmd = 1;
+
+    __osContPifRam.pifstatus = CONT_CMD_EXE;
+    readformat.dummy = CONT_CMD_NOP;
+    readformat.txsize = CONT_CMD_READ_BUTTON_TX;
+    readformat.rxsize = CONT_CMD_READ_BUTTON_RX;
+    readformat.cmd = CONT_CMD_READ_BUTTON;
     readformat.button = 0xFFFF;
     readformat.stick_x = -1;
     readformat.stick_y = -1;
-    for (i = 0; i < D_80141590; i++) {
-        *(ContReadFormat_ *)ptr = readformat;
-        ptr += sizeof(ContReadFormat_);
+
+    for (i = 0; i < __osMaxControllers; i++) {
+        *(__OSContReadFormat*)ptr = readformat;
+        ptr += sizeof(__OSContReadFormat);
     }
-    *ptr = 0xFE;
+
+    *ptr = CONT_CMD_END;
 }

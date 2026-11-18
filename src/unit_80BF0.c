@@ -1,42 +1,62 @@
 #include "common.h"
 #include "include_asm.h"
-typedef struct { u8 type; u8 pad[3]; u32 ctrl; } ViModeF_;
-typedef struct { u16 state; u16 retraceCount; void *framep; ViModeF_ *modep; u32 control; } ViCtxF_;
-extern ViCtxF_ *__osViNext;
-u32 __osDisableInt(void);
-void __osRestoreInt(u32);
-
-
+#include "PR/os_internal.h"
+#include "PR/ultraerror.h"
+#include "PR/rcp.h"
+#include "PRinternal/viint.h"
 
 void osViSetSpecialFeatures(u32 func) {
-    register u32 saveMask = __osDisableInt();
+    register u32 saveMask;
 
-    if ((func & 1) != 0) {
-        __osViNext->control |= 8;
+#ifdef _DEBUG
+    if (!__osViDevMgr.active) {
+        __osError(ERR_OSVISETSPECIAL_VIMGR, 0);
+        return;
     }
-    if ((func & 2) != 0) {
-        __osViNext->control &= ~8;
+
+    if ((func < OS_VI_GAMMA_ON) || (func > OS_VI_SPECIAL_MAX)) {
+        __osError(ERR_OSVISETSPECIAL_VALUE, 1, func);
+        return;
     }
-    if ((func & 4) != 0) {
-        __osViNext->control |= 4;
+#endif
+
+    saveMask = __osDisableInt();
+
+    if ((func & OS_VI_GAMMA_ON) != 0) {
+        __osViNext->control |= VI_CTRL_GAMMA_ON;
     }
-    if ((func & 8) != 0) {
-        __osViNext->control &= ~4;
+
+    if ((func & OS_VI_GAMMA_OFF) != 0) {
+        __osViNext->control &= ~VI_CTRL_GAMMA_ON;
     }
-    if ((func & 0x10) != 0) {
-        __osViNext->control |= 0x10;
+
+    if ((func & OS_VI_GAMMA_DITHER_ON) != 0) {
+        __osViNext->control |= VI_CTRL_GAMMA_DITHER_ON;
     }
-    if ((func & 0x20) != 0) {
-        __osViNext->control &= ~0x10;
+
+    if ((func & OS_VI_GAMMA_DITHER_OFF) != 0) {
+        __osViNext->control &= ~VI_CTRL_GAMMA_DITHER_ON;
     }
-    if ((func & 0x40) != 0) {
-        __osViNext->control |= 0x10000;
-        __osViNext->control &= ~0x300;
+
+    if ((func & OS_VI_DIVOT_ON) != 0) {
+        __osViNext->control |= VI_CTRL_DIVOT_ON;
     }
-    if ((func & 0x80) != 0) {
-        __osViNext->control &= ~0x10000;
-        __osViNext->control |= __osViNext->modep->ctrl & 0x300;
+
+    if ((func & OS_VI_DIVOT_OFF) != 0) {
+        __osViNext->control &= ~VI_CTRL_DIVOT_ON;
     }
-    __osViNext->state |= 8;
+
+    if ((func & OS_VI_DITHER_FILTER_ON) != 0) {
+        __osViNext->control |= VI_CTRL_DITHER_FILTER_ON;
+        __osViNext->control &= ~VI_CTRL_ANTIALIAS_MASK;
+    }
+
+    if ((func & OS_VI_DITHER_FILTER_OFF) != 0) {
+        __osViNext->control &= ~VI_CTRL_DITHER_FILTER_ON;
+        __osViNext->control |= __osViNext->modep->comRegs.ctrl & VI_CTRL_ANTIALIAS_MASK;
+    }
+
+    __osViNext->state |= VI_STATE_CTRL_UPDATED;
+
     __osRestoreInt(saveMask);
 }

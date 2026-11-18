@@ -1,8 +1,7 @@
 #include "common.h"
 #include "include_asm.h"
+#include "PR/os_internal.h"
 
-s32 __osSpSetPc(s32);
-
-void osAfterPreNMI(void) {
-    __osSpSetPc(0);
+s32 osAfterPreNMI(void) {
+    return __osSpSetPc(0);
 }

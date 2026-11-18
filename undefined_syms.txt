@@ -1,0 +1,5 @@
+/* Fixed low-memory variables set by the boot code (see PR/os_system.h). */
+osTvType = 0x80000300;
+osRomBase = 0x80000308;
+/* Entry point inside the exception handler assembly (exceptasm.s). */
+__osCleanupThread = 0x800E3AA8;

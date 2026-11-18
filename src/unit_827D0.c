@@ -1,20 +1,21 @@
 #include "common.h"
 #include "include_asm.h"
-typedef struct { s32 status; } OSPfs_;
-s32 __osGetId(OSPfs_ *pfs);
+#include "PRinternal/macros.h"
+#include "PR/os_internal.h"
+#include "PRinternal/controller.h"
 
-
-
-s32 osPfsRepairId(OSPfs_ *pfs) {
+s32 osPfsRepairId(OSPfs* pfs) {
     s32 ret = 0;
 
-    if ((pfs->status & (1 | 4))) {
+    if ((pfs->status & (PFS_INITIALIZED | PFS_ID_BROKEN))) {
         ret = __osGetId(pfs);
+
         if (ret == 0) {
-            pfs->status &= ~4;
+            pfs->status &= ~(PFS_ID_BROKEN);
         }
     } else {
-        ret = 5;
+        ret = PFS_ERR_INVALID;
     }
+
     return ret;
 }

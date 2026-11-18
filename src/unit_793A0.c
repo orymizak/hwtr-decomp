@@ -1,34 +1,35 @@
 #include "common.h"
 #include "include_asm.h"
-typedef struct { u16 type; u8 pri; u8 status; void *retQueue; void *dramAddr; u32 devAddr; u32 size; void *piHandle; } IoMesg_;
-s32 osJamMesg(void *, void *, s32);
-void *osPiGetCmdQueue(void);
-s32 osSendMesg(void *, void *, s32);
-extern s32 D_800FB2A0;
+#include "PR/os_internal.h"
+#include "PR/ultraerror.h"
+#include "PRinternal/piint.h"
 
 
-
-s32 osPiStartDma(IoMesg_ *mb, s32 priority, s32 direction, u32 devAddr, void *dramAddr, u32 size, void *mq) {
-    s32 ret;
-
-    if (D_800FB2A0 == 0) {
+s32 osPiStartDma(OSIoMesg* mb, s32 priority, s32 direction, u32 devAddr, void* dramAddr, u32 size, OSMesgQueue* mq) {
+    register s32 ret;
+    if (!__osPiDevMgr.active) {
         return -1;
     }
-    if (direction == 0) {
-        mb->type = 0xB;
+
+
+    if (direction == OS_READ) {
+        mb->hdr.type = OS_MESG_TYPE_DMAREAD;
     } else {
-        mb->type = 0xC;
+        mb->hdr.type = OS_MESG_TYPE_DMAWRITE;
     }
-    mb->pri = priority;
-    mb->retQueue = mq;
+
+    mb->hdr.pri = priority;
+    mb->hdr.retQueue = mq;
     mb->dramAddr = dramAddr;
     mb->devAddr = devAddr;
     mb->size = size;
     mb->piHandle = NULL;
-    if (priority == 1) {
-        ret = osJamMesg(osPiGetCmdQueue(), mb, 0);
+
+    if (priority == OS_MESG_PRI_HIGH) {
+        ret = osJamMesg(osPiGetCmdQueue(), (OSMesg)mb, OS_MESG_NOBLOCK);
     } else {
-        ret = osSendMesg(osPiGetCmdQueue(), mb, 0);
+        ret = osSendMesg(osPiGetCmdQueue(), (OSMesg)mb, OS_MESG_NOBLOCK);
     }
+
     return ret;
 }

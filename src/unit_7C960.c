@@ -14,7 +14,7 @@ void alSaveNew(void *f);
 void alAuxBusNew(void *m, void *sources, s32 maxSources);
 void alMainBusNew(void *m, void *sources, s32 maxSources);
 void alSynAllocFX(ALSynth5_ *s, s16 bus, SynConfig5_ *c, void *hp);
-s32 func_800DAC90(void *filter, s32 paramID, void *param);
+s32 alMainBusParam(void *filter, s32 paramID, void *param);
 void alLoadNew(void *f, void *dmaNew, void *hp);
 s32 alLoadParam(void *filter, s32 paramID, void *param);
 void alResampleNew(void *r, void *hp);
@@ -28,7 +28,7 @@ typedef struct { u8 pad[0x2C]; ALParam_ *paramList; } ALSynth_;
 s32 alLink(s32, void *);
 s32 alUnlink(s32);
 
-extern void *D_800FB5B0;
+extern void *alGlobals;
 extern f64 D_80101A30;
 extern f64 D_80101A38;
 extern f64 D_80101A40;
@@ -64,7 +64,7 @@ void alSynNew(ALSynth5_ *drvr, SynConfig5_ *c) {
     if (c->fxType != 0) {
         alSynAllocFX(drvr, 0, c, hp);
     } else
-        func_800DAC90(drvr->mainBus, 2, drvr->auxBus);
+        alMainBusParam(drvr->mainBus, 2, drvr->auxBus);
     drvr->pFreeList.next = 0;
     drvr->pFreeList.prev = 0;
     drvr->pLameList.next = 0;
@@ -102,7 +102,7 @@ s32 __nextSampleTime(ALSynth5_ *drvr, Player5_ **client);
 Acmd5_ *alAudioFrame(Acmd5_ *cmdList, s32 *cmdLen, s16 *outBuf, s32 outLen) {
     Player5_ *client;
     Filter5_ *output;
-    Synth5b_ *drvr = (Synth5b_ *)D_800FB5B0;
+    Synth5b_ *drvr = (Synth5b_ *)alGlobals;
     s16 tmp = 0;
     Acmd5_ *cmdlEnd = cmdList;
     Acmd5_ *cmdPtr;
@@ -138,7 +138,7 @@ Acmd5_ *alAudioFrame(Acmd5_ *cmdList, s32 *cmdLen, s16 *outBuf, s32 outLen) {
 
 ALParam5_ *__allocParam(void) {
     ALParam5_ *update = NULL;
-    ALSynth5_ *drvr = (ALSynth5_ *)D_800FB5B0;
+    ALSynth5_ *drvr = (ALSynth5_ *)alGlobals;
 
     if (drvr->paramList != NULL) {
         update = drvr->paramList;
@@ -149,7 +149,7 @@ ALParam5_ *__allocParam(void) {
 }
 
 void __freeParam(ALParam_ *param) {
-    ALSynth_ *drvr = (*(ALSynth_ * *)&D_800FB5B0);
+    ALSynth_ *drvr = (*(ALSynth_ * *)&alGlobals);
     param->next = drvr->paramList;
     drvr->paramList = param;
 }

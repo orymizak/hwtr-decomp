@@ -1,28 +1,37 @@
 #include "common.h"
 #include "include_asm.h"
-s32 osCreateMesgQueue(void *, void *,s32);
-s32 osSendMesg(void *,s32,s32);
-extern s32 D_800FB2E0;
-extern u8 D_80133220;
-extern u8 D_80141678;
+#include "PRinternal/macros.h"
+#include "PR/os_internal.h"
+
+#define PI_Q_BUF_LEN 1
+
+extern u32 __osPiAccessQueueEnabled;
+
+
+extern OSMesg piAccessBuf[PI_Q_BUF_LEN];
+
+
+extern OSMesgQueue __osPiAccessQueue;
+
 
 
 
 void __osPiCreateAccessQueue(void) {
-    D_800FB2E0 = 1;
-    osCreateMesgQueue(&D_80141678, &D_80133220, 1);
-    osSendMesg(&D_80141678, 0, 0);
+    __osPiAccessQueueEnabled = 1;
+    osCreateMesgQueue(&__osPiAccessQueue, piAccessBuf, PI_Q_BUF_LEN);
+    osSendMesg(&__osPiAccessQueue, NULL, OS_MESG_NOBLOCK);
 }
+
 
 void __osPiGetAccess(void) {
-    void *dummyMesg;
-
-    if (!D_800FB2E0) {
+    OSMesg dummyMesg;
+    if (!__osPiAccessQueueEnabled) {
         __osPiCreateAccessQueue();
     }
-    osRecvMesg(&D_80141678, &dummyMesg, 1);
+    osRecvMesg(&__osPiAccessQueue, &dummyMesg, OS_MESG_BLOCK);
 }
 
+
 void __osPiRelAccess(void) {
-    osSendMesg(&D_80141678, 0, 0);
+    osSendMesg(&__osPiAccessQueue, NULL, OS_MESG_NOBLOCK);
 }

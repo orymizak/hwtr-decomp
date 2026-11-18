@@ -179,7 +179,6 @@ extern s32 D_80101050[];
 extern u8 D_8010105C;
 extern u8 D_80101064;
 extern s32 (*D_80140F98)(void *);
-void *memset(void *, s32, u32);
 void *memcpy(void *, const void *, size_t);
 extern u8 *D_801410E0[];
 extern s32 (*D_80141008)(s32, u8);

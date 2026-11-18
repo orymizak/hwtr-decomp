@@ -1,28 +1,37 @@
 #include "common.h"
 #include "include_asm.h"
-s32 osCreateMesgQueue(void *, void *,s32);
-s32 osSendMesg(void *,s32,s32);
-extern s32 D_800FB5F0;
-extern u8 D_80133270;
-extern u8 D_8014EC98;
+#include "PRinternal/macros.h"
+#include "PR/os_internal.h"
+
+#define SI_Q_BUF_LEN 1
+
+extern OSMesg siAccessBuf[SI_Q_BUF_LEN];
+
+
+extern OSMesgQueue __osSiAccessQueue;
+
+
+extern u32 __osSiAccessQueueEnabled;
+
 
 
 
 void __osSiCreateAccessQueue(void) {
-    D_800FB5F0 = 1;
-    osCreateMesgQueue(&D_8014EC98, &D_80133270, 1);
-    osSendMesg(&D_8014EC98, 0, 0);
+    __osSiAccessQueueEnabled = 1;
+    osCreateMesgQueue(&__osSiAccessQueue, siAccessBuf, SI_Q_BUF_LEN);
+    osSendMesg(&__osSiAccessQueue, NULL, OS_MESG_NOBLOCK);
 }
+
 
 void __osSiGetAccess(void) {
-    void *dummyMesg;
-
-    if (!D_800FB5F0) {
+    OSMesg dummyMesg;
+    if (!__osSiAccessQueueEnabled) {
         __osSiCreateAccessQueue();
     }
-    osRecvMesg(&D_8014EC98, &dummyMesg, 1);
+    osRecvMesg(&__osSiAccessQueue, &dummyMesg, OS_MESG_BLOCK);
 }
 
+
 void __osSiRelAccess(void) {
-    osSendMesg(&D_8014EC98, 0, 0);
+    osSendMesg(&__osSiAccessQueue, NULL, OS_MESG_NOBLOCK);
 }

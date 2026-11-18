@@ -1,76 +1,87 @@
 #include "common.h"
 #include "include_asm.h"
-typedef struct { u8 txsize; u8 rxsize; u8 cmd; u8 typeh; u8 typel; u8 status; } ReqShort_;
-typedef struct { u32 ramarray[15]; u32 pifstatus; } PifRam_;
-extern u8 D_80145498;
-void __osPfsRequestOneChannel(s32 channel, s32 cmd);
-typedef struct { u16 type; u8 status; u8 errnum; } ContStatus_;
-extern u8 D_800FC7D4;
-extern PifRam_ D_8014C700;
-s32 __osSiRawStartDma(s32, void *);
-s32 osRecvMesg(void *, void **, s32);
-void __osPfsGetOneChannelData(s32, ContStatus_ *);
+#include "PR/os_internal.h"
+#include "PRinternal/controller.h"
+#include "PRinternal/siint.h"
+
+void __osPfsRequestOneChannel(int channel, u8 cmd);
+
+void __osPfsGetOneChannelData(int channel, OSContStatus* data);
 
 
 
-s32 __osPfsGetStatus(void *queue, s32 channel) {
+s32 __osPfsGetStatus(OSMesgQueue* queue, int channel) {
     s32 ret = 0;
-    void *dummy;
-    ContStatus_ data;
+    OSMesg dummy;
+    OSContStatus data;
 
-    D_800FC7D4 = 250;
-    __osPfsRequestOneChannel(channel, 0);
-    ret = __osSiRawStartDma(1, &D_8014C700);
-    osRecvMesg(queue, &dummy, 1);
-    ret = __osSiRawStartDma(0, &D_8014C700);
-    osRecvMesg(queue, &dummy, 1);
+    __osPfsInodeCacheBank = 250;
+
+    __osPfsRequestOneChannel(channel, CONT_CMD_REQUEST_STATUS);
+
+    ret = __osSiRawStartDma(OS_WRITE, &__osPfsPifRam);
+    osRecvMesg(queue, &dummy, OS_MESG_BLOCK);
+
+    ret = __osSiRawStartDma(OS_READ, &__osPfsPifRam);
+    osRecvMesg(queue, &dummy, OS_MESG_BLOCK);
+
     __osPfsGetOneChannelData(channel, &data);
-    if (((data.status & 1) != 0) && ((data.status & 2) != 0)) {
-        return 2;
-    } else if ((data.errnum != 0) || ((data.status & 1) == 0)) {
-        return 1;
-    } else if ((data.status & 4) != 0) {
-        return 4;
+
+    if (((data.status & CONT_CARD_ON) != 0) && ((data.status & CONT_CARD_PULL) != 0)) {
+        return PFS_ERR_NEW_PACK;
+    } else if ((data.errno != 0) || ((data.status & CONT_CARD_ON) == 0)) {
+        return PFS_ERR_NOPACK;
+    } else if ((data.status & CONT_ADDR_CRC_ER) != 0) {
+        return PFS_ERR_CONTRFAIL;
     }
+
     return ret;
 }
 
-void __osPfsRequestOneChannel(s32 channel, s32 cmd) {
-    u8 *ptr;
-    ReqShort_ requestformat;
-    s32 i;
 
-    D_80145498 = 0xFE;
-    D_8014C700.pifstatus = 1;
-    ptr = (u8 *)&D_8014C700;
-    requestformat.txsize = 1;
-    requestformat.rxsize = 3;
+void __osPfsRequestOneChannel(int channel, u8 cmd) {
+    u8* ptr;
+    __OSContRequesFormatShort requestformat;
+    int i;
+
+    __osContLastCmd = CONT_CMD_END;
+    __osPfsPifRam.pifstatus = CONT_CMD_READ_BUTTON;
+
+    ptr = (u8*)&__osPfsPifRam;
+
+    requestformat.txsize = CONT_CMD_REQUEST_STATUS_TX;
+    requestformat.rxsize = CONT_CMD_REQUEST_STATUS_RX;
     requestformat.cmd = cmd;
-    requestformat.typeh = 0xFF;
-    requestformat.typel = 0xFF;
-    requestformat.status = 0xFF;
+    requestformat.typeh = CONT_CMD_NOP;
+    requestformat.typel = CONT_CMD_NOP;
+    requestformat.status = CONT_CMD_NOP;
+
     for (i = 0; i < channel; i++) {
-        *ptr++ = 0;
+        *ptr++ = CONT_CMD_REQUEST_STATUS;
     }
-    *(ReqShort_ *)ptr = requestformat;
-    ptr += sizeof(ReqShort_);
-    *ptr = 0xFE;
+
+    *(__OSContRequesFormatShort*)ptr = requestformat;
+    ptr += sizeof(__OSContRequesFormatShort);
+    *ptr = CONT_CMD_END;
 }
 
-void __osPfsGetOneChannelData(s32 channel, ContStatus_ *data) {
-    u8 *ptr;
-    ReqShort_ requestformat;
-    s32 i;
 
-    ptr = (u8 *)&D_8014C700;
+void __osPfsGetOneChannelData(int channel, OSContStatus* data) {
+    u8* ptr = (u8*)&__osPfsPifRam;
+    __OSContRequesFormatShort requestformat;
+    int i;
+
     for (i = 0; i < channel; i++) {
         ptr++;
     }
-    requestformat = *(ReqShort_ *)ptr;
-    data->errnum = (requestformat.rxsize & 0xC0) >> 4;
-    if (data->errnum == 0) {
-        data->type = (requestformat.typel << 8) | requestformat.typeh;
-        data->status = requestformat.status;
-    }
-}
 
+    requestformat = *(__OSContRequesFormatShort*)ptr;
+    data->errno = CHNL_ERR(requestformat);
+
+    if (data->errno != 0) {
+        return;
+    }
+
+    data->type = (requestformat.typel << 8) | (requestformat.typeh);
+    data->status = requestformat.status;
+}

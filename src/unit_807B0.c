@@ -1,17 +1,23 @@
 #include "common.h"
 #include "include_asm.h"
-typedef struct { u8 type; } ViMode_;
-typedef struct { u16 state; u16 retraceCount; void *framep; ViMode_ *modep; } ViCtx_;
-extern ViCtx_ *__osViCurr;
-u32 __osDisableInt(void);
-void __osRestoreInt(u32);
-
-
+#include "PR/os_internal.h"
+#include "PR/ultraerror.h"
+#include "PRinternal/viint.h"
 
 u32 osViGetCurrentMode(void) {
-    register u32 saveMask = __osDisableInt();
-    u32 modep = __osViCurr->modep->type;
+    register u32 saveMask;
+    register u32 modeType;
+
+#ifdef _DEBUG
+    if (!__osViDevMgr.active) {
+        __osError(ERR_OSVIGETCURRENTMODE, 0);
+        return -1;
+    }
+#endif
+
+    saveMask = __osDisableInt();
+    modeType = (u32)__osViCurr->modep->type;
 
     __osRestoreInt(saveMask);
-    return modep;
+    return modeType;
 }

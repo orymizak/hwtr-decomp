@@ -40,7 +40,7 @@ $(BUILD)/src/unit_7FD20.o: OPTFLAGS := -O3
 $(BUILD)/src/unit_7EFB0.o: OPTFLAGS := -O3
 
 ASFLAGS := -EB -march=vr4300 -mtune=vr4300 -mabi=32 -Iinclude
-LDFLAGS := -EB -T $(LD_SCRIPT) -T undefined_syms_auto.txt -T undefined_funcs_auto.txt \
+LDFLAGS := -EB -T $(LD_SCRIPT) -T undefined_syms.txt -T undefined_syms_auto.txt -T undefined_funcs_auto.txt \
            -Map $(BUILD)/$(BASENAME).map --no-check-sections
 
 OBJECTS = $(shell grep -oE 'build/[^ ]+\.o' $(LD_SCRIPT) 2>/dev/null | sort -u)

@@ -1,19 +1,16 @@
 #include "common.h"
 #include "include_asm.h"
-typedef struct { u16 state; u16 retraceCount; void *framep; void *modep; u32 control; } ViCtxB_;
-extern ViCtxB_ *__osViNext;
-u32 __osDisableInt(void);
-void __osRestoreInt(u32);
-
-
+#include "PR/os_internal.h"
+#include "PRinternal/viint.h"
 
 void osViBlack(u8 active) {
     register u32 saveMask = __osDisableInt();
 
     if (active) {
-        __osViNext->state |= 0x20;
+        __osViNext->state |= VI_STATE_BLACK;
     } else {
-        __osViNext->state &= ~0x20;
+        __osViNext->state &= ~VI_STATE_BLACK;
     }
+
     __osRestoreInt(saveMask);
 }

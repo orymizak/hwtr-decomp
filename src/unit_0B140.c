@@ -4,7 +4,6 @@ typedef struct { s32 state; u8 pad[0x50]; } SlotC_;
 extern SlotC_ D_800F03F8[];
 extern u8 D_800F0548[];
 void func_800D7150(void);
-void *memset(void *dst, s32 value, u32 size);
 typedef struct { u16 button; s8 stick_x; s8 stick_y; u8 errnum; u8 pad; } Pad_;
 typedef struct { u8 buf[8]; s32 st; s32 mode; } PakSt_;
 typedef struct { s32 keys[6]; u8 pad[0x54 - 0x18]; } KeySet_;

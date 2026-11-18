@@ -1,38 +1,46 @@
 #include "common.h"
 #include "include_asm.h"
-s32 __osSpDeviceBusy(void);
-u32 osVirtualToPhysical(void *);
+#include "PR/os_internal.h"
+#include "PR/rcp.h"
+#include "PRinternal/osint.h"
+#include "assert.h"
 
-
-
-s32 __osSpGetStatus(void) {
-    return *(volatile s32 *)0xA4040010;
+u32 __osSpGetStatus(void) {
+    return IO_READ(SP_STATUS_REG);
 }
 
-void __osSpSetStatus(s32 arg0) {
-    *(volatile s32 *)0xA4040010 = arg0;
+void __osSpSetStatus(u32 data) {
+    IO_WRITE(SP_STATUS_REG, data);
 }
 
 s32 __osSpSetPc(u32 pc) {
-    register u32 stat = *(volatile u32 *)0xA4040010;
+    register u32 status = IO_READ(SP_STATUS_REG);
 
-    if (!(stat & 1)) {
+    if (!(status & SP_STATUS_HALT)) {
         return -1;
     }
-    *(volatile u32 *)0xA4080000 = pc;
+    IO_WRITE(SP_PC_REG, pc);
+
     return 0;
 }
 
-s32 __osSpRawStartDma(s32 direction, u32 devAddr, void *dramAddr, u32 size) {
+s32 __osSpRawStartDma(s32 direction, u32 devAddr, void* dramAddr, u32 size) {
+    assert(((u32)devAddr & 0x7) == 0);
+    assert(((u32)dramAddr & 0x7) == 0);
+    assert(((u32)size & 0x7) == 0);
+
     if (__osSpDeviceBusy()) {
         return -1;
     }
-    *(volatile u32 *)0xA4040000 = devAddr;
-    *(volatile u32 *)0xA4040004 = osVirtualToPhysical(dramAddr);
-    if (direction == 0) {
-        *(volatile u32 *)0xA404000C = size - 1;
+
+    IO_WRITE(SP_MEM_ADDR_REG, devAddr);
+    IO_WRITE(SP_DRAM_ADDR_REG, osVirtualToPhysical(dramAddr));
+
+    if (direction == OS_READ) {
+        IO_WRITE(SP_WR_LEN_REG, size - 1);
     } else {
-        *(volatile u32 *)0xA4040008 = size - 1;
+        IO_WRITE(SP_RD_LEN_REG, size - 1);
     }
+
     return 0;
 }

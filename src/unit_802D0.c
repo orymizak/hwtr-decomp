@@ -1,7 +1,7 @@
 #include "common.h"
 #include "include_asm.h"
 typedef struct { void *next; void *prev; u64 interval; u64 value; void *mq; void *msg; } Timer_;
-extern Timer_ **D_800FB620;
+extern Timer_ **__osTimerList;
 u64 __osInsertTimer(Timer_ *);
 void __osSetTimerIntr(u64);
 
@@ -20,7 +20,7 @@ s32 osSetTimer(Timer_ *t, u64 value, u64 interval, void *mq, void *msg) {
     t->mq = mq;
     t->msg = msg;
     time = __osInsertTimer(t);
-    if (*D_800FB620 == t) {
+    if (*__osTimerList == t) {
         __osSetTimerIntr(time);
     }
     return 0;

@@ -29,7 +29,6 @@ u8 func_800B2C94(P16b_, P16b_);
 f32 func_800B12C4(s32 ms);
 void *Memory_Alloc(s32);
 void Memory_Free(void *);
-void *memset(void *, s32, u32);
 extern u8 D_80123D28[];
 extern u8 D_80123D24[];
 extern s32 D_80138098[];

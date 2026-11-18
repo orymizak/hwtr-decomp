@@ -22,8 +22,8 @@ typedef struct { s16 retraceMsg; s16 prenmiMsg; MqS_ audioRequestMQ; void *audio
 typedef struct { u8 p0[8]; u32 flags; u8 pC[4]; u8 list[0x40]; void *msgQ; } ScTaskG_;
 typedef struct { u8 b[0x50]; } ViModeS_;
 extern SchedS_ D_8014D300;
-extern s32 D_80000300;
-extern ViModeS_ D_800FB650[];
+extern s32 osTvType;
+extern ViModeS_ osViModeTable[];
 extern u8 D_80129BC0[];
 extern u8 D_8012BBC0[];
 extern void *D_8012DBC0[];
@@ -60,7 +60,7 @@ void func_800D5560(u8 mode, u8 numFields) {
     D_8014D300.prenmiMsg = 2;
     D_8014D300.frameRate = numFields;
     D_8014D300.frameBufferNum = 2;
-    if (D_80000300 == 0) {
+    if (osTvType == 0) {
         D_8014D300.retraceCount = 50;
     } else {
         D_8014D300.retraceCount = 60;
@@ -73,7 +73,7 @@ void func_800D5560(u8 mode, u8 numFields) {
     osCreateMesgQueue(&D_8014D300.audioRequestMQ, D_8014D300.audioBuf, 8);
     osCreateMesgQueue(&D_8014D300.waitMQ, D_8014D300.waitBuf, 8);
     osCreateViManager(0xFE);
-    osViSetMode(&D_800FB650[mode]);
+    osViSetMode(&osViModeTable[mode]);
     osViBlack(1);
     osViSetEvent(&D_8014D300.retraceMQ, (void *)0x29A, numFields);
     osSetEventMesg(4, &D_8014D300.rspMQ, (void *)0x29B);

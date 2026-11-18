@@ -7,11 +7,11 @@ typedef struct { Inode3_ inode; u8 bank; u8 map[256]; } InodeCache_;
 typedef struct { u32 game_code; u16 company_code; InodeUnit3_ start_page; u8 status; s8 reserved; u16 data_sum; u8 ext_name[4]; u8 game_name[16]; } Dir3_;
 typedef struct { u8 dummy; u8 txsize; u8 rxsize; u8 cmd; u8 typeh; u8 typel; u8 status; u8 dummy1; } ReqFormat_;
 extern u32 D_8014C73C;
-extern u8 D_80145498;
+extern u8 __osContLastCmd;
 void __osPfsRequestData(u8 cmd);
 typedef struct { u16 type; u8 status; u8 errnum; } ContStatus_;
-extern u8 D_8014C700;
-extern u8 D_80141590;
+extern u8 __osPfsPifRam;
+extern u8 __osMaxControllers;
 void __osSiGetAccess(void);
 void __osSiRelAccess(void);
 s32 __osSiRawStartDma(s32 direction, void *dramAddr);
@@ -214,22 +214,22 @@ s32 osPfsIsPlug(void *mq, u8 *pattern) {
     __osSiGetAccess();
     do {
         __osPfsRequestData(0);
-        ret = __osSiRawStartDma(1, &D_8014C700);
+        ret = __osSiRawStartDma(1, &__osPfsPifRam);
         osRecvMesg(mq, &msg, 1);
-        ret = __osSiRawStartDma(0, &D_8014C700);
+        ret = __osSiRawStartDma(0, &__osPfsPifRam);
         osRecvMesg(mq, &msg, 1);
         func_800E5BB0(&bitpattern, &contData[0]);
-        for (channel = 0; channel < D_80141590; channel++) {
+        for (channel = 0; channel < __osMaxControllers; channel++) {
             if ((contData[channel].status & 4) == 0) {
                 crcErrorCount--;
                 break;
             }
         }
-        if (channel == D_80141590) {
+        if (channel == __osMaxControllers) {
             crcErrorCount = 0;
         }
     } while (crcErrorCount > 0);
-    for (channel = 0; channel < D_80141590; channel++) {
+    for (channel = 0; channel < __osMaxControllers; channel++) {
         if ((contData[channel].errnum == 0) && ((contData[channel].status & 1) != 0)) {
             bits |= (1 << channel);
         }
@@ -241,11 +241,11 @@ s32 osPfsIsPlug(void *mq, u8 *pattern) {
 
 
 void __osPfsRequestData(u8 cmd) {
-    u8 *ptr = &D_8014C700;
+    u8 *ptr = &__osPfsPifRam;
     ReqFormat_ requestformat;
     s32 i;
 
-    D_80145498 = cmd;
+    __osContLastCmd = cmd;
     D_8014C73C = 1;
     requestformat.dummy = 0xFF;
     requestformat.txsize = 1;
@@ -255,7 +255,7 @@ void __osPfsRequestData(u8 cmd) {
     requestformat.typel = 0xFF;
     requestformat.status = 0xFF;
     requestformat.dummy1 = 0xFF;
-    for (i = 0; i < D_80141590; i++) {
+    for (i = 0; i < __osMaxControllers; i++) {
         *((ReqFormat_ *)ptr) = requestformat;
         ptr += sizeof(ReqFormat_);
     }
@@ -269,8 +269,8 @@ void func_800E5BB0(u8 *pattern, ContStatus_ *data) {
     s32 i;
     u8 bits = 0;
 
-    ptr = &D_8014C700;
-    for (i = 0; i < D_80141590; i++, ptr += sizeof(requestformat), data++) {
+    ptr = &__osPfsPifRam;
+    for (i = 0; i < __osMaxControllers; i++, ptr += sizeof(requestformat), data++) {
         requestformat = *((ReqFormat_ *)ptr);
         data->errnum = (requestformat.rxsize & 0xC0) >> 4;
         if (data->errnum != 0) {

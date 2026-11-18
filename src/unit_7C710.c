@@ -1,75 +1,134 @@
 #include "common.h"
 #include "include_asm.h"
-typedef struct ALLink_ { struct ALLink_ *next; struct ALLink_ *prev; } ALLink_;
-typedef struct { u32 w0; u32 w1; } Acmd_;
-typedef struct ALFilter_ { struct ALFilter_ *source; Acmd_ *(*handler)(void *, s16 *, s32, s32, Acmd_ *); s32 (*setParam)(void *, s32, void *); } ALFilter_;
-typedef struct { ALFilter_ filter; u8 padC[8]; s32 sourceCount; s32 maxSources; ALFilter_ **sources; } ALBus_;
-typedef struct { ALFilter_ filter; u8 padC[8]; s32 dramout; s32 first; } ALSave2_;
+/*====================================================================
+ * save.c
+ *
+ * Copyright 1993, Silicon Graphics, Inc.
+ * All Rights Reserved.
+ * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Silicon Graphics,
+ * Inc.; the contents of this file may not be disclosed to third
+ * parties, copied or duplicated in any form, in whole or in part,
+ * without the prior written permission of Silicon Graphics, Inc.
+ *
+ * RESTRICTED RIGHTS LEGEND:
+ * Use, duplication or disclosure by the Government is subject to
+ * restrictions as set forth in subdivision (c)(1)(ii) of the Rights
+ * in Technical Data and Computer Software clause at DFARS
+ * 252.227-7013, and/or in similar or successor clauses in the FAR,
+ * DOD or NASA FAR Supplement. Unpublished - rights reserved under the
+ * Copyright Laws of the United States.
+ *====================================================================*/
+#include <libaudio.h>
+#include "audio/synthInternals.h"
+#include <os.h>
+#include <assert.h>
+// TODO: this comes from a header
+#ident "$Revision: 1.17 $"
+/*====================================================================
+ * sl.c
+ *
+ * Synopsis:
+ *  Sound library global routines
+ *
+ * Copyright 1993, Silicon Graphics, Inc.
+ * All Rights Reserved.
+ *
+ * This is UNPUBLISHED PROPRIETARY SOURCE CODE of Silicon Graphics,
+ * Inc.; the contents of this file may not be disclosed to third
+ * parties, copied or duplicated in any form, in whole or in part,
+ * without the prior written permission of Silicon Graphics, Inc.
+ *
+ * RESTRICTED RIGHTS LEGEND:
+ * Use, duplication or disclosure by the Government is subject to
+ * restrictions as set forth in subdivision (c)(1)(ii) of the Rights
+ * in Technical Data and Computer Software clause at DFARS
+ * 252.227-7013, and/or in similar or successor clauses in the FAR,
+ * DOD or NASA FAR Supplement. Unpublished - rights reserved under the
+ * Copyright Laws of the United States.
+ *====================================================================*/
 
-s32 alSynNew();
-extern s32 D_800FB5B0;
-s32 alSynDelete();
+#include <libaudio.h>
 
-Acmd_ *alSavePull(void *filter, s16 *outp, s32 outCount, s32 sampleOffset, Acmd_ *p) {
-    Acmd_ *ptr = p;
-    ALSave2_ *f = (ALSave2_ *)filter;
-    ALFilter_ *source = f->filter.source;
+extern ALGlobals *alGlobals;
 
+
+
+Acmd *alSavePull(void *filter, s16 *outp, s32 outCount, s32 sampleOffset,
+                 Acmd *p) 
+{
+    Acmd        *ptr = p;
+    ALSave *f = (ALSave *)filter;
+    ALFilter    *source = f->filter.source;
+    assert(f->filter.source);
+
+    
     ptr = (*source->handler)(source, outp, outCount, sampleOffset, ptr);
-    { Acmd_ *_a = ptr++; _a->w0 = 0x08000000; _a->w1 = (u32)((outCount << 1) & 0xFFFF); }
-    { Acmd_ *_a = ptr++; _a->w0 = 0x0D000000; _a->w1 = 0x04400580; }
-    { Acmd_ *_a = ptr++; _a->w0 = 0x08000000; _a->w1 = (u32)((outCount << 2) & 0xFFFF); }
-    { Acmd_ *_a = ptr++; _a->w0 = 0x06000000; _a->w1 = (u32)(f->dramout); }
+    
+    aSetBuffer (ptr++, 0, 0, 0, outCount<<1);
+    aInterleave(ptr++, AL_MAIN_L_OUT, AL_MAIN_R_OUT);
+    aSetBuffer (ptr++, 0, 0, 0, outCount<<2);
+    aSaveBuffer(ptr++, f->dramout);
     return ptr;
 }
 
-s32 alSaveParam(void *filter, s32 paramID, void *param) {
-    ALSave2_ *a = (ALSave2_ *)filter;
-    ALFilter_ *f = (ALFilter_ *)filter;
-    s32 pp = (s32)param;
+
+s32 alSaveParam(void *filter, s32 paramID, void *param)
+{
+    ALSave *a = (ALSave *) filter;
+    ALFilter *f = (ALFilter *) filter;
+    s32 pp = (s32) param;
 
     switch (paramID) {
-        case 1:
-            f->source = (ALFilter_ *)param;
+        case (AL_FILTER_SET_SOURCE):
+            f->source = (ALFilter *) param;
             break;
-        case 6:
+
+        case (AL_FILTER_SET_DRAM): 
             a->dramout = pp;
             break;
+            
         default:
             break;
     }
     return 0;
+            
 }
 
 
-void alInit(s32 arg0) {
-    if (D_800FB5B0 == 0) {
-        D_800FB5B0 = arg0;
-        alSynNew();
+
+void alInit(ALGlobals *g, ALSynConfig *c)
+{
+    if (!alGlobals) { /* already initialized? */
+        alGlobals = g;
+        alSynNew(&alGlobals->drvr, c);
     }
 }
 
-void alClose(void) {
-    if (D_800FB5B0 != 0) {
-        alSynDelete();
-        D_800FB5B0 = 0;
+
+void alClose(ALGlobals *glob)
+{
+    if (alGlobals) {
+        alSynDelete(&glob->drvr);
+        alGlobals = 0;
     }
 }
 
-void alLink(ALLink_ *ln, ALLink_ *to) {
-    ln->next = to->next;
-    ln->prev = to;
-    if (to->next) {
-        to->next->prev = ln;
-    }
-    to->next = ln;
+
+/* might want to make these macros */
+void alLink(ALLink *ln, ALLink *to)
+{					
+    ln->next = to->next;     
+    ln->prev = to;           
+    if (to->next)            
+        to->next->prev = ln; 
+    to->next = ln;           
 }
 
-void alUnlink(ALLink_ *ln) {
-    if (ln->next != NULL) {
-        ln->next->prev = ln->prev;
-    }
-    if (ln->prev != NULL) {
-        ln->prev->next = ln->next;
-    }
+
+void alUnlink(ALLink *ln)			
+{					
+    if (ln->next)                   
+        ln->next->prev = ln->prev;  
+    if (ln->prev)                   
+        ln->prev->next = ln->next;  
 }

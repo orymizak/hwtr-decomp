@@ -6,10 +6,10 @@ typedef struct { u16 state; u16 retraceCount; void *framep; void *modep; u32 con
 typedef struct { s32 active; void *thread; void *cmdQueue; void *evtQueue; void *acsQueue; void *dma; void *edma; } DevMgrV_;
 typedef struct { u16 type; } MesgHdrV_;
 extern u16 D_80133280;
-extern u32 D_80138B14;
-extern u64 D_801415B0;
-extern u32 D_801345C4;
-ViCtxM_ *func_800E5260(void);
+extern u32 __osViIntrCount;
+extern u64 __osCurrentTime;
+extern u32 __osBaseCounter;
+ViCtxM_ *__osViGetCurrentContext(void);
 s32 osRecvMesg(void *, void **, s32);
 s32 osSendMesg(void *, void *, s32);
 void __osViSwapContext(void);
@@ -18,14 +18,14 @@ u32 osGetCount(void);
 
 
 
-extern DevMgrV_ D_800FB630;
-extern s32 D_800FB64C;
-extern MesgQueueV_ D_80134440;
-extern void *D_80134458[5];
-extern MesgHdrC_ D_80134470;
-extern MesgHdrC_ D_80134488;
-extern u8 D_80133288[];
-extern u8 D_80133440[];
+extern DevMgrV_ __osViDevMgr;
+extern s32 __additional_scanline;
+extern MesgQueueV_ viEventQueue;
+extern void *viEventBuf[5];
+extern MesgHdrC_ viRetraceMsg;
+extern MesgHdrC_ viCounterMsg;
+extern u8 viThread[];
+extern u8 viThreadStack[];
 void __osTimerServicesInit(void);
 void osCreateMesgQueue(void *mq, void **msg, s32 count);
 void osSetEventMesg(s32 e, void *mq, void *msg);
@@ -42,20 +42,20 @@ void osCreateViManager(s32 pri) {
     s32 oldPri;
     s32 myPri;
 
-    if (D_800FB630.active) {
+    if (__osViDevMgr.active) {
         return;
     }
     __osTimerServicesInit();
-    D_800FB64C = 0;
-    osCreateMesgQueue(&D_80134440, D_80134458, 5);
-    D_80134470.type = 13;
-    D_80134470.pri = 0;
-    D_80134470.retQueue = 0;
-    D_80134488.type = 14;
-    D_80134488.pri = 0;
-    D_80134488.retQueue = 0;
-    osSetEventMesg(7, &D_80134440, &D_80134470);
-    osSetEventMesg(3, &D_80134440, &D_80134488);
+    __additional_scanline = 0;
+    osCreateMesgQueue(&viEventQueue, viEventBuf, 5);
+    viRetraceMsg.type = 13;
+    viRetraceMsg.pri = 0;
+    viRetraceMsg.retQueue = 0;
+    viCounterMsg.type = 14;
+    viCounterMsg.pri = 0;
+    viCounterMsg.retQueue = 0;
+    osSetEventMesg(7, &viEventQueue, &viRetraceMsg);
+    osSetEventMesg(3, &viEventQueue, &viCounterMsg);
     oldPri = -1;
     myPri = osGetThreadPri(0);
     if (myPri < pri) {
@@ -63,16 +63,16 @@ void osCreateViManager(s32 pri) {
         osSetThreadPri(0, pri);
     }
     savedMask = __osDisableInt();
-    D_800FB630.active = 1;
-    D_800FB630.thread = D_80133288;
-    D_800FB630.cmdQueue = &D_80134440;
-    D_800FB630.evtQueue = &D_80134440;
-    D_800FB630.acsQueue = 0;
-    D_800FB630.dma = 0;
-    D_800FB630.edma = 0;
-    osCreateThread(D_80133288, 0, viMgrMain, &D_800FB630, D_80133440 + 0x1000, pri);
+    __osViDevMgr.active = 1;
+    __osViDevMgr.thread = viThread;
+    __osViDevMgr.cmdQueue = &viEventQueue;
+    __osViDevMgr.evtQueue = &viEventQueue;
+    __osViDevMgr.acsQueue = 0;
+    __osViDevMgr.dma = 0;
+    __osViDevMgr.edma = 0;
+    osCreateThread(viThread, 0, viMgrMain, &__osViDevMgr, viThreadStack + 0x1000, pri);
     __osViInit();
-    osStartThread(D_80133288);
+    osStartThread(viThread);
     __osRestoreInt(savedMask);
     if (oldPri != -1) {
         osSetThreadPri(0, oldPri);
@@ -88,7 +88,7 @@ void viMgrMain(void *arg) {
 
     mb = NULL;
     first = 0;
-    vc = func_800E5260();
+    vc = __osViGetCurrentContext();
     D_80133280 = vc->retraceCount;
     if (D_80133280 == 0) {
         D_80133280 = 1;
@@ -101,22 +101,22 @@ void viMgrMain(void *arg) {
             __osViSwapContext();
             D_80133280--;
             if (D_80133280 == 0) {
-                vc = func_800E5260();
+                vc = __osViGetCurrentContext();
                 if (vc->msgq != NULL) {
                     osSendMesg(vc->msgq, vc->msg, 0);
                 }
                 D_80133280 = vc->retraceCount;
             }
-            D_80138B14++;
+            __osViIntrCount++;
             if (first) {
                 count = osGetCount();
-                D_801415B0 = count;
+                __osCurrentTime = count;
                 first = 0;
             }
-            count = D_801345C4;
-            D_801345C4 = osGetCount();
-            count = D_801345C4 - count;
-            D_801415B0 = D_801415B0 + count;
+            count = __osBaseCounter;
+            __osBaseCounter = osGetCount();
+            count = __osBaseCounter - count;
+            __osCurrentTime = __osCurrentTime + count;
             break;
         case 14:
             __osTimerInterrupt();

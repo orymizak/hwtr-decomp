@@ -39,7 +39,7 @@ typedef struct { ALFilt3_ filter; u8 padC[8]; s32 state; s16 pan; s16 volume; u8
 
 
 extern s16 D_800FB490[];
-extern void *D_800FB5B0;
+extern void *alGlobals;
 Acmd8_ *_pullSubFrame(void *filter, s16 *inp, s16 *outp, s32 outCount, s32 sampleOffset, Acmd8_ *p);
 f32 _getVol(f32 ivol, s32 samples, s16 ratem, u16 ratel);
 void _freePVoice(s32 arg0, s32 arg1);
@@ -70,7 +70,7 @@ void __freeParam(void *param);
         Pulls remaining samples then resets the filter via AL_FILTER_RESET (4).
 
         case 0 (AL_FILTER_FREE_EVT):
-        D_800FB5B0 is alGlobals.drvr (the ALSynth* driver pointer).
+        alGlobals is alGlobals.drvr (the ALSynth* driver pointer).
         _freePVoice releases the physical voice back to the driver's voice pool.
 
     Replace the magic setParam IDs with the standard enums:
@@ -187,7 +187,7 @@ Acmd8_ *alEnvmixerPull(void *filter, s16 *outp, s32 outCount, s32 sampleOffset, 
                 break;
             case 0:
                 {
-                    void *drvr = D_800FB5B0;
+                    void *drvr = alGlobals;
                     FreeParam8_ *param = (FreeParam8_ *)e->ctrlList;
                     param->pvoice->offset = 0;
                     _freePVoice((s32)drvr, (s32)param->pvoice);

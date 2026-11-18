@@ -59,7 +59,6 @@ typedef struct { AnimFn_ count; AnimFn_ info; AnimFn_ keys; } AnimIf_;
     */
 extern AnimIf_ D_80141720;
 void *Memory_Alloc(s32 size);
-void *memset(void *dst, s32 value, u32 size);
 s32 func_80087990(void) {
     u32 i;
 

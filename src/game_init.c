@@ -13,7 +13,7 @@ typedef struct {
     /* 0x00 */ u8 data[VI_MODE_SIZE];
 } ViMode;
 
-extern s32 D_80000300; /* osTvType */
+extern s32 osTvType; /* osTvType */
 extern ViMode D_800FB920[];
 extern s32 D_801380B0;
 extern s32 D_800F2190;
@@ -71,7 +71,7 @@ inline void Video_Init(void) {
 
 void Game_Init(void) {
     func_80060C30();
-    switch (D_80000300) {
+    switch (osTvType) {
         case OS_TV_NTSC:
             D_801380B0 = 0;
             break;

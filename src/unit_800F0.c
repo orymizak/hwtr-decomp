@@ -1,29 +1,25 @@
 #include "common.h"
 #include "include_asm.h"
-typedef struct Thread_ { struct Thread_ *next; s32 priority; struct Thread_ **queue; struct Thread_ *tlnext; u16 state; u16 flags; } Thread_;
-extern Thread_ *__osRunningThread;
-u32 __osDisableInt(void);
-void __osRestoreInt(u32);
-void __osEnqueueAndYield(Thread_ **);
-void __osDequeueThread(Thread_ **, Thread_ *);
+#include "PR/os_internal.h"
+#include "PRinternal/osint.h"
 
-
-
-void osStopThread(Thread_ *t) {
+void osStopThread(OSThread* t) {
     register u32 saveMask = __osDisableInt();
     register u16 state;
 
-    state = (t == NULL) ? 4 : t->state;
+    state = (t == NULL) ? OS_STATE_RUNNING: t->state;
+
     switch (state) {
-    case 4:
-        __osRunningThread->state = 1;
-        __osEnqueueAndYield(NULL);
-        break;
-    case 2:
-    case 8:
-        t->state = 1;
-        __osDequeueThread(t->queue, t);
-        break;
+        case OS_STATE_RUNNING:
+            __osRunningThread->state = OS_STATE_STOPPED;
+            __osEnqueueAndYield(NULL);
+            break;
+        case OS_STATE_RUNNABLE:
+        case OS_STATE_WAITING:
+            t->state = OS_STATE_STOPPED;
+            __osDequeueThread(t->queue, t);
+            break;
     }
+
     __osRestoreInt(saveMask);
 }

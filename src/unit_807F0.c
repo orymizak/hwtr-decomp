@@ -1,8 +1,8 @@
 #include "common.h"
 #include "include_asm.h"
+#include "PR/os_internal.h"
+#include "PR/rcp.h"
 
-extern s32 D_A4400000;
-
-s32 osViGetStatus(void) {
-    return D_A4400000;
+u32 osViGetStatus(void) {
+    return IO_READ(VI_STATUS_REG);
 }

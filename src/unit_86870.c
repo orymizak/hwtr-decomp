@@ -1,15 +1,15 @@
 #include "common.h"
 #include "include_asm.h"
 typedef struct { s32 quot; s32 rem; } ldiv_t_;
-extern const f64 D_80101D70[];
+extern const f64 pows[];
 extern char D_80101DB8[];
 extern char D_80101DBC[];
 ldiv_t_ ldiv(s32 num, s32 denom);
 extern u8 D_80101DD0[];
 typedef struct { union { s64 ll; f64 ld; } v; u8 *s; s32 n0; s32 nz0; s32 n1; s32 nz1; s32 n2; s32 nz2; s32 prec; s32 width; u32 nchar; u32 flags; char qual; } Pft_;
 typedef struct { s64 quot; s64 rem; } lldiv_t_;
-extern char D_800FC9F0[];
-extern char D_800FCA04[];
+extern char ldigs[];
+extern char udigs[];
 lldiv_t_ lldiv(s64 num, s64 denom);
 void *memcpy(void *dst, const void *src, size_t n);
 
@@ -22,7 +22,7 @@ void _Litob(Pft_ *px, char code) {
     s32 i;
     u64 ullval;
 
-    digs = (code == 'X') ? D_800FCA04 : D_800FC9F0;
+    digs = (code == 'X') ? udigs : ldigs;
     base = (code == 'o') ? 8 : ((code != 'x' && code != 'X') ? 10 : 16);
     i = 0x18;
     ullval = px->v.ll;
@@ -87,7 +87,7 @@ void _Ldtob(Pft_ *px, char code) {
                 n = (((u32)(-xexp) + 3) & ~3), xexp = -n;
                 for (i = 0; n > 0; n >>= 1, i++) {
                     if (n & 1) {
-                        ldval *= D_80101D70[i];
+                        ldval *= pows[i];
                     }
                 }
             } else if (xexp > 0) {
@@ -96,7 +96,7 @@ void _Ldtob(Pft_ *px, char code) {
                 xexp &= ~3;
                 for (n = xexp, i = 0; n > 0; n >>= 1, i++) {
                     if (n & 1) {
-                        factor *= D_80101D70[i];
+                        factor *= pows[i];
                     }
                 }
                 ldval /= factor;

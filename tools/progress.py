@@ -21,12 +21,16 @@ CODE_END = ZONES[-1][2]
 
 
 def c_functions():
-    names = set()
-    for path in glob.glob("src/*.c"):
-        with open(path) as f:
-            source = re.sub(r"/\*.*?\*/", "", f.read(), flags=re.S)
-        names.update(re.findall(r"^[\w* ]*?\b(\w+)\([^;{\n]*\) \{$", source, re.M))
-    return names
+    """Funciones escritas en C: las del ELF sin el símbolo gemelo NON_MATCHING de INCLUDE_ASM."""
+    names, asm = set(), set()
+    for line in subprocess.check_output([NM, ELF], text=True).splitlines():
+        parts = line.split()
+        if len(parts) == 3 and parts[1] in "Tt":
+            if parts[2].endswith(".NON_MATCHING"):
+                asm.add(parts[2][: -len(".NON_MATCHING")])
+            else:
+                names.add(parts[2])
+    return names - asm
 
 
 def main():

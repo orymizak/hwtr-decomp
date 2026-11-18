@@ -1,7 +1,7 @@
 #include "common.h"
 #include "include_asm.h"
-extern s32 D_800FB5E4;
-extern s32 D_800FB5E8;
+extern s32 dp_busy;
+extern s32 dpCount;
 void osWritebackDCacheAll(void);
 void osSpTaskLoad(void *task);
 void osSpTaskStartGo(void *task);
@@ -16,7 +16,7 @@ typedef struct OSScClient_ { struct OSScClient_ *next; void *msgQ; } OSScClient_
 typedef struct { u8 pad[0x260]; OSScClient_ *clientList; } OSSchedC_;
 typedef struct { s16 retraceMsg; u8 p2[0x1E]; s16 prenmiMsg; u8 p22[0x1E]; u8 interruptQ[0x18]; void *intBuf[8]; u8 cmdQ[0x18]; void *cmdMsgBuf[8]; u8 thread[0x1B0]; OSScClient_ *clientList; OSScTask_ *audioListHead; OSScTask_ *gfxListHead; OSScTask_ *audioListTail; OSScTask_ *gfxListTail; OSScTask_ *curRSPTask; OSScTask_ *curRDPTask; u32 frameCount; s32 doAudio; } OSSched_;
 typedef struct { u8 b[0x50]; } OSViMode_;
-extern OSViMode_ D_800FB650[];
+extern OSViMode_ osViModeTable[];
 void osCreateMesgQueue(void *mq, void **msg, s32 count);
 void osCreateViManager(s32 pri);
 void osViSetMode(OSViMode_ *mode);
@@ -58,7 +58,7 @@ void osCreateScheduler(OSSched_ *sc, void *stack, s32 priority, u8 mode, u8 numF
     osCreateMesgQueue(&sc->interruptQ, sc->intBuf, 8);
     osCreateMesgQueue(&sc->cmdQ, sc->cmdMsgBuf, 8);
     osCreateViManager(0xFE);
-    osViSetMode(&D_800FB650[mode]);
+    osViSetMode(&osViModeTable[mode]);
     osViBlack(1);
     osSetEventMesg(4, &sc->interruptQ, (void *)667);
     osSetEventMesg(9, &sc->interruptQ, (void *)668);
@@ -272,8 +272,8 @@ void __scExec(OSSchedT_ *sc, OSScTask_ *sp, OSScTask_ *dp) {
     }
     if (dp && (dp != sp)) {
         rv = osDpSetNextBuffer(dp->output_buff, *dp->output_buff_size);
-        D_800FB5E4 = 1;
-        D_800FB5E8 = 0;
+        dp_busy = 1;
+        dpCount = 0;
         sc->curRDPTask = dp;
     }
 }

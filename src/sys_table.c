@@ -52,7 +52,7 @@ extern void *D_8014107C;
 extern void *D_80141080;
 extern void *D_80141084;
 extern void *D_80141088;
-extern s32 D_80000300; /* osTvType */
+extern s32 osTvType; /* osTvType */
 
 void func_8006681C();
 void func_8006695C();
@@ -235,10 +235,10 @@ s32 func_8007F038(void) {
 }
 
     /* TODO (Clean version):
-    Comparing `D_80000300` against raw `0` should use the established TV type macro 
+    Comparing `osTvType` against raw `0` should use the established TV type macro 
     (`OS_TV_PAL`) for clarity and consistency across modules:
     `return D_0000300 == OS_TV_PAL;`
     */
 s32 func_8007F040(void) {
-    return D_80000300 == 0;
+    return osTvType == 0;
 }

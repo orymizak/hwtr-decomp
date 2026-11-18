@@ -48,7 +48,6 @@ extern void (*D_8014558C)(s32, s32, s32);
 s32 func_8008D3AC(void);
 void func_80095FE4(u8, u8 *, u8 *);
 extern u8 D_800F38A0[];
-void *memset(void *dst, s32 value, u32 size);
 extern s32 (*D_80141698)();
 s32 func_80099434(void *);
 s32 func_8009951C(void *);

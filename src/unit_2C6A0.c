@@ -24,7 +24,6 @@ typedef struct { u8 id; u8 pad[0xF]; } E10g_;
 extern void (*D_8014C0E0[])(u8);
 extern void (*D_8014C0B4)(void);
 void func_8008E700(void);
-void *memset(void *, s32, u32);
 extern void (*D_801416E4)(s32);
 extern void (*D_801416F0)(u32);
 extern u8 (*D_80145568)(s32);

@@ -40,7 +40,6 @@ u8 func_8008E38C(P3b_, u8, u8, s32);
 extern u32 (*D_801416FC)(void);
 extern Vec3f_ D_80100B00;
 void *Memory_Alloc(s32 size);
-void *memset(void *dst, s32 value, u32 size);
 void func_80099E78(V3i_ *, Vec3f_, Vec3f_, f32 *, s32);
 void func_800AC880(u8 *, f32, f32, f32, f32, Vec3f_);
 void func_8009A4E4(u8 *o);

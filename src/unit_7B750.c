@@ -26,7 +26,7 @@ Acmd_ *alMainBusPull(void *filter, s16 *outp, s32 outCount, s32 sampleOffset, Ac
     return ptr;
 }
 
-s32 func_800DAC90(void *filter, s32 paramID, void *param) {
+s32 alMainBusParam(void *filter, s32 paramID, void *param) {
     ALBus2_ *m = (ALBus2_ *)filter;
     ALFilt2_ **sources = m->sources;
 

@@ -1,16 +1,16 @@
 #include "common.h"
 #include "include_asm.h"
 typedef struct TimerI_ { struct TimerI_ *next; struct TimerI_ *prev; u64 interval; u64 remaining; void *mq; void *msg; } TimerI_;
-extern u32 D_80145560;
+extern u32 __osTimerCounter;
 u32 __osDisableInt(void);
 void __osRestoreInt(u32);
 u32 osGetCount(void);
 void __osSetCompare(u32);
 typedef struct Timer_ { struct Timer_ *next; struct Timer_ *prev; u64 interval; u64 remaining; void *mq; void *msg; } Timer_;
-extern u64 D_801415B0;
-extern u32 D_801345C4;
-extern u32 D_80138B14;
-extern Timer_ *D_800FB620;
+extern u64 __osCurrentTime;
+extern u32 __osBaseCounter;
+extern u32 __osViIntrCount;
+extern Timer_ *__osTimerList;
 s32 osSendMesg(void *, void *, s32);
 void __osSetTimerIntr(u64 tim);
 u64 __osInsertTimer(TimerI_ *t);
@@ -18,15 +18,15 @@ u64 __osInsertTimer(TimerI_ *t);
 
 
 void __osTimerServicesInit(void) {
-    D_801415B0 = 0;
-    D_801345C4 = 0;
-    D_80138B14 = 0;
-    D_800FB620->prev = D_800FB620;
-    D_800FB620->next = D_800FB620->prev;
-    D_800FB620->remaining = 0;
-    D_800FB620->interval = D_800FB620->remaining;
-    D_800FB620->mq = NULL;
-    D_800FB620->msg = 0;
+    __osCurrentTime = 0;
+    __osBaseCounter = 0;
+    __osViIntrCount = 0;
+    __osTimerList->prev = __osTimerList;
+    __osTimerList->next = __osTimerList->prev;
+    __osTimerList->remaining = 0;
+    __osTimerList->interval = __osTimerList->remaining;
+    __osTimerList->mq = NULL;
+    __osTimerList->msg = 0;
 }
 
 void __osTimerInterrupt(void) {
@@ -34,19 +34,19 @@ void __osTimerInterrupt(void) {
     u32 count;
     u32 elapsed_cycles;
 
-    if (D_800FB620->next == D_800FB620) {
+    if (__osTimerList->next == __osTimerList) {
         return;
     }
     while (1) {
-        t = D_800FB620->next;
-        if (t == D_800FB620) {
+        t = __osTimerList->next;
+        if (t == __osTimerList) {
             __osSetCompare(0);
-            D_80145560 = 0;
+            __osTimerCounter = 0;
             break;
         }
         count = osGetCount();
-        elapsed_cycles = count - D_80145560;
-        D_80145560 = count;
+        elapsed_cycles = count - __osTimerCounter;
+        __osTimerCounter = count;
         if (elapsed_cycles < t->remaining) {
             t->remaining -= elapsed_cycles;
             __osSetTimerIntr(t->remaining);
@@ -73,8 +73,8 @@ void __osSetTimerIntr(u64 tim) {
     u32 savedMask;
 
     savedMask = __osDisableInt();
-    D_80145560 = osGetCount();
-    NewTime = D_80145560 + tim;
+    __osTimerCounter = osGetCount();
+    NewTime = __osTimerCounter + tim;
     __osSetCompare(NewTime);
     __osRestoreInt(savedMask);
 }
@@ -85,11 +85,11 @@ u64 __osInsertTimer(TimerI_ *t) {
     u32 savedMask;
 
     savedMask = __osDisableInt();
-    for (timep = (*(TimerI_ * *)&D_800FB620)->next, tim = t->remaining; timep != (*(TimerI_ * *)&D_800FB620) && tim > timep->remaining;
+    for (timep = (*(TimerI_ * *)&__osTimerList)->next, tim = t->remaining; timep != (*(TimerI_ * *)&__osTimerList) && tim > timep->remaining;
          tim -= timep->remaining, timep = timep->next) {
     }
     t->remaining = tim;
-    if (timep != (*(TimerI_ * *)&D_800FB620)) {
+    if (timep != (*(TimerI_ * *)&__osTimerList)) {
         timep->remaining -= tim;
     }
     t->next = timep;

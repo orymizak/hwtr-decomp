@@ -1,39 +1,48 @@
 #include "common.h"
 #include "include_asm.h"
-typedef struct { u32 ctrl; u32 width; } ViComRegs_;
-typedef struct { u8 type; u8 pad[3]; ViComRegs_ comRegs; } OSViMode_;
-typedef struct { u16 state; u16 retraceCount; void *framep; OSViMode_ *modep; u32 control; void *msgq; void *msg; u8 xy[0x18]; } ViContext_;
-extern ViContext_ D_800FC890[2];
-extern ViContext_ *__osViCurr;
-extern ViContext_ *__osViNext;
-extern s32 D_80000300;
-extern OSViMode_ D_800FC900;
-extern OSViMode_ D_800FC950;
-extern OSViMode_ D_800FC9A0;
-void bzero(void *p, s32 n);
-void __osViSwapContext(void);
+#include "PRinternal/macros.h"
+#include "PR/os_internal.h"
+#include "PR/R4300.h"
+#include "PR/rcp.h"
+#include "PRinternal/viint.h"
+
+// TODO: this comes from a header
+#ident "$Revision: 1.17 $"
+
+extern __OSViContext vi[2];
+
+
+extern __OSViContext* __osViCurr;
+
+
+extern __OSViContext* __osViNext;
+
 
 
 
 void __osViInit(void) {
-    bzero(D_800FC890, sizeof(D_800FC890));
-    __osViCurr = &D_800FC890[0];
-    __osViNext = &D_800FC890[1];
+    bzero(vi, sizeof(vi));
+    __osViCurr = &vi[0];
+    __osViNext = &vi[1];
     __osViNext->retraceCount = 1;
     __osViCurr->retraceCount = 1;
-    __osViNext->framep = (void *)0x80000000;
-    __osViCurr->framep = (void *)0x80000000;
-    if (D_80000300 == 0) {
-        __osViNext->modep = &D_800FC950;
-    } else if (D_80000300 == 2) {
-        __osViNext->modep = &D_800FC9A0;
+    __osViNext->framep = (void*)K0BASE;
+    __osViCurr->framep = (void*)K0BASE;
+
+    if (osTvType == OS_TV_TYPE_PAL) {
+        __osViNext->modep = &osViModePalLan1;
+    } else if (osTvType == OS_TV_TYPE_MPAL) {
+        __osViNext->modep = &osViModeMpalLan1;
     } else {
-        __osViNext->modep = &D_800FC900;
+        __osViNext->modep = &osViModeNtscLan1;
     }
-    __osViNext->state = 0x20;
+
+    __osViNext->state = VI_STATE_BLACK;
     __osViNext->control = __osViNext->modep->comRegs.ctrl;
-    while (*(volatile u32 *)0xA4400010 > 10) {
+
+    while (IO_READ(VI_CURRENT_REG) > 10) { // wait for vsync?
     }
-    *(volatile u32 *)0xA4400000 = 0;
+
+    IO_WRITE(VI_CONTROL_REG, 0); // pixel size blank (no data, no sync)
     __osViSwapContext();
 }

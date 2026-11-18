@@ -1,22 +1,14 @@
 #include "common.h"
 #include "include_asm.h"
-
-
+#include "PR/os_internal.h"
+#include "PR/rcp.h"
 
 s32 __osAiDeviceBusy(void) {
-    register s32 status = *(volatile s32 *)0xA450000C;
+    register s32 status = IO_READ(AI_STATUS_REG);
 
-    if (status & 0x80000000) {
-        return 1;
+    if (status & AI_STATUS_FIFO_FULL) {
+        return TRUE;
     } else {
-        return 0;
+        return FALSE;
     }
 }
-
-    /* TODO validar si este código es equivalente:
-    s32 __osAiDeviceBusy(void) {
-        int zero = 0;
-        // Nota: Se compara contra 'zero' para forzar la instrucción MIPS de signo original (matching)
-        return (*((volatile s32 *)AI_STATUS_REG)) < zero;
-    }
-    */

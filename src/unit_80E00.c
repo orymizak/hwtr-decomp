@@ -1,20 +1,16 @@
 #include "common.h"
 #include "include_asm.h"
-typedef struct { u32 ctrl; u32 width; u32 burst; u32 vSync; u32 hSync; u32 leap; u32 hStart; u32 xScale; u32 vCurrent; } ViCommonRegs_;
-typedef struct { u32 origin; u32 yScale; u32 vStart; u32 vBurst; u32 vIntr; } ViFieldRegs_;
-typedef struct { u8 type; ViCommonRegs_ comRegs; ViFieldRegs_ fldRegs[2]; } ViMode2_;
-typedef struct { f32 factor; u16 offset; u32 scale; } ViScale_;
-typedef struct { u16 state; u16 retraceCount; void *framep; ViMode2_ *modep; u32 control; void *msgq; void *msg; ViScale_ x; ViScale_ y; } ViCtx2_;
-extern ViCtx2_ *__osViCurr;
-extern ViCtx2_ *__osViNext;
-extern u32 D_800FB64C;
-u32 osVirtualToPhysical(void *);
+#include "PR/os_internal.h"
+#include "PR/rcp.h"
+#include "PRinternal/viint.h"
 
+// TODO: this comes from a header
+#ident "$Revision: 1.17 $"
 
 
 void __osViSwapContext(void) {
-    register ViMode2_ *vm;
-    register ViCtx2_ *vc;
+    register OSViMode* vm;
+    register __OSViContext* vc;
     u32 origin;
     u32 hStart;
     u32 vStart;
@@ -24,46 +20,55 @@ void __osViSwapContext(void) {
     field = 0;
     vc = __osViNext;
     vm = vc->modep;
-    field = *(volatile u32 *)0xA4400010 & 1;
+
+    field = IO_READ(VI_CURRENT_REG) & 1; // field num
+
     origin = osVirtualToPhysical(vc->framep) + (vm->fldRegs[field].origin);
-    if (vc->state & 2) {
-        vc->x.scale |= (vm->comRegs.xScale & ~0xFFF);
+    if (vc->state & VI_STATE_XSCALE_UPDATED) {
+        vc->x.scale |= (vm->comRegs.xScale & ~VI_SCALE_MASK);
     } else {
         vc->x.scale = vm->comRegs.xScale;
     }
-    if (vc->state & 4) {
-        nomValue = vm->fldRegs[field].yScale & 0xFFF;
+
+    if (vc->state & VI_STATE_YSCALE_UPDATED) {
+        nomValue = vm->fldRegs[field].yScale & VI_SCALE_MASK;
         vc->y.scale = vc->y.factor * nomValue;
-        vc->y.scale |= vm->fldRegs[field].yScale & ~0xFFF;
+        vc->y.scale |= vm->fldRegs[field].yScale & ~VI_SCALE_MASK;
     } else {
         vc->y.scale = vm->fldRegs[field].yScale;
     }
-    vStart = (vm->fldRegs[field].vStart - (D_800FB64C << 0x10)) + D_800FB64C;
+
+    vStart = (vm->fldRegs[field].vStart - (__additional_scanline << VI_SUBPIXEL_SH)) + __additional_scanline;
     hStart = vm->comRegs.hStart;
-    if (vc->state & 0x20) {
+
+    if (vc->state & VI_STATE_BLACK) {
         hStart = 0;
     }
-    if (vc->state & 0x40) {
+
+    if (vc->state & VI_STATE_REPEATLINE) {
         vc->y.scale = 0;
         origin = osVirtualToPhysical(vc->framep);
     }
-    if (vc->state & 0x80) {
-        vc->y.scale = (vc->y.offset << 0x10) & (0x3FF << 0x10);
+
+    if (vc->state & VI_STATE_FADE) {
+        vc->y.scale = (vc->y.offset << VI_SUBPIXEL_SH) & (VI_2_10_FPART_MASK << VI_SUBPIXEL_SH);
         origin = osVirtualToPhysical(vc->framep);
     }
-    *(volatile u32 *)0xA4400004 = origin;
-    *(volatile u32 *)0xA4400008 = vm->comRegs.width;
-    *(volatile u32 *)0xA4400014 = vm->comRegs.burst;
-    *(volatile u32 *)0xA4400018 = vm->comRegs.vSync;
-    *(volatile u32 *)0xA440001C = vm->comRegs.hSync;
-    *(volatile u32 *)0xA4400020 = vm->comRegs.leap;
-    *(volatile u32 *)0xA4400024 = hStart;
-    *(volatile u32 *)0xA4400028 = vStart;
-    *(volatile u32 *)0xA440002C = vm->fldRegs[field].vBurst;
-    *(volatile u32 *)0xA440000C = vm->fldRegs[field].vIntr;
-    *(volatile u32 *)0xA4400030 = vc->x.scale;
-    *(volatile u32 *)0xA4400034 = vc->y.scale;
-    *(volatile u32 *)0xA4400000 = vc->control;
+
+    IO_WRITE(VI_ORIGIN_REG, origin);
+    IO_WRITE(VI_WIDTH_REG, vm->comRegs.width);
+    IO_WRITE(VI_BURST_REG, vm->comRegs.burst);
+    IO_WRITE(VI_V_SYNC_REG, vm->comRegs.vSync);
+    IO_WRITE(VI_H_SYNC_REG, vm->comRegs.hSync);
+    IO_WRITE(VI_LEAP_REG, vm->comRegs.leap);
+    IO_WRITE(VI_H_START_REG, hStart);
+    IO_WRITE(VI_V_START_REG, vStart);
+    IO_WRITE(VI_V_BURST_REG, vm->fldRegs[field].vBurst);
+    IO_WRITE(VI_INTR_REG, vm->fldRegs[field].vIntr);
+    IO_WRITE(VI_X_SCALE_REG, vc->x.scale);
+    IO_WRITE(VI_Y_SCALE_REG, vc->y.scale);
+    IO_WRITE(VI_CONTROL_REG, vc->control);
+
     __osViNext = __osViCurr;
     __osViCurr = vc;
     *__osViNext = *__osViCurr;

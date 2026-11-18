@@ -1,13 +1,16 @@
 #include "common.h"
 #include "include_asm.h"
-s32 __osSiDeviceBusy(void);
-
-
+#include "PR/os_internal.h"
+#include "PRinternal/siint.h"
+#include "assert.h"
 
 s32 __osSiRawWriteIo(u32 devAddr, u32 data) {
+    assert((devAddr & 0x3) == 0);
+
     if (__osSiDeviceBusy()) {
         return -1;
     }
-    *(volatile u32 *)(devAddr | 0xA0000000) = data;
+
+    IO_WRITE(devAddr, data);
     return 0;
 }

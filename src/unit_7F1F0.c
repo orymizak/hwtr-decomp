@@ -1,8 +1,8 @@
 #include "common.h"
 #include "include_asm.h"
-
-s32 __osSpSetStatus(s32);
+#include "PR/os_internal.h"
+#include "PR/rcp.h"
 
 void osSpTaskYield(void) {
-    __osSpSetStatus(0x400);
+    __osSpSetStatus(SP_SET_YIELD);
 }

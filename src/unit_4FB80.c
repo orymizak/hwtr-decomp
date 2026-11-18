@@ -14,7 +14,6 @@ void func_800A6D98(u8 *, s32);
 void func_80090FA8(u8 *, s32);
 extern s32 D_8011F6A4;
 extern u8 D_8011F6B0[];
-void *memset(void *dst, s32 value, u32 size);
 
 extern s32 D_8011F6A0;
 
