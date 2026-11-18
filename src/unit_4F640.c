@@ -1,9 +1,7 @@
 #include "common.h"
 #include "ultra64.h"
+#include "race.h"
 #include "include_asm.h"
-/* Race description passed to RaceView_Init: one 0x14-byte slot per racer. */
-typedef struct { s32 human; u8 p[16]; } RaceSlot;  /* human: 1 = player-controlled, gets a view */
-typedef struct { u8 pad[0x18]; u8 n; u8 p2[3]; s32 flags; u8 p3[0x10]; RaceSlot e[1]; } RaceDesc;
 extern s32 (*D_801416AC)();
 extern s32 (*D_801416B0)();
 extern void (*svcFontDrawChar)(s32, u8, u16, s32, s32);
@@ -21,21 +19,21 @@ extern s32 (*svcScreenBeginFrame)();
 extern s32 (*svcScreenEndFrame)();
 extern s32 gRaceViewCount;
 
-s32 RaceView_Init(RaceDesc *t) {
+s32 RaceView_Init(RaceSetup *t) {
     u8 i;
 
     gRaceViewCount = 0;
-    for (i = 0; i < t->n; i++) {
-        if (t->e[i].human == 1) {
+    for (i = 0; i < t->count; i++) {
+        if (t->p[i].kind == 1) {
             gRaceViewCount++;
         }
     }
     if (gRaceViewCount == 0) {
         gRaceViewCount = 1;
     }
-    D_801415B8 = t->n;
+    D_801415B8 = t->count;
     /* TODO (Clean version): [evaluated 2026-11-18: the (flags & 0x200) != 0 form changes the ROM] */
-    if (t->flags & 0x200) {
+    if (t->cheats & 0x200) {
         D_800F3B81 = 1;
     } else {
         D_800F3B81 = 0;

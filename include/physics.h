@@ -42,7 +42,8 @@ typedef struct {
     /* 0x48 */ u8 pad48[0x14];
     /* 0x5C */ s32 kind;
     /* 0x60 */ RigidBody *body;
-    /* 0x64 */ u8 pad64[0x20];
+    /* 0x64 */ u8 *owner;     /* the car or object this collider belongs to */
+    /* 0x68 */ u8 pad68[0x1C];
     /* 0x84 */ u32 weight;    /* 0 = immovable */
 } Collider; /* size = 0x88 */
 

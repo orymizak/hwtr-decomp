@@ -1,4 +1,7 @@
 #include "common.h"
+#include "race.h"
+#include "input.h"
+#include "physics.h"
 #include "include_asm.h"
 #include "car.h"
 extern void (*svcGamePauseBegin)(void);
@@ -10,16 +13,9 @@ typedef struct { u8 b0; u8 pad[0xF]; } E10b_;
 extern E10b_ D_801184C8[];
 extern u8 D_801184C2;
 extern s32 D_80118528;
-extern void (*audCarSndInit)(u8, u8, u8 *);
-typedef struct { s32 w; u8 p[16]; } E14t_;
-typedef struct { u8 pad[0x30]; E14t_ e[1]; } T8D_;
-typedef struct { u8 pad[0x12]; u8 b; u8 pad2[0x19]; } E2Cd_;
-typedef struct { u8 pad[0x30]; E2Cd_ e[1]; } T8B_;
-typedef struct { s32 kind; u8 p4; u8 slot; u8 p6[14]; } E20_;
-typedef struct { u8 p0[0x30]; E20_ ent[6]; } Cfg8B_;
+extern void (*audCarSndInit)(u8, u8, RaceSetup *);
 typedef struct { u32 time; u32 best; u8 id; } Res8C_;
 typedef struct { u8 id; u8 b; u8 pad[2]; s32 c; } Ent8b_;
-typedef struct { u8 id; u8 pad[0xF]; } E10g_;
 extern void (*audCarSndStopEngine[])(u8);
 extern void (*audMusicStop)(void);
 void RaceAudio_Pause(void);
@@ -59,9 +55,9 @@ extern u8 gRaceIsDemo;
 extern u8 gRacePausePlayer;
 extern s32 gRaceStartDelay;
 extern s32 gRaceAudioTick;
-extern u8 (*svcRacePreLoad)(u8 *);
-extern u8 (*svcTrackLoad)(u8 *);
-extern u8 (*svcRacePostLoad)(u8 *);
+extern u8 (*svcRacePreLoad)(RaceSetup *);
+extern u8 (*svcTrackLoad)(RaceSetup *);
+extern u8 (*svcRacePostLoad)(RaceSetup *);
 extern void (*sysInputRumbleResume)(void);
 u8 RaceAudio_Load(void);
 void RaceClock_Reset(void);
@@ -70,20 +66,20 @@ s32 RaceCam_GetIntroDuration(void);
 void RaceCam_EndIntro(void);
 void Coll_Update(void);
 void Ai_StartRace(void);
-u8 Hud_Init(u8 *);
-u8 RaceView_Init(u8 *);
-u8 AnimTrack_Init(u8 *);
-u8 Bld_Load(u8 *);
-u8 Rumble_Init(u8 *);
-u8 Coll_Init(u8 *);
-u8 Ai_Init(u8 *);
-u8 Cars_Init(u8 *);
-u8 RaceCam_Init(u8 *);
-u8 TrackObj_Init(u8 *);
-u8 Pickup_Init(u8 *);
-u8 Lap_Init(u8 *);
-u8 Debris_Init(u8 *);
-u8 Replay_Init(u8 *);
+u8 Hud_Init(RaceSetup *);
+u8 RaceView_Init(RaceSetup *);
+u8 AnimTrack_Init(RaceSetup *);
+u8 Bld_Load(RaceSetup *);
+u8 Rumble_Init(RaceSetup *);
+u8 Coll_Init(RaceSetup *);
+u8 Ai_Init(RaceSetup *);
+u8 Cars_Init(RaceSetup *);
+u8 RaceCam_Init(RaceSetup *);
+u8 TrackObj_Init(RaceSetup *);
+u8 Pickup_Init(RaceSetup *);
+u8 Lap_Init(RaceSetup *);
+u8 Debris_Init(RaceSetup *);
+u8 Replay_Init(RaceSetup *);
 extern void (*audCarSndPlayOneShot)(u8, s32, f32);
 extern u32 (*svcGamePauseUpdate)(void);
 extern void (*svcGamePauseEnd)(s32);
@@ -94,27 +90,27 @@ extern u8 gRacePauseReleased;
 extern u8 gRaceShowResults;
 extern s32 gRaceSimTime;
 extern s32 gRaceLastTime;
-extern u8 (*svcRacePreUnload)(u8 *);
-extern u8 (*svcRacePostUnload)(u8 *);
+extern u8 (*svcRacePreUnload)(RaceResult *);
+extern u8 (*svcRacePostUnload)(RaceResult *);
 extern u8 (*svcTrackUnload)();
 extern u32 gRacerCount;
 extern u8 gRacePoints[];
 extern s32 gRaceOutcome;
-u8 Replay_Shutdown(u8 *);
-u8 Debris_Shutdown(u8 *);
-u8 Lap_Shutdown(u8 *);
-u8 Pickup_Shutdown(u8 *);
-u8 TrackObj_Shutdown(u8 *);
-u8 RaceCam_Shutdown(u8 *);
-u8 RaceAudio_Unload(u8 *);
-u8 Cars_Shutdown(u8 *);
-u8 Ai_Shutdown(u8 *);
-u8 RaceView_Shutdown(u8 *);
-u8 Coll_Shutdown(u8 *);
-u8 Rumble_Shutdown(u8 *);
+u8 Replay_Shutdown(RaceResult *);
+u8 Debris_Shutdown(RaceResult *);
+u8 Lap_Shutdown(RaceResult *);
+u8 Pickup_Shutdown(RaceResult *);
+u8 TrackObj_Shutdown(RaceResult *);
+u8 RaceCam_Shutdown(RaceResult *);
+u8 RaceAudio_Unload(RaceResult *);
+u8 Cars_Shutdown(RaceResult *);
+u8 Ai_Shutdown(RaceResult *);
+u8 RaceView_Shutdown(RaceResult *);
+u8 Coll_Shutdown(RaceResult *);
+u8 Rumble_Shutdown(RaceResult *);
 u8 Bld_Free();
-u8 AnimTrack_Shutdown(u8 *);
-u8 Hud_Shutdown(u8 *);
+u8 AnimTrack_Shutdown(RaceResult *);
+u8 Hud_Shutdown(RaceResult *);
 extern u8 D_801184C1;
 extern u8 D_800F3700;
 extern E10_ *D_800F3704;
@@ -144,49 +140,32 @@ extern s32 D_8011852C;
 extern u8 D_80118530;
 extern u32 D_80118534;
 
-void Race_LoadProgressInit(u8 *arg0);
+void Race_LoadProgressInit(RaceSetup *cfg);
 void Race_LoadProgressStep(void);
-s32 RaceAudio_Init(u8 *t);
-    /* TODO (Clean version / Bug check): Define a unified GameConfig struct for 'cfg' instead of raw byte offsets:
-    typedef struct {
-        u32 flags;              // 0x00: bit 0: is_practice, bit 2: has_time_limit
-        u8 pad04[0x14];
-        u8 racer_count;         // 0x18: gRacerCount
-        u8 pad19[7];
-        u32 time_limit;         // 0x20: gRaceTimeLimit
-        u8 pad24[12];
-        struct {
-            s32 kind;           // 0x00: 1 = player racer
-            u8 pad04;
-            u8 slot;            // 0x05
-            u8 pad06[14];
-        } racers[6];            // 0x30
-    } GameConfig;
-    Also remove the redundant function pointer cast on RaceAudio_Init(cfg).
-    */
-s32 Race_Init(u8 *cfg) {
+u8 RaceAudio_Init(RaceSetup *t);
+s32 Race_Init(RaceSetup *cfg) {
     u8 i;
 
     gRaceOutcome = 0;
-    gRacerCount = cfg[0x18];
+    gRacerCount = cfg->count;
     gHumanCount = 0;
     for (i = 0; i < gRacerCount; i++) {
         gRacePoints[i] = 0;
-        if (((Cfg8B_ *)cfg)->ent[i].kind == 1) {
-            gHumanRacer[((Cfg8B_ *)cfg)->ent[i].slot] = i;
+        if (cfg->p[i].kind == 1) {
+            gHumanRacer[cfg->p[i].player] = i;
             gHumanCount++;
         }
     }
     for (i = 0; i < 2; i++) {
         gHumanFinished[i] = 0;
     }
-    if (*(s32 *)cfg & 4) {
-        gRaceTimeLimit = *(s32 *)(cfg + 0x20);
+    if (cfg->flags & 4) {
+        gRaceTimeLimit = cfg->timeLimit;
         gRaceHasTimeLimit = 1;
     } else {
         gRaceHasTimeLimit = 0;
     }
-    gRaceIsDemo = *(s32 *)cfg & 1;
+    gRaceIsDemo = cfg->flags & 1;
     D_801184AA = 0;
     D_801184A9 = 0;
     D_801184A8 = 0;
@@ -230,7 +209,7 @@ s32 Race_Init(u8 *cfg) {
     if (!Cars_Init(cfg)) {
         return 0;
     }
-    if (!((u8 (*)(u8 *))RaceAudio_Init)(cfg)) {
+    if (!RaceAudio_Init(cfg)) {
         return 0;
     }
     if (!RaceCam_Init(cfg)) {
@@ -278,24 +257,13 @@ s32 Race_Init(u8 *cfg) {
     return 1;
 }
 
-    /* TODO (Clean version / Bug check): Replace raw buffer 'o' with a structured RaceSummary struct:
-    typedef struct {
-        s32 race_result_code;   // 0x00: gRaceOutcome
-        u8 pad04[0x2C];
-        struct {
-            u8 pad00[0x12];
-            u8 points;          // 0x12: gRacePoints[i]
-            u8 pad13[0x19];
-        } racers[6];            // 0x30, stride 0x2C
-    } RaceSummary;
-    Also consider replacing cascading 'err += func() == 0' with a boolean failure accumulator:
-    bool ok = svcRacePreUnload(o) && Replay_Shutdown(o) && ... && svcRacePostUnload(o);
-    */
-u8 Race_Shutdown(u8 *o) {
+    /* TODO (Clean version / Bug check): [evaluated 2026-11-18: done with RaceResult (race.h); the
+    `err += f() == 0` chain stays: && short-circuits and changes behaviour and the ROM] */
+u8 Race_Shutdown(RaceResult *o) {
     s32 err;
     u8 i;
 
-    memset(o, 0, 0x124);
+    memset(o, 0, RACE_RESULT_SIZE);
     if (svcRacePreUnload(o) == 0) {
         return 0;
     }
@@ -319,13 +287,14 @@ u8 Race_Shutdown(u8 *o) {
         return 0;
     }
     for (i = 0; i < gRacerCount; i++) {
-        ((T8B_ *)o)->e[i].b = gRacePoints[i];
+        o->r[i].points = gRacePoints[i];
     }
-    *(s32 *)o = gRaceOutcome;
+    o->outcome = gRaceOutcome;
     return err == 0;
 }
 
-    /* TODO (Clean version / Bug check): Eliminate dead branch and clean up state dispatch:
+    /* TODO (Clean version / Bug check): [evaluated 2026-11-18: the single `return 1` changes the
+    ROM; the dead if/else is in the original] Eliminate dead branch and clean up state dispatch:
     if (gGameState != 2) {
         gGameStateFuncs[gGameState]();
         return 0;
@@ -346,7 +315,8 @@ s32 Game_RunState(void) {
   }
 }
 
-    /* TODO (Clean version / Bug check): Use struct assignment and static lookup table for points:
+    /* TODO (Clean version / Bug check): [evaluated 2026-11-18: the struct assignment and a points
+    table both change the ROM] Use struct assignment and static lookup table for points:
     static const u8 sPointsTable[] = { 10, 8, 7, 6, 5, 4 };
     ...
     if (b != i) {
@@ -433,19 +403,24 @@ void Race_ComputeResults(void) {
 
 void Race_PauseBegin(void);
 u8 Race_IsFinished(void);
-    /* TODO (Clean version / Bug check): Factor out duplicate car freeze/reset logic into an inline helper:
-    static inline void freeze_car(Car *c) {
-        if (c->flags & 3) {
-            c->yaw = 1.0f;
-            c->unk014 = 0.0f;
-            c->unk018 = 0.0f;
-            c->unk024 = 1;
-            c->unk025 = 0;
-            c->unk027 = 0;
-        }
+/* Stops a car that is still driving (flags & 3) when the race ends. */
+static inline void Car_StopAtFinish(Car *c) {
+    if (c->flags & 3) {
+        c->yaw = 1.0f;
+        c->unk014 = 0.0f;
+        c->unk018 = 0.0f;
+        c->unk024 = 1;
+        c->unk025 = 0;
+        c->unk027 = 0;
     }
-    And define constants for countdown timer thresholds (1200ms, 2550ms, 3800ms, 5000ms).
-    */
+}
+
+/* Countdown after the intro (gRaceStartDelay): "3", "2", "1", then the race starts. */
+#define COUNTDOWN_3_MS 1200
+#define COUNTDOWN_2_MS 2550
+#define COUNTDOWN_1_MS 3800
+#define COUNTDOWN_GO_MS 5000
+
 void Race_Update(void) {
     u32 now;
     u32 delta;
@@ -513,22 +488,22 @@ void Race_Update(void) {
     case 0:
         if (RaceClock_Get() >= gRaceStartDelay) {
             RaceCam_EndIntro();
-        } else if (sysInputIsKeyHeldAny(0x12)) {
+        } else if (sysInputIsKeyHeldAny(KEY_A)) {
             gRaceStartDelay = RaceClock_Get();
         }
-        if (RaceClock_Get() >= gRaceStartDelay + 1200 && D_801184A8 == 0) {
+        if (RaceClock_Get() >= gRaceStartDelay + COUNTDOWN_3_MS && D_801184A8 == 0) {
             audSfxPlay(6, 1, 1.0f, 1.0f);
             svcHudCountdown(3);
             D_801184A8 = 1;
-        } else if (RaceClock_Get() >= gRaceStartDelay + 2550 && D_801184A9 == 0) {
+        } else if (RaceClock_Get() >= gRaceStartDelay + COUNTDOWN_2_MS && D_801184A9 == 0) {
             audSfxPlay(7, 1, 1.0f, 1.0f);
             svcHudCountdown(2);
             D_801184A9 = 1;
-        } else if (RaceClock_Get() >= gRaceStartDelay + 3800 && D_801184AA == 0) {
+        } else if (RaceClock_Get() >= gRaceStartDelay + COUNTDOWN_1_MS && D_801184AA == 0) {
             audSfxPlay(8, 1, 1.0f, 1.0f);
             svcHudCountdown(1);
             D_801184AA = 1;
-        } else if (RaceClock_Get() >= gRaceStartDelay + 5000) {
+        } else if (RaceClock_Get() >= gRaceStartDelay + COUNTDOWN_GO_MS) {
             Replay_Record();
             RaceClock_Start();
             gRacePhase = 1;
@@ -547,15 +522,7 @@ void Race_Update(void) {
                 svcRacePhaseChanged(2);
                 gRaceOutcome = 1;
                 for (i = 0; i < gRacerCount; i++) {
-                    c = Car_Get(i);
-                    if (c->flags & 3) {
-                        c->yaw = 1.0f;
-                        c->unk014 = 0.0f;
-                        c->unk018 = 0.0f;
-                        c->unk024 = 1;
-                        c->unk025 = 0;
-                        c->unk027 = 0;
-                    }
+                    Car_StopAtFinish(Car_Get(i));
                 }
             } else {
                 gGameState = 2;
@@ -567,21 +534,13 @@ void Race_Update(void) {
         Race_ComputeResults();
         gRacePhase = 3;
         for (i = 0; i < gRacerCount; i++) {
-            c = Car_Get(i);
-            if (c->flags & 3) {
-                c->yaw = 1.0f;
-                c->unk014 = 0.0f;
-                c->unk018 = 0.0f;
-                c->unk024 = 1;
-                c->unk025 = 0;
-                c->unk027 = 0;
-            }
+            Car_StopAtFinish(Car_Get(i));
         }
         gRaceEndTime = gRaceLastTime - 4000;
         break;
     case 3:
         if (gRaceSkipArmed == 0) {
-            gRaceSkipArmed = sysInputIsKeyHeldAny(0x12) == 0;
+            gRaceSkipArmed = sysInputIsKeyHeldAny(KEY_A) == 0;
         }
         if (now - gRaceEndTime > 4000) {
             if (gRaceShowResults == 0) {
@@ -593,7 +552,7 @@ void Race_Update(void) {
                 i = (now - gRaceEndTime - 4000) / 2000;
                 Replay_Show(i % n);
             }
-            if (now - gRaceEndTime > 30000 || (gRaceSkipArmed != 0 && sysInputIsKeyHeldAny(0x12)) || sysInputIsKeyHeldAny(0x1A)) {
+            if (now - gRaceEndTime > 30000 || (gRaceSkipArmed != 0 && sysInputIsKeyHeldAny(KEY_A)) || sysInputIsKeyHeldAny(0x1A)) {
                 gGameState = 2;
             }
         }
@@ -620,7 +579,9 @@ void Race_PauseBegin(void) {
 
 
 void RaceAudio_Resume(void);
-    /* TODO (Clean version / Bug check): Hoist shared pause-exit state updates out of the switch cases:
+    /* TODO (Clean version / Bug check): [evaluated 2026-11-18: not equivalent: case 1 calls
+    RaceAudio_Resume between the steps and other results must do nothing; hoisting also changes the
+    ROM] Hoist shared pause-exit state updates out of the switch cases:
     svcGamePauseEnd(choice);
     gRacePauseRequested = 0;
     gRacePauseReleased = 0;
@@ -673,24 +634,17 @@ void Race_PauseUpdate(void) {
     }
 }
 
-    /* TODO (Clean version / Bug check): Define named timeout constant and simplify boolean return:
-    #define RACE_TIMEOUT_MS 1799999 // 0x1B773F (~30 minutes)
-    if (RaceClock_Get() > RACE_TIMEOUT_MS) {
-        return 1;
-    }
-    if (gRaceHasTimeLimit != 0) {
-        return RaceClock_Get() >= gRaceTimeLimit;
-    }
-    */
+#define RACE_MAX_TIME_MS 1799999 /* a race ends after 30 minutes */
+
 u8 Race_IsFinished(void) {
     u8 ok = 1;
     u8 i;
 
-    if (RaceClock_Get() > 0x1B773F) {
+    if (RaceClock_Get() > RACE_MAX_TIME_MS) {
         return 1;
     }
     if (gRaceHasTimeLimit != 0) {
-        ok = !(RaceClock_Get() < gRaceTimeLimit);
+        ok = RaceClock_Get() >= gRaceTimeLimit;
     } else {
         for (i = 0; i < gHumanCount; i++) {
             u8 v = Car_CheckFinished(i);
@@ -710,48 +664,27 @@ s32 Race_GetPhase(void) {
     return gRacePhase;
 }
 
-void Race_LoadProgressInit(u8 *arg0) {
-    gRaceLoadSteps = arg0[0x18] + 6;
+void Race_LoadProgressInit(RaceSetup *cfg) {
+    gRaceLoadSteps = cfg->count + 6; /* one step per racer plus the fixed loads */
     gRaceLoadStep = 0;
 }
 
-    /* TODO (Clean version / Bug check): Express percentage calculation with named macro:
-    #define CALC_PROGRESS_PCT(curr, total) (((curr) * 100) / ((total) - 1))
-    svcLoadingProgress(CALC_PROGRESS_PCT(gRaceLoadStep, gRaceLoadSteps));
-    */
 void Race_LoadProgressStep(void) {
-    svcLoadingProgress((s32) (gRaceLoadStep * 0x64) / (s32) (gRaceLoadSteps - 1));
+    svcLoadingProgress((s32) (gRaceLoadStep * 100) / (s32) (gRaceLoadSteps - 1)); /* percent */
     gRaceLoadStep += 1;
 }
 
-    /* TODO (Clean version / Bug check): Simplify range switch cases 0..6 to a bounds check:
-    return (i <= 6) ? D_800F3770[i] : D_80141448;
-    */
 s32 Jukebox_GetArtist(u32 i) {
-    switch (i) {
-        case 0:
-        case 1:
-        case 2:
-        case 3:
-        case 4:
-        case 5:
-        case 6:
-            return D_800F3770[i];
+    if (i <= 6) {
+        return D_800F3770[i];
     }
     return D_80141448;
 }
 
 
 s32 Jukebox_GetTitle(u32 i) {
-    switch (i) {
-        case 0:
-        case 1:
-        case 2:
-        case 3:
-        case 4:
-        case 5:
-        case 6:
-            return D_800F378C[i];
+    if (i <= 6) {
+        return D_800F378C[i];
     }
     return D_80141448;
 }
@@ -771,18 +704,18 @@ s32 Music_GetSongTrack(u32 i) {
     D_801184C8[D_801184C2].b0 = i;
     D_801184C2++;
     */
-s32 RaceAudio_Init(u8 *t) {
+u8 RaceAudio_Init(RaceSetup *t) {
     u8 n;
     u8 i;
 
     memset(D_801184C8, 0, 0x60);
     memset(&D_8011852C, 0, 0xC);
     D_80118530 = 1;
-    n = t[0x18];
+    n = t->count;
     D_801184C2 = 0;
     D_801184C1 = n;
     for (i = 0; i < D_801184C1; i++) {
-        if (((T8D_ *)t)->e[i].w == 1) {
+        if (t->p[i].kind == 1) {
             D_801184C8[D_801184C1].b0 = i;
             D_801184C2++;
         }
@@ -800,26 +733,15 @@ INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", RaceAudio_Update);
 
 INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", RaceAudio_OnContact);
 
-    /* TODO (Clean version / Bug check): Replace raw byte offset dereferencing with proper Vector3 and Entity structs:
-    typedef struct {
-        u8 pad00[0x60];
-        struct { u8 pad00[0x84]; f32 x, y, z; } *transform; // 0x60
-        u8 *audio_emitter;                                   // 0x64
-    } SoundSource;
-    Vec3f diff;
-    // diff.x = s1->transform->x - s2->transform->x; ...
-    f32 dist = sqrtf(diff.x * diff.x + diff.y * diff.y + diff.z * diff.z);
-    audCarSndPlayOneShot(*s, (dist < 352.0f) ? 2 : (dist < 880.0f) ? 3 : 4, dist / (dist < 352.0f ? 352.0f : dist < 880.0f ? 880.0f : 2304.0f));
-    */
-void RaceAudio_OnCollision(u8 **pair) {
+void RaceAudio_OnCollision(Collider **pair) {
     u8 *s;
     u8 *t;
     f32 d;
     Vec3f v;
 
     if (D_80118528 != 1) {
-        s = *(u8 **) (pair[0] + 0x64);
-        t = *(u8 **) (pair[1] + 0x64);
+        s = pair[0]->owner;
+        t = pair[1]->owner;
         if ((u32) s < (u32) t) {
             s = t;
         }
@@ -827,15 +749,15 @@ void RaceAudio_OnCollision(u8 **pair) {
             v.x = 0.0f;
             v.y = 0.0f;
             v.z = 0.0f;
-            if (*(u8 **) (pair[0] + 0x60) != NULL) {
-                v.x += *(f32 *) (*(u8 **) (pair[0] + 0x60) + 0x84);
-                v.y += *(f32 *) (*(u8 **) (pair[0] + 0x60) + 0x88);
-                v.z += *(f32 *) (*(u8 **) (pair[0] + 0x60) + 0x8C);
+            if (pair[0]->body != NULL) {
+                v.x += pair[0]->body->vel.x;
+                v.y += pair[0]->body->vel.y;
+                v.z += pair[0]->body->vel.z;
             }
-            if (*(u8 **) (pair[1] + 0x60) != NULL) {
-                v.x -= *(f32 *) (*(u8 **) (pair[1] + 0x60) + 0x84);
-                v.y -= *(f32 *) (*(u8 **) (pair[1] + 0x60) + 0x88);
-                v.z -= *(f32 *) (*(u8 **) (pair[1] + 0x60) + 0x8C);
+            if (pair[1]->body != NULL) {
+                v.x -= pair[1]->body->vel.x;
+                v.y -= pair[1]->body->vel.y;
+                v.z -= pair[1]->body->vel.z;
             }
             d = sqrtf(v.x * v.x + v.y * v.y + v.z * v.z);
             if (d > 176.0f) {
@@ -860,10 +782,9 @@ void RaceSfx_Init(void) {
     }
 }
 
-    /* TODO (Clean version / Bug check): Negative function pointer array indexing 'fp[-2]' should be refactored:
-    audSndSrcStop(e->id);
-    audSndSrcDestroy(e->id); // fp[-2] accesses the pointer at (audSndSrcStop - 2 * sizeof(void*)). Group these into an audio driver vtable.
-    */
+    /* TODO (Clean version / Bug check): [evaluated 2026-11-18: fp[-2] is audSndSrcDestroy (the
+    pointer two slots before audSndSrcStop). Calling both by name, or through a struct based
+    at audSndSrcCreate, changes the base register and the offsets, so the ROM changes.] */
 void RaceSfx_Shutdown(void) {
     u32 i;
     Ent8b_ *e;
@@ -871,7 +792,7 @@ void RaceSfx_Shutdown(void) {
 
     for (i = 0, fp = &audSndSrcStop, e = ((Ent8b_ *)&gRaceSfx); i < 2; i++, e++) {
         fp[0](e->id);
-        fp[-2](e->id);
+        fp[-2](e->id); /* audSndSrcDestroy */
     }
     memset(((Ent8b_ *)&gRaceSfx), 0, 16);
 }
@@ -935,10 +856,6 @@ void RaceAudio_QueueAnnouncer(s32 arg0) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", RaceAudio_Silence);
 
-    /* TODO (Clean version / Bug check): Remove convoluted pointer cast '(*(E10g_ * *)&D_800F3704)[i].id':
-    Both E10_ and E10g_ have the id byte at offset 0. Use direct member access:
-    audSndSrcStop(D_800F3704[i].b0);
-    */
 void RaceAudio_Pause(void) {
     u8 i;
     void (**fp)(u8);
@@ -957,7 +874,7 @@ void RaceAudio_Pause(void) {
         } while (i < D_801184C1);
     }
     for (i = 0; i < D_800F3700; i++) {
-        audSndSrcStop((*(E10g_ * *)&D_800F3704)[i].id);
+        audSndSrcStop(D_800F3704[i].b0);
     }
     audMusicStop();
 }

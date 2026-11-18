@@ -2,6 +2,7 @@
 #include "input.h"
 #include "pak.h"
 #include "save.h"
+#include "race.h"
 
 /* Key newly pressed on any of the four pads. */
 #define INPUT_PRESSED_ANY_PAD(key) \
@@ -97,8 +98,6 @@ typedef struct { u8 pad[0x20]; u8 n; u8 p[3]; N10_ *names; E34b_ *objs; } TBL_;
 typedef struct { u8 pad[8]; char name[0xC]; s32 w14; s32 w18; s32 w1C; u8 pad2[0x120]; } E140b_;
 typedef struct { u16 idx; u8 pad[2]; s32 lo; s32 hi; s32 y; s32 reset; f32 x; } Scroll4E_;
 typedef struct { u8 a; u8 b; u8 c; s8 lv; } Bars4_;
-typedef struct { char name[0xC]; s32 f0C; u8 f10; u8 f11; u8 f12; u8 p13; } Pl7A_;
-typedef struct { s32 flags; char name[9]; char sub[9]; u8 trk; u8 sb; u8 cnt; u8 f19; u8 f1A; u8 p1B; s32 f1C; s32 f20; Pl7A_ p[6]; u8 f9C; } Race7A_;
 typedef struct { u8 b0; u8 p1[0x17]; u8 b18; u8 p19[0x13]; } It2C_;
 typedef struct { u8 n; u8 p1[3]; It2C_ *it; } Ls2C_;
 typedef struct { s32 a; s32 b; s32 c; } V12c_;
@@ -175,7 +174,7 @@ void Music_PlaySong(void);
 extern s32 (*sysScreenEndFrame)();
 s32 Menu_EndFrame();
 s32 Menu_LoadBg(s32 *a);
-extern Race7A_ gRaceSetup;
+extern RaceSetup gRaceSetup;
 extern u8 D_80124D10[];
 extern s32 D_800F9FD0[];
 extern u8 D_800FA010[][3];
@@ -6018,33 +6017,33 @@ void Race_StartCup(void) {
     s32 a;
     s32 b;
     s32 d;
-    Race7A_ *g;
+    RaceSetup *g;
 
     Menu_FreeBg();
     Race_CopyPlayerNames();
     memset(D_80124D10, 1, 0x29);
     strcpy((s32 *)gRaceSetup.p[0].name, (s32 *)gCarModelNames[((u8 *)gProfileP1)[0x20]]);
-    gRaceSetup.p[0].f10 = ((u8 *)gProfileP1)[0x20];
-    gRaceSetup.p[0].f0C = 1;
-    gRaceSetup.p[0].f11 = 0;
-    gRaceSetup.p[0].f12 = Cup_GetPosition(0);
+    gRaceSetup.p[0].car = ((u8 *)gProfileP1)[0x20];
+    gRaceSetup.p[0].kind = 1;
+    gRaceSetup.p[0].player = 0;
+    gRaceSetup.p[0].grid = Cup_GetPosition(0);
     D_80124D10[((u8 *)gProfileP1)[0x20]] = 0;
     if (((u8 *)gProfileP1)[0x22] == 2) {
-        gRaceSetup.cnt = 3;
+        gRaceSetup.count = 3;
         gRaceSetup.f9C = 0xFF;
-        gRaceSetup.p[0].f12 = 2;
+        gRaceSetup.p[0].grid = 2;
         memcpy(&gRaceSetup.p[1], D_80101044, 9);
-        gRaceSetup.p[1].f10 = 0x26;
-        gRaceSetup.p[1].f0C = 0;
-        gRaceSetup.p[1].f11 = 0;
-        gRaceSetup.p[1].f12 = 0;
+        gRaceSetup.p[1].car = 0x26;
+        gRaceSetup.p[1].kind = 0;
+        gRaceSetup.p[1].player = 0;
+        gRaceSetup.p[1].grid = 0;
         memcpy(&gRaceSetup.p[2], D_80101050, 9);
-        gRaceSetup.p[2].f10 = 0x27;
-        gRaceSetup.p[2].f0C = 0;
-        gRaceSetup.p[2].f11 = 0;
-        gRaceSetup.p[2].f12 = 1;
+        gRaceSetup.p[2].car = 0x27;
+        gRaceSetup.p[2].kind = 0;
+        gRaceSetup.p[2].player = 0;
+        gRaceSetup.p[2].grid = 1;
     } else {
-        gRaceSetup.cnt = 6;
+        gRaceSetup.count = 6;
         gRaceSetup.f9C = gActiveSave->option0;
         for (i = 1; i < 6; i++) {
             r = (u8)Car_WrapIndex(((u8 *)gProfileP1 + i)[7]);
@@ -6056,25 +6055,25 @@ void Race_StartCup(void) {
             } while ((u8)Car_IsUnlocked(r, gProfileP1) == 0 || D_80124D10[r] == 0);
             D_80124D10[r] = 0;
             strcpy((s32 *)gRaceSetup.p[i].name, (s32 *)gCarModelNames[r]);
-            gRaceSetup.p[i].f10 = r;
-            gRaceSetup.p[i].f0C = 0;
-            gRaceSetup.p[i].f11 = 0;
-            gRaceSetup.p[i].f12 = Cup_GetPosition(i);
+            gRaceSetup.p[i].car = r;
+            gRaceSetup.p[i].kind = 0;
+            gRaceSetup.p[i].player = 0;
+            gRaceSetup.p[i].grid = Cup_GetPosition(i);
         }
     }
     c = D_800F60D4[((u8 *)gProfileP1)[0x22]][((u8 *)gProfileP1)[0x23]];
-    gRaceSetup.trk = c / 3;
-    gRaceSetup.sb = c % 3 + 1;
-    strcpy((s32 *)gRaceSetup.name, D_800F9FD0[gRaceSetup.trk]);
+    gRaceSetup.cup = c / 3;
+    gRaceSetup.track = c % 3 + 1;
+    strcpy((s32 *)gRaceSetup.name, D_800F9FD0[gRaceSetup.cup]);
     gRaceSetup.f19 = 6;
-    gRaceSetup.f1A = D_800FA010[gRaceSetup.trk][gRaceSetup.sb - 1];
-    gRaceSetup.f20 = 0;
+    gRaceSetup.f1A = D_800FA010[gRaceSetup.cup][gRaceSetup.track - 1];
+    gRaceSetup.timeLimit = 0;
     if (*(s32 *)(gProfileP1 + 0x3C) != 0) {
-        gRaceSetup.f1C = *(s32 *)(gProfileP1 + 0x3C);
+        gRaceSetup.cheats = *(s32 *)(gProfileP1 + 0x3C);
     } else if (*(s32 *)(gProfileP2 + 0x3C) != 0) {
-        gRaceSetup.f1C = *(s32 *)(gProfileP2 + 0x3C);
+        gRaceSetup.cheats = *(s32 *)(gProfileP2 + 0x3C);
     } else {
-        gRaceSetup.f1C = 0;
+        gRaceSetup.cheats = 0;
     }
     g = &gRaceSetup;
     g->flags = 0x20;
