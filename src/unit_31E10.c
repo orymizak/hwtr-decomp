@@ -9,7 +9,7 @@ typedef struct { s32 d[0x22]; } B88_;
 typedef Vec3f V3_1B0;
 typedef Mtx3f M3_1B0;
 extern void (*D_80141760)(u8, u8, V3_1B0);
-extern void (*D_80145590)(u8, u8);
+extern void (*sysInputRumble)(u8, u8);
 extern void (*audCarSndSetLoopCVolume)(u8, f32);
 extern void (*audCarSndPlayLoopC)(u8, s32, s32);
 extern u8 D_80138D6A;
@@ -36,9 +36,9 @@ void func_800863A4(u8 *, u8 *);
 B88_ *func_8008637C(u8 *);
 void func_800ACDC8(void *, f32);
 void func_8007A9E0(void *);
-extern void (*D_8014556C)(s32);
+extern void (*sysInputUpdate)(s32);
 extern s32 (*sysInputGetControl)(s32, s32);
-extern void (*D_8014558C)(s32, s32, s32);
+extern void (*sysInputHasRumble)(s32, s32, s32);
 s32 Race_GetPhase(void);
 void Car_GetSpeedAndGrip(u8, u8 *, u8 *);
 extern u8 D_800F38A0[];
@@ -651,7 +651,7 @@ void Car_StartCrash(Car *p, u8 id, u8 flip) {
                 p->unk4B9 = one;
             }
             func_800911E0(p->id);
-            D_80145590(p->id, D_80138D6A);
+            sysInputRumble(p->id, D_80138D6A);
             audSfxPlay(0x1D, 1, 1.0f, 1.0f);
         }
         audCarSndSetLoopCVolume(p->id, 1.0f);
@@ -948,12 +948,12 @@ s32 func_80098BF4(void) {
         if (e != NULL && (((s32 *) e)[1] & 1)) {
             if (Race_GetPhase() == 1) {
                 Car_GetSpeedAndGrip(i, &a, &b);
-                D_8014558C(i, a, b);
+                sysInputHasRumble(i, a, b);
             }
             n++;
         }
     }
-    p = &D_8014556C;
+    p = &sysInputUpdate;
     (*p)(0);
     (*p)(1);
     if (n == 2) {
@@ -989,7 +989,7 @@ void Car_ReportImpact(HitEnt98_ *e) {
             if (v > 255) {
                 v = 255;
             }
-            D_80145590(c->id, v);
+            sysInputRumble(c->id, v);
             ((s32 *)D_800F38A0)[c->id] = 20;
         }
     }

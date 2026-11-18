@@ -38,7 +38,7 @@ s8 NameList_Add(void *);
 extern s16 D_800F616C;
 extern s16 D_800F61D0;
 extern u8 gProfileChoice;
-extern void (*D_801455AC)(s32, s32);
+extern void (*sysInputSaveBindings)(s32, s32);
 u8 Cup_IsUnlocked(u8 i);
 typedef struct { u8 a; u8 pad; s16 b; s16 c; u8 pad2[4]; } E0A_;
 typedef struct { u8 pad[2]; u8 n; u8 pad2; E0A_ *arr; u8 pad3[8]; u8 r; u8 g; u8 bl; } T39_;
@@ -47,9 +47,9 @@ extern void (*D_8014102C)(void);
 extern void (*sysCameraSetPerspective)(f32, f32, f32, f32);
 extern void (*D_8014105C)(s32);
 extern u8 (*sysIsPAL)(void);
-extern u8 (*D_801455A4)(void);
-extern void (*D_8014556C)(s32);
-extern u8 (*D_80145578)(s32, s32);
+extern u8 (*sysInputIsPad1Connected)(void);
+extern void (*sysInputUpdate)(s32);
+extern u8 (*sysInputBindKey)(s32, s32);
 extern u8 (*sysGameEndRace)(void *);
 extern u8 (*sysGameUpdate)(void);
 extern void (*sysSfxPlay)(s32, s32, f32, f32);
@@ -257,7 +257,7 @@ void Menu_SetText(s32, s32, s32 *, s32, s32, s32, s32, s32, s32, s32, s32, s32);
 extern Bars4_ D_801240E0;
 extern u8 D_80100FA4;
 extern ObjG1_ D_800F63B8;
-extern void (*D_801455A8)(s32, s32);
+extern void (*sysInputLoadBindings)(s32, s32);
 extern void (*sysAudioSetMusicVolume)(s32);
 extern void (*D_80141064)(s32);
 extern void (*D_8014107C)(void);
@@ -475,7 +475,7 @@ extern s32 D_800F5F4C;
 extern s32 D_800F5F50;
 extern s32 D_800F5F54;
 extern s32 D_800F5F58;
-extern s32 (*D_801455B0)(s32);
+extern s32 (*sysInputResetLayout)(s32);
 extern s32 D_800F5F5C;
 s32 Menu_HandlePad2(s32);
 s32 Pak_GetStatus(u8);
@@ -1164,8 +1164,8 @@ void Profile_InitDefault(void *arg0, s32 arg1) {
     *(u32 *)(o + 0x14) = 0xB48EE52E;
     *(s32 *)(o + 0x18) = 0x10B;
     *(s32 *)(o + 0x1C) = 0xE3F;
-    D_801455B0(i);
-    D_801455AC((s32)(o + 0x40), i);
+    sysInputResetLayout(i);
+    sysInputSaveBindings((s32)(o + 0x40), i);
     o[0x20] = 0x1D;
     o[0x21] = 0;
     o[0x22] = 0;
@@ -1224,7 +1224,7 @@ void Save_Load(void) {
         gProfileP2 = (s32)&D_80124B30;
     }
     D_8014105C(0xFF);
-    fp = &D_801455A8;
+    fp = &sysInputLoadBindings;
     (*fp)(gProfileP1 + 0x40, 0);
     (*fp)(gProfileP2 + 0x40, 1);
     gSaveLoaded = 1;
@@ -1240,7 +1240,7 @@ void Save_Load(void) {
 void PakDialog_Input(void) {
     void (**fp)(s32);
 
-    fp = &D_8014556C;
+    fp = &sysInputUpdate;
     (*fp)(0);
     (*fp)(1);
     (*fp)(2);
@@ -1328,7 +1328,7 @@ INCLUDE_ASM("asm/nonmatchings/unit_53B30", PakRepair_Draw);
 void PakRepair_Input(void) {
     void (**fp)(s32);
 
-    fp = &D_8014556C;
+    fp = &sysInputUpdate;
     (*fp)(0);
     (*fp)(1);
     (*fp)(2);
@@ -1494,7 +1494,7 @@ void PakDialog_RepairDamaged(void) {
 
 
 void PakRepairResult_Input(void) {
-    void (**fp)(s32) = &D_8014556C;
+    void (**fp)(s32) = &sysInputUpdate;
 
     (*fp)(0);
     (*fp)(1);
@@ -2161,7 +2161,7 @@ void PalError_Draw(void) {
 }
 
 void Boot_CheckController(void) {
-    if (D_801455A4() != 0) {
+    if (sysInputIsPad1Connected() != 0) {
         Fsm_Trigger(&gMenuFsm, 0x15);
     } else {
         Fsm_Trigger(&gMenuFsm, 0x16);
@@ -4174,7 +4174,7 @@ void Options_ResetTexts(void) {
 
 void Options_CheckSlider(void) {
     if (gOptionsSel < 4) {
-        D_8014556C(0);
+        sysInputUpdate(0);
         if ((u8)Menu_IsKeyHeld(0, 0x10) != 0) {
             Fsm_Trigger(&gMenuFsm, 0x5D);
         } else if ((u8)Menu_IsKeyHeld(0, 0x11) != 0) {
@@ -4485,7 +4485,7 @@ void Controls_Enter(void) {
 
     Menu_LoadBg((s32 *)&D_80100FA4);
     Menu_StartFadeIn();
-    fp = &D_801455A8;
+    fp = &sysInputLoadBindings;
     (*fp)(gProfileP1 + 0x40, 0);
     (*fp)(gProfileP2 + 0x40, 1);
     gControlsRemapP1 = 0;
@@ -4581,7 +4581,7 @@ void Controls_Leave(void) {
     Menu_StartLeave(D_800F5F54);
     Menu_StartLeave(D_800F5F58);
     Menu_StartFadeOut();
-    fp = &D_801455AC;
+    fp = &sysInputSaveBindings;
     (*fp)(gProfileP1 + 0x40, 0);
     (*fp)(gProfileP2 + 0x40, 1);
 }
@@ -4635,16 +4635,16 @@ void Controls_StartRemapP2(void) {
 }
 
 void Controls_ResetP1(void) {
-    D_801455B0(0);
+    sysInputResetLayout(0);
 }
 
 void Controls_ResetP2(void) {
-    D_801455B0(1);
+    sysInputResetLayout(1);
 }
 
 void Controls_RemapP1(void) {
-    D_8014556C(0);
-    if (D_80145578(0, D_80124107 + D_8012410B) != 0) {
+    sysInputUpdate(0);
+    if (sysInputBindKey(0, D_80124107 + D_8012410B) != 0) {
         gControlsRemapP1 = 0;
         Fsm_Trigger(&gMenuFsm, 0x64);
     }
@@ -4652,8 +4652,8 @@ void Controls_RemapP1(void) {
 
 
 void Controls_RemapP2(void) {
-    D_8014556C(1);
-    if (D_80145578(1, D_80124108 + D_8012410C) != 0) {
+    sysInputUpdate(1);
+    if (sysInputBindKey(1, D_80124108 + D_8012410C) != 0) {
         gControlsRemapP2 = 0;
         Fsm_Trigger(&gMenuFsm, 0x64);
     }

@@ -30,7 +30,7 @@ u8 Volume_StepUp(u8);
 extern u8 (*sysInputIsKeyHeld)(s32, s32);
 extern u32 gPauseButtons;
 extern IdTab_ *gPauseCurState;
-extern u8 (*D_801455A4)(void);
+extern u8 (*sysInputIsPad1Connected)(void);
 s32 PauseUi_BeginFrame();
 s32 PauseUi_EndFrame();
 s32 PauseUi_DrawMenu(s32,s32);
@@ -187,7 +187,7 @@ void PauseMain_Animate(void) {
 }
 
 void PauseMain_OnContinue(void) {
-    if (D_801455A4() != 0) {
+    if (sysInputIsPad1Connected() != 0) {
         Fsm_Trigger(&gPauseFsm, 7);
     } else {
         Fsm_Trigger(&gPauseFsm, 8);

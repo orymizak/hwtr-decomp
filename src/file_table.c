@@ -52,7 +52,7 @@ typedef struct {
     /* 0x04 */ u8 unk04[0x50];
 } PakState; /* size = 0x54 */
 
-extern PakState D_800F03F8[];
+extern PakState gRumbleState[];
 extern u8 D_80102220[];
 
 FileEntry gFileTable[] = {
@@ -272,7 +272,7 @@ void nuPiReadRom(u32 romAddr, void *dst, u32 size);
 void nuContPakOpen(PakHandle *handle, s32 port);
 void nuContPakRepairId(PakHandle *handle);
 void func_800D7030(s32 port, s32 arg1);
-u8 func_8006C4BC(u8 port);
+u8 Rumble_Probe(u8 port);
 void nuContPakFileOpenJis(PakHandle *handle, const char *name, const char *ext, s32 create, s32 size);
 void nuContPakFileReadWrite(PakHandle *handle, s32 offset, s32 size, void *buffer, s32 write);
 s32 Pak_Open(s32 port);
@@ -473,7 +473,7 @@ s32 Pak_Open(s32 port) {
             case 11: // Full or needs formatting
                 Memory_Free(handle);
                 gFileSystem.handles[port] = NULL;
-                if (func_8006C4BC(port)) {
+                if (Rumble_Probe(port)) {
                     D_800F1C9C[port] = 1;
                 } else {
                     D_800F1C9C[port] = 0x80;
@@ -494,7 +494,7 @@ s32 Pak_Open(s32 port) {
                 D_800F1C9C[port] = 2;
                 return 2;
             case 10:
-                D_800F03F8[port].unk00 = 1;
+                gRumbleState[port].unk00 = 1;
                 D_800F1C9C[port] = 0x20;
                 return 0x20;
             case 3:
@@ -503,7 +503,7 @@ s32 Pak_Open(s32 port) {
                 return 1;
         }
     }
-    if (D_800F03F8[port].unk00 == 2) {
+    if (gRumbleState[port].unk00 == 2) {
         func_800D7030(port, 0);
     }
     nuContPakFileOpenJis(handle, sPakGameName, sPakExtName, 0, 0);
@@ -513,7 +513,7 @@ s32 Pak_Open(s32 port) {
             case 1:
                 Memory_Free(handle);
                 gFileSystem.handles[port] = NULL;
-                D_800F03F8[port].unk00 = 0;
+                gRumbleState[port].unk00 = 0;
                 D_800F1C9C[port] = 1;
                 return 1;
             case 2:

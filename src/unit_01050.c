@@ -6,7 +6,7 @@ void Snd_SetVolume(s32, s32);
 void *Memory_Alloc(s32);
 extern void *gWaveTblBuffer;
 extern u8 D_80138AB0;
-void func_8006B838(void);
+void Input_MirrorSteering(void);
 u8 Race_Shutdown(s32);
 void Particles_FreeAll(void);
 void func_80078980(s32);
@@ -420,7 +420,7 @@ u8 Game_StartRace(Cfg9_ *c) {
     }
     if (c->f0 & 0x40) {
         D_80138AB0 = 1;
-        func_8006B838();
+        Input_MirrorSteering();
     } else {
         D_80138AB0 = 0;
     }
@@ -441,7 +441,7 @@ u8 Game_EndRace(s32 a) {
     Input_RumbleStopAll();
     Music_Stop();
     if (*p != 0) {
-        func_8006B838();
+        Input_MirrorSteering();
     }
     *p = 0;
     r = Race_Shutdown(a);

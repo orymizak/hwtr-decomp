@@ -3,7 +3,7 @@
 u8 Menu_HandlePad1(u16 mask);
 extern void (*sysSfxPlay)(s32, s32, f32, f32);
 u8 Menu_HandlePad2(u16 mask);
-extern void (*D_8014556C)(s32);
+extern void (*sysInputUpdate)(s32);
 extern u8 D_800F64B0[][14];
 s32 Fsm_Trigger(void *,s32);
 extern u8 gMenuFsm;
@@ -144,7 +144,7 @@ void Menu_StartTimer(void) {
 u8 Menu_HandlePad1(u16 mask) {
     u8 hit = 0;
 
-    D_8014556C(0);
+    sysInputUpdate(0);
     if (Input_PressedOnce(0, 0xE) && (mask & 0x1)) {
         Menu_ResetIdleTimer();
         hit = 1;
@@ -221,7 +221,7 @@ u8 Menu_HandlePad1(u16 mask) {
 u8 Menu_HandlePad2(u16 mask) {
     u8 hit = 0;
 
-    D_8014556C(1);
+    sysInputUpdate(1);
     if (Input_PressedOnce(1, 0xE) && (mask & 0x1)) {
         Menu_ResetIdleTimer();
         hit = 1;
@@ -304,7 +304,7 @@ s32 Menu_HandlePads(u16 a, u16 b) {
 }
 
 void Controls_WaitRelease(void) {
-    void (**fp)(s32) = &D_8014556C;
+    void (**fp)(s32) = &sysInputUpdate;
     u8 i;
     u32 k;
 

@@ -24,7 +24,7 @@ void Memory_InitMain(void);
 void func_80060C30(void);
 void Audio_Init(void);
 void World_Init(void);
-void func_8006B2A0(void);
+void Input_Init(void);
 void Input_RumbleStopAll(void);
 void func_8006DA88(void);
 void func_8006DC90(void);
@@ -86,7 +86,7 @@ void Game_Init(void) {
     #define VI_MODE_MPAL_OFFSET 28
     */
     Video_Init();
-    func_8006B2A0();
+    Input_Init();
     func_80077FB0();
     func_8007F420();
     Memory_InitMain();

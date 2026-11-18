@@ -10,7 +10,7 @@ typedef struct { s32 idx; s32 a; s32 b; s32 c; } Rec16_;
 typedef struct { Vec3f v; f32 s; u16 node; char name[0xE]; } Ent20_;
 extern void *gTrackSky;
 void WorldData_Free(void *);
-void func_8006AA34(void);
+void Clouds_Free(void);
 void func_8006DC28(void);
 extern char D_800FE9F0[];
 char *strcpy(char *, const char *);
@@ -188,7 +188,7 @@ World_ *func_800731DC(s32);
 void func_800734AC(World_ *);
 void func_8006DD34(World_ *);
 void Track_LoadSky(char *, u8);
-void func_8006A540(Vec3f *, Vec3f *, u8, u8, u8);
+void Clouds_Init(Vec3f *, Vec3f *, u8, u8, u8);
 
 /* Loads "<name><variant>.WLD" and applies the matching per-track RGB color (white if none). */
 s32 Track_Load(TrackName_ *t) {
@@ -221,7 +221,7 @@ s32 Track_Load(TrackName_ *t) {
             break;
         }
     }
-    func_8006A540(&gTrackWorld->v14, &gTrackWorld->v20, r, g, b);
+    Clouds_Init(&gTrackWorld->v14, &gTrackWorld->v20, r, g, b);
     return 1;
 }
 
@@ -232,7 +232,7 @@ s32 Track_Unload(void) {
 
     WorldData_Free(*p);
     WorldData_Free(gTrackSky);
-    func_8006AA34();
+    Clouds_Free();
     func_8006DC28();
     *p = NULL;
     gTrackSky = NULL;
