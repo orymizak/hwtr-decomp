@@ -1,8 +1,8 @@
 #include "common.h"
 #include "include_asm.h"
-u8 func_800C8554(u16 mask);
+u8 Menu_HandlePad1(u16 mask);
 extern void (*D_80140FAC)(s32, s32, f32, f32);
-u8 func_800C891C(u16 mask);
+u8 Menu_HandlePad2(u16 mask);
 extern void (*D_8014556C)(s32);
 extern u8 D_800F64B0[][14];
 s32 Fsm_Trigger(void *,s32);
@@ -11,9 +11,9 @@ extern u8 gMenuFsm;
 extern s32 (*D_801455A0)(s32);
 extern s32 D_80124D48;
 extern s32 D_80124D51;
-extern s32 D_80124D40;
+extern s32 gMenuIdleTime;
 extern s32 (*sysTimeGetMillis)();
-extern s32 D_80124D44;
+extern s32 gMenuTimer;
 
 void Menu_Advance(void) {
     Fsm_Trigger(&gMenuFsm, 0x11);
@@ -83,106 +83,106 @@ u8 Input_PressedOnce(u8 i, s32 k) {
 void func_800C82B4(void) {
     s32 (**fp)() = &sysTimeGetMillis;
 
-    if ((u32)((*fp)() - D_80124D44) >= 1000) {
-        D_80124D44 = (*fp)();
+    if ((u32)((*fp)() - gMenuTimer) >= 1000) {
+        gMenuTimer = (*fp)();
         Fsm_Trigger(&gMenuFsm, 0x7C);
     }
 }
 
-void func_800C8320(void) {
+void Menu_Timeout3s(void) {
     s32 (**fp)() = &sysTimeGetMillis;
 
-    if ((u32)((*fp)() - D_80124D44) >= 3000) {
-        D_80124D44 = (*fp)();
+    if ((u32)((*fp)() - gMenuTimer) >= 3000) {
+        gMenuTimer = (*fp)();
         Fsm_Trigger(&gMenuFsm, 0x2D);
     }
 }
 
 
-void func_800C838C(void) {
+void Menu_Timeout5s(void) {
     s32 (**fp)() = &sysTimeGetMillis;
 
-    if ((u32)((*fp)() - D_80124D44) >= 5000) {
-        D_80124D44 = (*fp)();
+    if ((u32)((*fp)() - gMenuTimer) >= 5000) {
+        gMenuTimer = (*fp)();
         Fsm_Trigger(&gMenuFsm, 0x18);
     }
 }
 
 
-void func_800C83F8(void) {
+void Menu_Timeout30s(void) {
     s32 (**fp)() = &sysTimeGetMillis;
 
-    if ((u32)((*fp)() - D_80124D44) >= 30000) {
-        D_80124D44 = (*fp)();
+    if ((u32)((*fp)() - gMenuTimer) >= 30000) {
+        gMenuTimer = (*fp)();
         Fsm_Trigger(&gMenuFsm, 0x2E);
     }
 }
 
 
 void func_800C8464(void) {
-    if ((u32) (sysTimeGetMillis() - D_80124D40) >= 0x1388U) {
+    if ((u32) (sysTimeGetMillis() - gMenuIdleTime) >= 0x1388U) {
         Fsm_Trigger(&gMenuFsm, 0x10);
     }
 }
 
 void func_800C84B0(void) {
-    if ((u32) (sysTimeGetMillis() - D_80124D40) >= 0x7530U) {
+    if ((u32) (sysTimeGetMillis() - gMenuIdleTime) >= 0x7530U) {
         Fsm_Trigger(&gMenuFsm, 0x38);
     }
 }
 
-void func_800C84FC(void) {
-    D_80124D40 = sysTimeGetMillis();
+void Menu_ResetIdleTimer(void) {
+    gMenuIdleTime = sysTimeGetMillis();
 }
 
-void func_800C8528(void) {
-    D_80124D44 = sysTimeGetMillis();
+void Menu_StartTimer(void) {
+    gMenuTimer = sysTimeGetMillis();
 }
 
 /* Menu input for controller 1: newly pressed buttons allowed by mask play the menu sound and a
  * voice line; the other buttons feed the cheat-code buffer. Returns 1 if anything was pressed. */
-u8 func_800C8554(u16 mask) {
+u8 Menu_HandlePad1(u16 mask) {
     u8 hit = 0;
 
     D_8014556C(0);
     if (Input_PressedOnce(0, 0xE) && (mask & 0x1)) {
-        func_800C84FC();
+        Menu_ResetIdleTimer();
         hit = 1;
         D_80140FAC(0x2E, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 6);
     }
     if (Input_PressedOnce(0, 0xF) && (mask & 0x2)) {
-        func_800C84FC();
+        Menu_ResetIdleTimer();
         hit = 1;
         D_80140FAC(0x2F, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 8);
     }
     if (Input_PressedOnce(0, 0x12) && (mask & 0x10)) {
-        func_800C84FC();
+        Menu_ResetIdleTimer();
         hit = 1;
         D_80140FAC(0x32, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 2);
     }
     if (Input_PressedOnce(0, 0x13) && (mask & 0x20)) {
-        func_800C84FC();
+        Menu_ResetIdleTimer();
         hit = 1;
         D_80140FAC(0x33, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 0);
     }
     if (Input_PressedOnce(0, 0x11) && (mask & 0x8)) {
-        func_800C84FC();
+        Menu_ResetIdleTimer();
         hit = 1;
         D_80140FAC(0x31, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 12);
     }
     if (Input_PressedOnce(0, 0x10) && (mask & 0x4)) {
-        func_800C84FC();
+        Menu_ResetIdleTimer();
         hit = 1;
         D_80140FAC(0x30, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 10);
     }
     if (Input_PressedOnce(0, 0x1A) && (mask & 0x40)) {
-        func_800C84FC();
+        Menu_ResetIdleTimer();
         hit = 1;
         D_80140FAC(0x32, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 4);
@@ -218,48 +218,48 @@ u8 func_800C8554(u16 mask) {
 
 /* Menu input for controller 2: newly pressed buttons allowed by mask play the menu sound and a
  * voice line; the other buttons feed the cheat-code buffer. Returns 1 if anything was pressed. */
-u8 func_800C891C(u16 mask) {
+u8 Menu_HandlePad2(u16 mask) {
     u8 hit = 0;
 
     D_8014556C(1);
     if (Input_PressedOnce(1, 0xE) && (mask & 0x1)) {
-        func_800C84FC();
+        Menu_ResetIdleTimer();
         hit = 1;
         D_80140FAC(0x2E, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 7);
     }
     if (Input_PressedOnce(1, 0xF) && (mask & 0x2)) {
-        func_800C84FC();
+        Menu_ResetIdleTimer();
         hit = 1;
         D_80140FAC(0x2F, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 9);
     }
     if (Input_PressedOnce(1, 0x12) && (mask & 0x10)) {
-        func_800C84FC();
+        Menu_ResetIdleTimer();
         hit = 1;
         D_80140FAC(0x32, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 3);
     }
     if (Input_PressedOnce(1, 0x13) && (mask & 0x20)) {
-        func_800C84FC();
+        Menu_ResetIdleTimer();
         hit = 1;
         D_80140FAC(0x33, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 1);
     }
     if (Input_PressedOnce(1, 0x11) && (mask & 0x8)) {
-        func_800C84FC();
+        Menu_ResetIdleTimer();
         hit = 1;
         D_80140FAC(0x31, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 13);
     }
     if (Input_PressedOnce(1, 0x10) && (mask & 0x4)) {
-        func_800C84FC();
+        Menu_ResetIdleTimer();
         hit = 1;
         D_80140FAC(0x30, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 11);
     }
     if (Input_PressedOnce(1, 0x1A) && (mask & 0x40)) {
-        func_800C84FC();
+        Menu_ResetIdleTimer();
         hit = 1;
         D_80140FAC(0x32, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 5);
@@ -293,11 +293,11 @@ u8 func_800C891C(u16 mask) {
     return hit;
 }
 
-s32 func_800C8CE4(u16 a, u16 b) {
+s32 Menu_HandlePads(u16 a, u16 b) {
     s32 r;
 
     r = 0;
-    if (func_800C8554(a) || func_800C891C(b)) {
+    if (Menu_HandlePad1(a) || Menu_HandlePad2(b)) {
         r = 1;
     }
     return r;

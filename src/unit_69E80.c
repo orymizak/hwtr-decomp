@@ -52,7 +52,7 @@ void func_800C96DC(void) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_69E80", func_800C9848);
+INCLUDE_ASM("asm/nonmatchings/unit_69E80", MenuObjs_CopyTexts);
 
 void MenuObjs_Alloc(void) {
     s32 i;
