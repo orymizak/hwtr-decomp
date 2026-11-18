@@ -1,4 +1,5 @@
 #include "common.h"
+#include "input.h"
 #include "include_asm.h"
 s32 Jukebox_GetArtist(s32);
 s32 Jukebox_GetTitle(s32);
@@ -93,8 +94,8 @@ u32 Pause_ReadLeftRight(void) {
 
     pad = (u8)gPausePlayer != 1;
     fp = &sysInputIsKeyHeld;
-    r = (*fp)(pad, 0x10) != 0;
-    if ((*fp)(pad, 0x11)) {
+    r = (*fp)(pad, KEY_LEFT) != 0;
+    if ((*fp)(pad, KEY_RIGHT)) {
         r |= 8;
     }
     old = gPauseButtons;

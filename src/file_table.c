@@ -1,5 +1,6 @@
 #include "common.h"
 #include "ultra64.h"
+#include "pak.h"
 #include "include_asm.h"
 
 typedef enum {
@@ -31,9 +32,15 @@ typedef struct {
     /* 0x18 */ u8 initialized[4];
 } FileSystem; /* size = 0x1C */
 
+/* Save block: SAVE_DATA_SIZE bytes of data, then an s32 byte-sum checksum.
+   Kept as a byte array: an s32 member would raise the alignment and turn the
+   struct copies in Save_Read from lwl/lwr into lw/sw. */
+#define SAVE_DATA_SIZE 0xD90
 typedef struct {
     /* 0x00 */ u8 data[0xDA0];
 } SaveBlock; /* size = 0xDA0 */
+
+#define LZ_CHUNK_HEADER_SIZE 8 /* u32 size of the next chunk + 4 bytes of padding */
 
 typedef struct {
     /* 0x00 */ u8 ioMesg[0x18];
@@ -309,7 +316,9 @@ s32 File_Load(char *name, void *dst) {
             high = mid - 1;
         }
     }
-    /* TODO (Clean version):
+    /* TODO (Clean version): [evaluated 2026-11-18: an inline File_FindEntry helper
+    changes codegen in File_Load; the search stays duplicated for matching. Note that
+    the original starts with high = count, one past the last entry.]
     The binary search logic is duplicated across File_Load, File_LoadAsync, and File_GetSize.
     A helper function like `static s32 File_FindEntry(const char *name)` should be used:
     
@@ -344,7 +353,9 @@ s32 File_Load(char *name, void *dst) {
             } else {
                 nuPiReadRom(gFileSystem.table[mid].romStart, dst, size);
             }
-            /* TODO (Clean version):
+            /* TODO (Clean version): [evaluated 2026-11-18: both ALIGN_2(size) and a
+            ternary argument merge the two calls and change codegen (37 words differ);
+            kept for matching]
             CHECK_1
             The odd-size alignment check can be cleanly encapsulated in an alignment macro:
             #define ALIGN_2(val) (((val) + 1) & ~1)
@@ -407,7 +418,7 @@ s32 File_LoadAsync(char *name, void *dst) {
             } else {
                 Rom_ReadAsync(gFileSystem.table[mid].romStart, dst, size, &gAsyncReads[slot]);
             }
-            /* TODO (Clean version):
+            /* TODO (Clean version): [evaluated 2026-11-18: same result as CHECK_1]
             CHECK_2
             The odd-size alignment check can be cleanly encapsulated in an alignment macro,
             similar to CHECK_1
@@ -465,42 +476,31 @@ s32 Pak_Open(s32 port) {
     if (handle->status != 0) {
         gFileSystem.handles[port] = handle;
         switch (handle->status) {
-            case 1: // Pak error / missing
+            case PFS_ERR_NOPACK:
                 Memory_Free(handle);
                 gFileSystem.handles[port] = NULL;
-                D_800F1C9C[port] = 1;
-                return 1;
-            case 11: // Full or needs formatting
+                D_800F1C9C[port] = PAK_STATE_NONE;
+                return PAK_STATE_NONE;
+            case PFS_ERR_DEVICE: /* not a Controller Pak: probe for a Rumble Pak */
                 Memory_Free(handle);
                 gFileSystem.handles[port] = NULL;
                 if (Rumble_Probe(port)) {
-                    D_800F1C9C[port] = 1;
+                    D_800F1C9C[port] = PAK_STATE_NONE;
                 } else {
-                    D_800F1C9C[port] = 0x80;
+                    D_800F1C9C[port] = PAK_STATE_RUMBLE;
                 }
                 return D_800F1C9C[port];
-                /* TODO (Clean version):
-                Controller Pak error codes should be mapped to an enum for readability:
-                typedef enum {
-                    PAK_ERR_OK = 0,
-                    PAK_ERR_NOPAK = 1,
-                    PAK_ERR_CORRUPT = 2,
-                    PAK_ERR_FULL = 5,
-                    PAK_ERR_IDLE = 10,
-                    PAK_ERR_PORK = 11
-                } PakErrorStatus;
-                */
-            case 2:
-                D_800F1C9C[port] = 2;
-                return 2;
-            case 10:
+            case PFS_ERR_NEW_PACK:
+                D_800F1C9C[port] = PAK_STATE_CHANGED;
+                return PAK_STATE_CHANGED;
+            case PFS_ERR_ID_FATAL:
                 gRumbleState[port].unk00 = 1;
-                D_800F1C9C[port] = 0x20;
-                return 0x20;
-            case 3:
+                D_800F1C9C[port] = PAK_STATE_DAMAGED;
+                return PAK_STATE_DAMAGED;
+            case PFS_ERR_INCONSISTENT:
             default:
-                D_800F1C9C[port] = 1;
-                return 1;
+                D_800F1C9C[port] = PAK_STATE_NONE;
+                return PAK_STATE_NONE;
         }
     }
     if (gRumbleState[port].unk00 == 2) {
@@ -510,27 +510,27 @@ s32 Pak_Open(s32 port) {
     if (handle->status != 0) {
         gFileSystem.handles[port] = handle;
         switch (handle->status) {
-            case 1:
+            case PFS_ERR_NOPACK:
                 Memory_Free(handle);
                 gFileSystem.handles[port] = NULL;
                 gRumbleState[port].unk00 = 0;
-                D_800F1C9C[port] = 1;
-                return 1;
-            case 2:
-                D_800F1C9C[port] = 2;
-                return 2;
-            case 5:
-                D_800F1C9C[port] = 4;
-                return 4;
-            case 4:
-                D_800F1C9C[port] = 1;
-                return 1;
+                D_800F1C9C[port] = PAK_STATE_NONE;
+                return PAK_STATE_NONE;
+            case PFS_ERR_NEW_PACK:
+                D_800F1C9C[port] = PAK_STATE_CHANGED;
+                return PAK_STATE_CHANGED;
+            case PFS_ERR_INVALID:
+                D_800F1C9C[port] = PAK_STATE_NO_FILE;
+                return PAK_STATE_NO_FILE;
+            case PFS_ERR_CONTRFAIL:
+                D_800F1C9C[port] = PAK_STATE_NONE;
+                return PAK_STATE_NONE;
         }
     }
     gFileSystem.initialized[port] = 1;
     gFileSystem.handles[port] = handle;
-    D_800F1C9C[port] = 0;
-    return 0;
+    D_800F1C9C[port] = PAK_STATE_OK;
+    return PAK_STATE_OK;
 }
 
 s32 Pak_GetState(s32 port) {
@@ -541,28 +541,28 @@ s32 Pak_GetState(s32 port) {
     }
     handle = gFileSystem.handles[port];
     if (handle == NULL) {
-        return 1;
+        return PAK_STATE_NONE;
     }
     if (!gFileSystem.initialized[port]) {
-        if (handle->status == 7 || handle->status == 8) {
-            return 8;
+        if (handle->status == PFS_DATA_FULL || handle->status == PFS_DIR_FULL) {
+            return PAK_STATE_FULL;
         }
-        return 1;
+        return PAK_STATE_NONE;
     }
     switch (handle->status) {
         case 0:
-            return 0;
-        case 2:
-            return 2;
-        case 7:
-        case 8:
-            return 8;
-        case 9:
-        case 10:
-            return 0x20;
-        case 13:
+            return PAK_STATE_OK;
+        case PFS_ERR_NEW_PACK:
+            return PAK_STATE_CHANGED;
+        case PFS_DATA_FULL:
+        case PFS_DIR_FULL:
+            return PAK_STATE_FULL;
+        case PFS_ERR_EXIST:
+        case PFS_ERR_ID_FATAL:
+            return PAK_STATE_DAMAGED;
+        case PFS_ERR_NEW_GBCART:
         default:
-            return 1;
+            return PAK_STATE_NONE;
     }
 }
 
@@ -570,19 +570,12 @@ u8 Save_IsChecksumValid(SaveBlock *block) {
     s32 sum = 0;
     u8 *p = block->data;
     u16 i = 0;
-    u32 size = 0xD90;
+    u32 size = SAVE_DATA_SIZE;
 
     for (; i < size; i++) {
         sum += *p++;
     }
-    return *(s32 *)&block->data[0xD90] == sum;
-    /* TODO (Clean version):
-    Replace magic offsets with `offsetof` or an explicit struct layout:
-    typedef struct {
-        u8 data[0xD90];
-        s32 checksum;
-    } CleanSaveBlock;
-    */
+    return *(s32 *)&block->data[SAVE_DATA_SIZE] == sum;
 }
 
 s32 Save_Read(s32 port, SaveBlock *dst) {
@@ -605,7 +598,8 @@ s32 Save_Read(s32 port, SaveBlock *dst) {
         if (Save_IsChecksumValid(blocks[1]) && !errors[1]) {
             goto second_only;
         }
-        /* TODO (Clean version):
+        /* TODO (Clean version): [evaluated 2026-11-18: without gotos, gcc places the
+        success paths before the shared failure exit (152-209 words differ); kept for matching]
         The control flow can be refactored into a clear conditional block without gotos:
         
         bool valid0 = !errors[0] && Save_IsChecksumValid(blocks[0]);
@@ -665,13 +659,11 @@ s32 Save_Write(s32 port, SaveBlock *src) {
         }
         gFileSystem.initialized[port] = 1;
     }
+    /* Write the primary block and then the backup copy, so a failed write never
+       leaves the pak without one valid block (Save_Read restores the bad one). */
     nuContPakFileReadWrite(handle, 0, sizeof(SaveBlock), src, 1);
     nuContPakFileReadWrite(handle, sizeof(SaveBlock), sizeof(SaveBlock), src, 1);
     return handle->status == 0;
-    /* TODO (Clean version):
-    Document the dual-write strategy for backup resilience:
-    // Write primary block and secondary backup block to prevent save corruption.
-    */
 }
 
 s32 Pak_Repair(s32 port) {
@@ -711,12 +703,9 @@ s32 File_LoadLZ(s32 index, void *dst) {
 s32 File_LoadLZChunked(s32 index, u8 *dst) {
     u8 mesg[0x38];
     u8 *buffer = D_80102220;
-    /* TODO (Clean version):
-    Magic numbers like `0x38` for message queues and raw buffer increments (`buffer += 8`) 
-    should be replaced with explicit struct definitions or descriptive macros:
-    #define LZ_CHUNK_HEADER_SIZE 8
-    buffer += LZ_CHUNK_HEADER_SIZE;
-    */
+    /* TODO (Clean version): [evaluated 2026-11-18: `mesg` cannot become a local
+       AsyncRead, which is 0x48 bytes and would change the stack frame; only its
+       first 0x38 bytes are used here. The header size is now LZ_CHUNK_HEADER_SIZE.] */
     u8 *out = dst;
     u32 offset = 0;
     u32 chunkSize = gFileSystem.table[index].firstChunkSize;
@@ -727,7 +716,7 @@ s32 File_LoadLZChunked(s32 index, u8 *dst) {
         }
         offset += chunkSize;
         chunkSize = *(u32 *)buffer;
-        buffer += 8;
+        buffer += LZ_CHUNK_HEADER_SIZE;
         out += LZ_Decompress(buffer, out);
     } while (chunkSize != 0);
     return 1;

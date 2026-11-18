@@ -1,4 +1,5 @@
 #include "common.h"
+#include "math.h"
 #include "include_asm.h"
     /* TODO (Clean version): Unify duplicate structs (EA6_/EA7_, TA6_/TA7_) and define proper text layout structures:
     typedef struct {
@@ -312,7 +313,7 @@ void PauseUi_BeginFrame(void) {
     svcScreenBeginFrame();
     D_801416AC();
     RaceView_DrawScene(0);
-    svcCameraSetPerspective(48.0f, 5000.0f, 1.0471967f, 1.3333334f);
+    svcCameraSetPerspective(CAM_NEAR, CAM_FAR, CAM_FOV_60DEG, CAM_ASPECT_4_3);
     a = gPauseFadeAlpha;
     b = gPauseFadeTarget;
     if (a > b) {

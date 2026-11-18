@@ -1,4 +1,5 @@
 #include "common.h"
+#include "input.h"
 #include "gfx.h"
 #include "include_asm.h"
 typedef struct { s32 state; u8 pad[0x50]; } SlotC_;
@@ -221,58 +222,58 @@ s32 Input_IsKeyHeld(u8 ch, s32 key) {
 
     nuContDataGetAll(pad);
     switch (key) {
-    case 14:
+    case KEY_UP:
         if (pad[ch].stick_y > 0x28) {
             return 1;
         }
         mask = 0x800;
         break;
-    case 15:
+    case KEY_DOWN:
         if (pad[ch].stick_y < -0x28) {
             return 1;
         }
         mask = 0x400;
         break;
-    case 16:
+    case KEY_LEFT:
         if (pad[ch].stick_x < -0x28) {
             return 1;
         }
         mask = 0x200;
         break;
-    case 17:
+    case KEY_RIGHT:
         if (pad[ch].stick_x > 0x28) {
             return 1;
         }
         mask = 0x100;
         break;
-    case 18:
+    case KEY_A:
         mask = 0x8000;
         break;
-    case 19:
+    case KEY_B:
         mask = 0x4000;
         break;
-    case 20:
+    case KEY_C_UP:
         mask = 8;
         break;
-    case 21:
+    case KEY_C_DOWN:
         mask = 4;
         break;
-    case 22:
+    case KEY_Z:
         mask = 0x2000;
         break;
-    case 23:
+    case KEY_R:
         mask = 0x10;
         break;
-    case 24:
+    case KEY_C_LEFT:
         mask = 2;
         break;
-    case 25:
+    case KEY_C_RIGHT:
         mask = 1;
         break;
-    case 26:
+    case KEY_START:
         mask = 0x1000;
         break;
-    case 27:
+    case KEY_A_OR_START:
         mask = 0x9000;
         break;
     default:
@@ -301,58 +302,58 @@ s32 Input_IsKeyHeldAny(s32 key) {
 
     nuContDataGetAll(pad);
     switch (key) {
-    case 14:
+    case KEY_UP:
         if (pad[0].stick_y > 0x28 || pad[1].stick_y > 0x28 || pad[2].stick_y > 0x28 || pad[3].stick_y > 0x28) {
             return 1;
         }
         mask = 0x800;
         break;
-    case 15:
+    case KEY_DOWN:
         if (pad[0].stick_y < -0x28 || pad[1].stick_y < -0x28 || pad[2].stick_y < -0x28 || pad[3].stick_y < -0x28) {
             return 1;
         }
         mask = 0x400;
         break;
-    case 16:
+    case KEY_LEFT:
         if (pad[0].stick_x < -0x28 || pad[1].stick_x < -0x28 || pad[2].stick_x < -0x28 || pad[3].stick_x < -0x28) {
             return 1;
         }
         mask = 0x200;
         break;
-    case 17:
+    case KEY_RIGHT:
         if (pad[0].stick_x > 0x28 || pad[1].stick_x > 0x28 || pad[2].stick_x > 0x28 || pad[3].stick_x > 0x28) {
             return 1;
         }
         mask = 0x100;
         break;
-    case 18:
+    case KEY_A:
         mask = 0x8000;
         break;
-    case 19:
+    case KEY_B:
         mask = 0x4000;
         break;
-    case 20:
+    case KEY_C_UP:
         mask = 8;
         break;
-    case 21:
+    case KEY_C_DOWN:
         mask = 4;
         break;
-    case 22:
+    case KEY_Z:
         mask = 0x2000;
         break;
-    case 23:
+    case KEY_R:
         mask = 0x10;
         break;
-    case 24:
+    case KEY_C_LEFT:
         mask = 2;
         break;
-    case 25:
+    case KEY_C_RIGHT:
         mask = 1;
         break;
-    case 26:
+    case KEY_START:
         mask = 0x1000;
         break;
-    case 27:
+    case KEY_A_OR_START:
         mask = 0x9000;
         break;
     default:

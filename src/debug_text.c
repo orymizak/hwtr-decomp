@@ -9,6 +9,7 @@ extern FontRange_ D_800F01D0[];
 #define CHAR_UNKNOWN 0x38
 #define SCREEN_WIDTH 640
 #define GLYPH_WIDTH 16
+#define SHADOW_OFFSET_PIXELS (SCREEN_WIDTH + 1) /* one pixel down and right */
 
 extern u16 *D_8014EB38;
 extern u16 *D_80138E38;
@@ -81,7 +82,8 @@ void Debug_FormatNumber(u16 n, u8 *out) {
     }
     out[2] = n % 10 + 0x10;
 
-    /* TODO (Clean version):
+    /* TODO (Clean version): [evaluated 2026-11-18: the ternary/hundreds-tens form
+    changes codegen (63 words differ); the current form is kept for matching]
     Can be simplified using direct modular arithmetic and a cleaner string 
     formatting approach (e.g., custom sprintf or hundreds/tens/units logic):
     
@@ -112,15 +114,9 @@ inline void Debug_DrawChar(s32 c, u16 color, u16 shadow) {
             for (bit = GLYPH_WIDTH - 1; bit >= 0; bit--) {
                 if ((*glyph >> bit) & 1) {
                     pixel[0] = color;
-                    pixel[0x281] = shadow;
+                    pixel[SHADOW_OFFSET_PIXELS] = shadow;
                 }
                 pixel++;
-
-                /* TODO (Clean version):
-                The magic offset `0x281` should be defined via a macro for clarity:
-                #define SHADOW_OFFSET_PIXELS (SCREEN_WIDTH + 1)
-                pixel[SHADOW_OFFSET_PIXELS] = shadow;
-                */
             }
             pixel += SCREEN_WIDTH - GLYPH_WIDTH;
             glyph++;
@@ -138,7 +134,8 @@ void Debug_DrawString(u8 *s, s32 n, u16 color, u16 shadow) {
         }
         Debug_DrawChar(*s++, color, shadow);
     }
-    /* TODO (Clean version):
+    /* TODO (Clean version): [evaluated 2026-11-18: forward and while(n--) loops
+    change codegen (46 words differ); the countdown is kept for matching]
     A standard forward loop with a size limit is much more readable:
     for (s32 i = 0; i < n && *s != '\0'; i++) {
         Debug_DrawChar(*s++, color, shadow);
@@ -158,7 +155,8 @@ void Debug_DrawChars(u8 *s, s32 n, u16 color, u16 shadow) {
             Debug_DrawChar(CHAR_FIRST, color, shadow);
         }
     }
-    /* TODO (Clean version):
+    /* TODO (Clean version): [evaluated 2026-11-18: forward loop and a single call
+    with a ternary change codegen (70 words differ); kept for matching]
     Similar to Debug_DrawString, this reverse countdown loop can be refactored 
     into a cleaner forward loop with explicit bounds and string termination checks.
     */

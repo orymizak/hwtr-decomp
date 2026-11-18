@@ -1,4 +1,5 @@
 #include "common.h"
+#include "input.h"
 #include "include_asm.h"
 u8 Menu_HandlePad1(u16 mask);
 extern void (*sysSfxPlay)(s32, s32, f32, f32);
@@ -145,71 +146,71 @@ u8 Menu_HandlePad1(u16 mask) {
     u8 hit = 0;
 
     sysInputUpdate(0);
-    if (Input_PressedOnce(0, 0xE) && (mask & 0x1)) {
+    if (Input_PressedOnce(0, KEY_UP) && (mask & 0x1)) {
         Menu_ResetIdleTimer();
         hit = 1;
         sysSfxPlay(0x2E, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 6);
     }
-    if (Input_PressedOnce(0, 0xF) && (mask & 0x2)) {
+    if (Input_PressedOnce(0, KEY_DOWN) && (mask & 0x2)) {
         Menu_ResetIdleTimer();
         hit = 1;
         sysSfxPlay(0x2F, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 8);
     }
-    if (Input_PressedOnce(0, 0x12) && (mask & 0x10)) {
+    if (Input_PressedOnce(0, KEY_A) && (mask & 0x10)) {
         Menu_ResetIdleTimer();
         hit = 1;
         sysSfxPlay(0x32, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 2);
     }
-    if (Input_PressedOnce(0, 0x13) && (mask & 0x20)) {
+    if (Input_PressedOnce(0, KEY_B) && (mask & 0x20)) {
         Menu_ResetIdleTimer();
         hit = 1;
         sysSfxPlay(0x33, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 0);
     }
-    if (Input_PressedOnce(0, 0x11) && (mask & 0x8)) {
+    if (Input_PressedOnce(0, KEY_RIGHT) && (mask & 0x8)) {
         Menu_ResetIdleTimer();
         hit = 1;
         sysSfxPlay(0x31, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 12);
     }
-    if (Input_PressedOnce(0, 0x10) && (mask & 0x4)) {
+    if (Input_PressedOnce(0, KEY_LEFT) && (mask & 0x4)) {
         Menu_ResetIdleTimer();
         hit = 1;
         sysSfxPlay(0x30, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 10);
     }
-    if (Input_PressedOnce(0, 0x1A) && (mask & 0x40)) {
+    if (Input_PressedOnce(0, KEY_START) && (mask & 0x40)) {
         Menu_ResetIdleTimer();
         hit = 1;
         sysSfxPlay(0x32, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 4);
     }
-    if (Input_PressedOnce(0, 0x14)) {
+    if (Input_PressedOnce(0, KEY_C_UP)) {
         hit = 1;
         Cheat_PushKey(0, 0x31);
     }
-    if (Input_PressedOnce(0, 0x15)) {
+    if (Input_PressedOnce(0, KEY_C_DOWN)) {
         hit = 1;
         Cheat_PushKey(0, 0x32);
     }
-    if (Input_PressedOnce(0, 0x16)) {
+    if (Input_PressedOnce(0, KEY_Z)) {
         hit = 1;
         Cheat_PushKey(0, 0x33);
         Fsm_Trigger(&gMenuFsm, 0xE);
     }
-    if (Input_PressedOnce(0, 0x17)) {
+    if (Input_PressedOnce(0, KEY_R)) {
         hit = 1;
         Cheat_PushKey(0, 0x34);
         Fsm_Trigger(&gMenuFsm, 0x62);
     }
-    if (Input_PressedOnce(0, 0x18)) {
+    if (Input_PressedOnce(0, KEY_C_LEFT)) {
         hit = 1;
         Cheat_PushKey(0, 0x35);
     }
-    if (Input_PressedOnce(0, 0x19)) {
+    if (Input_PressedOnce(0, KEY_C_RIGHT)) {
         hit = 1;
         Cheat_PushKey(0, 0x36);
     }
@@ -222,71 +223,71 @@ u8 Menu_HandlePad2(u16 mask) {
     u8 hit = 0;
 
     sysInputUpdate(1);
-    if (Input_PressedOnce(1, 0xE) && (mask & 0x1)) {
+    if (Input_PressedOnce(1, KEY_UP) && (mask & 0x1)) {
         Menu_ResetIdleTimer();
         hit = 1;
         sysSfxPlay(0x2E, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 7);
     }
-    if (Input_PressedOnce(1, 0xF) && (mask & 0x2)) {
+    if (Input_PressedOnce(1, KEY_DOWN) && (mask & 0x2)) {
         Menu_ResetIdleTimer();
         hit = 1;
         sysSfxPlay(0x2F, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 9);
     }
-    if (Input_PressedOnce(1, 0x12) && (mask & 0x10)) {
+    if (Input_PressedOnce(1, KEY_A) && (mask & 0x10)) {
         Menu_ResetIdleTimer();
         hit = 1;
         sysSfxPlay(0x32, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 3);
     }
-    if (Input_PressedOnce(1, 0x13) && (mask & 0x20)) {
+    if (Input_PressedOnce(1, KEY_B) && (mask & 0x20)) {
         Menu_ResetIdleTimer();
         hit = 1;
         sysSfxPlay(0x33, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 1);
     }
-    if (Input_PressedOnce(1, 0x11) && (mask & 0x8)) {
+    if (Input_PressedOnce(1, KEY_RIGHT) && (mask & 0x8)) {
         Menu_ResetIdleTimer();
         hit = 1;
         sysSfxPlay(0x31, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 13);
     }
-    if (Input_PressedOnce(1, 0x10) && (mask & 0x4)) {
+    if (Input_PressedOnce(1, KEY_LEFT) && (mask & 0x4)) {
         Menu_ResetIdleTimer();
         hit = 1;
         sysSfxPlay(0x30, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 11);
     }
-    if (Input_PressedOnce(1, 0x1A) && (mask & 0x40)) {
+    if (Input_PressedOnce(1, KEY_START) && (mask & 0x40)) {
         Menu_ResetIdleTimer();
         hit = 1;
         sysSfxPlay(0x32, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 5);
     }
-    if (Input_PressedOnce(1, 0x14)) {
+    if (Input_PressedOnce(1, KEY_C_UP)) {
         hit = 1;
         Cheat_PushKey(1, 0x31);
     }
-    if (Input_PressedOnce(1, 0x15)) {
+    if (Input_PressedOnce(1, KEY_C_DOWN)) {
         hit = 1;
         Cheat_PushKey(1, 0x32);
     }
-    if (Input_PressedOnce(1, 0x16)) {
+    if (Input_PressedOnce(1, KEY_Z)) {
         hit = 1;
         Cheat_PushKey(1, 0x33);
         Fsm_Trigger(&gMenuFsm, 0xF);
     }
-    if (Input_PressedOnce(1, 0x17)) {
+    if (Input_PressedOnce(1, KEY_R)) {
         hit = 1;
         Cheat_PushKey(1, 0x34);
         Fsm_Trigger(&gMenuFsm, 0x63);
     }
-    if (Input_PressedOnce(1, 0x18)) {
+    if (Input_PressedOnce(1, KEY_C_LEFT)) {
         hit = 1;
         Cheat_PushKey(1, 0x35);
     }
-    if (Input_PressedOnce(1, 0x19)) {
+    if (Input_PressedOnce(1, KEY_C_RIGHT)) {
         hit = 1;
         Cheat_PushKey(1, 0x36);
     }

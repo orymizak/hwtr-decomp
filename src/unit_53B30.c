@@ -1,4 +1,11 @@
 #include "common.h"
+#include "input.h"
+#include "pak.h"
+
+/* Key newly pressed on any of the four pads. */
+#define INPUT_PRESSED_ANY_PAD(key) \
+    (Input_PressedOnce(0, key) || Input_PressedOnce(1, key) || Input_PressedOnce(2, key) || \
+     Input_PressedOnce(3, key))
 #include "ultra64.h"
 #include "math.h"
 #include "include_asm.h"
@@ -135,7 +142,6 @@ extern u8 D_80100DC0;
 extern u8 D_80100DC8;
 u8 Lang_Load(void *);
 u8 CarNames_Load(void *);
-extern s32 D_801411CC[];
 extern s32 D_801411D0;
 extern s32 D_801411D4;
 extern s32 D_801411D8;
@@ -151,7 +157,7 @@ extern s32 D_80124080;
 extern s32 D_80124084;
 extern s32 D_80124088;
 extern s32 D_80124110[];
-extern Nm5010_ D_800F61F0[];
+extern Nm5010_ D_800F61F0[18];
 void Menu_DrawModel(u8, f32, f32, f32, f32, f32, f32, f32);
 void Menu_InitViewMtx(f32 (*m)[4]);
 extern void (*sysCameraApply)(f32 (*)[4]);
@@ -305,7 +311,16 @@ extern u8 D_80123EBF;
 extern u8 D_80123EC1;
 s32 MenuCar_Draw(s32, s32, s32, s32);
 void MenuGlobe_Draw(s8);
-typedef struct { u8 p0[0x2C]; } MnText_;
+/* A menu text: a run of positioned glyphs drawn from one font sheet. */
+typedef struct {
+    /* 0x00 */ u8 p0[0x18];
+    /* 0x18 */ u8 nChars;
+    /* 0x19 */ u8 p19[3];
+    /* 0x1C */ E0A4_ *chars;
+    /* 0x20 */ u8 p20[8];
+    /* 0x28 */ u8 sheet;
+    /* 0x29 */ u8 r, g, b;
+} MnText_; /* size = 0x2C */
 typedef struct { u8 p0[0x10]; u8 r; u8 g; u8 b; u8 p13[5]; } MnSprite_;
 typedef struct {
     u8 nText; u8 p1[3]; MnText_ *text;
@@ -358,7 +373,7 @@ extern u8 D_800F6490;
 extern u8 D_80100F60;
 extern s8 gKeyRepeatCountP2;
 extern s8 gGarageDirtyP2;
-s32 MenuCar_MoveTo(s32,s32,s32,s32);
+void MenuCar_MoveTo(s32 i, s32 x, s32 y, s32 z);
 extern u8 D_80100F58;
 extern u8 gKeyRepeatCountP1;
 extern s8 gGarageDirtyP1;
@@ -374,7 +389,7 @@ extern s8 gMenuMusicStarted;
 s32 Music_GetSongTrack(u32);
 extern s8 gMenuSong;
 extern u8 gMenuFsm;
-extern u8 gCarModelNames;
+extern char *gCarModelNames[];
 extern f32 D_80123E88;
 extern f32 D_80123E8C;
 extern f32 D_80123E90;
@@ -593,17 +608,10 @@ void Menu_InitViewMtx(f32 (*m)[4]) {
     m[2][3] += m[2][0] * 0.0f + m[2][1] * 0.0f + m[2][2] * -866.0f;
 }
 
-/* TODO (Clean version): Perspective projection setup with magic constants:
- *   nearClip = 48.0f, farClip = 5000.0f, fovY = 60.0 deg (1.0471967f rad = M_PI / 3.0f), aspect = 4:3 (1.3333334f).
- * Propose:
- *   #define FOV_60_DEGREES  1.0471967f
- *   #define ASPECT_4_3      (4.0f / 3.0f)
- *   sysCameraSetPerspective(48.0f, 5000.0f, FOV_60_DEGREES, ASPECT_4_3);
- */
 void Menu_SetupCamera(void) {
     sysScreenSetClearColor(0, 0, 0);
     sysScreenBeginFrame();
-    sysCameraSetPerspective(48.0f, 5000.0f, 1.0471967f, 1.3333334f);
+    sysCameraSetPerspective(CAM_NEAR, CAM_FAR, CAM_FOV_60DEG, CAM_ASPECT_4_3);
 }
 
 
@@ -711,35 +719,24 @@ void Menu_DrawModels(ObB37_ *o) {
     }
 }
 
-/* TODO (Clean version): Replace raw byte indexing on 't' with a typed UI component header:
- *   typedef struct {
- *       u8 pad0[0x18];
- *       u8 count;             // 0x18
- *       u8 pad19[3];
- *       E0A4_ *entries;       // 0x1C
- *       u8 pad20[8];
- *       u8 sheet;             // 0x28
- *       u8 r, g, b;           // 0x29, 0x2A, 0x2B
- *   } UIComponent_;
- */
-void Menu_DrawText(u8 *t, u8 mode, u8 c) {
+void Menu_DrawText(MnText_ *t, u8 mode, u8 c) {
     u8 r = 0;
     u8 g = 0;
     u8 b = 0;
     s32 i;
 
     if (mode == 0) {
-        r = t[0x29];
-        g = t[0x2A];
-        b = t[0x2B];
+        r = t->r;
+        g = t->g;
+        b = t->b;
     }
-    for (i = 0; i < t[0x18]; i++) {
-        E0A4_ *e = &(*(E0A4_ **)(t + 0x1C))[i];
+    for (i = 0; i < t->nChars; i++) {
+        E0A4_ *e = &t->chars[i];
 
         if (mode != 0) {
-            Menu_DrawChar(e->a, t[0x28], e->x, e->y, mode, c, c, c);
+            Menu_DrawChar(e->a, t->sheet, e->x, e->y, mode, c, c, c);
         } else {
-            Menu_DrawChar(e->a, t[0x28], e->x, e->y, 0, r, g, b);
+            Menu_DrawChar(e->a, t->sheet, e->x, e->y, 0, r, g, b);
         }
     }
 }
@@ -786,7 +783,10 @@ void Menu_DrawItem(MnAA4_ *m, u8 idx, u8 col) {
     }
 }
 
-/* TODO (Clean version): Unify per-player camera arrays into a struct and define angle constant:
+/* TODO (Clean version): [evaluated 2026-11-18: the angle is now CAM_FOV_130DEG. A PlayerCam
+ * struct array cannot match: the data is laid out as five separate [2] arrays (struct of
+ * arrays), so an array of structs would change every address.]
+ * Unify per-player camera arrays into a struct and define angle constant:
  *   #define CAM_DEFAULT_FOV_RAD 2.2689264f // 130.0 degrees in radians (130 * M_PI / 180)
  *   typedef struct {
  *       f32 zoomCur; // D_800F60A0
@@ -798,15 +798,15 @@ void Menu_DrawItem(MnAA4_ *m, u8 idx, u8 col) {
  */
 void MenuCar_Init(u8 i) {
     D_800F60C0[i] = 0;
-    D_800F60B0[i] = 2.2689264f;
-    D_800F60B8[i] = 2.2689264f;
+    D_800F60B0[i] = CAM_FOV_130DEG;
+    D_800F60B8[i] = CAM_FOV_130DEG;
     D_800F60A0[i] = 1.0f;
     D_800F60A8[i] = 1.0f;
 }
 
 s32 MenuCar_ResetAngle(u8 i) {
-    D_800F60B8[i] = 2.2689264f;
-    D_800F60B0[i] = 2.2689264f;
+    D_800F60B8[i] = CAM_FOV_130DEG;
+    D_800F60B0[i] = CAM_FOV_130DEG;
     return 1;
 }
 
@@ -815,7 +815,7 @@ void MenuCar_Show(u8 i) {
         D_800F60A0[i] = 0.0f;
         D_800F60C0[i] = 0;
         D_800F60A8[i] = 1.0f;
-        D_800F60B8[i] = 2.2689264f;
+        D_800F60B8[i] = CAM_FOV_130DEG;
     }
 }
 
@@ -837,7 +837,7 @@ void MenuCar_ScaleTo100(u8 i) {
     if (i < 2) {
         D_800F60C0[i] = 0;
         D_800F60A8[i] = 1.0f;
-        D_800F60B8[i] = 2.2689264f;
+        D_800F60B8[i] = CAM_FOV_130DEG;
     }
 }
 
@@ -865,10 +865,7 @@ void MenuCar_SetPos(u8 i, s32 a, s32 b, s32 c) {
 
 
 extern Vec3f gMenuCarTarget[];
-/* TODO (Bug potential): Missing return value in non-void function. Return type is s32 but control
- * reaches end without returning a value. Either change signature to void MenuCar_MoveTo(...) or return 0.
- */
-s32 MenuCar_MoveTo(s32 arg0, s32 a, s32 b, s32 c) {
+void MenuCar_MoveTo(s32 arg0, s32 a, s32 b, s32 c) {
     u8 i = arg0;
 
     if (i < 2) {
@@ -898,13 +895,8 @@ void MenuGlobe_Reset(void) {
     D_80123E84 = 2.5307255f;
 }
 
-/* TODO (Clean version): Type punning integer store to clear an f32 variable (D_80123E94 is f32,
- * assigned 0.75f and 0.5f in MenuGlobe_SpinLarge/510). Propose clean assignment:
- *   D_80123E94 = 0.0f;
- *   D_80123E98 = 0;
- */
 void MenuGlobe_Hide(void) {
-    (*(s32 *)&D_80123E94) = 0;
+    D_80123E94 = 0.0f;
     D_80123E98 = 0;
 }
 
@@ -1088,16 +1080,11 @@ void Menu_DrawTicker(Scroll4E_ *t) {
     t->x -= Menu_DeltaSeconds(4) * 45.0f;
 }
 
-/* TODO (Clean version): Fix sprintf prototype and remove int-pointer casts:
- *   int sprintf(char *str, const char *format, ...);
- *   sprintf((char *)out, (const char *)&D_80100CA0, name);
- * Also replace magic bound 18 with ARRAY_COUNT(D_800F61F0).
- */
 s32 Text_ButtonGlyphs(char *name, u8 *out) {
     u8 i;
     u8 j;
 
-    for (i = 0; i < 18; i++) {
+    for (i = 0; i < ARRAY_COUNT(D_800F61F0); i++) {
         if (strcmp(name, D_800F61F0[i].name) == 0) {
             for (j = 0; j < D_800F61F0[i].n; j++) {
                 out[j] = D_800F61F0[i].v[j];
@@ -1106,31 +1093,19 @@ s32 Text_ButtonGlyphs(char *name, u8 *out) {
             return 1;
         }
     }
-    sprintf((s32 *)out, (s32 *)&D_80100CA0, (s32)name);
+    sprintf((char *)out, (char *)&D_80100CA0, name);
     return 0;
 }
 
-/* TODO (Clean version): gCarModelNames is an array of 41 string pointers (char *table[41]).
- * Declare properly as:
- *   extern const char *gCarModelNames[41];
- * And refactor accessors cleanly without raw byte pointer arithmetic:
- *   const char *CarModel_GetName(u8 id) { return gCarModelNames[id]; }
- *   s8 CarModel_FindByName(const char *s) {
- *       for (u8 i = 0; i < 41; i++) {
- *           if (gCarModelNames[i] != NULL && strcmp(s, gCarModelNames[i]) == 0) return i;
- *       }
- *       return -1;
- *   }
- */
 s32 CarModel_GetName(u32 arg0) {
-    return *(s32 *)((u8 *)&gCarModelNames + ((arg0 & 0xFF) * 4));
+    return (s32)gCarModelNames[arg0 & 0xFF];
 }
 
 s8 CarModel_FindByName(char *s) {
     u8 i;
 
     for (i = 0; i < 41; i++) {
-        if (((char **)&gCarModelNames)[i] != NULL && strcmp(s, ((char **)&gCarModelNames)[i]) == 0) {
+        if (gCarModelNames[i] != NULL && strcmp(s, gCarModelNames[i]) == 0) {
             return i;
         }
     }
@@ -1159,7 +1134,7 @@ void Profile_InitDefault(void *arg0, s32 arg1) {
     u8 i = arg1;
     u8 j;
 
-    ((s32 (*)(s32 *, s32 *, s32, s32))sprintf)(buf, (s32 *)&D_80100CA4, D_8014122C, i + 1);
+    sprintf((char *)buf, (char *)&D_80100CA4, D_8014122C, i + 1);
     strcpy((s32 *)(o + 8), (s32)buf);
     *(u32 *)(o + 0x14) = 0xB48EE52E;
     *(s32 *)(o + 0x18) = 0x10B;
@@ -1231,11 +1206,9 @@ void Save_Load(void) {
     Fsm_Trigger(&gMenuFsm, 0x22);
 }
 
-/* TODO (Clean version): Consolidate repeated 4-controller button polling with a helper macro:
- *   #define CHECK_ANY_CONTROLLER_BTN(btn) \
- *       (Input_PressedOnce(0, (btn)) || Input_PressedOnce(1, (btn)) || \
- *        Input_PressedOnce(2, (btn)) || Input_PressedOnce(3, (btn)))
- * And define named constants for button events (0xE, 0xF, 0x12) and SFX IDs (0x2E, 0x2F, 0x32).
+/* TODO (Clean version): [evaluated 2026-11-18: done with INPUT_PRESSED_ANY_PAD and the KEY_*
+ * constants of include/input.h. The sound ids were left as numbers: the same id goes with
+ * different keys (e.g. 0x2F with KEY_A in PakCheck), so they are not per-key names.]
  */
 void PakDialog_Input(void) {
     void (**fp)(s32);
@@ -1246,17 +1219,17 @@ void PakDialog_Input(void) {
     (*fp)(2);
     (*fp)(3);
     if ((u8) gPakDialogSel == 4) {
-        if (Input_PressedOnce(0, 0xF) || Input_PressedOnce(1, 0xF) || Input_PressedOnce(2, 0xF) || Input_PressedOnce(3, 0xF)) {
+        if (INPUT_PRESSED_ANY_PAD(KEY_DOWN)) {
             sysAudioSetAmbientVolume(0xFF);
             sysSfxPlay(0x2F, 1, 1.0f, 1.0f);
             Fsm_Trigger(&gMenuFsm, 8);
         }
-    } else if (Input_PressedOnce(0, 0xE) || Input_PressedOnce(1, 0xE) || Input_PressedOnce(2, 0xE) || Input_PressedOnce(3, 0xE)) {
+    } else if (INPUT_PRESSED_ANY_PAD(KEY_UP)) {
         sysAudioSetAmbientVolume(0xFF);
         sysSfxPlay(0x2E, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 6);
     }
-    if (Input_PressedOnce(0, 0x12) || Input_PressedOnce(1, 0x12) || Input_PressedOnce(2, 0x12) || Input_PressedOnce(3, 0x12)) {
+    if (INPUT_PRESSED_ANY_PAD(KEY_A)) {
         sysAudioSetAmbientVolume(0xFF);
         sysSfxPlay(0x32, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 2);
@@ -1276,7 +1249,7 @@ void PakNotFound_Enter(void) {
 void PakNoNote_Enter(void) {
     s32 buf[8];
 
-    ((s32 (*)(s32 *, s32 *, s32, s32))sprintf)(buf, (s32 *)&D_80100CAC, (s32)D_80141234, gPakErrorPort);
+    sprintf((char *)buf, (char *)&D_80100CAC, (s32)D_80141234, gPakErrorPort);
     Menu_SetText(gMenuObjs[4], 0, buf, 320, 150, 0, 0, 1, 1, 255, 255, 255);
     Menu_SetText(gMenuObjs[4], 1, D_8014124C, 320, 170, 0, 0, 1, 1, 255, 255, 255);
     Menu_SetText(gMenuObjs[4], 2, D_80141238, 320, 190, 0, 0, 1, 1, 255, 255, 255);
@@ -1299,7 +1272,7 @@ void PakNoSave_Enter(void) {
 void PakDamaged_Enter(void) {
     s32 buf[8];
 
-    ((s32 (*)(s32 *, s32 *, s32, s32))sprintf)(buf, (s32 *)&D_80100CAC, (s32)D_80141234, gPakErrorPort);
+    sprintf((char *)buf, (char *)&D_80100CAC, (s32)D_80141234, gPakErrorPort);
     Menu_SetText(gMenuObjs[4], 0, buf, 320, 160, 0, 0, 1, 1, 255, 255, 255);
     Menu_SetText(gMenuObjs[4], 1, (s32 *)&D_80100CB4, 320, 180, 0, 0, 1, 1, 255, 255, 255);
     Menu_SetText(gMenuObjs[4], 2, (s32 *)&D_80100CC8, 320, 230, 0, 0, 1, 1, 127, 127, 127);
@@ -1313,7 +1286,7 @@ void PakDamaged_Enter(void) {
 void PakUnsupported_Enter(void) {
     s32 buf[8];
 
-    ((s32 (*)(s32 *, s32 *, s32, s32))sprintf)(buf, (s32 *)&D_80100CAC, (s32)D_80141234, gPakErrorPort);
+    sprintf((char *)buf, (char *)&D_80100CAC, (s32)D_80141234, gPakErrorPort);
     Menu_SetText(gMenuObjs[4], 0, buf, 320, 150, 0, 0, 1, 1, 255, 255, 255);
     Menu_SetText(gMenuObjs[4], 1, (s32 *)&D_80100D08, 320, 170, 0, 0, 1, 1, 255, 255, 255);
     Menu_SetText(gMenuObjs[4], 2, (s32 *)&D_80100D20, 320, 190, 0, 0, 1, 1, 255, 255, 255);
@@ -1333,17 +1306,17 @@ void PakRepair_Input(void) {
     (*fp)(1);
     (*fp)(2);
     (*fp)(3);
-    if (Input_PressedOnce(0, 0x12) || Input_PressedOnce(1, 0x12) || Input_PressedOnce(2, 0x12) || Input_PressedOnce(3, 0x12)) {
+    if (INPUT_PRESSED_ANY_PAD(KEY_A)) {
         sysAudioSetAmbientVolume(0xFF);
         sysSfxPlay(0x32, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 2);
     }
-    if ((u8) gPakDialogSel < 5 && (Input_PressedOnce(0, 0xF) || Input_PressedOnce(1, 0xF) || Input_PressedOnce(2, 0xF) || Input_PressedOnce(3, 0xF))) {
+    if ((u8) gPakDialogSel < 5 && (INPUT_PRESSED_ANY_PAD(KEY_DOWN))) {
         sysAudioSetAmbientVolume(0xFF);
         sysSfxPlay(0x2F, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 8);
     }
-    if ((u8) gPakDialogSel >= 4 && (Input_PressedOnce(0, 0xE) || Input_PressedOnce(1, 0xE) || Input_PressedOnce(2, 0xE) || Input_PressedOnce(3, 0xE))) {
+    if ((u8) gPakDialogSel >= 4 && (INPUT_PRESSED_ANY_PAD(KEY_UP))) {
         sysAudioSetAmbientVolume(0xFF);
         sysSfxPlay(0x2E, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 6);
@@ -1383,7 +1356,7 @@ void PakDialog_Resolve3(void) {
 void PakFull_Enter(void) {
     s32 buf[8];
 
-    ((s32 (*)(s32 *, s32 *, s32, s32))sprintf)(buf, (s32 *)&D_80100CA4, (s32)D_80141234, gPakErrorPort);
+    sprintf((char *)buf, (char *)&D_80100CA4, (s32)D_80141234, gPakErrorPort);
     Menu_SetText(gMenuObjs[4], 0, buf, 320, 160, 0, 0, 1, 1, 255, 255, 255);
     Menu_SetText(gMenuObjs[4], 1, D_80141464, 320, 180, 0, 0, 1, 1, 255, 255, 255);
     Menu_SetText(gMenuObjs[4], 2, D_80141468, 320, 200, 0, 0, 1, 1, 255, 255, 255);
@@ -1406,7 +1379,7 @@ void PakCreateFailed_Enter(void) {
 void PakNoteCorrupt_Enter(void) {
     s32 buf[8];
 
-    ((s32 (*)(s32 *, s32 *, s32, s32))sprintf)(buf, (s32 *)&D_80100CA4, (s32)D_80141234, gPakErrorPort);
+    sprintf((char *)buf, (char *)&D_80100CA4, (s32)D_80141234, gPakErrorPort);
     Menu_SetText(gMenuObjs[4], 0, buf, 320, 160, 0, 0, 1, 1, 255, 255, 255);
     Menu_SetText(gMenuObjs[4], 1, (s32 *)&D_80100D48, 320, 180, 0, 0, 1, 1, 255, 255, 255);
     Menu_SetText(gMenuObjs[4], 2, (s32 *)&D_80100D58, 320, 200, 0, 0, 1, 1, 255, 255, 255);
@@ -1451,7 +1424,7 @@ void PakNoteMissing_Enter(void) {
 void PakRepairOk_Enter(void) {
     s32 buf[8];
 
-    ((s32 (*)(s32 *, s32 *, s32, s32))sprintf)(buf, (s32 *)&D_80100CA4, (s32)D_80141234, gPakErrorPort);
+    sprintf((char *)buf, (char *)&D_80100CA4, (s32)D_80141234, gPakErrorPort);
     gPakDialogSel = 4;
     Menu_SetText(gMenuObjs[4], 0, (s32 *)&D_80100CC8, 320, 160, 0, 0, 1, 1, 255, 255, 255);
     Menu_SetText(gMenuObjs[4], 1, buf, 320, 180, 0, 0, 1, 1, 255, 255, 255);
@@ -1465,7 +1438,7 @@ void PakRepairOk_Enter(void) {
 void PakRepairFailed_Enter(void) {
     s32 buf[8];
 
-    ((s32 (*)(s32 *, s32 *, s32, s32))sprintf)(buf, (s32 *)&D_80100CA4, (s32)D_80141234, gPakErrorPort);
+    sprintf((char *)buf, (char *)&D_80100CA4, (s32)D_80141234, gPakErrorPort);
     gPakDialogSel = 4;
     Menu_SetText(gMenuObjs[4], 0, (s32 *)&D_80100CC8, 320, 160, 0, 0, 1, 1, 255, 255, 255);
     Menu_SetText(gMenuObjs[4], 1, buf, 320, 180, 0, 0, 1, 1, 255, 255, 255);
@@ -1480,7 +1453,7 @@ void PakDialog_RepairDamaged(void) {
     u8 i;
 
     for (i = 0; i < 4; i++) {
-        if (Pak_GetStatus(i) == 4) {
+        if (Pak_GetStatus(i) == PAK_STATUS_DAMAGED) {
             if (sysPakRepair(i) != 0) {
                 Fsm_Trigger(&gMenuFsm, 0x29);
             } else {
@@ -1500,8 +1473,7 @@ void PakRepairResult_Input(void) {
     (*fp)(1);
     (*fp)(2);
     (*fp)(3);
-    if (Input_PressedOnce(0, 18) != 0 || Input_PressedOnce(1, 18) != 0 || Input_PressedOnce(2, 18) != 0 ||
-        Input_PressedOnce(3, 18) != 0) {
+    if (INPUT_PRESSED_ANY_PAD(KEY_A)) {
         sysAudioSetAmbientVolume(0xFF);
         sysSfxPlay(0x2F, 1, 1.0f, 1.0f);
         Fsm_Trigger(&gMenuFsm, 2);
@@ -1509,7 +1481,9 @@ void PakRepairResult_Input(void) {
 }
 
 
-/* TODO (Clean version): Simplify 6 consecutive 4-iteration loops with a prioritized table lookup:
+/* TODO (Clean version): [evaluated 2026-11-18: statuses are now PAK_STATUS_* (include/pak.h).
+ * A priority table would add .rodata and a nested loop, so the six scans stay for matching.]
+ * Simplify 6 consecutive 4-iteration loops with a prioritized table lookup:
  *   static const struct { u8 status; u8 targetMenuState; } sStatusPriority[] = {
  *       { 4, 0x1F }, { 9, 0x20 }, { 3, 0x1E }, { 8, 0x25 }, { 2, 0x1D }, { 7, 0x24 }
  *   };
@@ -1525,7 +1499,7 @@ void Pak_DispatchStatus(void) {
     found = 0;
     for (i = 0; (u8) i < 4; i++) {
         st[(u8) i] = Pak_GetStatus(i);
-        if (!(u8) found && st[(u8) i] != 1) {
+        if (!(u8) found && st[(u8) i] != PAK_STATUS_NONE) {
             first = i;
             found = 1;
         }
@@ -1535,42 +1509,42 @@ void Pak_DispatchStatus(void) {
         return;
     }
     for (i = 0; (u8) i < 4; i++) {
-        if (st[(u8) i] == 4) {
+        if (st[(u8) i] == PAK_STATUS_DAMAGED) {
             gPakErrorPort = i + 1;
             Fsm_Trigger(&gMenuFsm, 0x1f);
             return;
         }
     }
     for (i = 0; (u8) i < 4; i++) {
-        if (st[(u8) i] == 9) {
+        if (st[(u8) i] == PAK_STATUS_RUMBLE) {
             gPakErrorPort = i + 1;
             Fsm_Trigger(&gMenuFsm, 0x20);
             return;
         }
     }
     for (i = 0; (u8) i < 4; i++) {
-        if (st[(u8) i] == 3) {
+        if (st[(u8) i] == PAK_STATUS_NO_FILE) {
             gPakErrorPort = i + 1;
             Fsm_Trigger(&gMenuFsm, 0x1e);
             return;
         }
     }
     for (i = 0; (u8) i < 4; i++) {
-        if (st[(u8) i] == 8) {
+        if (st[(u8) i] == PAK_STATUS_UNK8) {
             gPakErrorPort = i + 1;
             Fsm_Trigger(&gMenuFsm, 0x25);
             return;
         }
     }
     for (i = 0; (u8) i < 4; i++) {
-        if (st[(u8) i] == 2) {
+        if (st[(u8) i] == PAK_STATUS_CHANGED) {
             gPakErrorPort = i + 1;
             Fsm_Trigger(&gMenuFsm, 0x1d);
             return;
         }
     }
     for (i = 0; (u8) i < 4; i++) {
-        if (st[(u8) i] == 7) {
+        if (st[(u8) i] == PAK_STATUS_FULL) {
             gPakErrorPort = i + 1;
             Fsm_Trigger(&gMenuFsm, 0x24);
             return;
@@ -1756,7 +1730,7 @@ void PakCheck_Dispatch(void) {
 }
 
 s32 Car_IsUnlocked(u8 i, s32 p) {
-    if (((s32 *)&gCarModelNames)[i] == 0) {
+    if (gCarModelNames[i] == NULL) {
         return 0;
     }
     if (i >= 32) {
@@ -2000,7 +1974,8 @@ void Menu_ResetAttractTimer(void) {
     D_800F6468 = sysTimeGetMillis();
 }
 
-/* TODO (Clean version / Bug check): Idle timeout check (30,000 ms = 30 seconds).
+/* TODO (Clean version / Bug check): [evaluated 2026-11-18: the overflow-safe delta changes the
+ * ROM; the original comparison is the game's behaviour and stays.] Idle timeout check (30,000 ms = 30 seconds).
  * Using (now > start + 30000) causes an early trigger or miss on 32-bit timer overflow (wraps around ~49.7 days).
  * Standard delta time check is overflow-safe:
  *   #define IDLE_TIMEOUT_MS 30000
@@ -2033,12 +2008,10 @@ void Boot_AllocBg(void) {
     sysScreenAllocBg();
 }
 
-/* TODO (Clean version): D_801411CC is a loaded configuration/calibration block.
- * Contiguous scalar globals D_8012406C..D_80124088 (8 words) and D_80124110 (13 words)
- * should be mapped to structured settings:
- *   typedef struct { s32 val[8]; } SystemSettings;
- *   typedef struct { s32 val[13]; } AudioCalibrationSettings;
- */
+/* Copies language strings into the menu tables: gLangText[59..65] to the eight game-mode
+ * entries D_8012406C..D_80124088 (the last one repeats entry 59) and gLangText[70..82] to
+ * D_80124110[13]. (The user's TODO read D_801411CC as a calibration block: it is
+ * &gLangText[59].) */
 void Boot_LoadLanguage(void) {
     u8 i;
 
@@ -2048,16 +2021,16 @@ void Boot_LoadLanguage(void) {
     if (!CarNames_Load(&D_80100DC8)) {
         Fsm_Trigger(&gMenuFsm, 0x12);
     }
-    D_8012406C = D_801411CC[0];
-    D_80124070 = D_801411D0;
-    D_80124074 = D_801411D4;
-    gGameModeNames = D_801411D8;
-    D_8012407C = D_801411DC;
-    D_80124080 = D_801411E0;
-    D_80124084 = D_801411E4;
-    D_80124088 = D_801411CC[0];
+    D_8012406C = (s32)gLangText[59];
+    D_80124070 = (s32)gLangText[60];
+    D_80124074 = (s32)gLangText[61];
+    gGameModeNames = (s32)gLangText[62];
+    D_8012407C = (s32)gLangText[63];
+    D_80124080 = (s32)gLangText[64];
+    D_80124084 = (s32)gLangText[65];
+    D_80124088 = (s32)gLangText[59];
     for (i = 0; i < 13; i++) {
-        D_80124110[i] = D_801411CC[i + 11];
+        D_80124110[i] = (s32)gLangText[i + 70];
     }
 }
 
@@ -2118,7 +2091,9 @@ void Menu_Exit(void) {
     sysMenuExit();
 }
 
-/* TODO (Clean version): Millisecond time formatting helpers. Propose unifying into inline helpers or a struct:
+/* TODO (Clean version): [evaluated 2026-11-18: Time_Seconds/Time_Hundredths simplified. Hours and
+ * minutes need the step-by-step divisions: a single ms / 3600000 or ms / 60000 changes codegen.]
+ * Millisecond time formatting helpers. Propose unifying into inline helpers or a struct:
  *   typedef struct { u16 hours; u8 minutes; u8 seconds; u8 centiseconds; } FormattedTime;
  *   static inline u16 Time_GetHours(u32 ms)        { return (ms / 3600000); }
  *   static inline u16 Time_GetTotalMinutes(u32 ms) { return (ms / 60000); }
@@ -2137,12 +2112,12 @@ u16 Time_Minutes(u32 ms) {
     return s / 60;
 }
 
-u32 Time_Seconds(u32 arg0) {
-    return ((arg0 / 1000) % 60) & 0xFFFF;
+u32 Time_Seconds(u32 ms) {
+    return (u16)((ms / 1000) % 60);
 }
 
-u32 Time_Hundredths(u32 arg0) {
-    return ((arg0 % 1000) / 10) & 0xFFFF;
+u32 Time_Hundredths(u32 ms) {
+    return (u16)((ms % 1000) / 10);
 }
 
 void Boot_CheckPAL(void) {
@@ -2342,13 +2317,13 @@ void Password_Enter(void) {
     Menu_LoadBg(NULL);
     Menu_StartFadeIn();
     if (gNameChangedP1 != 0) {
-        sprintf(a, (s32 *)&D_80100DF4, gProfileP1 + 8);
+        sprintf((char *)a, (char *)&D_80100DF4, gProfileP1 + 8);
         src = &gPasswordP1;
         gNameChangedP1 = 0;
         D_80124C7E = 1;
         D_80124C7F = 0;
     } else {
-        sprintf(a, (s32 *)&D_80100DF4, gProfileP2 + 8);
+        sprintf((char *)a, (char *)&D_80100DF4, gProfileP2 + 8);
         src = &gPasswordP2;
         gNameChangedP2 = 0;
         D_80124C7E = 0;
@@ -2536,8 +2511,8 @@ void CarPreview_LoadP1(void) {
     u8 buf[0x40];
     u8 big[0x118];
 
-    sysModelLoadAsync(0, ((char **)&gCarModelNames)[((u8 *)gProfileP1)[0x20]], 0);
-    sysCarInfoLoad(((char **)&gCarModelNames)[((u8 *)gProfileP1)[0x20]], big, buf);
+    sysModelLoadAsync(0, gCarModelNames[((u8 *)gProfileP1)[0x20]], 0);
+    sysCarInfoLoad(gCarModelNames[((u8 *)gProfileP1)[0x20]], big, buf);
     D_80140FD8();
     *(V12_ *)&D_801240E8 = *(V12_ *)(big + 0x80);
     D_80124C94 = 0;
@@ -2547,8 +2522,8 @@ void CarPreview_LoadP2(void) {
     u8 buf[0x40];
     u8 big[0x118];
 
-    sysModelLoadAsync(1, ((char **)&gCarModelNames)[((u8 *)gProfileP2)[0x20]], 0);
-    sysCarInfoLoad(((char **)&gCarModelNames)[((u8 *)gProfileP2)[0x20]], big, buf);
+    sysModelLoadAsync(1, gCarModelNames[((u8 *)gProfileP2)[0x20]], 0);
+    sysCarInfoLoad(gCarModelNames[((u8 *)gProfileP2)[0x20]], big, buf);
     D_80140FD8();
     *(V12_ *)&D_801240F4 = *(V12_ *)(big + 0x80);
     D_80124C95 = 0;
@@ -3507,11 +3482,11 @@ void RaceWin_SetupTexts(void) {
     s32 buf[16];
     s32 *fmt = (s32 *)&D_80100CA0;
 
-    sprintf(buf, fmt, D_80141504);
+    sprintf((char *)buf, fmt, D_80141504);
     Menu_SetText(gMenuObjs[12], 0, buf, 320, 210, 0, 2, 1, 1, 255, 255, 255);
-    ((s32 (*)(s32 *, s32 *, s32, s32))sprintf)(buf, (s32 *)&D_80100EB4, gProfileP1 + 8, D_80141508);
+    sprintf((char *)buf, (char *)&D_80100EB4, gProfileP1 + 8, D_80141508);
     Menu_SetText(gMenuObjs[12], 1, buf, 320, 240, 0, 2, 1, 1, 255, 255, 255);
-    sprintf(buf, fmt, D_8014150C);
+    sprintf((char *)buf, fmt, D_8014150C);
     Menu_SetText(gMenuObjs[12], 2, buf, 320, 270, 0, 2, 1, 1, 255, 255, 255);
 }
 
@@ -3555,11 +3530,11 @@ void RaceLose_Enter(void) {
 void RaceLose_SetupTexts(void) {
     s32 buf[16];
 
-    ((s32 (*)(s32 *, s32 *))sprintf)(buf, (s32 *)&D_80100F0C);
+    sprintf((char *)buf, (char *)&D_80100F0C);
     Menu_SetText(gMenuObjs[13], 0, buf, 320, 210, 0, 2, 1, 1, 255, 255, 255);
-    sprintf(buf, (s32 *)&D_80100F14, gProfileP1 + 8);
+    sprintf((char *)buf, (char *)&D_80100F14, gProfileP1 + 8);
     Menu_SetText(gMenuObjs[13], 1, buf, 320, 240, 0, 2, 1, 1, 255, 255, 255);
-    ((s32 (*)(s32 *, s32 *))sprintf)(buf, (s32 *)&D_80100F1C);
+    sprintf((char *)buf, (char *)&D_80100F1C);
     Menu_SetText(gMenuObjs[13], 2, buf, 320, 270, 0, 2, 1, 1, 255, 255, 255);
 }
 
@@ -3968,8 +3943,8 @@ void GarageCar_LoadP1(void) {
     u8 big[0x118];
 
     if ((u8)Car_IsUnlocked(gGarageCarP1, gProfileP1) != 0) {
-        sysModelLoadAsync(0, ((char **)&gCarModelNames)[gGarageCarP1], 1);
-        sysCarInfoLoad(((char **)&gCarModelNames)[gGarageCarP1], big, buf);
+        sysModelLoadAsync(0, gCarModelNames[gGarageCarP1], 1);
+        sysCarInfoLoad(gCarModelNames[gGarageCarP1], big, buf);
         D_80140FD8();
         *(V12_ *)&D_801240E8 = *(V12_ *)(big + 0x80);
         D_80124C94 = 0;
@@ -4001,8 +3976,8 @@ void GarageCar_LoadP2(void) {
         return;
     }
     if ((u8)Car_IsUnlocked(gGarageCarP2, gProfileP2) != 0) {
-        sysModelLoadAsync(1, ((char **)&gCarModelNames)[gGarageCarP2], 1);
-        sysCarInfoLoad(((char **)&gCarModelNames)[gGarageCarP2], big, buf);
+        sysModelLoadAsync(1, gCarModelNames[gGarageCarP2], 1);
+        sysCarInfoLoad(gCarModelNames[gGarageCarP2], big, buf);
         D_80140FD8();
         *(V12_ *)&D_801240F4 = *(V12_ *)(big + 0x80);
         D_80124C95 = 0;
@@ -4713,13 +4688,13 @@ void Controls_Input(void) {
 void ControlsError_Enter(void) {
     s32 buf[8];
 
-    ((s32 (*)(s32 *, s32 *))sprintf)(buf, (s32 *)&D_80100FAC);
+    sprintf((char *)buf, (char *)&D_80100FAC);
     Menu_SetText(gMenuObjs[21], 0, buf, 320, 165, 0, 0, 1, 1, 255, 255, 255);
-    sprintf(buf, (s32 *)&D_80100FB4, (s32)&D_80124CA0);
+    sprintf((char *)buf, (char *)&D_80100FB4, (s32)&D_80124CA0);
     Menu_SetText(gMenuObjs[21], 1, buf, 320, 195, 0, 0, 1, 1, 255, 255, 255);
-    sprintf(buf, (s32 *)&D_80100FBC, (s32)&D_80124CC0);
+    sprintf((char *)buf, (char *)&D_80100FBC, (s32)&D_80124CC0);
     Menu_SetText(gMenuObjs[21], 2, buf, 320, 225, 0, 0, 1, 1, 255, 255, 255);
-    ((s32 (*)(s32 *, s32 *))sprintf)(buf, (s32 *)&D_80100FC4);
+    sprintf((char *)buf, (char *)&D_80100FC4);
     Menu_SetText(gMenuObjs[21], 3, buf, 320, 255, 0, 0, 1, 1, 255, 255, 255);
     Menu_StartEnter(gMenuObjs[21]);
 }
@@ -5684,8 +5659,8 @@ void Unlocks_ShowCar(u8 i) {
     u8 buf[0x40];
     u8 big[0x118];
 
-    sysModelLoadAsync(0, ((char **)&gCarModelNames)[i], 1);
-    sysCarInfoLoad(((char **)&gCarModelNames)[i], big, buf);
+    sysModelLoadAsync(0, gCarModelNames[i], 1);
+    sysCarInfoLoad(gCarModelNames[i], big, buf);
     D_80140FD8();
     *(V12c_ *)&D_801240E8 = *(V12c_ *)(big + 0x80);
     D_80124C94 = 0;
@@ -5845,7 +5820,7 @@ INCLUDE_ASM("asm/nonmatchings/unit_53B30", Records_SaveRaceResult);
 void Help_Enter(void) {
     s32 buf[8];
 
-    sprintf(buf, &D_80101020, sysRandRange(10));
+    sprintf((char *)buf, (char *)&D_80101020, sysRandRange(10));
     Menu_LoadBg(buf);
     Menu_StartFadeIn();
     D_80124D04 = sysTimeGetMillis();
@@ -6056,7 +6031,7 @@ void Race_StartCup(void) {
     Menu_FreeBg();
     Race_CopyPlayerNames();
     memset(D_80124D10, 1, 0x29);
-    strcpy((s32 *)gRaceSetup.p[0].name, ((s32 *)&gCarModelNames)[((u8 *)gProfileP1)[0x20]]);
+    strcpy((s32 *)gRaceSetup.p[0].name, (s32 *)gCarModelNames[((u8 *)gProfileP1)[0x20]]);
     gRaceSetup.p[0].f10 = ((u8 *)gProfileP1)[0x20];
     gRaceSetup.p[0].f0C = 1;
     gRaceSetup.p[0].f11 = 0;
@@ -6088,7 +6063,7 @@ void Race_StartCup(void) {
                 }
             } while ((u8)Car_IsUnlocked(r, gProfileP1) == 0 || D_80124D10[r] == 0);
             D_80124D10[r] = 0;
-            strcpy((s32 *)gRaceSetup.p[i].name, ((s32 *)&gCarModelNames)[r]);
+            strcpy((s32 *)gRaceSetup.p[i].name, (s32 *)gCarModelNames[r]);
             gRaceSetup.p[i].f10 = r;
             gRaceSetup.p[i].f0C = 0;
             gRaceSetup.p[i].f11 = 0;
@@ -6117,11 +6092,11 @@ void Race_StartCup(void) {
     g->flags |= a | b | d | Cheat_GetMirrorFlag(*(s32 *)(gProfileP2 + 0x3C));
     if (((u8 *)gProfileP1)[0x22] == 1) {
         g->flags |= 0x100;
-        sprintf(buf, (s32 *)&D_8010105C, ((u8 *)gProfileP1)[0x23] + 1);
+        sprintf((char *)buf, (char *)&D_8010105C, ((u8 *)gProfileP1)[0x23] + 1);
         strcpy((s32 *)g->sub, (s32)buf);
     } else if (((u8 *)gProfileP1)[0x22] == 2) {
         g->flags |= 0x100;
-        ((s32 (*)(s32 *, s32 *))sprintf)(buf, (s32 *)&D_80101064);
+        sprintf((char *)buf, (char *)&D_80101064);
         strcpy((s32 *)g->sub, (s32)buf);
     }
     if ((u8)sysGameStartRace(&gRaceSetup) == 0) {

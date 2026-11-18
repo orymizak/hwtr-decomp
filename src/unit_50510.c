@@ -1,5 +1,6 @@
 #include "common.h"
 #include "ultra64.h"
+#include "pak.h"
 #include "include_asm.h"
 s32 strcmp(const char *, const char *);
 typedef struct { u8 d[0x2C]; } E2C5_;
@@ -116,32 +117,32 @@ s32 Pak_GetStatus(u32 i) {
     u32 s;
 
     if (i >= 4) {
-        return 4;
+        return PAK_STATUS_DAMAGED;
     }
     if (gPakStatus[i] & 0x40) {
-        return 8;
+        return PAK_STATUS_UNK8;
     }
     s = sysPakGetState(i);
-    if (s == 0) {
-        return 0;
-    } else if (s & 2) {
-        return 2;
-    } else if (s == 4) {
-        return 3;
-    } else if (s & 1) {
-        return 1;
-    } else if (s & 0x20) {
-        return 4;
-    } else if (s & 8) {
-        return 7;
-    } else if (s & 0x10) {
-        return 6;
-    } else if (s & 0x40) {
-        return 8;
-    } else if (s & 0x80) {
-        return 9;
+    if (s == PAK_STATE_OK) {
+        return PAK_STATUS_OK;
+    } else if (s & PAK_STATE_CHANGED) {
+        return PAK_STATUS_CHANGED;
+    } else if (s == PAK_STATE_NO_FILE) {
+        return PAK_STATUS_NO_FILE;
+    } else if (s & PAK_STATE_NONE) {
+        return PAK_STATUS_NONE;
+    } else if (s & PAK_STATE_DAMAGED) {
+        return PAK_STATUS_DAMAGED;
+    } else if (s & PAK_STATE_FULL) {
+        return PAK_STATUS_FULL;
+    } else if (s & PAK_STATE_UNK10) {
+        return PAK_STATUS_UNK6;
+    } else if (s & PAK_STATE_UNK40) {
+        return PAK_STATUS_UNK8;
+    } else if (s & PAK_STATE_RUMBLE) {
+        return PAK_STATUS_RUMBLE;
     }
-    return 4;
+    return PAK_STATUS_DAMAGED;
 }
 
 
