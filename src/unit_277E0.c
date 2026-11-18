@@ -51,6 +51,6 @@ s32 CarNames_Load(char *name) {
     return 1;
 }
 
-void func_80086D3C(void) {
+void CarNames_Free(void) {
 
 }

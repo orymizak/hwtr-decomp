@@ -40,6 +40,6 @@ u8 Keyboard_LoadCharset(char *name) {
     return k;
 }
 
-void func_80086E2C(void) {
+void Keyboard_FreeCharset(void) {
 
 }

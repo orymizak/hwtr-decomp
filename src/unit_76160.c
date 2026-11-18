@@ -123,7 +123,7 @@ void nuScAddClient(ClientS_ *c, void *mq, u16 flags) {
     osSetIntMask(mask);
 }
 
-void func_800D59A0(RetraceCfg_ *cfg, s16 count) {
+void nuScResetClientMesgType(RetraceCfg_ *cfg, s16 count) {
     s32 mask;
 
     mask = osSetIntMask(1);

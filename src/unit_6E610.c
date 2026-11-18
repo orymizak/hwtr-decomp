@@ -94,7 +94,7 @@ s32 SndSong_Start();
 extern void *gSndCurWaveBank;
 extern s32 gSndSfxBank;
 extern s32 gSndSfxBankOnce;
-extern s32 D_800FAEAC;
+extern s32 gSndTaskHooks;
 extern s32 gSndMarkerCallback;
 s32 SndHeap_Alloc(s32);
 extern s32 gSndMsgRead;
@@ -577,8 +577,8 @@ s32 SndBank_GetWaveBank(SeqPl6_ *pl) {
     return pl->unk10;
 }
 
-void func_800CE95C(s32 arg0) {
-    D_800FAEAC = arg0;
+void Snd_SetTaskHooks(s32 arg0) {
+    gSndTaskHooks = arg0;
 }
 
 INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CE968);

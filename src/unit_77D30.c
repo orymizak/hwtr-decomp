@@ -59,7 +59,7 @@ void nuSiMgrRestart(void) {
 typedef struct { s16 mesg; u8 p2[2]; void *rtnMesgQ; s32 error; } SiMesgT_;
 typedef struct { u8 b[0x10]; } SiClientT_;
 void nuScAddClient(void *c, void *mq, s32 flags);
-void func_800D59A0(void *arg0, s16 arg1);
+void nuScResetClientMesgType(void *arg0, s16 arg1);
 void nuSiMgrThread(void *arg) {
     SiClientT_ client;
     void *buf[8];
@@ -88,9 +88,9 @@ void nuSiMgrThread(void *arg) {
             break;
         case 0x7F00:
             osSendMesg(msg->rtnMesgQ, 0, 1);
-            func_800D59A0(&client, 0);
+            nuScResetClientMesgType(&client, 0);
             osStopThread(0);
-            func_800D59A0(&client, 1);
+            nuScResetClientMesgType(&client, 1);
             break;
         default:
             major = msg->mesg & 0xFF00;

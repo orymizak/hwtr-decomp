@@ -119,7 +119,7 @@ u16 Font_GetCharWidth16(u8 id, u8 c) {
     * compiled out in release builds; verify against a real cause when one turns up. */
 #define FONT_ASSERT(cond) do { } while (0)
 
-s32 func_8006F528(u8 id, u8 c, f32 x, f32 y, f32 scale) {
+s32 Font_DrawCharScaled(u8 id, u8 c, f32 x, f32 y, f32 scale) {
     Font *font;
     u8 index;
     Glyph *glyph;

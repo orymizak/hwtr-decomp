@@ -74,7 +74,7 @@ u8 Lang_Load(char *name) {
     return 1;
 }
 
-void func_80086F78(void) {
+void Lang_Free(void) {
 
 }
 

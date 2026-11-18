@@ -42,7 +42,7 @@ extern u8 D_80118550;
 extern u8 D_80138D43;
 s32 Race_GetPhase(void);
 void RaceCam_UpdateIntro(CamE_ *);
-void func_8009013C(Vec3f_, Vec3f_, Vec3f_, Vec3f_ *, f32, f32, f32, f32);
+void RaceCam_SmoothTo(Vec3f_, Vec3f_, Vec3f_, Vec3f_ *, f32, f32, f32, f32);
 void Coll_ClipCamera(u8, Vec3f_ *);
 u8 func_800A4EE8(u8, Vec3f_ *, Vec3f_ *);
 Vec3f_ Vec3_Lerp(f32 t, Vec3f_ a, Vec3f_ b);
@@ -273,7 +273,7 @@ void RaceCam_Update(u32 dt) {
                 if (((t).x * ( d).x + (t).y * ( d).y + (t).z * ( d).z) < 0.0f) {
                     eye.z += 120.0f;
                 }
-                func_8009013C((*cam).pos, (*cam).vel, eye, &eye, k, far, near, damp);
+                RaceCam_SmoothTo((*cam).pos, (*cam).vel, eye, &eye, k, far, near, damp);
             }
             if (dist < 1.0f) {
                 f.y = 1.0f;
@@ -379,7 +379,7 @@ void RaceCam_Update(u32 dt) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_2F4F0", func_8009013C);
+INCLUDE_ASM("asm/nonmatchings/unit_2F4F0", RaceCam_SmoothTo);
 
 void RaceCam_Get(u8 i, Vec3i *a1, f32 *a2, f32 *a3, f32 *a4, f32 *a5, s8 *a6, u8 *a7) {
     /* TODO (Clean version): Replace raw byte indexing with Camera struct member accesses:

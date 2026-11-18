@@ -13,8 +13,8 @@ void PointLight_SetPos(s32 arg0, f32 arg1, f32 arg2, f32 arg3, f32 arg4);
 typedef struct { Vtx v[32]; u8 p200[0x30]; f32 r; f32 a; u8 p238; u8 mode; } Ring6D_;
 typedef struct { u32 t; Vec3f pos; Vec3f vel; f32 m[9]; } MvD6_;
 void ExplosionDebris_Update(MvD6_ *o, u32 dt);
-f64 func_800E6E80(f64);
-f64 func_800E6F60(f64);
+f64 sin(f64);
+f64 cos(f64);
 void ExplosionRing_Update(Ring6D_ *s, u32 t);
 void Explosion_Update(s32 *p, s32 dt);
 extern S_D_801455C0 gExplosions[];
@@ -101,15 +101,15 @@ void ExplosionRing_Update(Ring6D_ *s, u32 t) {
     if (s->mode == 0) {
         for (i = 0; i < 32; i++) {
             ang = (f32) i * 3.14159265 / 16.0 + s->a;
-            s->v[i].v.ob[0] = func_800E6E80(ang) * (s->r + (i & 1) * 65.0);
-            s->v[i].v.ob[1] = func_800E6F60(ang) * (s->r + (i & 1) * 65.0);
+            s->v[i].v.ob[0] = sin(ang) * (s->r + (i & 1) * 65.0);
+            s->v[i].v.ob[1] = cos(ang) * (s->r + (i & 1) * 65.0);
             s->v[i].v.ob[2] = -((i & 1) * 65.0 / 3.0);
         }
     } else if (s->mode != 2) {
         for (i = 0; i < 32; i++) {
             ang = (f32) i * 3.14159265 / 16.0 + s->a;
-            s->v[i].v.ob[0] = func_800E6E80(ang) * (s->r + (i & 1) * 65.0);
-            s->v[i].v.ob[1] = func_800E6F60(ang) * (s->r + (i & 1) * 65.0);
+            s->v[i].v.ob[0] = sin(ang) * (s->r + (i & 1) * 65.0);
+            s->v[i].v.ob[1] = cos(ang) * (s->r + (i & 1) * 65.0);
             s->v[i].v.ob[2] = 0;
         }
     } else {

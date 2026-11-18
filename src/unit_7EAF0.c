@@ -7,6 +7,6 @@ void osSyncPrintf(const char *fmt, ...) {
 }
 
 
-void func_800DDF04(const char *fmt, ...) {
+void rmonPrintf(const char *fmt, ...) {
 }
 

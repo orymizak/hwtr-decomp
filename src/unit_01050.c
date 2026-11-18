@@ -144,7 +144,7 @@ extern void *svcCarInfoLoadEx;
 extern void *svcModelSetTransform;
 extern void *svcModelSetWheel;
 extern void *D_80141754;
-extern void *D_80141758;
+extern void *svcModelSetShadowPlane;
 extern s32 D_80141768;
 extern void *svcFxCarScrape;
 extern void *svcGamePauseBegin;
@@ -287,7 +287,7 @@ s32 Svc_Install(void) {
     D_80141750 = &func_800685E0;
     svcModelSetTransform = &Model_SetTransform;
     svcModelSetWheel = &Model_SetWheel;
-    D_80141758 = &Model_SetShadowPlane;
+    svcModelSetShadowPlane = &Model_SetShadowPlane;
     D_80141754 = &func_80067F40;
     svcModelApplyFlags = &Model_ApplyFlags;
     svcModelFlashOn = &Model_FlashOn;
@@ -346,7 +346,7 @@ s32 Svc_Uninstall(void) {
     svcCarInfoLoadEx = 0;
     svcModelSetTransform = 0;
     svcModelSetWheel = 0;
-    D_80141758 = 0;
+    svcModelSetShadowPlane = 0;
     D_80141754 = 0;
     D_80141768 = 0;
     sysScreenBeginFrame = 0;

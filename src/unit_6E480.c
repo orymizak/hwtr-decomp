@@ -2,8 +2,8 @@
 #include "include_asm.h"
 
 s32 Snd_Alloc();
-extern s32 D_800FABC0;
+extern s32 gSndGlobalBuf;
 
-void func_800CD880(void) {
-    D_800FABC0 = Snd_Alloc();
+void Snd_AllocGlobal(void) {
+    gSndGlobalBuf = Snd_Alloc();
 }

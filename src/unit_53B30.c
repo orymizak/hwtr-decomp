@@ -407,7 +407,7 @@ extern s32 D_800F6468;
 extern s32 (*sysTimeGetMillis)();
 s32 Menu_FreeModels();
 extern s32 (*sysScreenAllocBg)();
-s32 func_80086F78();
+s32 Lang_Free();
 extern s32 (*sysMenuExit)();
 s32 Menu_StartEnter(s32);
 extern s32 gMenuObjs[];
@@ -2068,7 +2068,7 @@ void Boot_LoadTuning(void) {
 }
 
 void Menu_ShutdownNop(void) {
-    func_80086F78();
+    Lang_Free();
 }
 
 void Boot_Nop(void) {

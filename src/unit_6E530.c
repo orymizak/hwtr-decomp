@@ -2,7 +2,7 @@
 #include "include_asm.h"
 s32 Snd_FadeOutAll(s32,s32);
 s32 nuScRemoveClient(void *);
-extern s8 D_800FABA0;
+extern s8 gAudioTaskEnabled;
 extern u8 D_80144450;
 
     /* TODO (Clean version):
@@ -23,7 +23,7 @@ extern u8 D_80144450;
     }
     */
 
-    void func_800CD930(s16 arg0, s32 arg1) {
+    void AudioTask_HandleEvent(s16 arg0, s32 arg1) {
     switch (arg0) {
     case 2:
         Snd_FadeOutAll(2, 0x19);
@@ -31,7 +31,7 @@ extern u8 D_80144450;
         return;
     case 1:
         if (arg1 == 0x1C) {
-            D_800FABA0 = 0;
+            gAudioTaskEnabled = 0;
             nuScRemoveClient(&D_80144450);
         }
         return;
