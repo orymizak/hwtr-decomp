@@ -48,8 +48,8 @@ extern s32 gRaceEndTime;
 extern u8 gRaceSkipArmed;
 void Replay_Record(void);
 void Lap_GetTimes(u8, u32 *, u32 *);
-void func_800ABEA8(u8, u8);
-void func_800ABEBC(u8);
+void Hud_SetResultRacer(u8, u8);
+void Hud_SetBestLapRacer(u8);
 void RaceAudio_Silence(void);
 extern u8 gHumanRacer[];
 extern u8 D_801184A8;
@@ -69,7 +69,7 @@ void RaceCam_StartIntro(void);
 s32 RaceCam_GetIntroDuration(void);
 void RaceCam_EndIntro(void);
 void Coll_Update(void);
-void func_80085780(void);
+void Ai_StartRace(void);
 u8 Hud_Init(u8 *);
 u8 RaceView_Init(u8 *);
 u8 AnimTrack_Init(u8 *);
@@ -273,7 +273,7 @@ s32 Race_Init(u8 *cfg) {
     gRaceLastTime = 0;
     gRaceAudioTick = svcTimeGetMillis();
     Coll_Update();
-    func_80085780();
+    Ai_StartRace();
     sysInputRumbleResume();
     return 1;
 }
@@ -389,7 +389,7 @@ void Race_ComputeResults(void) {
             r[b].best = tmp.best;
         }
         p = &r[i];
-        func_800ABEA8(p->id, i + 1);
+        Hud_SetResultRacer(p->id, i + 1);
         if (p->time != 0) {
             switch (i) {
             case 0:
@@ -425,7 +425,7 @@ void Race_ComputeResults(void) {
         }
     }
     if (b != -1) {
-        func_800ABEBC(r[b].id);
+        Hud_SetBestLapRacer(r[b].id);
     }
     RaceAudio_Silence();
     gRaceSkipArmed = 0;

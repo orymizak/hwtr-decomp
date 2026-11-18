@@ -11,12 +11,12 @@ typedef struct { s32 t; u8 a; u8 b; u8 c; u8 d; s32 pad; } E0Cb_;
 typedef struct { u8 p0[8]; s16 h8; u8 pA[2]; u8 bC; u8 bD; u8 pE[2]; } El10_;
 typedef struct { u8 on; u8 p1[0x27]; } Blk28_;
 typedef struct { s32 t; s32 w4; s32 w8; u8 pC[4]; El10_ el[6]; Blk28_ blk[3]; u8 pE8; u8 flag; u8 bEA; u8 bEB; u8 pEC[4]; } HudF0_;
-extern u8 D_800F3B43;
+extern u8 gHudRacerCount;
 extern char D_80100A94[];
 extern HudF0_ D_800F3934[];
 void func_800AAA20(Blk28_ *, El10_ *, s32, s32);
 void func_800AABE4(Blk28_ *, El10_ *, s32, s32);
-extern s32 D_800F3B30;
+extern s32 gHudTimeLimit;
 extern char D_80100A9C[];
 extern void (*svcFontDrawChar)(s32, s32, u16, u16, s32);
 extern void (*svcDraw2DSetColor)(s32, s32, s32);
@@ -46,21 +46,22 @@ s32 Hud_Shutdown(void) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_49CF0", func_800A93B4);
+INCLUDE_ASM("asm/nonmatchings/unit_49CF0", Hud_DrawSpeed);
 
-void Hud_DrawLaps(u8 idx, u8 flag) {
+/* Draws the race position as "pos/racers" (yellow while leading). */
+void Hud_DrawPosition(u8 idx, u8 flag) {
     u8 buf[80];
     Car *p;
     u8 *c;
     s32 x;
     s32 y;
-    s32 laps;
+    s32 pos;
 
     p = Car_Get((&gHudRacer)[idx]);
     if (p->flags & 0x4000) {
         return;
     }
-    laps = p->lapsDone;
+    pos = p->position;
     svcDraw2DSetColor(0xFF, 0xFF, 0xFF);
     if (flag == 0) {
         x = 0x103;
@@ -73,12 +74,12 @@ void Hud_DrawLaps(u8 idx, u8 flag) {
         }
     }
     svcFontDrawChar(1, 0, x, y, 2);
-    if (laps == 0) {
+    if (pos == 0) {
         svcDraw2DSetColor(0xFF, 0xFF, 0);
     } else {
         svcDraw2DSetColor(0, 0xFF, 0);
     }
-    sprintf(buf, D_80100A94, laps + 1, D_800F3B43);
+    sprintf(buf, D_80100A94, pos + 1, gHudRacerCount);
     if (flag == 0) {
         x = 0x108;
         y = 0xD4;
@@ -99,7 +100,7 @@ void Hud_DrawLaps(u8 idx, u8 flag) {
     }
 }
 
-void func_800A978C(u8 idx, u8 flag) {
+void Hud_DrawTimeLeft(u8 idx, u8 flag) {
     u8 buf[80];
     Car *p;
     u8 *c;
@@ -118,7 +119,7 @@ void func_800A978C(u8 idx, u8 flag) {
     }
     svcFontDrawChar(1, 1, x, color, 2);
     svcDraw2DSetColor(0, 0xFF, 0);
-    t = D_800F3B30 - (((s32 (*)(void))RaceClock_Get)() - p->unk440);
+    t = gHudTimeLimit - (((s32 (*)(void))RaceClock_Get)() - p->unk440);
     if (t < 0) {
         t = 0;
     }
@@ -143,7 +144,7 @@ void func_800A978C(u8 idx, u8 flag) {
     }
 }
 
-void func_800A99D0(u8 idx, u8 flag) {
+void Hud_DrawLapTimer(u8 idx, u8 flag) {
     u8 buf[80];
     Car *p;
     u8 *c;
@@ -184,13 +185,13 @@ void func_800A99D0(u8 idx, u8 flag) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_49CF0", func_800A9C00);
+INCLUDE_ASM("asm/nonmatchings/unit_49CF0", Hud_DrawLapTimePopup);
 
 extern char D_80100A90[];
 u32 strlen(const char *);
 
-/* Draws car idx's unk4B0 counter right-aligned on the HUD. */
-void func_800A9EDC(u8 idx, u8 flag) {
+/* Draws car idx's trick score right-aligned on the HUD. */
+void Hud_DrawScore(u8 idx, u8 flag) {
     u8 buf[80];
     u8 *c;
     s32 x;
@@ -210,7 +211,7 @@ void func_800A9EDC(u8 idx, u8 flag) {
     }
     svcFontDrawChar(1, 1, x, y, 2);
     svcDraw2DSetColor(0xFF, 0, 0);
-    sprintf(buf, D_80100A90, Car_Get((&gHudRacer)[idx])->unk4B0);
+    sprintf(buf, D_80100A90, Car_Get((&gHudRacer)[idx])->score);
     if (flag == 0) {
         x = 0x11E;
         y = 0x20;
@@ -232,11 +233,11 @@ void func_800A9EDC(u8 idx, u8 flag) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_49CF0", func_800AA054);
+INCLUDE_ASM("asm/nonmatchings/unit_49CF0", Hud_DrawLaps);
 
-INCLUDE_ASM("asm/nonmatchings/unit_49CF0", func_800AA214);
+INCLUDE_ASM("asm/nonmatchings/unit_49CF0", Hud_DrawTurbos);
 
-extern u8 D_800F3B3F;
+extern u8 gHudCountdown;
 /* Draws the HUD elements enabled in gHudFlags[idx] for player idx. */
 s32 Hud_DrawPlayer(u8 idx) {
     u8 two;
@@ -249,7 +250,7 @@ s32 Hud_DrawPlayer(u8 idx) {
     svcDraw2DSetColor(0xFF, 0xFF, 0xFF);
     done = 0;
     if (gHudFlags[idx] & 1) {
-        func_800A93B4(idx, two);
+        Hud_DrawSpeed(idx, two);
     }
     if (gHudFlags[idx] & 0x10) {
         p = Car_Get((&gHudRacer)[idx]);
@@ -269,25 +270,25 @@ s32 Hud_DrawPlayer(u8 idx) {
         }
     }
     if (gHudFlags[idx] & 2) {
-        if (D_800F3B3F != 0) {
-            func_800A978C(idx, two);
+        if (gHudCountdown != 0) {
+            Hud_DrawTimeLeft(idx, two);
         } else {
-            func_800A99D0(idx, two);
+            Hud_DrawLapTimer(idx, two);
         }
-        done = func_800A9C00(idx, two);
+        done = Hud_DrawLapTimePopup(idx, two);
     }
     if (gHudFlags[idx] & 0x200) {
-        func_800A978C(idx, two);
-        func_800A9EDC(idx, two);
+        Hud_DrawTimeLeft(idx, two);
+        Hud_DrawScore(idx, two);
     }
     if (gHudFlags[idx] & 8) {
-        Hud_DrawLaps(idx, two);
+        Hud_DrawPosition(idx, two);
     }
     if (((gHudFlags[idx] & 4) != 0) & (done == 0)) {
-        func_800AA054(idx, two);
+        Hud_DrawLaps(idx, two);
     }
     if (gHudFlags[idx] & 0x20) {
-        func_800AA214(idx, two);
+        Hud_DrawTurbos(idx, two);
     }
     return 1;
 }
@@ -296,13 +297,13 @@ INCLUDE_ASM("asm/nonmatchings/unit_49CF0", func_800AAA20);
 
 INCLUDE_ASM("asm/nonmatchings/unit_49CF0", func_800AABE4);
 
-INCLUDE_ASM("asm/nonmatchings/unit_49CF0", func_800AAD9C);
+INCLUDE_ASM("asm/nonmatchings/unit_49CF0", Hud_DrawResults);
 
 INCLUDE_ASM("asm/nonmatchings/unit_49CF0", func_800AB38C);
 
 INCLUDE_ASM("asm/nonmatchings/unit_49CF0", func_800AB700);
 
-void func_800AB8AC(u8 p) {
+void Hud_DrawTrickPopup(u8 p) {
     El10_ *e0;
     El10_ *e1;
     El10_ *e2;
@@ -375,11 +376,11 @@ void Hud_SetPlayer(u8 i, s32 v, s8 id) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_49CF0", Hud_Draw);
 
-void func_800ABEA8(s8 arg0, s32 arg1) {
+void Hud_SetResultRacer(s8 arg0, s32 arg1) {
     *(u8 *)(&D_8011F68F + (arg1 & 0xFF)) = arg0;
 }
 
-void func_800ABEBC(s8 arg0) {
+void Hud_SetBestLapRacer(s8 arg0) {
     D_800F3B45 = arg0;
 }
 
@@ -390,12 +391,12 @@ void Hud_ShowLapTime(u8 i, s32 v, s8 b) {
     D_800F3934[i].w8 = RaceClock_Get(i);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_49CF0", func_800ABF2C);
+INCLUDE_ASM("asm/nonmatchings/unit_49CF0", Hud_ShowTrick);
 
-void func_800AC6EC(u8 i, s32 n) {
+void Hud_ShowTurbosGained(u8 i, s32 n) {
     if (i < gHudPlayerCount) {
         D_800F3B18[i].t = ((s32 (*)(void))RaceClock_Get)();
-        D_800F3B18[i].a = Car_Get((&gHudRacer)[i])->n6CC;
+        D_800F3B18[i].a = Car_Get((&gHudRacer)[i])->turbos;
         D_800F3B18[i].b = n;
         if (D_800F3B18[i].a + (u8)n >= 11) {
             D_800F3B18[i].b = 10 - D_800F3B18[i].a;
@@ -406,7 +407,7 @@ void func_800AC6EC(u8 i, s32 n) {
 }
 
 
-void func_800AC7C8(u8 i, u8 v) {
+void Hud_SetVisible(u8 i, u8 v) {
     u8 j;
 
     if (D_800F3B3C[i] == v) {

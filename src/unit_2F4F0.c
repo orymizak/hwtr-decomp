@@ -43,7 +43,7 @@ extern u8 D_80138D43;
 s32 Race_GetPhase(void);
 void RaceCam_UpdateIntro(CamE_ *);
 void func_8009013C(Vec3f_, Vec3f_, Vec3f_, Vec3f_ *, f32, f32, f32, f32);
-void func_800A4198(u8, Vec3f_ *);
+void Coll_ClipCamera(u8, Vec3f_ *);
 u8 func_800A4EE8(u8, Vec3f_ *, Vec3f_ *);
 Vec3f_ Vec3_Lerp(f32 t, Vec3f_ a, Vec3f_ b);
 s32 Coll_GetSpawn(s32 arg0);
@@ -52,7 +52,7 @@ extern void (*svcTrackGetCamera)(u8, Vec3f_ *, void *, s32 *, s32 *);
 extern u8 (*svcRandRange)(s32);
 extern u8 D_80118621;
 extern s32 *D_80118624;
-s32 func_80096100(void);
+s32 Cars_GetCount(void);
 extern u8 gRaceCams[];
 s32 Coll_GetSpawnCount(void);
 extern u8 D_801185AC;
@@ -168,7 +168,7 @@ void RaceCam_Update(u32 dt) {
             (*cam).m[2][1] = m[2][1];
             (*cam).m[2][2] = m[2][2];
             (*cam).fov = 1.570795f;
-            func_800A4198((*cam).car, &(*cam).pos);
+            Coll_ClipCamera((*cam).car, &(*cam).pos);
             break;
         case 1:
             if (flags & 0x10) {
@@ -263,7 +263,7 @@ void RaceCam_Update(u32 dt) {
             { (eye).x = ( eye).x + ( t).x; (eye).y = ( eye).y + ( t).y; (eye).z = ( eye).z + ( t).z; };
             { (t).x = ( u).x * ( ofs.z); (t).y = ( u).y * ( ofs.z); (t).z = ( u).z * ( ofs.z); };
             { (eye).x = ( eye).x + ( t).x; (eye).y = ( eye).y + ( t).y; (eye).z = ( eye).z + ( t).z; };
-            func_800A4198((*cam).car, &eye);
+            Coll_ClipCamera((*cam).car, &eye);
             { (t).x = ( eye).x - ( pos).x; (t).y = ( eye).y - ( pos).y; (t).z = ( eye).z - ( pos).z; };
             dist = sqrtf(((t).x * ( t).x + (t).y * ( t).y + (t).z * ( t).z));
             olen = sqrtf(((ofs).x * ( ofs).x + (ofs).y * ( ofs).y + (ofs).z * ( ofs).z));
@@ -482,7 +482,7 @@ void RaceCam_UpdateTrackside(Cam90_ *cam, u32 dt) {
                 radius = 0.0f;
             }
             mind = 0.0f;
-            for (j = 0; j < func_80096100(); j++) {
+            for (j = 0; j < Cars_GetCount(); j++) {
                 car = Car_Get(j);
                 d.x = p.x - car->pos.x;
                 d.y = p.y - car->pos.y;
@@ -518,7 +518,7 @@ void RaceCam_UpdateTrackside(Cam90_ *cam, u32 dt) {
             } while ((w = D_80118624[cam->pt * 5]) == 0);
             cam->mode = w;
             for (j = 0; j < 10; j++) {
-                cam->car = svcRandRange(func_80096100());
+                cam->car = svcRandRange(Cars_GetCount());
                 if (Car_Get(cam->car)->b4B8 == 0) {
                     break;
                 }

@@ -23,16 +23,16 @@ void RaceCam_Shake(u8);
 extern s32 D_8011B320;
 extern s32 (*svcRandRange)(s32);
 extern void (*audSfxPlay)(s32, s32, f32, f32);
-u8 func_800977AC(u8 *);
-void func_800949E4(u8 *);
-void func_80092534(u8 *);
+u8 Car_UseTurbo(u8 *);
+void Car_Simulate(u8 *);
+void Car_AirControl(u8 *);
 u32 RaceClock_Get(void);
 void Replay_Record(void);
-void func_80095804(u8 *);
-void func_80091E30(Car *, f32);
-void func_8009887C(u8 *);
-void func_80094234(void);
-void func_800863A4(u8 *, u8 *);
+void Car_UpdateWheelSpin(u8 *);
+void Car_UpdateAirTricks(Car *, f32);
+void Car_Unstick(u8 *);
+void Car_Respawn(void);
+void Ai_RestoreSlot(u8 *, u8 *);
 B88_ *Ai_GetSlot(u8 *);
 void func_800ACDC8(void *, f32);
 void Mtx3_Orthonormalize(void *);
@@ -46,24 +46,24 @@ extern s32 (*svcTimeGetMillis)();
 s32 Coll_AddCar(void *);
 s32 Coll_RemoveById(void *);
 
-extern s32 D_8011B318;
+extern s32 gCarCount;
 
 INCLUDE_ASM("asm/nonmatchings/unit_31E10", Cars_Init);
 
 void RaceAudio_QueueAnnouncer(s32);
 
 /* Adds to the car's counter at 0x6CC, capped at 10; returns how much was added. */
-u8 func_80091B20(Car *c, s32 add) {
+u8 Car_AddTurbos(Car *c, s32 add) {
     u8 added = add;
-    s32 total = c->n6CC + add;
+    s32 total = c->turbos + add;
 
-    c->n6CC = total;
+    c->turbos = total;
     if ((u8)total > 10) {
         added = add + 10 - total;
-        c->n6CC = 10;
+        c->turbos = 10;
     }
     /* TODO(match-debt): n6CC == 10 && unk6CD == 0 is read as one word. */
-    if ((*(u32 *)&c->n6CC & 0xFFFF0000) == 0x0A000000) {
+    if ((*(u32 *)&c->turbos & 0xFFFF0000) == 0x0A000000) {
         RaceAudio_QueueAnnouncer(3);
         c->unk6CD = 1;
     }
@@ -72,27 +72,27 @@ u8 func_80091B20(Car *c, s32 add) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_31E10", Cars_Shutdown);
 
-void func_80091DC4(Car *car) {
+void Car_NoteGroundContact(Car *car) {
     s32 now;
     u32 dt;
 
     now = svcTimeGetMillis();
-    dt = now - car->timerLast;
+    dt = now - car->contactLast;
     if (dt <= 100) {
-        car->timerAcc += dt;
+        car->contactTime += dt;
     } else {
-        car->timerAcc = 0;
+        car->contactTime = 0;
     }
-    car->timerLast = now;
-    if (car->timerFlag != 0 && car->timerAcc > 500) {
-        car->timerFlag = 0;
+    car->contactLast = now;
+    if (car->airborne != 0 && car->contactTime > 500) {
+        car->airborne = 0;
     }
 }
 
 typedef Vec3f V3_E30;
 extern u8 D_8011B31C;
-void func_8008AEC0(s32, s32, s32, s32, s32, s32, s32, u8 *, u16 *, u32 *);
-void func_800ABF2C(u8, u32, u16, u8);
+void Trick_Evaluate(s32, s32, s32, s32, s32, s32, s32, u8 *, u16 *, u32 *);
+void Hud_ShowTrick(u8, u32, u16, u8);
 static inline V3_E30 mul_E30(Mtx3f *m, V3_E30 *v) {
     V3_E30 r;
 
@@ -101,7 +101,7 @@ static inline V3_E30 mul_E30(Mtx3f *m, V3_E30 *v) {
     r.z = m->m[2][0] * v->x + m->m[2][1] * v->y + m->m[2][2] * v->z;
     return r;
 }
-void func_80091E30(Car *p, f32 dt) {
+void Car_UpdateAirTricks(Car *p, f32 dt) {
     s32 a[3];
     s32 b[3];
     V3_E30 v;
@@ -121,10 +121,10 @@ void func_80091E30(Car *p, f32 dt) {
     pts = 0;
     x = 0;
     n = 0;
-    if (p->timerFlag == 0) {
+    if (p->airborne == 0) {
         if (p->cnt3E7 == 0) {
-            p->timerFlag = 1;
-            p->unk4A0 = 0;
+            p->airborne = 1;
+            p->airTime = 0;
             t.m[0][0] = p->rot.m[0][0];
             t.m[0][1] = p->rot.m[1][0];
             t.m[0][2] = p->rot.m[2][0];
@@ -147,9 +147,9 @@ void func_80091E30(Car *p, f32 dt) {
     } else {
         if (p->cnt3E8 == 0) {
             if (p->cnt3E7 != 0) {
-                p->timerFlag = 0;
+                p->airborne = 0;
             }
-            p->unk4A0 += ms;
+            p->airTime += ms;
             t.m[0][0] = p->rot.m[0][0];
             t.m[0][1] = p->rot.m[1][0];
             t.m[0][2] = p->rot.m[2][0];
@@ -184,16 +184,16 @@ void func_80091E30(Car *p, f32 dt) {
             p->v488.z = w.z + p->v488.z;
             p->v47C = v;
         } else {
-            p->unk4A0 += ms;
-            p->timerFlag = 0;
-            el = p->unk4A0;
+            p->airTime += ms;
+            p->airborne = 0;
+            el = p->airTime;
             a[0] = (s32)(p->v494.x * 180.0f / 3.14159f);
             b[0] = (s32)(p->v488.x * 180.0f / 3.14159f) - a[0];
             a[1] = (s32)(p->v494.y * 180.0f / 3.14159f);
             b[1] = (s32)(p->v488.y * 180.0f / 3.14159f) - a[1];
             a[2] = (s32)(p->v494.z * 180.0f / 3.14159f);
             b[2] = (s32)(p->v488.z * 180.0f / 3.14159f) - a[2];
-            func_8008AEC0(a[0], b[0], a[1], b[1], a[2], b[2], el, &n, &x, &pts);
+            Trick_Evaluate(a[0], b[0], a[1], b[1], a[2], b[2], el, &n, &x, &pts);
             if (pts != 0) {
                 if ((p->flags & 1) && (pts > 1000 || svcRandRange(8) == 0)) {
                     if (svcRandRange(2) != 0) {
@@ -205,15 +205,15 @@ void func_80091E30(Car *p, f32 dt) {
                 if (D_8011B31C == 0) {
                     pts = 0;
                 }
-                func_800ABF2C(p->unk00C, pts, x, n);
-                q = p->unk4B0;
+                Hud_ShowTrick(p->unk00C, pts, x, n);
+                q = p->score;
                 k = n;
-                p->unk4B0 = q + pts;
+                p->score = q + pts;
                 c = k;
-                p->n6CC += k;
-                if (p->n6CC > 10) {
-                    c = k + 10 - p->n6CC;
-                    p->n6CC = 10;
+                p->turbos += k;
+                if (p->turbos > 10) {
+                    c = k + 10 - p->turbos;
+                    p->turbos = 10;
                 }
                 if ((*(u32 *)((u8 *)p + 0x6CC) & 0xFFFF0000) == 0x0A000000) {
                     RaceAudio_QueueAnnouncer(3);
@@ -232,30 +232,30 @@ void func_80091E30(Car *p, f32 dt) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_80092534);
+INCLUDE_ASM("asm/nonmatchings/unit_31E10", Car_AirControl);
 
-void func_80093164(Car *p, f32 dt) {
+void Car_UpdatePhysics(Car *p, f32 dt) {
     Vec3f col;
     u8 f;
     f32 v;
 
     if (p->unk6C1 != 0) {
-        func_80094234();
+        Car_Respawn();
         p->unk6C1 = 0;
     } else if (p->b4B8 != 0) {
         if (p->unk025 != 0 && p->unk4BC >= 1000) {
-            ((void (*)(u8 *))func_80094234)(p);
+            ((void (*)(u8 *))Car_Respawn)(p);
         }
     } else if (p->unk025 != 0 && p->unk774 == 0 && (p->cnt3E7 != p->nPoints || p->fBC < 176.0f)) {
-        ((void (*)(u8 *))func_80094234)(p);
+        ((void (*)(u8 *))Car_Respawn)(p);
     }
     if (p->b4B8 == 0) {
         if (p->unk027 != 0 && p->unk029 == 0) {
             if (D_8011B320 & 0x40) {
-                func_800977AC(p);
-            } else if (p->n6CC != 0) {
-                if (func_800977AC(p)) {
-                    p->n6CC--;
+                Car_UseTurbo(p);
+            } else if (p->turbos != 0) {
+                if (Car_UseTurbo(p)) {
+                    p->turbos--;
                 }
             } else {
                 audSfxPlay(0x2C, 0, 1.0f, 1.0f);
@@ -293,16 +293,16 @@ void func_80093164(Car *p, f32 dt) {
             }
         }
         if (p->b13C == 0) {
-            func_800949E4(p);
+            Car_Simulate(p);
         }
         if (p->cnt3E7 == 0) {
-            func_80092534(p);
+            Car_AirControl(p);
         } else {
             p->unk6C3 = 0;
         }
     }
     f = 0;
-    if ((p->flags & 1) && p->timerFlag != 0 && p->unk4A0 > 500 && p->vel.z > 0.0f) {
+    if ((p->flags & 1) && p->airborne != 0 && p->airTime > 500 && p->vel.z > 0.0f) {
         f = RaceClock_Get() - p->unk770 > 500;
     }
     func_800ACDC8((u8 *)&p->m2C, dt);
@@ -314,11 +314,11 @@ void func_80093164(Car *p, f32 dt) {
     }
     if (p->b13C == 0) {
         Mtx3_Orthonormalize((u8 *)&p->rot);
-        func_80095804(p);
+        Car_UpdateWheelSpin(p);
     }
     if (p->b4B8 == 0) {
         if (p->flags & 1) {
-            func_80091E30(p, dt);
+            Car_UpdateAirTricks(p, dt);
         }
         if (p->unk014 < 0.0f || p->unk014 > 0.0f || p->unk018 < 0.0f || p->unk018 > 0.0f) {
             p->b13C = 0;
@@ -340,16 +340,16 @@ void func_80093164(Car *p, f32 dt) {
         p->unk76C = 0;
     }
     if (p->unk76C > 500) {
-        func_8009887C(p);
+        Car_Unstick(p);
     }
 }
 
-void func_800937E8(Car *p, f32 dt) {
+void Car_UpdateOnPath(Car *p, f32 dt) {
     u8 f;
 
     if (p->unk6C1 != 0) {
-        func_80094234();
-        func_800863A4(p, p->savedState);
+        Car_Respawn();
+        Ai_RestoreSlot(p, p->savedState);
         p->unk6C1 = 0;
     }
     f = 0;
@@ -383,9 +383,9 @@ void func_80093990(void) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_31E10", Cars_Update);
 
-INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_80093B74);
+INCLUDE_ASM("asm/nonmatchings/unit_31E10", Cars_UpdatePositions);
 
-void func_80093D34(Car *car) {
+void Car_UpdatePoints(Car *car) {
     Vec3f col1;
     Vec3f col0;
     Vec3f r1;
@@ -484,15 +484,15 @@ void func_80093D34(Car *car) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_80094234);
+INCLUDE_ASM("asm/nonmatchings/unit_31E10", Car_Respawn);
 
-INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_800946DC);
+INCLUDE_ASM("asm/nonmatchings/unit_31E10", Car_ApplyAero);
 
-INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_800949E4);
+INCLUDE_ASM("asm/nonmatchings/unit_31E10", Car_Simulate);
 
-INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_80095804);
+INCLUDE_ASM("asm/nonmatchings/unit_31E10", Car_UpdateWheelSpin);
 
-INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_80095970);
+INCLUDE_ASM("asm/nonmatchings/unit_31E10", Car_ComputeMass);
 
 /* Returns the car state: position (with offset), rotation, velocity, flags and the 0x13C byte. */
 void Car_GetState(u8 id, Vec3f *pos, Mtx3f *rot, Vec3f *vel, u32 *flags, u8 *out) {
@@ -516,7 +516,7 @@ void Car_GetState(u8 id, Vec3f *pos, Mtx3f *rot, Vec3f *vel, u32 *flags, u8 *out
     *out = Race_GetPhase() ? c->b13C : 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_80095D5C);
+INCLUDE_ASM("asm/nonmatchings/unit_31E10", Car_GetAudioInfo);
 
 extern u8 D_800F3890[];
 /* Returns the speed scaled to 0..255 and the average surface value of the wheels in contact. */
@@ -548,8 +548,8 @@ Car *Car_Get(u8 i) {
     return &gCars[i];
 }
 
-s32 func_80096100(void) {
-    return D_8011B318;
+s32 Cars_GetCount(void) {
+    return gCarCount;
 }
 
 s32 Car_IsPlayer(u8 i) {
@@ -676,7 +676,7 @@ static inline void push_954(Car *c, Vec3f *at, Vec3f *f, Vec3f *a) {
     c->force.z = c->force.z + f->z;
 }
 
-void func_80096954(Car *c) {
+void Car_SelfRight(Car *c) {
     Vec3f axis;
     Vec3f pos;
     Vec3f pt;
@@ -763,9 +763,9 @@ void func_80096954(Car *c) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_8009751C);
+INCLUDE_ASM("asm/nonmatchings/unit_31E10", Car_DirectionalBoost);
 
-INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_800977AC);
+INCLUDE_ASM("asm/nonmatchings/unit_31E10", Car_UseTurbo);
 
 extern void (*svcModelFlashOn)(u8);
 /* Scales the impulse so that the speed becomes 2288 and marks the car (once) as boosted. */
@@ -917,7 +917,7 @@ INCLUDE_ASM("asm/nonmatchings/unit_31E10", Cars_SaveReplay);
 
 INCLUDE_ASM("asm/nonmatchings/unit_31E10", Cars_LoadReplay);
 
-INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_8009887C);
+INCLUDE_ASM("asm/nonmatchings/unit_31E10", Car_Unstick);
 
 s32 Rumble_Init(void) {
     memset(gImpactCooldown, 0, 8);

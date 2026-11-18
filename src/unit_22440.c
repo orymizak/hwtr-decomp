@@ -19,20 +19,20 @@ u32 RaceClock_Get(void);
 extern Slot85_ gAi[];
 extern s32 D_80115824;
 extern f32 D_80115820;
-void func_80084B9C(u8 *);
+void Ai_ApplyImpulse(u8 *);
 extern u8 D_80114838;
 
-s32 func_80081840();
+s32 Ai_Step();
 
-INCLUDE_ASM("asm/nonmatchings/unit_22440", func_80081840);
+INCLUDE_ASM("asm/nonmatchings/unit_22440", Ai_Step);
 
-void func_80084B80(void) {
-    func_80081840();
+void Ai_Update(void) {
+    Ai_Step();
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_22440", func_80084B9C);
+INCLUDE_ASM("asm/nonmatchings/unit_22440", Ai_ApplyImpulse);
 
-void func_80084FDC(void) {
+void Ai_SyncCars(void) {
     u32 i;
     Car *c1;
     Car *car;
@@ -62,7 +62,7 @@ void func_80084FDC(void) {
             gAi[i].v228.x = (car->impulse.x) + gAi[i].v228.x;
             gAi[i].v228.y = (car->impulse.y) + gAi[i].v228.y;
             gAi[i].v228.z = (car->impulse.z) + gAi[i].v228.z;
-            func_80084B9C(car);
+            Ai_ApplyImpulse(car);
             (car->impulse.x) = 0.0f;
             (car->impulse.y) = 0.0f;
             (car->impulse.z) = 0.0f;
@@ -78,7 +78,7 @@ void func_80084FDC(void) {
     }
 }
 
-f32 func_800853B4(u8 i) {
+f32 Ai_GetRaceDistance(u8 i) {
     if (i < 6) {
         return gAi[i].f218;
     }
@@ -88,14 +88,14 @@ f32 func_800853B4(u8 i) {
 INCLUDE_ASM("asm/nonmatchings/unit_22440", Ai_Init);
 
 extern f32 D_80115838;
-extern s8 D_80115845;
-extern Car *D_80115848;
-extern Car *D_8011584C;
+extern s8 gAiPhysicsCarCount;
+extern Car *gAiPhysicsCar0;
+extern Car *gAiPhysicsCar1;
 extern u8 D_80115850;
-u32 func_80096100(void);
+u32 Cars_GetCount(void);
 
 /* Scales each slot's f20C (offset by 100) by car 0's k538, then records the first two cars whose state is not 1. */
-void func_80085780(void) {
+void Ai_StartRace(void) {
     Car *car;
     Car *c;
     u32 i;
@@ -104,32 +104,32 @@ void func_80085780(void) {
     car = Car_Get(0);
     if (D_80115850 == 0 && car->state != 1) {
         k = 1.0f - D_80115838 * (1.0f - car->k538);
-        for (i = 0; i < func_80096100(); i++) {
+        for (i = 0; i < Cars_GetCount(); i++) {
             gAi[i].f20C = (gAi[i].f20C + 100.0f) * k - 100.0f;
         }
     }
-    D_8011584C = NULL;
-    D_80115848 = NULL;
+    gAiPhysicsCar1 = NULL;
+    gAiPhysicsCar0 = NULL;
     for (i = 0; i < 6; i++) {
         c = Car_Get(i);
         if (c->state == 1) {
             continue;
         }
-        if (D_80115848 == NULL) {
-            D_80115848 = c;
-        } else if (D_8011584C == NULL) {
-            D_8011584C = c;
+        if (gAiPhysicsCar0 == NULL) {
+            gAiPhysicsCar0 = c;
+        } else if (gAiPhysicsCar1 == NULL) {
+            gAiPhysicsCar1 = c;
             break;
         }
     }
-    if (D_80115848 == NULL) {
-        D_80115845 = 0;
+    if (gAiPhysicsCar0 == NULL) {
+        gAiPhysicsCarCount = 0;
         return;
     }
-    if (D_8011584C != NULL) {
-        D_80115845 = 2;
+    if (gAiPhysicsCar1 != NULL) {
+        gAiPhysicsCarCount = 2;
     } else {
-        D_80115845 = 1;
+        gAiPhysicsCarCount = 1;
     }
 }
 
@@ -137,10 +137,10 @@ s32 Ai_Shutdown(void) {
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_22440", func_800858F0);
+INCLUDE_ASM("asm/nonmatchings/unit_22440", Ai_InitRacer);
 
 void *Ai_GetSlot(u8 *arg0) {
     return (*arg0 * 0x2A8) + &D_80114838;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_22440", func_800863A4);
+INCLUDE_ASM("asm/nonmatchings/unit_22440", Ai_RestoreSlot);

@@ -88,7 +88,7 @@ typedef struct { f32 a; f32 b; f32 c; f32 d; s16 e; u16 f; } PlF_;
 extern u32 D_8011C830[];
 void Lap_PassCheckpoint(u8, u8, s32);
 void Car_Boost(u8 *);
-void func_8009751C(u8 *, u16, u8);
+void Car_DirectionalBoost(u8 *, u16, u8);
 void func_800C9B84(u16);
 void Coll_ApplyRoomFlags(RObj_ *o, u16 idx, s32 arg2);
 u16 Coll_FindRoom(Vec3f pos);
@@ -492,12 +492,12 @@ extern u16 gCollPairCount;
 extern PairAB_ gCollPairs[];
 extern u8 D_800F38E4[];
 extern void (*svcFxCarScrape)(EntAB_ *, f32);
-void func_8009B0AC(void);
+void Coll_SyncObjects(void);
 void RaceAudio_OnContact(EntAB_ *);
-void func_80091DC4(PlAB_ *);
+void Car_NoteGroundContact(PlAB_ *);
 void Car_ReportImpact(EntAB_ *);
 void Car_CheckCrashContact(EntAB_ *);
-void func_80096954(PlAB_ *, EntAB_ *);
+void Car_SelfRight(PlAB_ *, EntAB_ *);
 s32 RaceClock_Get(void);
 f32 func_800AD774(EntAB_ *, f32);
 void RaceAudio_OnCollision(PairAB_ *);
@@ -522,7 +522,7 @@ void Coll_Update(void) {
     gCollPairCount = 0;
     gCollContactCount = 0;
     gCollFrame++;
-    func_8009B0AC();
+    Coll_SyncObjects();
     Coll_BroadPhase();
     Coll_Solve();
     for (i = 0, e = gCollContacts; i < gCollContactCount; e++, i++) {
@@ -542,14 +542,14 @@ void Coll_Update(void) {
         pl = e->obj->pl;
         if (isRacer && !flag) {
             if (changed) {
-                func_80091DC4(pl);
+                Car_NoteGroundContact(pl);
                 if (pl->flags & 1) {
                     Car_ReportImpact(e);
                 }
             }
             Car_CheckCrashContact(e);
             if (pl->b710 && e->pos.x * pl->n720.x + e->pos.y * pl->n720.y + e->pos.z * pl->n720.z > 0.866f) {
-                func_80096954(pl, e);
+                Car_SelfRight(pl, e);
             }
             pl->w770 = RaceClock_Get();
         }
@@ -623,7 +623,7 @@ void Coll_Update(void) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_8009B0AC);
+INCLUDE_ASM("asm/nonmatchings/unit_39C90", Coll_SyncObjects);
 
 void Coll_ResolveBoxPair(ObjC7_ *a, ObjC7_ *b);
 #define ABS_56C(v) ((v) < 0.0f ? -(v) : (v))
@@ -1186,7 +1186,7 @@ void Coll_ApplyRoomFlags(RObj_ *o, u16 idx, s32 arg2) {
                 if (r->flags & 0x800) {
                     Car_Boost(c);
                 } else {
-                    func_8009751C(c, r->param.val, r->b4);
+                    Car_DirectionalBoost(c, r->param.val, r->b4);
                 }
             }
             if (r->flags & 2) {
@@ -1280,9 +1280,9 @@ void CollList_Remove(Nd4_ **list, s32 key) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_800A3ED4);
+INCLUDE_ASM("asm/nonmatchings/unit_39C90", Car_CheckWrongWay);
 
-void func_800A4120(u8 i, V12_ *v, V16_ *q) {
+void Coll_GetStartPos(u8 i, V12_ *v, V16_ *q) {
     if (gCollLevel != NULL) {
         *v = ((Cam41_ *)gCollLevel)->v[i];
         *q = ((Cam41_ *)gCollLevel)->q[i];
@@ -1290,7 +1290,7 @@ void func_800A4120(u8 i, V12_ *v, V16_ *q) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_800A4198);
+INCLUDE_ASM("asm/nonmatchings/unit_39C90", Coll_ClipCamera);
 
 INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_800A4EE8);
 

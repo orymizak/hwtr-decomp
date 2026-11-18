@@ -109,17 +109,17 @@ typedef struct Car {
     /* 0x474 */ u32 unk474;
     /* 0x478 */ u8 lap;
     /* 0x479 */ u8 checkpoint; /* next checkpoint index */
-    /* 0x47A */ u8 lapsDone; /* completed laps shown on the HUD counter */
+    /* 0x47A */ u8 position; /* race position (0 = first), set by Cars_UpdatePositions */
     /* 0x47B */ u8 finished; /* set when the last lap is completed */
     /* 0x47C */ Vec3f v47C;
     /* 0x488 */ Vec3f v488;
     /* 0x494 */ Vec3f v494;
-    /* 0x4A0 */ u32 unk4A0;
+    /* 0x4A0 */ u32 airTime;
     /* 0x4A4 */ s32 unk4A4;
-    /* 0x4A8 */ s32 timerLast;
-    /* 0x4AC */ u32 timerAcc;
-    /* 0x4B0 */ s32 unk4B0;
-    /* 0x4B4 */ u8 timerFlag;
+    /* 0x4A8 */ s32 contactLast;
+    /* 0x4AC */ u32 contactTime;
+    /* 0x4B0 */ s32 score;
+    /* 0x4B4 */ u8 airborne;
     /* 0x4B5 */ u8 pad4B5[0x3];
     /* 0x4B8 */ u8 b4B8;
     /* 0x4B9 */ u8 unk4B9;
@@ -153,7 +153,7 @@ typedef struct Car {
     /* 0x6C4 */ u8 wrongWay; /* set after driving the wrong way for 500 ms */
     /* 0x6C5 */ u8 pad6C5[0x3];
     /* 0x6C8 */ u32 wrongWayTime;
-    /* 0x6CC */ u8 n6CC;
+    /* 0x6CC */ u8 turbos;
     /* 0x6CD */ u8 unk6CD;
     /* 0x6CE */ u8 pad6CE[0xA];
     /* 0x6D8 */ s32 state;

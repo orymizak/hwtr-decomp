@@ -17,7 +17,7 @@ extern u16 D_800F302E;
 extern u16 D_800F3030;
 extern u16 D_800F3032;
 extern u16 D_800F3034;
-void func_800AC6EC(u8, s32);
+void Hud_ShowTurbosGained(u8, s32);
 void func_800B0614(u8, s32);
 void Car_ApplyPickup(u8 *arg0, u8 *arg1);
 extern void (*audSfxPlay)(s32, s32, f32, f32);
@@ -32,7 +32,7 @@ s32 RaceClock_Get(void);
 extern Lnk89_ **gCarPickups[];
 void RefList_Release(Lnk89_ **, s32 *);
 void Memory_Free(void *);
-s32 func_80095970(void *);
+s32 Car_ComputeMass(void *);
 extern s32 (*D_80141768)(u8,s32);
 
 
@@ -105,9 +105,9 @@ void Car_ApplyPickup(u8 *arg0, u8 *arg1) {
     if (p->flags & 2) {
         D_80141768(c->id, 1);
     }
-    if ((p->flags & 4) && c->n6CC < 10) {
-        func_800AC6EC(c->id, 1);
-        c->n6CC++;
+    if ((p->flags & 4) && c->turbos < 10) {
+        Hud_ShowTurbosGained(c->id, 1);
+        c->turbos++;
     }
     if (c->flags & 1) {
         if (p->flags & 0x01000000) {
@@ -143,7 +143,7 @@ void Car_ApplyPickup(u8 *arg0, u8 *arg1) {
             func_800B0614(c->id, 8);
         }
     }
-    func_80095970(c);
+    Car_ComputeMass(c);
     c->scale = c->k[0];
     c->invScale = 1.0f / c->k[0];
 }
@@ -198,7 +198,7 @@ void Car_RemovePickup(P_8010 *p, Car *c) {
         if (p->flags & 2) {
             D_80141768(c->id, 0);
         }
-        func_80095970(c);
+        Car_ComputeMass(c);
         c->scale = c->k[0];
         c->invScale = 1.0f / c->k[0];
     }
@@ -342,7 +342,7 @@ void Pickup_Update(void) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_28C10", func_8008AEC0);
+INCLUDE_ASM("asm/nonmatchings/unit_28C10", Trick_Evaluate);
 
 void func_8008B9FC(u16 i, char *out) {
     if (i < 49) {
