@@ -15,10 +15,10 @@ void func_800ACDC8(void *, f32);
 void Mtx3_Orthonormalize(void *);
 
 s32 Coll_Unregister(s32 *);
-extern s32 D_8011E870;
+extern s32 gDebris;
 
-s32 func_800A58D0(void) {
-    u8 *e = (u8 *)&D_8011E870;
+s32 Debris_Init(void) {
+    u8 *e = (u8 *)&gDebris;
     u32 i;
 
     memset(e, 0, 0xE20);
@@ -35,8 +35,8 @@ s32 func_800A58D0(void) {
 }
 
 
-s32 func_800A5950(void) {
-    Ent1C4_ *e = (Ent1C4_ *)&D_8011E870;
+s32 Debris_Shutdown(void) {
+    Ent1C4_ *e = (Ent1C4_ *)&gDebris;
     u32 i;
 
     for (i = 0; i < 8; i++, e++) {
@@ -49,8 +49,8 @@ s32 func_800A5950(void) {
 }
 
 
-void func_800A59B8(void) {
-    Ent1C4_ *e = (Ent1C4_ *)&D_8011E870;
+void Debris_Update(void) {
+    Ent1C4_ *e = (Ent1C4_ *)&gDebris;
     u32 i;
 
     for (i = 0; i < 8; i++, e++) {
@@ -62,9 +62,9 @@ void func_800A59B8(void) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_464D0", func_800A5A1C);
+INCLUDE_ASM("asm/nonmatchings/unit_464D0", Debris_Draw);
 
-void func_800A5AB0(Car *c) {
+void Debris_SpawnFromCar(Car *c) {
     V3a5_ d;
     V3a5_ col;
     V3a5_ t;
@@ -84,7 +84,7 @@ void func_800A5AB0(Car *c) {
     col = D_80100A00;
     e = c->points;
     for (i = 0; i < c->nPoints; e++, i++) {
-        p = ((Prta5_ *)&D_8011E870);
+        p = ((Prta5_ *)&gDebris);
         for (j = 0; j < 8; j++, p++) {
             if (p->active == 0) {
                 break;
@@ -208,8 +208,8 @@ void func_800A5AB0(Car *c) {
     }
 }
 
-void func_800A6630(void *arg0) {
-    Ent1C4_ *e = (Ent1C4_ *)&D_8011E870;
+void Debris_RemoveForCar(void *arg0) {
+    Ent1C4_ *e = (Ent1C4_ *)&gDebris;
     u32 i;
 
     for (i = 0; i < 8; e++, i++) {
@@ -227,7 +227,7 @@ typedef struct { ContactObj_ *obj; u8 p4[0xC]; Vec3f n; } Contact_;
 void Car_StartCrash(Car *p, u8 id, u8 flip);
 /* Crashes the car when the impact speed along the contact normal exceeds a threshold that grows with
  * its k53C factor (clamped to [0.25, 4]) and the normal's alignment with the car's forward axis. */
-void func_800A66C0(Contact_ *h) {
+void Car_CheckCrashContact(Contact_ *h) {
     Car *car;
     Vec3f fwd;
     f32 s;
@@ -260,12 +260,12 @@ void func_800A66C0(Contact_ *h) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_464D0", func_800A6850);
+INCLUDE_ASM("asm/nonmatchings/unit_464D0", Car_CheckCrashPair);
 
 typedef struct { u16 kind; u8 id; u8 idx; s8 rot[6]; s16 pos[3]; } PrtRec_;
 /* Packs the active parts into 16-byte records (two rotation rows as s8, position as s16); returns the
  * bytes written, 0 if out (size bytes) is too small. */
-u32 func_800A6BA4(PrtRec_ *out, u32 size) {
+u32 Debris_SaveReplay(PrtRec_ *out, u32 size) {
     u32 n;
     Prta5_ *e;
     u32 i;
@@ -273,7 +273,7 @@ u32 func_800A6BA4(PrtRec_ *out, u32 size) {
     s32 v;
 
     n = 0;
-    for (e = (Prta5_ *)&D_8011E870, i = 0; i < 8; e++, i++) {
+    for (e = (Prta5_ *)&gDebris, i = 0; i < 8; e++, i++) {
         if (e->active == 0) {
             continue;
         }
@@ -345,4 +345,4 @@ u32 func_800A6BA4(PrtRec_ *out, u32 size) {
     return n;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_464D0", func_800A6D98);
+INCLUDE_ASM("asm/nonmatchings/unit_464D0", Debris_LoadReplay);

@@ -27,12 +27,12 @@ extern void (*svcHudCountdown)(s32);
 extern void (*svcWorldUpdate)(u32);
 extern u8 (*sysInputIsKeyHeldAny)(s32);
 extern void (*sysInputRumbleStopAll)(void);
-u8 func_80098BF4(void);
+u8 Race_PollPauseButton(void);
 void Race_ReadPlayerControls(u8);
-void func_80093998(s32);
-void func_800AF67C(void);
-void func_800A59B8(s32);
-void func_8008EA6C(s32);
+void Cars_Update(s32);
+void TrackObj_Update(void);
+void Debris_Update(s32);
+void RaceCam_Update(s32);
 void func_8008AD04(void);
 void RaceClock_Advance(s32);
 void RaceAudio_Update(s32);
@@ -40,13 +40,13 @@ void AnimTrack_Update(void);
 void func_800ABC80(u8, s32, u8);
 void RaceView_Draw(u32);
 void RaceClock_Start(void);
-u32 func_800AF174(void);
-void func_800AF180(u32);
+u32 Replay_GetCount(void);
+void Replay_Show(u32);
 void Pause_SetPlayer(u8);
 extern s32 D_800F3740[];
 extern s32 gRaceEndTime;
 extern u8 gRaceSkipArmed;
-void func_800AEFF8(void);
+void Replay_Record(void);
 void func_800A7C8C(u8, u32 *, u32 *);
 void func_800ABEA8(u8, u8);
 void func_800ABEBC(u8);
@@ -65,25 +65,25 @@ extern u8 (*svcRacePostLoad)(u8 *);
 extern void (*sysInputRumbleResume)(void);
 u8 RaceAudio_Load(void);
 void RaceClock_Reset(void);
-void func_800908E8(void);
-s32 func_800908A8(void);
-void func_80090934(void);
+void RaceCam_StartIntro(void);
+s32 RaceCam_GetIntroDuration(void);
+void RaceCam_EndIntro(void);
 void Coll_Update(void);
 void func_80085780(void);
 u8 func_800A90F0(u8 *);
 u8 RaceView_Init(u8 *);
 u8 AnimTrack_Init(u8 *);
 u8 func_80080550(u8 *);
-u8 func_80098BC0(u8 *);
+u8 Rumble_Init(u8 *);
 u8 Coll_Init(u8 *);
 u8 func_800853F4(u8 *);
-u8 func_80091210(u8 *);
-u8 func_8008E8F0(u8 *);
-u8 func_800AF230(u8 *);
+u8 Cars_Init(u8 *);
+u8 RaceCam_Init(u8 *);
+u8 TrackObj_Init(u8 *);
 u8 func_8008955C(u8 *);
 u8 func_800A7B88(u8 *);
-u8 func_800A58D0(u8 *);
-u8 func_800AEF80(u8 *);
+u8 Debris_Init(u8 *);
+u8 Replay_Init(u8 *);
 extern void (*audCarSndPlayOneShot)(u8, s32, f32);
 extern u32 (*svcGamePauseUpdate)(void);
 extern void (*svcGamePauseEnd)(s32);
@@ -100,18 +100,18 @@ extern u8 (*svcTrackUnload)();
 extern u32 gRacerCount;
 extern u8 gRacePoints[];
 extern s32 gRaceOutcome;
-u8 func_800AEFBC(u8 *);
-u8 func_800A5950(u8 *);
+u8 Replay_Shutdown(u8 *);
+u8 Debris_Shutdown(u8 *);
 u8 func_800A7C2C(u8 *);
 u8 func_80089848(u8 *);
-u8 func_800AF5B4(u8 *);
-u8 func_8008EA64(u8 *);
+u8 TrackObj_Shutdown(u8 *);
+u8 RaceCam_Shutdown(u8 *);
 u8 RaceAudio_Unload(u8 *);
-u8 func_80091BA0(u8 *);
+u8 Cars_Shutdown(u8 *);
 u8 func_800858E8(u8 *);
 u8 RaceView_Shutdown(u8 *);
 u8 Coll_Shutdown(u8 *);
-u8 func_80098BEC(u8 *);
+u8 Rumble_Shutdown(u8 *);
 u8 func_800806FC();
 u8 AnimTrack_Shutdown(u8 *);
 u8 func_800A9370(u8 *);
@@ -214,7 +214,7 @@ s32 Race_Init(u8 *cfg) {
     if (!func_80080550(cfg)) {
         return 0;
     }
-    if (!func_80098BC0(cfg)) {
+    if (!Rumble_Init(cfg)) {
         return 0;
     }
     if (!Coll_Init(cfg)) {
@@ -227,16 +227,16 @@ s32 Race_Init(u8 *cfg) {
     if (!func_800853F4(cfg)) {
         return 0;
     }
-    if (!func_80091210(cfg)) {
+    if (!Cars_Init(cfg)) {
         return 0;
     }
     if (!((u8 (*)(u8 *))RaceAudio_Init)(cfg)) {
         return 0;
     }
-    if (!func_8008E8F0(cfg)) {
+    if (!RaceCam_Init(cfg)) {
         return 0;
     }
-    if (!func_800AF230(cfg)) {
+    if (!TrackObj_Init(cfg)) {
         return 0;
     }
     if (!func_8008955C(cfg)) {
@@ -245,10 +245,10 @@ s32 Race_Init(u8 *cfg) {
     if (!func_800A7B88(cfg)) {
         return 0;
     }
-    if (!func_800A58D0(cfg)) {
+    if (!Debris_Init(cfg)) {
         return 0;
     }
-    if (!func_800AEF80(cfg)) {
+    if (!Replay_Init(cfg)) {
         return 0;
     }
     if (!RaceAudio_Load()) {
@@ -262,12 +262,12 @@ s32 Race_Init(u8 *cfg) {
     gRacePhase = 0;
     svcRacePhaseChanged(0);
     RaceClock_Reset();
-    func_800908E8();
+    RaceCam_StartIntro();
     if (gHumanCount == 1 && gRacerCount == 6) {
-        gRaceStartDelay = func_800908A8();
+        gRaceStartDelay = RaceCam_GetIntroDuration();
     } else {
         gRaceStartDelay = 0;
-        func_80090934();
+        RaceCam_EndIntro();
     }
     gRaceSimTime = 0;
     gRaceLastTime = 0;
@@ -289,7 +289,7 @@ s32 Race_Init(u8 *cfg) {
         } racers[6];            // 0x30, stride 0x2C
     } RaceSummary;
     Also consider replacing cascading 'err += func() == 0' with a boolean failure accumulator:
-    bool ok = svcRacePreUnload(o) && func_800AEFBC(o) && ... && svcRacePostUnload(o);
+    bool ok = svcRacePreUnload(o) && Replay_Shutdown(o) && ... && svcRacePostUnload(o);
     */
 u8 Race_Shutdown(u8 *o) {
     s32 err;
@@ -299,18 +299,18 @@ u8 Race_Shutdown(u8 *o) {
     if (svcRacePreUnload(o) == 0) {
         return 0;
     }
-    err = func_800AEFBC(o) == 0;
-    err += func_800A5950(o) == 0;
+    err = Replay_Shutdown(o) == 0;
+    err += Debris_Shutdown(o) == 0;
     err += func_800A7C2C(o) == 0;
     err += func_80089848(o) == 0;
-    err += func_800AF5B4(o) == 0;
-    err += func_8008EA64(o) == 0;
+    err += TrackObj_Shutdown(o) == 0;
+    err += RaceCam_Shutdown(o) == 0;
     err += RaceAudio_Unload(o) == 0;
-    err += func_80091BA0(o) == 0;
+    err += Cars_Shutdown(o) == 0;
     err += func_800858E8(o) == 0;
     err += RaceView_Shutdown(o) == 0;
     err += Coll_Shutdown(o) == 0;
-    err += func_80098BEC(o) == 0;
+    err += Rumble_Shutdown(o) == 0;
     err += func_800806FC() == 0;
     err += AnimTrack_Shutdown(o) == 0;
     err += svcTrackUnload() == 0;
@@ -364,7 +364,7 @@ void Race_ComputeResults(void) {
     s8 b;
     Res8C_ *p;
 
-    func_800AEFF8();
+    Replay_Record();
     gRaceEndTime = gRaceLastTime;
     for (i = 0; i < (s8)gRacerCount; i++) {
         func_800A7C8C(i, &r[i].time, &r[i].best);
@@ -463,7 +463,7 @@ void Race_Update(void) {
         gRaceSimTime += gRaceLastTime - prev;
     }
     while (gRaceSimTime < now) {
-        gRacePausePlayer = func_80098BF4();
+        gRacePausePlayer = Race_PollPauseButton();
         if ((u32)gRacePhase < 2) {
             for (i = 0; i < gHumanCount; i++) {
                 Race_ReadPlayerControls(i);
@@ -471,12 +471,12 @@ void Race_Update(void) {
         }
         if (gRaceShowResults == 0) {
             if (gRacePhase != 0) {
-                func_80093998(10);
+                Cars_Update(10);
                 Coll_Update();
-                func_800AF67C();
-                func_800A59B8(10);
+                TrackObj_Update();
+                Debris_Update(10);
             }
-            func_8008EA6C(10);
+            RaceCam_Update(10);
             func_8008AD04();
         }
         RaceClock_Advance(10);
@@ -512,7 +512,7 @@ void Race_Update(void) {
     switch ((u32)gRacePhase) {
     case 0:
         if (RaceClock_Get() >= gRaceStartDelay) {
-            func_80090934();
+            RaceCam_EndIntro();
         } else if (sysInputIsKeyHeldAny(0x12)) {
             gRaceStartDelay = RaceClock_Get();
         }
@@ -529,7 +529,7 @@ void Race_Update(void) {
             svcHudCountdown(1);
             D_801184AA = 1;
         } else if (RaceClock_Get() >= gRaceStartDelay + 5000) {
-            func_800AEFF8();
+            Replay_Record();
             RaceClock_Start();
             gRacePhase = 1;
             svcRacePhaseChanged(1);
@@ -588,10 +588,10 @@ void Race_Update(void) {
                 svcRacePhaseChanged(3);
             }
             gRaceShowResults = 1;
-            n = func_800AF174();
+            n = Replay_GetCount();
             if (n != 0) {
                 i = (now - gRaceEndTime - 4000) / 2000;
-                func_800AF180(i % n);
+                Replay_Show(i % n);
             }
             if (now - gRaceEndTime > 30000 || (gRaceSkipArmed != 0 && sysInputIsKeyHeldAny(0x12)) || sysInputIsKeyHeldAny(0x1A)) {
                 gGameState = 2;

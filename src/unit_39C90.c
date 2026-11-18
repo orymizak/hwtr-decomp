@@ -496,15 +496,15 @@ void func_8009B0AC(void);
 void RaceAudio_OnContact(EntAB_ *);
 void func_80091DC4(PlAB_ *);
 void Car_ReportImpact(EntAB_ *);
-void func_800A66C0(EntAB_ *);
+void Car_CheckCrashContact(EntAB_ *);
 void func_80096954(PlAB_ *, EntAB_ *);
 s32 RaceClock_Get(void);
 f32 func_800AD774(EntAB_ *, f32);
 void RaceAudio_OnCollision(PairAB_ *);
-void func_80098E84(PairAB_ *, s32);
-void func_800A6850(PairAB_ *, s32);
+void Car_ReportPairImpact(PairAB_ *, s32);
+void Car_CheckCrashPair(PairAB_ *, s32);
 void func_800ADE1C(PairAB_ *);
-void func_800AEFF8(void);
+void Replay_Record(void);
 void Coll_Update(void) {
     u32 i;
     EntAB_ *e;
@@ -547,7 +547,7 @@ void Coll_Update(void) {
                     Car_ReportImpact(e);
                 }
             }
-            func_800A66C0(e);
+            Car_CheckCrashContact(e);
             if (pl->b710 && e->pos.x * pl->n720.x + e->pos.y * pl->n720.y + e->pos.z * pl->n720.z > 0.866f) {
                 func_80096954(pl, e);
             }
@@ -576,15 +576,15 @@ void Coll_Update(void) {
         RaceAudio_OnCollision(pr);
         if (pa != NULL) {
             if (pa->flags & 1) {
-                func_80098E84(pr, 0);
+                Car_ReportPairImpact(pr, 0);
             }
-            func_800A6850(pr, 0);
+            Car_CheckCrashPair(pr, 0);
         }
         if (pb != NULL) {
             if (pb->flags & 1) {
-                func_80098E84(pr, 1);
+                Car_ReportPairImpact(pr, 1);
             }
-            func_800A6850(pr, 1);
+            Car_CheckCrashPair(pr, 1);
         }
         if (pa != NULL) {
             if (pa->b6BE) {
@@ -618,7 +618,7 @@ void Coll_Update(void) {
             pr->b->flags &= ~0x60;
         }
         if (pa != NULL && pb != NULL && (pa->flags & 1) && (pb->flags & 1)) {
-            func_800AEFF8();
+            Replay_Record();
         }
     }
 }

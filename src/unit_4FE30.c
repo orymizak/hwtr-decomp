@@ -44,16 +44,16 @@ extern void (*svcTrackGetLink)(u32, Vec3i *, f32 *, f32 *, f32 *, f32 *, f32 *, 
 extern void (*svcTrackSetLinkTransform)(u32, f32, f32, f32, void *);
 void func_800ACDC8(void *, f32);
 void Mtx3_Orthonormalize(void *);
-extern u8 *D_800F3B90;
-extern void *D_800F3B94;
-extern u32 D_801206C0;
+extern u8 *gTrackObjs;
+extern void *gTrackObjInfo;
+extern u32 gTrackObjCount;
 s32 Coll_Unregister(s32 *);
 void CollShape_Free(void *);
 void Memory_Free(void *);
 
 
 
-s32 func_800AF230(void) {
+s32 TrackObj_Init(void) {
     Vec3f pos;
     Vec3f dir;
     f32 m[9];
@@ -66,17 +66,17 @@ s32 func_800AF230(void) {
     s32 fl;
 
     dflt = D_80100B00;
-    D_801206C0 = svcTrackGetLinkCount();
-    if (D_801206C0 == 0) {
+    gTrackObjCount = svcTrackGetLinkCount();
+    if (gTrackObjCount == 0) {
         return 1;
     }
-    D_800F3B90 = Memory_Alloc(D_801206C0 * 0x88);
-    memset(D_800F3B90, 0, D_801206C0 * 0x88);
-    D_800F3B94 = Memory_Alloc(D_801206C0 * 12);
-    memset(D_800F3B94, 0, D_801206C0 * 12);
-    e = (E88_ *)D_800F3B90;
-    info = D_800F3B94;
-    for (i = 0; i < D_801206C0; e++, i++, info += 3) {
+    gTrackObjs = Memory_Alloc(gTrackObjCount * 0x88);
+    memset(gTrackObjs, 0, gTrackObjCount * 0x88);
+    gTrackObjInfo = Memory_Alloc(gTrackObjCount * 12);
+    memset(gTrackObjInfo, 0, gTrackObjCount * 12);
+    e = (E88_ *)gTrackObjs;
+    info = gTrackObjInfo;
+    for (i = 0; i < gTrackObjCount; e++, i++, info += 3) {
         svcTrackGetLink(i, (Vec3i *)&pos, m, (f32 *)&dir, (f32 *)&val, (f32 *)info, (f32 *)(info + 1), (f32 *)(info + 2));
         if (info[0] & 1) {
             *(s32 *)((u8 *)e + 4) |= 2;
@@ -124,14 +124,14 @@ s32 func_800AF230(void) {
     return 1;
 }
 
-s32 func_800AF5B4(void) {
+s32 TrackObj_Shutdown(void) {
     u8 *e;
     u32 i;
 
-    if (D_800F3B90 != NULL) {
-        e = D_800F3B90;
+    if (gTrackObjs != NULL) {
+        e = gTrackObjs;
         /* TODO (Clean version): Avoid raw byte-offset casting; access fields via E88_ struct:
-           for (i = 0; i < D_801206C0; i++) {
+           for (i = 0; i < gTrackObjCount; i++) {
                Coll_Unregister((s32 *)e);
                if (e->kind == 1) {
                    Memory_Free(e->obj);
@@ -140,7 +140,7 @@ s32 func_800AF5B4(void) {
                e++;
            }
         */
-        for (i = 0; i < D_801206C0; i++) {
+        for (i = 0; i < gTrackObjCount; i++) {
             Coll_Unregister((s32 *)e);
             if (*(s32 *)(e + 0x5C) == 1) {
                 Memory_Free(*(void **)(e + 0x60));
@@ -148,16 +148,16 @@ s32 func_800AF5B4(void) {
             CollShape_Free(e + 0xC);
             e += 0x88;
         }
-        Memory_Free(D_800F3B90);
-        Memory_Free(D_800F3B94);
-        D_800F3B90 = NULL;
-        D_800F3B94 = NULL;
+        Memory_Free(gTrackObjs);
+        Memory_Free(gTrackObjInfo);
+        gTrackObjs = NULL;
+        gTrackObjInfo = NULL;
     }
     return 1;
 }
 
 
-void func_800AF67C(void) {
+void TrackObj_Update(void) {
     u32 i;
     E88_ *e;
     f32 v[3];
@@ -170,8 +170,8 @@ void func_800AF67C(void) {
     f32 c;
     f32 d;
 
-    e = (E88_ *) D_800F3B90;
-    for (i = 0; i < D_801206C0; i++, e++) {
+    e = (E88_ *) gTrackObjs;
+    for (i = 0; i < gTrackObjCount; i++, e++) {
         if (e->kind == 1) {
             if (e->obj[0x110] == 0) {
                 func_800ACDC8(e->obj, 0.01f);
@@ -198,9 +198,9 @@ void func_800AF67C(void) {
     }
 }
 
-void func_800AF820(E88b_ *e, Vec3f v) {
-    s32 idx = e - (E88b_ *)D_800F3B90;
-    Inf12b_ *inf = &((Inf12b_ *)D_800F3B94)[idx];
+void TrackObj_Smash(E88b_ *e, Vec3f v) {
+    s32 idx = e - (E88b_ *)gTrackObjs;
+    Inf12b_ *inf = &((Inf12b_ *)gTrackObjInfo)[idx];
 
     e->flags |= 1;
     svcTrackSmashObject[0](idx, v);
@@ -209,13 +209,13 @@ void func_800AF820(E88b_ *e, Vec3f v) {
     }
 }
 
-s32 func_800AF8EC(s32 arg0, u32 arg1) {
+s32 TrackObj_SaveReplay(s32 arg0, u32 arg1) {
     /* TODO (Clean version): Simplify conditional expression:
        return (arg1 >= 4) ? 4 : 0;
     */
     return (arg1 >= 4U) * 4;
 }
 
-void func_800AF8FC(void) {
+void TrackObj_LoadReplay(void) {
 
 }

@@ -10,7 +10,7 @@ typedef struct { s32 w; u8 pad[0x60]; } Ent64w_;
 extern Ent64w_ D_801185B8[];
 typedef struct { u8 on; u8 pad[0x63]; } Ent64_;
 extern Ent64_ D_801185B4[];
-extern u8 D_80118620;
+extern u8 gRaceCamCount;
 typedef Vec3f Vec3f_;
     /* TODO (Clean version): Unify CamE_, Cam90_, Ent64_, and Ent64w_ into a single Camera struct (sizeof 0x64):
     typedef struct {
@@ -41,7 +41,7 @@ typedef struct { s32 mode; Vec3f_ ofs; f32 dist; } CamT_;
 extern u8 D_80118550;
 extern u8 D_80138D43;
 s32 Race_GetPhase(void);
-void func_8009099C(CamE_ *);
+void RaceCam_UpdateIntro(CamE_ *);
 void func_8009013C(Vec3f_, Vec3f_, Vec3f_, Vec3f_ *, f32, f32, f32, f32);
 void func_800A4198(u8, Vec3f_ *);
 u8 func_800A4EE8(u8, Vec3f_ *, Vec3f_ *);
@@ -53,7 +53,7 @@ extern u8 (*svcRandRange)(s32);
 extern u8 D_80118621;
 extern s32 *D_80118624;
 s32 func_80096100(void);
-extern u8 D_80118558[];
+extern u8 gRaceCams[];
 s32 Coll_GetSpawnCount(void);
 extern u8 D_801185AC;
 extern u8 D_801185A4;
@@ -61,16 +61,16 @@ extern u8 D_801185A2;
 
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_2F4F0", func_8008E8F0);
+INCLUDE_ASM("asm/nonmatchings/unit_2F4F0", RaceCam_Init);
 
-s32 func_8008EA64(void) {
+s32 RaceCam_Shutdown(void) {
     return 1;
 }
 
-void func_80090578(Cam90_ *cam, u32 dt);
-void func_800908A0(void);
-s32 func_800908A8(void);
-void func_8008EA6C(u32 dt) {
+void RaceCam_UpdateTrackside(Cam90_ *cam, u32 dt);
+void RaceCam_Nop(void);
+s32 RaceCam_GetIntroDuration(void);
+void RaceCam_Update(u32 dt) {
     Vec3f_ pos;
     Vec3f_ vel;
     Vec3f_ t;
@@ -106,10 +106,10 @@ void func_8008EA6C(u32 dt) {
     s32 idx;
 
     k = 1000.0f / (f32)dt;
-    cam = (CamE_ *)D_80118558;
-    for (i = 0; i < D_80118620; cam++, i++) {
-        if ((*cam).b5C != 0 && func_800908A8() != 0) {
-            func_8009099C(&(*cam));
+    cam = (CamE_ *)gRaceCams;
+    for (i = 0; i < gRaceCamCount; cam++, i++) {
+        if ((*cam).b5C != 0 && RaceCam_GetIntroDuration() != 0) {
+            RaceCam_UpdateIntro(&(*cam));
             continue;
         }
         vis = 1;
@@ -340,11 +340,11 @@ void func_8008EA6C(u32 dt) {
             { (*cam).m[0][0] = (r).x; (*cam).m[1][0] = (r).y; (*cam).m[2][0] = (r).z; (*cam).m[0][1] = ( f).x; (*cam).m[1][1] = ( f).y; (*cam).m[2][1] = ( f).z; (*cam).m[0][2] = ( u).x; (*cam).m[1][2] = ( u).y; (*cam).m[2][2] = ( u).z; };
             break;
         case 4:
-            /* TODO (Clean version / Bug check): func_800908A0 is declared as void(void) but invoked
+            /* TODO (Clean version / Bug check): RaceCam_Nop is declared as void(void) but invoked
              * as void (*)(CamE_ *, f32). If mode 4 is implemented, align the function prototype:
-             *   void func_800908A0(CamE_ *cam, f32 k);
+             *   void RaceCam_Nop(CamE_ *cam, f32 k);
              */
-            ((void (*)(CamE_ *, f32))func_800908A0)(&(*cam), k);
+            ((void (*)(CamE_ *, f32))RaceCam_Nop)(&(*cam), k);
             break;
         }
         if ((*cam).shake > dt) {
@@ -361,7 +361,7 @@ void func_8008EA6C(u32 dt) {
         }
         (*cam).b4C = 0;
         if (D_80118550 != 0) {
-            func_80090578(&(*cam), dt);
+            RaceCam_UpdateTrackside(&(*cam), dt);
         } else if ((*cam).b4A != (*cam).b4B) {
             if ((*cam).b4A != 0) {
                 idx = ((*cam).pt + 1) % D_80118621;
@@ -381,9 +381,9 @@ void func_8008EA6C(u32 dt) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_2F4F0", func_8009013C);
 
-void func_80090410(u8 i, Vec3i *a1, f32 *a2, f32 *a3, f32 *a4, f32 *a5, s8 *a6, u8 *a7) {
+void RaceCam_Get(u8 i, Vec3i *a1, f32 *a2, f32 *a3, f32 *a4, f32 *a5, s8 *a6, u8 *a7) {
     /* TODO (Clean version): Replace raw byte indexing with Camera struct member accesses:
-     *   CamE_ *cam = &((CamE_ *)D_80118558)[i];
+     *   CamE_ *cam = &((CamE_ *)gRaceCams)[i];
      *   *a1 = *(Vec3i *)&cam->pos;
      *   a2[0] = cam->m[0][0]; a2[1] = cam->m[1][0]; a2[2] = cam->m[2][0];
      *   a3[0] = cam->m[0][1]; a3[1] = cam->m[1][1]; a3[2] = cam->m[2][1];
@@ -392,7 +392,7 @@ void func_80090410(u8 i, Vec3i *a1, f32 *a2, f32 *a3, f32 *a4, f32 *a5, s8 *a6, 
      *   *a6 = (cam->mode == 0);
      *   *a7 = cam->car;
      */
-    u8 *p = D_80118558 + i * 0x64;
+    u8 *p = gRaceCams + i * 0x64;
 
     *a1 = *(Vec3i *)(p + 4);
     a2[0] = *(f32 *)(p + 0x1C);
@@ -409,10 +409,10 @@ void func_80090410(u8 i, Vec3i *a1, f32 *a2, f32 *a3, f32 *a4, f32 *a5, s8 *a6, 
     *a7 = p[0x49];
 }
 
-void func_800904C4(V12_ *a, V12_ *b, Vec3f *c, Vec3f *d) {
+void RaceCam_GetListener(V12_ *a, V12_ *b, Vec3f *c, Vec3f *d) {
     /* TODO (Clean version): D_8011855C, D_80118568, and D_80118578 are pos, vel, and rot columns
-     * of the first camera in D_80118558:
-     *   CamE_ *cam0 = (CamE_ *)D_80118558;
+     * of the first camera in gRaceCams:
+     *   CamE_ *cam0 = (CamE_ *)gRaceCams;
      *   *a = *(V12_ *)&cam0->pos;
      *   *b = *(V12_ *)&cam0->vel;
      *   c->x = cam0->m[0][1]; c->y = cam0->m[1][1]; c->z = cam0->m[2][1];
@@ -429,14 +429,14 @@ void func_800904C4(V12_ *a, V12_ *b, Vec3f *c, Vec3f *d) {
 }
 
 
-void func_80090550(s32 arg0, s8 arg1) {
-    /* TODO (Clean version): &D_801185A2 is &((CamE_ *)D_80118558)[0].b4A (offset 0x4A). Refactor as:
-     *   ((CamE_ *)D_80118558)[arg0 & 0xFF].b4A = arg1;
+void RaceCam_SetFlag4A(s32 arg0, s8 arg1) {
+    /* TODO (Clean version): &D_801185A2 is &((CamE_ *)gRaceCams)[0].b4A (offset 0x4A). Refactor as:
+     *   ((CamE_ *)gRaceCams)[arg0 & 0xFF].b4A = arg1;
      */
     *(u8 *)(&D_801185A2 + ((arg0 & 0xFF) * 0x64)) = arg1;
 }
 
-void func_80090578(Cam90_ *cam, u32 dt) {
+void RaceCam_UpdateTrackside(Cam90_ *cam, u32 dt) {
     Vec3f_ pos;
     Vec3f_ p;
     Vec3f_ d;
@@ -530,11 +530,11 @@ void func_80090578(Cam90_ *cam, u32 dt) {
     cam->timer -= dt;
 }
 
-void func_800908A0(void) {
+void RaceCam_Nop(void) {
 
 }
 
-s32 func_800908A8(void) {
+s32 RaceCam_GetIntroDuration(void) {
     s32 n = Coll_GetSpawnCount();
 
     if (n == 0) {
@@ -545,26 +545,26 @@ s32 func_800908A8(void) {
 
     /* TODO (Clean version): D_801185B4[i].on and D_801185B8[i].w correspond to fields b5C (0x5C)
     * and b60 (0x60) of CamE_:
-    *   for (i = 0; i < D_80118620; i++) {
+    *   for (i = 0; i < gRaceCamCount; i++) {
     *       if (gCameras[i].b5C != 0) {
     *           gCameras[i].b60 = 5000;
     *           gCameras[i].b5C = 0;
     *       }
     *   }
     */
-void func_800908E8(void) {
+void RaceCam_StartIntro(void) {
     u32 i;
 
-    for (i = 0; i < D_80118620; i++) {
+    for (i = 0; i < gRaceCamCount; i++) {
         D_801185B4[i].on = 1;
     }
 }
 
 
-void func_80090934(void) {
+void RaceCam_EndIntro(void) {
     u32 i;
 
-    for (i = 0; i < D_80118620; i++) {
+    for (i = 0; i < gRaceCamCount; i++) {
         if (D_801185B4[i].on != 0) {
             D_801185B8[i].w = 5000;
             D_801185B4[i].on = 0;
@@ -573,21 +573,21 @@ void func_80090934(void) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_2F4F0", func_8009099C);
+INCLUDE_ASM("asm/nonmatchings/unit_2F4F0", RaceCam_UpdateIntro);
 
-INCLUDE_ASM("asm/nonmatchings/unit_2F4F0", func_80090D80);
+INCLUDE_ASM("asm/nonmatchings/unit_2F4F0", RaceCam_SaveReplay);
 
-INCLUDE_ASM("asm/nonmatchings/unit_2F4F0", func_80090FA8);
+INCLUDE_ASM("asm/nonmatchings/unit_2F4F0", RaceCam_LoadReplay);
 
     /* TODO (Clean version): Symbols &D_801185A4 and &D_801185AC represent fields b4C (0x4C)
-    * and shake (0x54) of ((CamE_ *)D_80118558)[arg0 & 0xFF]:
-    *   ((CamE_ *)D_80118558)[arg0 & 0xFF].b4C = 1;
-    *   ((CamE_ *)D_80118558)[arg0 & 0xFF].shake = 0xFA;
+    * and shake (0x54) of ((CamE_ *)gRaceCams)[arg0 & 0xFF]:
+    *   ((CamE_ *)gRaceCams)[arg0 & 0xFF].b4C = 1;
+    *   ((CamE_ *)gRaceCams)[arg0 & 0xFF].shake = 0xFA;
     */
-void func_800911B4(s32 arg0) {
+void RaceCam_Reset(s32 arg0) {
     *(u8 *)(&D_801185A4 + ((arg0 & 0xFF) * 0x64)) = 1;
 }
 
-void func_800911E0(s32 arg0) {
+void RaceCam_Shake(s32 arg0) {
     *(s32 *)(&D_801185AC + ((arg0 & 0xFF) * 0x64)) = 0xFA;
 }

@@ -18,8 +18,8 @@ extern u8 D_80138D6E;
 extern u8 D_80138D6F;
 extern u8 D_80138D70;
 extern u8 D_80138D71;
-void func_800A5AB0(u8 *);
-void func_800911E0(u8);
+void Debris_SpawnFromCar(u8 *);
+void RaceCam_Shake(u8);
 extern s32 D_8011B320;
 extern s32 (*svcRandRange)(s32);
 extern void (*audSfxPlay)(s32, s32, f32, f32);
@@ -27,7 +27,7 @@ u8 func_800977AC(u8 *);
 void func_800949E4(u8 *);
 void func_80092534(u8 *);
 u32 RaceClock_Get(void);
-void func_800AEFF8(void);
+void Replay_Record(void);
 void func_80095804(u8 *);
 void func_80091E30(Car *, f32);
 void func_8009887C(u8 *);
@@ -41,14 +41,14 @@ extern s32 (*sysInputGetControl)(s32, s32);
 extern void (*sysInputHasRumble)(s32, s32, s32);
 s32 Race_GetPhase(void);
 void Car_GetSpeedAndGrip(u8, u8 *, u8 *);
-extern u8 D_800F38A0[];
+extern u8 gImpactCooldown[];
 extern s32 (*svcTimeGetMillis)();
 s32 Coll_AddCar(void *);
 s32 Coll_RemoveById(void *);
 
 extern s32 D_8011B318;
 
-INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_80091210);
+INCLUDE_ASM("asm/nonmatchings/unit_31E10", Cars_Init);
 
 void RaceAudio_QueueAnnouncer(s32);
 
@@ -70,7 +70,7 @@ u8 func_80091B20(Car *c, s32 add) {
     return added;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_80091BA0);
+INCLUDE_ASM("asm/nonmatchings/unit_31E10", Cars_Shutdown);
 
 void func_80091DC4(Car *car) {
     s32 now;
@@ -307,10 +307,10 @@ void func_80093164(Car *p, f32 dt) {
     }
     func_800ACDC8((u8 *)&p->m2C, dt);
     if (f && p->vel.z < 0.0f && svcRandRange(2) == 0) {
-        func_800AEFF8();
+        Replay_Record();
     }
     if ((p->flags & 1) && p->b4B8 != 0 && p->unk4BC == 500 && svcRandRange(2) == 0) {
-        func_800AEFF8();
+        Replay_Record();
     }
     if (p->b13C == 0) {
         Mtx3_Orthonormalize((u8 *)&p->rot);
@@ -381,7 +381,7 @@ void func_80093990(void) {
 
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_80093998);
+INCLUDE_ASM("asm/nonmatchings/unit_31E10", Cars_Update);
 
 INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_80093B74);
 
@@ -598,7 +598,7 @@ void Car_StartCrash(Car *p, u8 id, u8 flip) {
         p->vel.z *= 0.5f;
         v = p->vel;
         if (p->flags & 1) {
-            func_800A5AB0(p);
+            Debris_SpawnFromCar(p);
         }
         rnd = &svcRandRange;
         p->vel.z += ((*rnd)(10) + 10) * 17.6f;
@@ -650,7 +650,7 @@ void Car_StartCrash(Car *p, u8 id, u8 flip) {
             if ((*rnd)(2) != 0) {
                 p->unk4B9 = one;
             }
-            func_800911E0(p->id);
+            RaceCam_Shake(p->id);
             sysInputRumble(p->id, D_80138D6A);
             audSfxPlay(0x1D, 1, 1.0f, 1.0f);
         }
@@ -797,7 +797,7 @@ extern void (*D_80141748)(u8, V3_B00 *, void *);
 extern void (*D_8014174C)(u8, u8, f32, f32, f32, s32, s32, s32, V3_B00 *, V3_B00 *);
 extern T_B00 D_80141754;
 u32 RaceView_GetPlayerCount(void);
-void func_80090410(u8, V3_B00 *, V3_B00 *, V3_B00 *, V3_B00 *, s32 *, u8 *, u8 *);
+void RaceCam_Get(u8, V3_B00 *, V3_B00 *, V3_B00 *, V3_B00 *, s32 *, u8 *, u8 *);
 static inline f32 maxf_B00(f32 a, f32 b) { return a > b ? a : b; }
 void Cars_CollideObstacles(u32 dt) {
     V3_B00 d;
@@ -825,7 +825,7 @@ void Cars_CollideObstacles(u32 dt) {
         near[i] = 0;
     }
     for (i = 0; i < RaceView_GetPlayerCount(); i++) {
-        func_80090410(i, &o, &v1, &v2, &v3, &s90, &s94, &j);
+        RaceCam_Get(i, &o, &v1, &v2, &v3, &s90, &s94, &j);
         for (j = 0; j < cnt; j++) {
             if (near[j] == 0) {
                 c = &gCars[j];
@@ -913,23 +913,23 @@ void Cars_CollideObstacles(u32 dt) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_80098300);
+INCLUDE_ASM("asm/nonmatchings/unit_31E10", Cars_SaveReplay);
 
-INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_80098584);
+INCLUDE_ASM("asm/nonmatchings/unit_31E10", Cars_LoadReplay);
 
 INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_8009887C);
 
-s32 func_80098BC0(void) {
-    memset(D_800F38A0, 0, 8);
+s32 Rumble_Init(void) {
+    memset(gImpactCooldown, 0, 8);
     return 1;
 }
 
 
-s32 func_80098BEC(void) {
+s32 Rumble_Shutdown(void) {
     return 1;
 }
 
-s32 func_80098BF4(void) {
+s32 Race_PollPauseButton(void) {
     u8 a;
     u8 b;
     u8 i;
@@ -939,8 +939,8 @@ s32 func_80098BF4(void) {
 
     n = 0;
     for (i = 0; i < 2; i++) {
-        if (((s32 *) D_800F38A0)[i] != 0) {
-            ((s32 *) D_800F38A0)[i]--;
+        if (((s32 *) gImpactCooldown)[i] != 0) {
+            ((s32 *) gImpactCooldown)[i]--;
         }
     }
     for (i = 0; i < 2; i++) {
@@ -979,7 +979,7 @@ void Car_ReportImpact(HitEnt98_ *e) {
     f32 d;
     s32 v;
 
-    if (((s32 *)D_800F38A0)[c->id] == 0) {
+    if (((s32 *)gImpactCooldown)[c->id] == 0) {
         d = -(c->vel.x * e->dir.x + c->vel.y * e->dir.y + c->vel.z * e->dir.z);
         if (d > 352.0f) {
             v = d / 2304.0f * 255.0f;
@@ -990,9 +990,9 @@ void Car_ReportImpact(HitEnt98_ *e) {
                 v = 255;
             }
             sysInputRumble(c->id, v);
-            ((s32 *)D_800F38A0)[c->id] = 20;
+            ((s32 *)gImpactCooldown)[c->id] = 20;
         }
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_80098E84);
+INCLUDE_ASM("asm/nonmatchings/unit_31E10", Car_ReportPairImpact);

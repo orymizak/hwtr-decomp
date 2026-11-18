@@ -242,9 +242,9 @@ void AnimTrack_SeekKey(s32 index, u32 t, s32 mode) {
     }
 }
 
-s32 func_80087FF4(s32 arg0, u32 arg1) {
+s32 AnimTrack_SaveReplay(s32 arg0, u32 arg1) {
     return (arg1 >= 4) ? 4 : 0;
 }
 
-void func_80088004(void) {
+void AnimTrack_LoadReplay(void) {
 }

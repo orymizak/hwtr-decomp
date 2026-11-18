@@ -23,7 +23,7 @@ extern s32 (*D_801416B0)();
 extern void (*svcFontDrawChar)(s32, u8, u16, s32, s32);
 extern char D_80100AF0[];
 void Cars_CollideObstacles(void);
-void func_800A5A1C(u32);
+void Debris_Draw(u32);
 void RaceView_DrawScene(u32);
 void func_800ABCA4(void);
 u32 strlen(const char *);
@@ -80,7 +80,7 @@ void RaceView_Draw(u32 dt) {
     u16 i;
 
     Cars_CollideObstacles();
-    func_800A5A1C(dt);
+    Debris_Draw(dt);
     svcScreenBeginFrame();
     D_801416AC();
     RaceView_DrawScene(dt);
