@@ -55,7 +55,7 @@ extern u8 (*sysGameUpdate)(void);
 extern void (*sysSfxPlay)(s32, s32, f32, f32);
 extern Vec3f gMenuCarPos[];
 s32 strcmp(const char *, const char *);
-u32 func_800B042C(u8);
+u32 SaveSlot_GetCount(u8);
 extern u8 gChampProfileChoice;
 void Controls_UpdateArrowsP1(void);
 u8 Controls_HasConflict(void);
@@ -69,13 +69,13 @@ void Menu_SetupCamera(void);
 extern u8 gNameChangedP1;
 extern u8 gNameChangedP2;
 extern s32 D_80124C78;
-void func_800B2A20(s32);
+void Menu_LoadModels(s32);
 s32 KeyRepeat_IsDue(u8 i);
 s32 Pak_AnyChanged(void);
 extern u8 gRaceResult;
 typedef struct { u8 pad[0x23]; u8 b23; s32 w24[6]; } Blk23_;
 extern s32 D_800F60E8[];
-u8 func_800AF910(void);
+u8 Save_Probe(void);
 void KeyRepeat_Accelerate(u8 i);
 extern u8 gSaveLoaded;
 extern u8 D_80100F88[];
@@ -125,7 +125,7 @@ void Register_PlaceCursor(s32 x, s32 y);
 extern s32 D_800F5F70;
 extern s32 D_800F5F74;
 extern u8 D_800F63D0;
-s32 func_800AFC40(u32 i);
+s32 Save_CreateOnPak(u32 i);
 void Menu_Advance(void);
 extern u8 D_801410A8[];
 extern u8 D_800F6400;
@@ -181,7 +181,7 @@ void *memcpy(void *, const void *, size_t);
 extern u8 *gLangText[];
 extern s32 (*sysFontGetCharWidth)(s32, u8);
 s8 func_80086F80(s32, u8, u8);
-s32 func_800B0454(u32 i, E140b_ *src);
+s32 SaveSlot_Add(u32 i, E140b_ *src);
 extern char D_80100F70[];
 extern s32 *D_80141268;
 s32 *Jukebox_GetArtist(s32);
@@ -191,9 +191,9 @@ extern u8 D_80100DF4;
 extern s32 *D_80141480;
 extern u8 D_80100E08;
 extern ObjG1_ D_800F6358;
-u8 func_800AFD1C(void);
+u8 Save_ReadAll(void);
 void *Save_GetActiveProfile(void);
-s32 func_800B0364(s32);
+s32 SaveSlot_FindPlayer(s32);
 extern u8 D_80100DAC;
 extern u8 D_80100D94;
 extern s32 *D_8014158C;
@@ -262,20 +262,20 @@ extern void (*sysAudioSetMusicVolume)(s32);
 extern void (*D_80141064)(s32);
 extern void (*D_8014107C)(void);
 extern void (*sysScreenFreeBg)(void);
-void func_800C9130(void);
+void MenuFont_FreeAll(void);
 void func_800C9A00(void);
 extern u32 D_800F6078[];
 u8 Input_PressedOnce(u8 i, s32 k);
 extern void (*D_80141068)(s32);
-void func_800C90DC(void);
+void MenuFont_LoadAll(void);
 void MenuObjs_Alloc(void);
-Big88C_ *func_800B02E4(s32);
+Big88C_ *Save_GetProfile(s32);
 void Records_SaveRaceResult(void *);
 void Track_SelectPrev(void);
-extern u8 D_800F6424;
-extern u8 D_800F6444;
-s32 func_800B0F94(void *, s32);
-void func_800B0F74(s32, s32 *);
+extern u8 gPasswordP1;
+extern u8 gPasswordP2;
+s32 Password_Apply(void *, s32);
+void Password_Get(s32, s32 *);
 void Track_SelectNext(void);
 extern s32 D_8014122C;
 extern u8 D_80100CA4;
@@ -378,9 +378,9 @@ extern u8 gCarModelNames;
 extern f32 D_80123E88;
 extern f32 D_80123E8C;
 extern f32 D_80123E90;
-f32 func_800B1294(s32);
-f32 func_800B12C4(s32);
-f32 func_800B1308(s32);
+f32 MenuPos_ToWorldX(s32);
+f32 MenuPos_ToWorldY(s32);
+f32 MenuPos_ToWorldZ(s32);
 extern f32 D_80123E70;
 extern Vec3f D_80123E74;
 void MenuGlobe_Hide(void);
@@ -405,7 +405,7 @@ extern s32 (*audMusicStop)();
 extern s8 gMusicFadeMode;
 extern s32 D_800F6468;
 extern s32 (*sysTimeGetMillis)();
-s32 func_800B2A84();
+s32 Menu_FreeModels();
 extern s32 (*sysScreenAllocBg)();
 s32 func_80086F78();
 extern s32 (*sysMenuExit)();
@@ -857,9 +857,9 @@ void MenuCar_ScaleTo200(u8 i) {
 
 void MenuCar_SetPos(u8 i, s32 a, s32 b, s32 c) {
     if (i < 2) {
-        gMenuCarPos[i].x = func_800B1294(a);
-        gMenuCarPos[i].y = func_800B12C4(b);
-        gMenuCarPos[i].z = func_800B1308(c);
+        gMenuCarPos[i].x = MenuPos_ToWorldX(a);
+        gMenuCarPos[i].y = MenuPos_ToWorldY(b);
+        gMenuCarPos[i].z = MenuPos_ToWorldZ(c);
     }
 }
 
@@ -872,9 +872,9 @@ s32 MenuCar_MoveTo(s32 arg0, s32 a, s32 b, s32 c) {
     u8 i = arg0;
 
     if (i < 2) {
-        gMenuCarTarget[i].x = func_800B1294(a);
-        gMenuCarTarget[i].y = func_800B12C4(b);
-        gMenuCarTarget[i].z = func_800B1308(c);
+        gMenuCarTarget[i].x = MenuPos_ToWorldX(a);
+        gMenuCarTarget[i].y = MenuPos_ToWorldY(b);
+        gMenuCarTarget[i].z = MenuPos_ToWorldZ(c);
     }
 }
 
@@ -909,15 +909,15 @@ void MenuGlobe_Hide(void) {
 }
 
 void MenuGlobe_SetPos(s32 arg0, s32 arg1, s32 arg2) {
-    D_80123E74.x = func_800B1294(arg0);
-    D_80123E74.y = func_800B12C4(arg1);
-    D_80123E74.z = func_800B1308(arg2);
+    D_80123E74.x = MenuPos_ToWorldX(arg0);
+    D_80123E74.y = MenuPos_ToWorldY(arg1);
+    D_80123E74.z = MenuPos_ToWorldZ(arg2);
 }
 
 void MenuGlobe_MoveTo(s32 arg0, s32 arg1, s32 arg2) {
-    D_80123E88 = func_800B1294(arg0);
-    D_80123E8C = func_800B12C4(arg1);
-    D_80123E90 = func_800B1308(arg2);
+    D_80123E88 = MenuPos_ToWorldX(arg0);
+    D_80123E8C = MenuPos_ToWorldY(arg1);
+    D_80123E90 = MenuPos_ToWorldZ(arg2);
 }
 
 extern s32 D_80100BD0;
@@ -1180,7 +1180,7 @@ void Profile_InitDefault(void *arg0, s32 arg1) {
 INCLUDE_ASM("asm/nonmatchings/unit_53B30", Save_InitDefault);
 
 void Boot_CheckSaveFound(void) {
-    if (func_800AF910() != 0) {
+    if (Save_Probe() != 0) {
         Fsm_Trigger(&gMenuFsm, 0x19);
     } else {
         Fsm_Trigger(&gMenuFsm, 0x1A);
@@ -1203,13 +1203,13 @@ void Save_Load(void) {
     Save_InitDefault(&D_80124160);
     Profile_InitDefault(&D_801249F0, 0);
     Profile_InitDefault(&D_80124B30, 1);
-    if (func_800AFD1C() == 0) {
+    if (Save_ReadAll() == 0) {
         Fsm_Trigger(&gMenuFsm, 0x23);
         return;
     }
     gActiveSave = Save_GetActiveProfile();
-    gProfileP1 = func_800B0364(0);
-    gProfileP2 = func_800B0364(1);
+    gProfileP1 = SaveSlot_FindPlayer(0);
+    gProfileP2 = SaveSlot_FindPlayer(1);
     if (gActiveSave == NULL) {
         gActiveSave = &D_80124160;
         gProfileP1 = (s32)&D_801249F0;
@@ -1630,7 +1630,7 @@ void Save_CreateNew(void) {
     slot = 0;
     for (i = 0; i < 4; i++) {
         if (Pak_GetStatus(i) == 3) {
-            found = func_800AFC40(i);
+            found = Save_CreateOnPak(i);
             slot = i;
             break;
         }
@@ -1639,13 +1639,13 @@ void Save_CreateNew(void) {
         Fsm_Trigger(&gMenuFsm, 0x2B);
         return;
     }
-    func_800AFD1C();
-    gActiveSave = (u8 *)func_800B02E4(slot);
+    Save_ReadAll();
+    gActiveSave = (u8 *)Save_GetProfile(slot);
     Save_InitDefault(gActiveSave);
     Profile_InitDefault(&buf, 0);
-    func_800B0454(slot, &buf);
+    SaveSlot_Add(slot, &buf);
     Profile_InitDefault(&buf, 1);
-    func_800B0454(slot, &buf);
+    SaveSlot_Add(slot, &buf);
     gProfileP1 = (s32)SaveSlot_Get(slot, 0);
     p = SaveSlot_Get(slot, 1);
     *(s32 *)(gActiveSave + 0x884) = *(s32 *)(gProfileP1 + 4);
@@ -1697,9 +1697,9 @@ void Save_CommitLoaded(void) {
     gActiveSave = &D_80124160;
     gProfileP1 = (s32)&D_801249F0;
     gProfileP2 = (s32)&D_80124B30;
-    *(s32 *)&D_800F6424 = x;
+    *(s32 *)&gPasswordP1 = x;
     if (gNumPlayers == 2) {
-        *(s32 *)&D_800F6444 = x;
+        *(s32 *)&gPasswordP2 = x;
     }
 }
 
@@ -1723,12 +1723,12 @@ void Save_ApplyProfiles(void) {
     if (((s32 *)gProfileP1)[1] == 0) {
         Fsm_Trigger(&gMenuFsm, 0x31);
     } else {
-        func_800B0F74(gProfileP1, (s32 *)&D_800F6424);
+        Password_Get(gProfileP1, (s32 *)&gPasswordP1);
     }
     if (gNumPlayers == 2 && ((s32 *)gProfileP2)[1] == 0) {
         Fsm_Trigger(&gMenuFsm, 0x31);
     } else {
-        func_800B0F74(gProfileP2, (s32 *)&D_800F6444);
+        Password_Get(gProfileP2, (s32 *)&gPasswordP2);
     }
     Fsm_Trigger(&gMenuFsm, 0x33);
     } else {
@@ -2018,15 +2018,15 @@ void Menu_AttractTimeout(void) {
 void MenuObjs_Reset(void) {
     u8 i;
 
-    func_800B2A84();
+    Menu_FreeModels();
     for (i = 0; i < 33; i++) {
-        func_800B2A20(gMenuObjs[i]);
+        Menu_LoadModels(gMenuObjs[i]);
     }
 }
 
 
 void Menu_UnloadWorlds(void) {
-    func_800B2A84();
+    Menu_FreeModels();
 }
 
 void Boot_AllocBg(void) {
@@ -2077,14 +2077,14 @@ void Boot_Nop(void) {
 
 void Menu_ExitToGame(void) {
     if (gSaveLoaded == 0) {
-        *func_800B02E4(0) = *(Big88C_ *)&D_80124160;
+        *Save_GetProfile(0) = *(Big88C_ *)&D_80124160;
     }
     Music_StopMenuTrack();
     sysAudioSetMusicVolume(gActiveSave[0x87D]);
     D_8014105C(gActiveSave[0x87C]);
     D_80141064(gActiveSave[0x880]);
     D_80141068(0xFF);
-    func_800C9130();
+    MenuFont_FreeAll();
     func_800C9A00();
     D_8014107C();
     sysScreenFreeBg();
@@ -2092,7 +2092,7 @@ void Menu_ExitToGame(void) {
 }
 
 void Menu_ReturnFromGame(void) {
-    func_800C90DC();
+    MenuFont_LoadAll();
     MenuObjs_Alloc();
     MenuObjs_Reset();
     sysScreenAllocBg();
@@ -2101,7 +2101,7 @@ void Menu_ReturnFromGame(void) {
     Music_PickMenuTrack();
     Music_StartMenuTrack();
     if (gSaveLoaded == 0) {
-        *(Big88C_ *)&D_80124160 = *func_800B02E4(0);
+        *(Big88C_ *)&D_80124160 = *Save_GetProfile(0);
     }
     Records_SaveRaceResult(&gRaceResult);
 }
@@ -2305,20 +2305,20 @@ void Welcome_CheckNames(void) {
 
     gNameChangedP1 = 0;
     gNameChangedP2 = 0;
-    func_800B0F74(gProfileP1, a);
-    func_800B0F74(gProfileP2, b);
-    if (strcmp((char *)&D_800F6424, (char *)&D_80100CC8) == 0) {
-        strcpy((s32 *)&D_800F6424, (s32)a);
+    Password_Get(gProfileP1, a);
+    Password_Get(gProfileP2, b);
+    if (strcmp((char *)&gPasswordP1, (char *)&D_80100CC8) == 0) {
+        strcpy((s32 *)&gPasswordP1, (s32)a);
     }
-    if (strcmp((char *)&D_800F6444, (char *)&D_80100CC8) == 0) {
-        strcpy((s32 *)&D_800F6444, (s32)b);
+    if (strcmp((char *)&gPasswordP2, (char *)&D_80100CC8) == 0) {
+        strcpy((s32 *)&gPasswordP2, (s32)b);
     }
-    if (strcmp((char *)&D_800F6424, (char *)a) != 0) {
-        strcpy((s32 *)&D_800F6424, (s32)a);
+    if (strcmp((char *)&gPasswordP1, (char *)a) != 0) {
+        strcpy((s32 *)&gPasswordP1, (s32)a);
         gNameChangedP1 = 1;
     }
-    if (strcmp((char *)&D_800F6444, (char *)b) != 0) {
-        strcpy((s32 *)&D_800F6444, (s32)b);
+    if (strcmp((char *)&gPasswordP2, (char *)b) != 0) {
+        strcpy((s32 *)&gPasswordP2, (s32)b);
         gNameChangedP2 = 1;
     }
 }
@@ -2343,13 +2343,13 @@ void Password_Enter(void) {
     Menu_StartFadeIn();
     if (gNameChangedP1 != 0) {
         sprintf(a, (s32 *)&D_80100DF4, gProfileP1 + 8);
-        src = &D_800F6424;
+        src = &gPasswordP1;
         gNameChangedP1 = 0;
         D_80124C7E = 1;
         D_80124C7F = 0;
     } else {
         sprintf(a, (s32 *)&D_80100DF4, gProfileP2 + 8);
-        src = &D_800F6444;
+        src = &gPasswordP2;
         gNameChangedP2 = 0;
         D_80124C7E = 0;
         D_80124C7F = 1;
@@ -2431,8 +2431,8 @@ void MainMenu_PlaceArrow(s32 i, s32 x, s32 y, s32 c) {
                 return;
             }
             t->objs[j].h30 = (u8)c;
-            t->objs[j].x = func_800B1294(x);
-            t->objs[j].y = func_800B12C4(y);
+            t->objs[j].x = MenuPos_ToWorldX(x);
+            t->objs[j].y = MenuPos_ToWorldY(y);
             t->objs[j].x2 = t->objs[j].x;
             t->objs[j].y2 = t->objs[j].y;
             return;
@@ -2985,8 +2985,8 @@ void Championship_PlaceArrow(s32 i, s32 x, s32 y, s32 c) {
                 return;
             }
             t->objs[j].h30 = (u8)c;
-            t->objs[j].x = func_800B1294(x);
-            t->objs[j].y = func_800B12C4(y);
+            t->objs[j].x = MenuPos_ToWorldX(x);
+            t->objs[j].y = MenuPos_ToWorldY(y);
             t->objs[j].x2 = t->objs[j].x;
             t->objs[j].y2 = t->objs[j].y;
             return;
@@ -4100,8 +4100,8 @@ void Options_UpdateSongTexts(void) {
 
     for (j = 0; j < t->n; j++) {
         if (strcmp(t->names[j].name, D_80100F70) == 0) {
-            t->objs[j].x = func_800B1294(gMusicMode * 185 + 460);
-            t->objs[j].y = func_800B12C4(725);
+            t->objs[j].x = MenuPos_ToWorldX(gMusicMode * 185 + 460);
+            t->objs[j].y = MenuPos_ToWorldY(725);
             t->objs[j].x2 = t->objs[j].x;
             t->objs[j].y2 = t->objs[j].y;
         }
@@ -4348,8 +4348,8 @@ void Options_LayoutColorBars(void) {
     c[2] = gActiveSave[0x87C];
     c[3] = gActiveSave[0x880];
     for (i = 0; i < 4; i++) {
-        (*(ElC05_ **)(D_800F5F48 + 0x28))[i].fC = func_800B1294((s32)(c[i] * 2.1568627f) + 360);
-        (*(ElC05_ **)(D_800F5F48 + 0x28))[i].f10 = func_800B12C4(i * 0x54 + 0x136);
+        (*(ElC05_ **)(D_800F5F48 + 0x28))[i].fC = MenuPos_ToWorldX((s32)(c[i] * 2.1568627f) + 360);
+        (*(ElC05_ **)(D_800F5F48 + 0x28))[i].f10 = MenuPos_ToWorldY(i * 0x54 + 0x136);
     }
 }
 
@@ -4450,8 +4450,8 @@ void Controls_PlaceArrow(u8 which, u8 name, s32 x, s32 y, u8 val) {
         if (strcmp(m->names[i].s, D_800F649C[name]) == 0) {
             m->elems[i].h30 = val;
             m->elems[i].h32 = val;
-            m->elems[i].x = func_800B1294(x);
-            m->elems[i].y = func_800B12C4(y);
+            m->elems[i].x = MenuPos_ToWorldX(x);
+            m->elems[i].y = MenuPos_ToWorldY(y);
             m->elems[i].xC = m->elems[i].x;
             m->elems[i].x10 = m->elems[i].y;
             return;
@@ -4917,7 +4917,7 @@ void LoadGame_SelectP1(void) {
 
     if (n == 0) {
         Fsm_Trigger(&gMenuFsm, 0x69);
-    } else if (func_800B042C(gLoadPakP1) < n) {
+    } else if (SaveSlot_GetCount(gLoadPakP1) < n) {
         gLoadPlayer = 0;
         Fsm_Trigger(&gMenuFsm, 0x6C);
     } else {
@@ -4940,7 +4940,7 @@ void LoadGame_SelectP2(void) {
         Fsm_Trigger(&gMenuFsm, 0x6A);
     } else if (n == 0) {
         Fsm_Trigger(&gMenuFsm, 0x69);
-    } else if (func_800B042C(gLoadPakP2) < n) {
+    } else if (SaveSlot_GetCount(gLoadPakP2) < n) {
         gLoadPlayer = 1;
         Fsm_Trigger(&gMenuFsm, 0x6C);
     } else {
@@ -5213,8 +5213,8 @@ void Register_PlaceCursor(s32 x, s32 y) {
     m = (MnC3_ *)D_800F5F7C;
     for (i = 0; i < m->n; i++) {
         if (strcmp(m->names[i].s, D_80100FEC) == 0) {
-            m->elems[i].xC = func_800B1294((x + 5) / 640.0f * 1000.0f);
-            m->elems[i].x10 = func_800B12C4((y + 10) / 480.0f * 1000.0f);
+            m->elems[i].xC = MenuPos_ToWorldX((x + 5) / 640.0f * 1000.0f);
+            m->elems[i].x10 = MenuPos_ToWorldY((y + 10) / 480.0f * 1000.0f);
             m->elems[i].x = m->elems[i].xC;
             m->elems[i].y = m->elems[i].x10;
             return;
@@ -5249,14 +5249,14 @@ void Register_ApplyChoice(void) {
                 l.w18 |= ((E140b_ *)gProfileP1)->w18;
                 l.w1C |= ((E140b_ *)gProfileP1)->w1C;
                 strcpy((s32 *)l.name, (s32)&gKeyboardText);
-                func_800B0454(gLoadPakP1, &l);
+                SaveSlot_Add(gLoadPakP1, &l);
             } else {
                 Profile_InitDefault(&l, 0);
                 l.w14 |= ((E140b_ *)gProfileP2)->w14;
                 l.w18 |= ((E140b_ *)gProfileP2)->w18;
                 l.w1C |= ((E140b_ *)gProfileP2)->w1C;
                 strcpy((s32 *)l.name, (s32)&gKeyboardText);
-                func_800B0454(gLoadPakP2, &l);
+                SaveSlot_Add(gLoadPakP2, &l);
             }
             if ((u8)Save_Commit() != 0) {
                 Fsm_Trigger(&gMenuFsm, 0x76);
@@ -5399,13 +5399,13 @@ void Register_Leave(void) {
 void Register_Confirm(void) {
     s32 buf[6];
 
-    if (func_800B0F94(&gKeyboardText, gLoadPlayer == 0 ? gProfileP1 : gProfileP2) == 0) {
+    if (Password_Apply(&gKeyboardText, gLoadPlayer == 0 ? gProfileP1 : gProfileP2) == 0) {
         if (gLoadPlayer == 0) {
-            func_800B0F74(gProfileP1, buf);
-            strcpy((s32 *)&D_800F6424, (s32)buf);
+            Password_Get(gProfileP1, buf);
+            strcpy((s32 *)&gPasswordP1, (s32)buf);
         } else {
-            func_800B0F74(gProfileP2, buf);
-            strcpy((s32 *)&D_800F6444, (s32)buf);
+            Password_Get(gProfileP2, buf);
+            strcpy((s32 *)&gPasswordP2, (s32)buf);
         }
         Fsm_Trigger(&gMenuFsm, 0x7A);
     } else {
@@ -5450,8 +5450,8 @@ void HighScores_PlaceArrow(s32 i, s32 x, s32 y, s32 c) {
                 return;
             }
             t->objs[j].h30 = (u8)c;
-            t->objs[j].x = func_800B1294(x);
-            t->objs[j].y = func_800B12C4(y);
+            t->objs[j].x = MenuPos_ToWorldX(x);
+            t->objs[j].y = MenuPos_ToWorldY(y);
             t->objs[j].x2 = t->objs[j].x;
             t->objs[j].y2 = t->objs[j].y;
             return;

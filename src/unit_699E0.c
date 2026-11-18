@@ -47,7 +47,7 @@ void func_800C8DE0(void) {
     }
 }
 
-s32 func_800C8EE4(u8 font, u8 a, u8 b) {
+s32 MenuFont_Kerning(u8 font, u8 a, u8 b) {
     u8 ia;
     u8 ib;
     s8 k;
@@ -61,11 +61,11 @@ s32 func_800C8EE4(u8 font, u8 a, u8 b) {
     return k + Chr_Width(font, Chr_At(ia));
 }
 
-u8 func_800C902C(u8 font, u8 c) {
+u8 MenuFont_CharWidth(u8 font, u8 c) {
     return Chr_Width(font, Chr_At(Chr_Index(c)));
 }
 
-void func_800C90DC(void) {
+void MenuFont_LoadAll(void) {
     void (**fp)(s32, void *) = &sysFontLoad;
 
     (*fp)(0, &D_80101070);
@@ -73,7 +73,7 @@ void func_800C90DC(void) {
     func_800C8DE0();
 }
 
-void func_800C9130(void) {
+void MenuFont_FreeAll(void) {
     void (**fp)(s32) = &sysFontFree;
 
     (*fp)(0);

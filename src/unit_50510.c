@@ -5,16 +5,16 @@ s32 strcmp(const char *, const char *);
 typedef struct { u8 d[0x2C]; } E2C5_;
 typedef struct { u8 n; u8 pad[3]; E2C5_ *arr; } T2C5_;
 typedef struct { u8 pad[0x14]; u32 lo; u32 hi; } Bits5_;
-extern s8 D_800F5F90[];
+extern s8 gUnlockBitMap[];
 extern u8 D_80123D20[];
-void func_800C90DC(void);
-void func_800B1824(void);
-void func_800B20A4(void);
-extern s32 D_80123DB0[];
-extern u8 D_800F6040;
-extern void *D_80123D30[];
+void MenuFont_LoadAll(void);
+void Menu_LayoutAll(void);
+void Menu_ResetAllPos(void);
+extern s32 gMenuAnimTime[];
+extern u8 gNameListCount;
+extern void *gNameList[];
 extern u8 D_80100BB0;
-void func_800B11FC(void);
+void NameList_Clear(void);
 typedef struct { u8 d[0x140]; } E140_;
 typedef struct { u8 a; u8 pad; u16 x; u16 y; u16 x2; u16 y2; } E0A2_;
 typedef struct { u8 pad[2]; u8 n; u8 pad2; E0A2_ *arr; u8 pad3[0xB]; u8 mode; } T0A2_;
@@ -26,72 +26,72 @@ typedef struct { s32 d[0x88C / 4]; } Big88C_;
 typedef struct { s32 d[0x140 / 4]; } Blk140_;
 extern u8 *gMenuObjs[];
 typedef struct { u8 a; u8 pad; s16 x; s16 y; s16 x2; s16 y2; } E0A7_;
-u8 func_800B2C94(P16b_, P16b_);
-f32 func_800B12C4(s32 ms);
+u8 Pos_IsNear(P16b_, P16b_);
+f32 MenuPos_ToWorldY(s32 ms);
 void *Memory_Alloc(s32);
 void Memory_Free(void *);
 extern u8 D_80123D28[];
 extern u8 D_80123D24[];
-extern s32 D_80138098[];
+extern s32 gSaveIds[];
 extern s32 (*sysPakOpen[])(s32);
 extern s32 (*sysTimeGetMillis)(void);
-void func_800B2440(u8 *, f32);
-void func_800B2540(u8 *, f32);
-void func_800B2640(u8 *, f32);
-void func_800B271C(s32, f32);
-s32 func_800B2170(s32 arg0);
+void MenuText_Animate(u8 *, f32);
+void MenuSprite_Animate(u8 *, f32);
+void MenuButton_Animate(u8 *, f32);
+void MenuModel_Animate(s32, f32);
+s32 MenuModels_StartEnter(s32 arg0);
 void MenuText_Layout(u8 *t);
-s32 func_800C8EE4(s32, u8, u8);
-s32 func_800C902C(s32, u8);
+s32 MenuFont_Kerning(s32, u8, u8);
+s32 MenuFont_CharWidth(s32, u8);
 void MenuText_ResetPos(u8 *t);
-extern u32 D_80123D10[];
+extern u32 gPakStatus[];
 extern u32 (*sysPakGetState)(u32);
 s8 NameList_Add(char *s);
-extern E140_ D_80122900[][4];
+extern E140_ gSaveSlots[][4];
 extern void (*sysWorldLoad)(u8, s32);
-void func_800B1250(s32 x);
-extern s32 D_80123D00[];
-extern u8 D_801206D0;
+void Menu_LoadModel(s32 x);
+extern s32 gSaveSlotCount[];
+extern u8 gSaves;
 
 extern s32 (*sysRandRange)(s32);
-s32 func_800B073C();
-s32 func_800B0A5C();
+s32 Password_Encode();
+s32 Password_Decode();
 extern s32 (*sysWorldFree)(s32);
-void func_800B1F00();
-void func_800B1FE4();
-s32 func_800B2330(s32);
-s32 func_800C9130();
+void Menu_PrepareEnter();
+void Menu_PrepareLeave();
+s32 MenuModels_StartLeave(s32);
+s32 MenuFont_FreeAll();
 
-s32 func_800AF910(void) {
+s32 Save_Probe(void) {
     u32 i;
     u32 j;
     s32 s;
     s32 ok;
 
     for (i = 0; i < 4; i++) {
-        memset(&D_801206D0 + i * 0x88C, 0, 0x88C);
+        memset(&gSaves + i * 0x88C, 0, 0x88C);
         D_80123D28[i] = 0;
     }
     memset(D_80123D24, 0, 4);
     for (i = 0; i < 4; i++) {
         for (j = 0; j < 4; j++) {
-            memset(&D_80122900[i][j], 0, 0x140);
+            memset(&gSaveSlots[i][j], 0, 0x140);
         }
     }
     for (i = 0; i < 4; i++) {
-        D_80138098[i] = 0;
-        D_80123D00[i] = 0;
+        gSaveIds[i] = 0;
+        gSaveSlotCount[i] = 0;
     }
     for (i = 0; i < 4; i++) {
         sysPakOpen[0](i);
         s = sysPakOpen[1](i);
-        D_80123D10[i] = s;
+        gPakStatus[i] = s;
         if (s != 4) {
             D_80123D24[i] = 1;
         } else {
             D_80123D24[i] = 0;
         }
-        if (D_80123D10[i] != 1) {
+        if (gPakStatus[i] != 1) {
             D_80123D20[i] = 1;
         } else {
             D_80123D20[i] = 0;
@@ -99,8 +99,8 @@ s32 func_800AF910(void) {
     }
     if (D_80123D20[0] || D_80123D20[1] || D_80123D20[2] || D_80123D20[3]) {
         ok = 0;
-        if (!(D_80123D20[0] && D_80123D10[0]) && !(D_80123D20[1] && D_80123D10[1]) &&
-            !(D_80123D20[2] && D_80123D10[2]) && !(D_80123D20[3] && D_80123D10[3])) {
+        if (!(D_80123D20[0] && gPakStatus[0]) && !(D_80123D20[1] && gPakStatus[1]) &&
+            !(D_80123D20[2] && gPakStatus[2]) && !(D_80123D20[3] && gPakStatus[3])) {
             ok = 1;
         }
         return ok;
@@ -108,7 +108,7 @@ s32 func_800AF910(void) {
     return 0;
 }
 
-s32 func_800AFB74(void) {
+s32 Save_IsSupported(void) {
     return 1;
 }
 
@@ -118,7 +118,7 @@ s32 Pak_GetStatus(u32 i) {
     if (i >= 4) {
         return 4;
     }
-    if (D_80123D10[i] & 0x40) {
+    if (gPakStatus[i] & 0x40) {
         return 8;
     }
     s = sysPakGetState(i);
@@ -145,9 +145,9 @@ s32 Pak_GetStatus(u32 i) {
 }
 
 
-void func_800B0624(void);
+void Save_NewId(void);
 
-s32 func_800AFC40(u32 i) {
+s32 Save_CreateOnPak(u32 i) {
     u8 *buf;
     u32 sum;
     u16 j;
@@ -160,7 +160,7 @@ s32 func_800AFC40(u32 i) {
     }
     buf = Memory_Alloc(0xDA0);
     memset(buf, 0, 0xDA0);
-    *(s32 *)buf = ((s32 (*)(void))func_800B0624)();
+    *(s32 *)buf = ((s32 (*)(void))Save_NewId)();
     sum = 0;
     p = buf;
     for (j = 0, n = 0xD90; j < n; j++) {
@@ -170,14 +170,14 @@ s32 func_800AFC40(u32 i) {
     ok = ((u8 (*)(u32, u8 *))sysPakOpen[3])(i, buf);
     Memory_Free(buf);
     if (ok) {
-        D_80123D10[i] &= ~4;
+        gPakStatus[i] &= ~4;
     }
     return ok;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800AFD1C);
+INCLUDE_ASM("asm/nonmatchings/unit_50510", Save_ReadAll);
 
-void func_800B0624(void);
+void Save_NewId(void);
 s32 Save_Commit(void) {
     u8 *buf;
     u32 i;
@@ -193,15 +193,15 @@ s32 Save_Commit(void) {
     buf = Memory_Alloc(0xDA0);
     for (i = 0; i < 4; i++) {
         if (D_80123D20[i] != 0 && (D_80123D24[i] != 0 || (done ^ 1))) {
-            *(Big88C_ *)buf = *(Big88C_ *)(&D_801206D0 + i * 0x88C);
-            id = &D_80138098[i];
+            *(Big88C_ *)buf = *(Big88C_ *)(&gSaves + i * 0x88C);
+            id = &gSaveIds[i];
             if (*id == 0) {
-                *id = ((s32 (*)(void))func_800B0624)();
+                *id = ((s32 (*)(void))Save_NewId)();
             }
             *(s32 *)buf = *id;
-            buf[0x88C] = D_80123D00[i];
-            for (j = 0; j < (u32)D_80123D00[i]; j++) {
-                *(Blk140_ *)(buf + 0x890 + j * 0x140) = *(Blk140_ *)&D_80122900[i][j];
+            buf[0x88C] = gSaveSlotCount[i];
+            for (j = 0; j < (u32)gSaveSlotCount[i]; j++) {
+                *(Blk140_ *)(buf + 0x890 + j * 0x140) = *(Blk140_ *)&gSaveSlots[i][j];
             }
             sum = 0;
             c = buf;
@@ -211,7 +211,7 @@ s32 Save_Commit(void) {
             }
             *(s32 *)(buf + 0xD90) = sum;
             if (((s32 (*)(s32, u8 *))sysPakOpen[3])(i, buf) == 0) {
-                D_80123D10[i] = ((u32 (*)(u32))sysPakOpen[1])(i);
+                gPakStatus[i] = ((u32 (*)(u32))sysPakOpen[1])(i);
                 Memory_Free(buf);
                 return 0;
             }
@@ -229,28 +229,28 @@ u8 *Save_GetActiveProfile(void) {
 
     for (i = 0; i < 4; i++) {
         if (D_80123D20[i] != 0) {
-            return i * 0x88C + &D_801206D0;
+            return i * 0x88C + &gSaves;
         }
     }
-    return &D_801206D0;
+    return &gSaves;
 }
 
 
-void *func_800B02E4(s32 arg0) {
-    return (arg0 * 0x88C) + &D_801206D0;
+void *Save_GetProfile(s32 arg0) {
+    return (arg0 * 0x88C) + &gSaves;
 }
 
 E140_ *SaveSlot_Get(u32 i, u32 j) {
-    if (i >= 4 || j >= (u32)D_80123D00[i]) {
+    if (i >= 4 || j >= (u32)gSaveSlotCount[i]) {
         return NULL;
     }
-    return &D_80122900[i][j];
+    return &gSaveSlots[i][j];
 }
 
 extern s32 D_80122904[][4][0x50];
 extern Big88C_ D_80120F54[];
 
-E140_ *func_800B0364(u32 i) {
+E140_ *SaveSlot_FindPlayer(u32 i) {
     u32 k;
     u32 m;
 
@@ -259,37 +259,37 @@ E140_ *func_800B0364(u32 i) {
     }
     for (k = 0; k < 4; k++) {
         for (m = 0; m < 4; m++) {
-            if (D_80123D28[k] && m < (u32)D_80123D00[k] && D_80122904[k][m][0] == D_80120F54[k].d[i]) {
-                return &D_80122900[k][m];
+            if (D_80123D28[k] && m < (u32)gSaveSlotCount[k] && D_80122904[k][m][0] == D_80120F54[k].d[i]) {
+                return &gSaveSlots[k][m];
             }
         }
     }
     return NULL;
 }
 
-s32 func_800B042C(u32 i) {
+s32 SaveSlot_GetCount(u32 i) {
     s32 r;
 
     if (i < 4) {
-        r = D_80123D00[i];
+        r = gSaveSlotCount[i];
     } else {
         r = 0;
     }
     return r;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B0454);
+INCLUDE_ASM("asm/nonmatchings/unit_50510", SaveSlot_Add);
 
 s32 SaveSlot_Delete(u32 i, u32 j) {
     u32 k;
 
-    if (i >= 4 || j >= (u32)D_80123D00[i]) {
+    if (i >= 4 || j >= (u32)gSaveSlotCount[i]) {
         return 0;
     }
     for (k = j; k < 3; k++) {
-        *(Blk140_ *)&D_80122900[i][k] = *(Blk140_ *)&D_80122900[i][k + 1];
+        *(Blk140_ *)&gSaveSlots[i][k] = *(Blk140_ *)&gSaveSlots[i][k + 1];
     }
-    D_80123D00[i]--;
+    gSaveSlotCount[i]--;
     return 1;
 }
 
@@ -301,15 +301,15 @@ void func_800B061C(void) {
 
 }
 
-void func_800B0624(void) {
+void Save_NewId(void) {
     do {
 
     } while (sysRandRange(0x17D78400) == 0);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B0654);
+INCLUDE_ASM("asm/nonmatchings/unit_50510", Unlocks_GetMask);
 
-void func_800B06CC(Bits5_ *b, u32 mask) {
+void Unlocks_SetMask(Bits5_ *b, u32 mask) {
     u8 i;
 
     for (i = 0; i < 24; i++, mask >>= 1) {
@@ -317,7 +317,7 @@ void func_800B06CC(Bits5_ *b, u32 mask) {
             return;
         }
         if (mask & 1) {
-            s8 bit = D_800F5F90[i];
+            s8 bit = gUnlockBitMap[i];
 
             if (bit >= 32) {
                 b->hi |= 1 << (bit - 32);
@@ -328,31 +328,31 @@ void func_800B06CC(Bits5_ *b, u32 mask) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B073C);
+INCLUDE_ASM("asm/nonmatchings/unit_50510", Password_Encode);
 
-INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B0A5C);
+INCLUDE_ASM("asm/nonmatchings/unit_50510", Password_Decode);
 
-s32 func_800B0F74(void) {
-    func_800B073C();
+s32 Password_Get(void) {
+    Password_Encode();
     return 1;
 }
 
-void func_800B0F94(void) {
-    func_800B0A5C();
+void Password_Apply(void) {
+    Password_Decode();
 }
 
 s8 NameList_Add(char *s) {
     u8 i;
     u8 n;
 
-    for (i = 0; i < D_800F6040; i++) {
-        if (strcmp(s, D_80123D30[i]) == 0) {
+    for (i = 0; i < gNameListCount; i++) {
+        if (strcmp(s, gNameList[i]) == 0) {
             return -1;
         }
     }
-    n = D_800F6040;
-    D_80123D30[n] = s;
-    D_800F6040 = n + 1;
+    n = gNameListCount;
+    gNameList[n] = s;
+    gNameListCount = n + 1;
     return n;
 }
 
@@ -360,8 +360,8 @@ s8 NameList_Add(char *s) {
 s8 NameList_Find(char *s) {
     u8 i;
 
-    for (i = 0; i < D_800F6040; i++) {
-        if (strcmp(s, D_80123D30[i]) == 0) {
+    for (i = 0; i < gNameListCount; i++) {
+        if (strcmp(s, gNameList[i]) == 0) {
             return i;
         }
     }
@@ -372,29 +372,29 @@ void NameList_Remove(char *s) {
     u8 i;
     u8 j;
 
-    for (i = 0; i < D_800F6040; i++) {
-        if (strcmp(s, D_80123D30[i]) == 0) {
-            for (j = i; j < D_800F6040; j++) {
-                D_80123D30[j] = D_80123D30[j + 1];
+    for (i = 0; i < gNameListCount; i++) {
+        if (strcmp(s, gNameList[i]) == 0) {
+            for (j = i; j < gNameListCount; j++) {
+                gNameList[j] = gNameList[j + 1];
             }
-            D_80123D30[j] = &D_80100BB0;
-            D_800F6040--;
+            gNameList[j] = &D_80100BB0;
+            gNameListCount--;
             return;
         }
     }
 }
 
-void func_800B11FC(void) {
+void NameList_Clear(void) {
     u8 i;
 
-    for (i = 0; i < D_800F6040; i++) {
-        D_80123D30[i] = &D_80100BB0;
+    for (i = 0; i < gNameListCount; i++) {
+        gNameList[i] = &D_80100BB0;
     }
-    D_800F6040 = 0;
+    gNameListCount = 0;
 }
 
 
-void func_800B1250(s32 x) {
+void Menu_LoadModel(s32 x) {
     s8 r = NameList_Add(x);
 
     if (r >= 0) {
@@ -402,11 +402,11 @@ void func_800B1250(s32 x) {
     }
 }
 
-f32 func_800B1294(s32 arg0) {
+f32 MenuPos_ToWorldX(s32 arg0) {
     return (((f32) arg0 / 1000.0f) * 1000.0f) + -500.0f;
 }
 
-f32 func_800B12C4(s32 ms) {
+f32 MenuPos_ToWorldY(s32 ms) {
     f32 t;
     t = ms / 1000.0f;
     t = -t * 750.0f;
@@ -414,7 +414,7 @@ f32 func_800B12C4(s32 ms) {
 }
 
 
-f32 func_800B1308(s32 arg0) {
+f32 MenuPos_ToWorldZ(s32 arg0) {
     return (((f32) (arg0 + 0x1F4) / 1000.0f) * 1000.0f) + -500.0f;
 }
 
@@ -431,13 +431,13 @@ void MenuText_Layout(u8 *t) {
             if (t[0x28] == 2) {
                 w += 0x23;
             } else {
-                w += func_800C8EE4(t[0x28], (*(E0A5_ **)(t + 0x1C))[i].a, (*(E0A5_ **)(t + 0x1C))[i + 1].a);
+                w += MenuFont_Kerning(t[0x28], (*(E0A5_ **)(t + 0x1C))[i].a, (*(E0A5_ **)(t + 0x1C))[i + 1].a);
             }
         }
         if (t[0x28] == 2) {
             w += 0x23;
         } else {
-            w += func_800C902C(t[0x28], (*(E0A5_ **)(t + 0x1C))[i].a);
+            w += MenuFont_CharWidth(t[0x28], (*(E0A5_ **)(t + 0x1C))[i].a);
         }
         w /= 2;
         if (t[0x27] == 0) {
@@ -454,7 +454,7 @@ void MenuText_Layout(u8 *t) {
             if (t[0x28] == 2) {
                 x += 0x23;
             } else {
-                x += func_800C8EE4(t[0x28], (*(E0A5_ **)(t + 0x1C))[i - 1].a, (*(E0A5_ **)(t + 0x1C))[i].a);
+                x += MenuFont_Kerning(t[0x28], (*(E0A5_ **)(t + 0x1C))[i - 1].a, (*(E0A5_ **)(t + 0x1C))[i].a);
             }
             (*(E0A5_ **)(t + 0x1C))[i].x2 = x;
             (*(E0A5_ **)(t + 0x1C))[i].y2 = y;
@@ -463,7 +463,7 @@ void MenuText_Layout(u8 *t) {
     }
 }
 
-void func_800B14F8(u8 *t) {
+void MenuSprite_Layout(u8 *t) {
     u8 i;
     s32 w;
     s32 x;
@@ -474,25 +474,25 @@ void func_800B14F8(u8 *t) {
     x = (*(s16 *)(t + 8) + *(s16 *)(t + 0xA)) / 2;
     y = *(s16 *)(t + 0xC);
     for (; i < t[2] - 1; i++) {
-        w += func_800C8EE4(0, (*(E0A5_ **)(t + 4))[i].a, (*(E0A5_ **)(t + 4))[i + 1].a);
+        w += MenuFont_Kerning(0, (*(E0A5_ **)(t + 4))[i].a, (*(E0A5_ **)(t + 4))[i + 1].a);
     }
-    w += func_800C902C(0, (*(E0A5_ **)(t + 4))[i].a);
+    w += MenuFont_CharWidth(0, (*(E0A5_ **)(t + 4))[i].a);
     w /= 2;
     x -= w;
     (*(E0A5_ **)(t + 4))[0].x2 = x;
     (*(E0A5_ **)(t + 4))[0].y2 = y;
     *(P16b_ *)&(*(E0A5_ **)(t + 4))[0].x = *(P16b_ *)&(*(E0A5_ **)(t + 4))[0].x2;
     for (i = 1; i < t[2]; i++) {
-        x += func_800C8EE4(0, (*(E0A5_ **)(t + 4))[i - 1].a, (*(E0A5_ **)(t + 4))[i].a);
+        x += MenuFont_Kerning(0, (*(E0A5_ **)(t + 4))[i - 1].a, (*(E0A5_ **)(t + 4))[i].a);
         (*(E0A5_ **)(t + 4))[i].x2 = x;
         (*(E0A5_ **)(t + 4))[i].y2 = y;
         *(P16b_ *)&(*(E0A5_ **)(t + 4))[i].x = *(P16b_ *)&(*(E0A5_ **)(t + 4))[i].x2;
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B1694);
+INCLUDE_ASM("asm/nonmatchings/unit_50510", MenuButton_Layout);
 
-void func_800B1824(void) {
+void Menu_LayoutAll(void) {
     u32 k;
     u32 i;
 
@@ -501,10 +501,10 @@ void func_800B1824(void) {
             MenuText_Layout(*(u8 **)(gMenuObjs[k] + 4) + i * 0x2C);
         }
         for (i = 0; i < gMenuObjs[k][8]; i++) {
-            func_800B14F8(*(u8 **)(gMenuObjs[k] + 0xC) + i * 0x18);
+            MenuSprite_Layout(*(u8 **)(gMenuObjs[k] + 0xC) + i * 0x18);
         }
         for (i = 0; i < gMenuObjs[k][0x10]; i++) {
-            func_800B1694(*(u8 **)(gMenuObjs[k] + 0x14) + i * 0x18);
+            MenuButton_Layout(*(u8 **)(gMenuObjs[k] + 0x14) + i * 0x18);
         }
     }
 }
@@ -530,7 +530,7 @@ void MenuText_ResetPos(u8 *t) {
 }
 
 
-void func_800B1A3C(u8 *t) {
+void MenuText_SetLeaveTarget(u8 *t) {
     u32 i;
 
     if (t[0x26] == 0) {
@@ -552,7 +552,7 @@ void func_800B1A3C(u8 *t) {
     }
 }
 
-void func_800B1B60(u8 *t) {
+void MenuSprite_ResetPos(u8 *t) {
     u32 i;
 
     if (t[0x13] == 2) {
@@ -573,7 +573,7 @@ void func_800B1B60(u8 *t) {
 }
 
 
-void func_800B1C70(T0A2_ *t) {
+void MenuSprite_SetLeaveTarget(T0A2_ *t) {
     u32 i;
 
     if (t->mode == 2) {
@@ -590,7 +590,7 @@ void func_800B1C70(T0A2_ *t) {
 }
 
 
-void func_800B1D30(u8 *t) {
+void MenuButton_ResetPos(u8 *t) {
     u32 i;
 
     if (t[0x13] == 2) {
@@ -611,7 +611,7 @@ void func_800B1D30(u8 *t) {
 }
 
 
-void func_800B1E40(T0A2_ *t) {
+void MenuButton_SetLeaveTarget(T0A2_ *t) {
     u32 i;
 
     if (t->mode == 2) {
@@ -628,9 +628,9 @@ void func_800B1E40(T0A2_ *t) {
 }
 
 
-void func_800B1694(u8 *t);
+void MenuButton_Layout(u8 *t);
 
-void func_800B1F00(t)
+void Menu_PrepareEnter(t)
     u8 *t;
 {
     u32 i;
@@ -640,48 +640,48 @@ void func_800B1F00(t)
         MenuText_ResetPos(*(u8 **)(t + 4) + i * 0x2C);
     }
     for (i = 0; i < t[8]; i++) {
-        func_800B14F8(*(u8 **)(t + 0xC) + i * 0x18);
-        func_800B1B60(*(u8 **)(t + 0xC) + i * 0x18);
+        MenuSprite_Layout(*(u8 **)(t + 0xC) + i * 0x18);
+        MenuSprite_ResetPos(*(u8 **)(t + 0xC) + i * 0x18);
     }
     for (i = 0; i < t[0x10]; i++) {
-        func_800B1694(*(u8 **)(t + 0x14) + i * 0x18);
-        func_800B1D30(*(u8 **)(t + 0x14) + i * 0x18);
+        MenuButton_Layout(*(u8 **)(t + 0x14) + i * 0x18);
+        MenuButton_ResetPos(*(u8 **)(t + 0x14) + i * 0x18);
     }
 }
 
 typedef struct { u8 d[0x2C]; } E2Cc_;
 
-void func_800B1FE4(t)
+void Menu_PrepareLeave(t)
     u8 *t;
 {
     u32 i;
 
     for (i = 0; i < t[0]; i++) {
-        func_800B1A3C((u8 *)&(*(E2Cc_ **)(t + 4))[i]);
+        MenuText_SetLeaveTarget((u8 *)&(*(E2Cc_ **)(t + 4))[i]);
     }
     for (i = 0; i < t[8]; i++) {
-        func_800B1C70((T0A2_ *)&(*(OSMesgQueue **)(t + 0xC))[i]);
+        MenuSprite_SetLeaveTarget((T0A2_ *)&(*(OSMesgQueue **)(t + 0xC))[i]);
     }
     for (i = 0; i < t[0x10]; i++) {
-        func_800B1E40((T0A2_ *)&(*(OSMesgQueue **)(t + 0x14))[i]);
+        MenuButton_SetLeaveTarget((T0A2_ *)&(*(OSMesgQueue **)(t + 0x14))[i]);
     }
 }
 
-void func_800B20A4(void) {
+void Menu_ResetAllPos(void) {
     u32 k;
     u32 i;
 
     for (k = 0; k < 33; k++) {
         for (i = 0; i < gMenuObjs[k][8]; i++) {
-            func_800B1B60(*(u8 **)(gMenuObjs[k] + 0xC) + i * 0x18);
+            MenuSprite_ResetPos(*(u8 **)(gMenuObjs[k] + 0xC) + i * 0x18);
         }
         for (i = 0; i < gMenuObjs[k][0x10]; i++) {
-            func_800B1D30(*(u8 **)(gMenuObjs[k] + 0x14) + i * 0x18);
+            MenuButton_ResetPos(*(u8 **)(gMenuObjs[k] + 0x14) + i * 0x18);
         }
     }
 }
 
-s32 func_800B2170(s32 arg0) {
+s32 MenuModels_StartEnter(s32 arg0) {
     u8 *t;
     s32 i;
     f32 off;
@@ -690,10 +690,10 @@ s32 func_800B2170(s32 arg0) {
 
     t = (u8 *) arg0;
     for (i = 0; i < t[0x20]; i++) {
-        off = 500.0f - func_800B1294((*(Src10_ **) (t + 0x24))[i].a);
-        (*(Dst34_ **) (t + 0x28))[i].q[0] = func_800B1294((*(Src10_ **) (t + 0x24))[i].a);
-        (*(Dst34_ **) (t + 0x28))[i].q[1] = func_800B12C4((*(Src10_ **) (t + 0x24))[i].b);
-        (*(Dst34_ **) (t + 0x28))[i].q[2] = func_800B1308((*(Src10_ **) (t + 0x24))[i].c);
+        off = 500.0f - MenuPos_ToWorldX((*(Src10_ **) (t + 0x24))[i].a);
+        (*(Dst34_ **) (t + 0x28))[i].q[0] = MenuPos_ToWorldX((*(Src10_ **) (t + 0x24))[i].a);
+        (*(Dst34_ **) (t + 0x28))[i].q[1] = MenuPos_ToWorldY((*(Src10_ **) (t + 0x24))[i].b);
+        (*(Dst34_ **) (t + 0x28))[i].q[2] = MenuPos_ToWorldZ((*(Src10_ **) (t + 0x24))[i].c);
         switch ((*(Src10_ **) (t + 0x24))[i].kind) {
             case 0:
                 (*(Dst34_ **) (t + 0x28))[i].p[0] = (*(Dst34_ **) (t + 0x28))[i].q[0];
@@ -716,7 +716,7 @@ s32 func_800B2170(s32 arg0) {
     }
 }
 
-s32 func_800B2330(s32 arg0) {
+s32 MenuModels_StartLeave(s32 arg0) {
     u8 *t;
     s32 i;
 
@@ -742,7 +742,7 @@ s32 func_800B2330(s32 arg0) {
     }
 }
 
-void func_800B2440(u8 *t, f32 s) {
+void MenuText_Animate(u8 *t, f32 s) {
     u8 i;
     s32 dx;
     s32 dy;
@@ -765,7 +765,7 @@ void func_800B2440(u8 *t, f32 s) {
     }
 }
 
-void func_800B2540(u8 *t, f32 s) {
+void MenuSprite_Animate(u8 *t, f32 s) {
     u8 i;
     s32 dx;
     s32 dy;
@@ -788,7 +788,7 @@ void func_800B2540(u8 *t, f32 s) {
     }
 }
 
-void func_800B2640(u8 *t, f32 s) {
+void MenuButton_Animate(u8 *t, f32 s) {
     s32 i;
     s32 dx;
     s32 dy;
@@ -811,7 +811,7 @@ void func_800B2640(u8 *t, f32 s) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800B271C);
+INCLUDE_ASM("asm/nonmatchings/unit_50510", MenuModel_Animate);
 
 void Menu_Animate(u8 *t, u8 i) {
     f32 dt;
@@ -819,58 +819,58 @@ void Menu_Animate(u8 *t, u8 i) {
     u32 d;
     s32 k;
 
-    if (D_80123DB0 == NULL) {
+    if (gMenuAnimTime == NULL) {
         dt = 0.15f;
-        D_80123DB0[i] = sysTimeGetMillis();
+        gMenuAnimTime[i] = sysTimeGetMillis();
     } else {
         now = sysTimeGetMillis();
-        d = now - D_80123DB0[i];
+        d = now - gMenuAnimTime[i];
         if (d > 100) {
             dt = 0.1f;
         } else {
             dt = d / 100.0f;
         }
-        D_80123DB0[i] = now;
+        gMenuAnimTime[i] = now;
     }
     for (k = 0; k < t[0]; k++) {
-        func_800B2440(*(s32 *) (t + 4) + k * 0x2C, dt);
+        MenuText_Animate(*(s32 *) (t + 4) + k * 0x2C, dt);
     }
     for (k = 0; k < t[8]; k++) {
-        func_800B2540(*(s32 *) (t + 0xC) + k * 0x18, dt);
+        MenuSprite_Animate(*(s32 *) (t + 0xC) + k * 0x18, dt);
     }
     for (k = 0; k < t[0x10]; k++) {
-        func_800B2640(*(s32 *) (t + 0x14) + k * 0x18, dt);
+        MenuButton_Animate(*(s32 *) (t + 0x14) + k * 0x18, dt);
     }
     for (k = 0; k < t[0x20]; k++) {
-        func_800B271C(*(s32 *) (t + 0x28) + k * 0x34, dt);
+        MenuModel_Animate(*(s32 *) (t + 0x28) + k * 0x34, dt);
     }
 }
 
-void func_800B2A20(u8 *menu) {
+void Menu_LoadModels(u8 *menu) {
     u8 i;
 
     for (i = 0; i < menu[0x20]; i++) {
-        func_800B1250(*(s32 *)(*(u8 **)(menu + 0x24) + i * 0x10));
+        Menu_LoadModel(*(s32 *)(*(u8 **)(menu + 0x24) + i * 0x10));
     }
 }
 
-void func_800B2A84(void) {
+void Menu_FreeModels(void) {
     u8 i;
 
     for (i = 0; i < 32; i++) {
         sysWorldFree(i);
     }
-    func_800B11FC();
+    NameList_Clear();
 }
 
 void Menu_StartEnter(s32 arg0) {
-    func_800B1F00();
-    func_800B2170(arg0);
+    Menu_PrepareEnter();
+    MenuModels_StartEnter(arg0);
 }
 
 void Menu_StartLeave(s32 arg0) {
-    func_800B1FE4();
-    func_800B2330(arg0);
+    Menu_PrepareLeave();
+    MenuModels_StartLeave(arg0);
 }
 
 void Menu_ResetTexts(T2C5_ *t) {
@@ -894,53 +894,53 @@ void Menu_LayoutTexts(u8 *t) {
 void Menu_ResetState(void) {
     u8 i;
 
-    func_800C90DC();
-    func_800B1824();
-    func_800B20A4();
+    MenuFont_LoadAll();
+    Menu_LayoutAll();
+    Menu_ResetAllPos();
     for (i = 0; i < 33; i++) {
-        D_80123DB0[i] = 0;
+        gMenuAnimTime[i] = 0;
     }
 }
 
-void func_800B2C78(void) {
-    func_800C9130();
+void Menu_FreeFonts(void) {
+    MenuFont_FreeAll();
 }
 
 /* Returns 1 when the two points are at most 10 apart on both axes. */
-u8 func_800B2C94(P16b_ a, P16b_ b) {
+u8 Pos_IsNear(P16b_ a, P16b_ b) {
     if ((u32)(a.x - b.x + 10) >= 21 || (u32)(a.y - b.y + 10) >= 21) {
         return 0;
     }
     return 1;
 }
 
-s32 func_800B2CE0(u8 *t) {
+s32 MenuText_IsSettled(u8 *t) {
     u8 i;
 
     for (i = 0; i < t[0x18]; i++) {
-        if (!func_800B2C94(*(P16b_ *)&(*(E0A5_ **)(t + 0x1C))[i].x, *(P16b_ *)&(*(E0A5_ **)(t + 0x1C))[i].x2)) {
+        if (!Pos_IsNear(*(P16b_ *)&(*(E0A5_ **)(t + 0x1C))[i].x, *(P16b_ *)&(*(E0A5_ **)(t + 0x1C))[i].x2)) {
             return 0;
         }
     }
     return 1;
 }
 
-s32 func_800B2DA0(u8 *t) {
+s32 MenuSprite_IsSettled(u8 *t) {
     u8 i;
 
     for (i = 0; i < t[2]; i++) {
-        if (!func_800B2C94(*(P16b_ *)&(*(E0A5_ **)(t + 4))[i].x, *(P16b_ *)&(*(E0A5_ **)(t + 4))[i].x2)) {
+        if (!Pos_IsNear(*(P16b_ *)&(*(E0A5_ **)(t + 4))[i].x, *(P16b_ *)&(*(E0A5_ **)(t + 4))[i].x2)) {
             return 0;
         }
     }
     return 1;
 }
 
-s32 func_800B2E60(u8 *t) {
+s32 MenuButton_IsSettled(u8 *t) {
     u8 i;
 
     for (i = 0; i < t[2]; i++) {
-        if (!func_800B2C94(*(P16b_ *)&(*(E0A5_ **)(t + 4))[i].x, *(P16b_ *)&(*(E0A5_ **)(t + 4))[i].x2)) {
+        if (!Pos_IsNear(*(P16b_ *)&(*(E0A5_ **)(t + 4))[i].x, *(P16b_ *)&(*(E0A5_ **)(t + 4))[i].x2)) {
             return 0;
         }
     }
