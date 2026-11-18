@@ -49,7 +49,7 @@ typedef struct { u8 p0[0x14]; u32 unk14; u32 unk18; u8 p1C[0x20]; u32 unk3C; } C
 extern char *gCheatButtonCodes[];
 extern char *D_800F3008[];
 extern char *D_800F300C[];
-s8 func_800B513C(char *s);
+s8 CarModel_FindByName(char *s);
     /* TODO (Clean version):
     Both `func_find` and `func_find2` perform table lookups for cheat codes but modify 
     different configuration fields. They could be unified into a single lookup function 
@@ -95,7 +95,7 @@ static inline u8 func_find2(char *code, CheatCfg_ *cfg) {
                 u32 flags[2]; // Replaces unk14 and unk18
             } CleanCheatFlags;
             */
-            bit = func_800B513C(D_800F300C[j]);
+            bit = CarModel_FindByName(D_800F300C[j]);
             if (bit < 32) {
                 cfg->unk14 |= 1 << bit;
             } else {

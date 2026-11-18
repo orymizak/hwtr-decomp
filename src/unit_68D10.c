@@ -9,8 +9,8 @@ s32 Fsm_Trigger(void *,s32);
 extern u8 gMenuFsm;
 
 extern s32 (*sysInputIsKeyHeld)(s32);
-extern s32 D_80124D48;
-extern s32 D_80124D51;
+extern s32 gCheatBufferP1;
+extern s32 gCheatBufferP2;
 extern s32 gMenuIdleTime;
 extern s32 (*sysTimeGetMillis)();
 extern s32 gMenuTimer;
@@ -19,31 +19,31 @@ void Menu_Advance(void) {
     Fsm_Trigger(&gMenuFsm, 0x11);
 }
 
-s32 func_800C8134(s32 arg0) {
+s32 Menu_IsKeyHeld(s32 arg0) {
     return sysInputIsKeyHeld(arg0 & 0xFF) & 0xFF;
 }
 
-s32 *func_800C815C(void) {
-    return &D_80124D48;
+s32 *Cheat_GetBufferP1(void) {
+    return &gCheatBufferP1;
 }
 
-s32 *func_800C8168(void) {
-    return &D_80124D51;
+s32 *Cheat_GetBufferP2(void) {
+    return &gCheatBufferP2;
 }
 
-void func_800C8174(void) {
+void Cheat_ClearP1(void) {
     u32 i;
 
     for (i = 0; i < 8; i++) {
-        ((u8 *)&D_80124D48)[i] = ' ';
+        ((u8 *)&gCheatBufferP1)[i] = ' ';
     }
 }
 
-void func_800C81A0(void) {
+void Cheat_ClearP2(void) {
     u32 i;
 
     for (i = 0; i < 8; i++) {
-        ((u8 *)&D_80124D51)[i] = ' ';
+        ((u8 *)&gCheatBufferP2)[i] = ' ';
     }
 }
 
@@ -51,11 +51,11 @@ void func_800C81CC(u8 player, s8 c) {
     u8 *buf;
     u8 *p;
 
-    buf = (u8 *)&D_80124D51;
-    p = (u8 *)&D_80124D51;
+    buf = (u8 *)&gCheatBufferP2;
+    p = (u8 *)&gCheatBufferP2;
     if (!player) {
-        buf = (u8 *)&D_80124D48;
-        p = (u8 *)&D_80124D48;
+        buf = (u8 *)&gCheatBufferP1;
+        p = (u8 *)&gCheatBufferP1;
     }
     do {
         p[0] = p[1];

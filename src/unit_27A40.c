@@ -7,7 +7,7 @@ typedef struct { Kern1_ *tbl; u16 n; u8 pad[2]; } KernFont_;
 typedef struct { u8 flag; u8 p1[3]; char *str; } Ln74_;
 typedef struct { Ln74_ *lines; s32 a4; s32 a8; s32 top; s32 bottom; s32 start; f32 pos; s32 count; } Scr74_;
 void func_80087260(char *, s32, s32, s32, s32);
-f32 func_800B3024(u8);
+f32 Menu_DeltaSeconds(u8);
 extern u8 D_80116C70[];
 extern s32 (*sysFileLoad)(char *, void *);
 extern u32 (*sysFileGetSize)(char *);
@@ -194,9 +194,9 @@ void func_8008745C(Scr74_ *s, u8 fast) {
     if (drawn == 0 && y < 0) {
         s->pos = s->start;
     } else if (fast) {
-        s->pos -= func_800B3024(5) * 120.0f;
+        s->pos -= Menu_DeltaSeconds(5) * 120.0f;
     } else {
-        s->pos -= func_800B3024(5) * 30.0f;
+        s->pos -= Menu_DeltaSeconds(5) * 30.0f;
     }
 }
 
