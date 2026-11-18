@@ -50,7 +50,8 @@ void Debug_InitFont(u16 *buf) {
         }
     }
 
-    /* TODO (Clean version):
+    /* TODO (Clean version): [evaluated 2026-11-18: needs asset extraction, out of scope for the
+    matching source]
     Bit-level font unpacking logic (relying on bit-shifts and gotos) is highly 
     dependent on the raw ROM asset structure. A clean version would extract 
     font assets into a standard format or use a dedicated decompression parser, 

@@ -412,7 +412,8 @@ void RaceCam_UpdateTrackside(RaceCam *cam, u32 dt) {
         bestPt = 0;
         for (i = 0; i < svcTrackGetCameraCount(); i++) {
             svcTrackGetCamera(i, &pos, b, &flags, &x);
-            /* TODO (Clean version / Bug check): 'flags |= 1;' forces the 'if (flags & 1)' branch,
+            /* TODO (Clean version / Bug check): [evaluated 2026-11-18: original behaviour; the
+             * forced bit is in the ROM] 'flags |= 1;' forces the 'if (flags & 1)' branch,
              * making the 'else' branch (radius = 0.0f) dead code. Verify if flags was intended
              * to be tested without unconditional mutation:
              *   radius = (flags & 1) ? 5400.0f : 0.0f;

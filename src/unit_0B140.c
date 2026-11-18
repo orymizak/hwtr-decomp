@@ -190,7 +190,7 @@ s32 Input_InitTable(void) {
     return 1;
 }
 
-    /* TODO (Clean version):
+    /* TODO (Clean version): [evaluated 2026-11-18: original behaviour, in the ROM]
     sysInputGetLayout y sysInputSetLayout se asignan a 0 dos veces mientras que las variables void* no se limpian. (Original behavior.)
     */
 s32 Input_ClearTable(void) {
