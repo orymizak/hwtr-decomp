@@ -155,7 +155,26 @@ void func_800C9D00(s32 i) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_69E80", func_800C9DA0);
+void func_8008E558(u8, V12_);
+
+void func_800C9DA0(s32 i) {
+    V12_ v;
+    E0Cc_ *e = &((E0Cc_ *)D_800F9F94)[i];
+    u8 *s = &((u8 *)D_800F9F98)[i * 2];
+
+    if (e->flags & 2) {
+        if (e->flags & 0x10) {
+            if (s[0] != 0xFF) {
+                func_80087EA4(e->a, &v);
+                func_8008E558(s[0], v);
+            }
+            if ((e->flags & 4) && s[1] != 0xFF) {
+                func_80087EA4(e->b, &v);
+                func_8008E558(s[1], v);
+            }
+        }
+    }
+}
 
 s32 func_800C9E70(void) {
     char buf[80];

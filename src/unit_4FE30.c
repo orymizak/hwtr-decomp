@@ -2,33 +2,33 @@
 #include "include_asm.h"
 typedef struct { u8 p0[0x94]; f32 m[3][3]; f32 v[3]; } Body4F_;
 typedef struct { s32 x; s32 y; s32 z; } V3i_;
-/* TODO (Clean version): Define unified engine structs for E88_ and its dynamically allocated child object (0x118 bytes):
-   typedef struct {
-       u8 pad0[0x60];
-       Vec3f_ base_pos;
-       Vec3f_ offset_pos;
-       u8 pad78[0x1C];
-       f32 rot[3][3];    // 0x94
-       u8 padB8[0x58];
-       u8 state;          // 0x110
-       u8 pad111[7];
-   } PhysicsObj;          // sizeof 0x118
+    /* TODO (Clean version): Define unified engine structs for E88_ and its dynamically allocated child object (0x118 bytes):
+    typedef struct {
+        u8 pad0[0x60];
+        Vec3f_ base_pos;
+        Vec3f_ offset_pos;
+        u8 pad78[0x1C];
+        f32 rot[3][3];    // 0x94
+        u8 padB8[0x58];
+        u8 state;          // 0x110
+        u8 pad111[7];
+    } PhysicsObj;          // sizeof 0x118
 
-   typedef struct {
-       u32 pad0;
-       u32 flags;         // 0x04
-       u8 state;          // 0x08
-       u8 pad9[3];
-       V3i_ pos;          // 0x0C
-       u8 pad18[0xC];
-       f32 m[9];          // 0x24
-       u8 pad48[0x14];
-       s32 kind;          // 0x5C
-       PhysicsObj *obj;   // 0x60
-       u8 pad64[0x20];
-       u32 val;           // 0x84
-   } Entity88;            // sizeof 0x88
-*/
+    typedef struct {
+        u32 pad0;
+        u32 flags;         // 0x04
+        u8 state;          // 0x08
+        u8 pad9[3];
+        V3i_ pos;          // 0x0C
+        u8 pad18[0xC];
+        f32 m[9];          // 0x24
+        u8 pad48[0x14];
+        s32 kind;          // 0x5C
+        PhysicsObj *obj;   // 0x60
+        u8 pad64[0x20];
+        u32 val;           // 0x84
+    } Entity88;            // sizeof 0x88
+    */
 typedef struct { u8 pad0[8]; u8 state; u8 pad9[3]; V3i_ pos; u8 pad18[0xC]; f32 m[9]; u8 pad48[0x14]; s32 kind; u8 *obj; u8 pad64[0x24]; } E88_;
 typedef struct { f32 x; f32 y; f32 z; } Vec3f_;
 typedef struct { s32 x; s32 y; s32 z; } P3b_;

@@ -115,8 +115,8 @@ u16 Font_GetCharWidth16(u8 id, u8 c) {
     return Font_GetCharWidthF(id, c);
 }
 
-/* TODO(match-debt): empty loop needed to match (scheduling barrier). Assumed to be a debug assert
- * compiled out in release builds; verify against a real cause when one turns up. */
+    /* TODO(match-debt): empty loop needed to match (scheduling barrier). Assumed to be a debug assert
+    * compiled out in release builds; verify against a real cause when one turns up. */
 #define FONT_ASSERT(cond) do { } while (0)
 
 s32 func_8006F528(u8 id, u8 c, f32 x, f32 y, f32 scale) {

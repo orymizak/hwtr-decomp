@@ -41,7 +41,7 @@ typedef union { GfxWT_ words; s64 force; } GfxT_;
 typedef struct { s16 x; s16 y; s16 z; u16 flag; s16 s; s16 t; u8 r; u8 g; u8 b; u8 a; } VtxIn75_;
 typedef struct { f32 x; f32 y; f32 z; u8 r; u8 g; u8 b; u8 on; } VtxOut75_;
 typedef struct { u8 p0[6]; u16 nVtx; } MeshHdr75_;
-typedef struct { f32 m[3][4]; u8 p30[0xC]; MeshHdr75_ *hdr; VtxIn75_ *in; VtxOut75_ *out; } MeshXf75_;
+typedef struct { f32 m[3][4]; s32 flags; u8 p34[8]; MeshHdr75_ *hdr; VtxIn75_ *in; VtxOut75_ *out; } MeshXf75_;
 extern GfxT_ *D_8014EC78;
 extern u8 D_8014D184;
 extern u8 D_8014D188;
@@ -559,7 +559,26 @@ void func_800759F0(Node72_ *n) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_13490", func_80075A38);
+/* Copies the colors of the visible transformed vertices back to the input vertices. */
+void func_80075A38(MeshXf75_ *o) {
+    s32 i;
+    VtxOut75_ *out;
+    VtxIn75_ *in;
+    s32 n = o->hdr->nVtx;
+
+    in = o->in;
+    out = o->out;
+    for (i = 0; i < n; i++) {
+        if (o->out[i].on & 1) {
+            in->r = out->r;
+            in->g = out->g;
+            in->b = out->b;
+        }
+        out++;
+        in++;
+    }
+    o->flags &= ~0x100;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_13490", func_80075ABC);
 

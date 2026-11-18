@@ -1,6 +1,9 @@
 #include "common.h"
 #include "include_asm.h"
 #include "car.h"
+/* TODO(match-debt): empty loop needed to match (scheduling barrier). Assumed to be a debug hook
+ * compiled out in release builds; verify against a real cause when one turns up. */
+#define DEBUG_NOP() do { } while (0)
 typedef struct { s32 x; s32 y; s32 z; } V3i9_;
 typedef struct { s32 d[0x22]; } B88_;
 typedef struct { f32 m[3][4]; } M_D34;
@@ -43,7 +46,7 @@ extern void (*D_8014556C)(s32);
 extern s32 (*D_80145570)(s32, s32);
 extern void (*D_8014558C)(s32, s32, s32);
 s32 func_8008D3AC(void);
-void func_80095FE4(s32, u8 *, u8 *);
+void func_80095FE4(u8, u8 *, u8 *);
 extern u8 D_800F38A0[];
 void *memset(void *dst, s32 value, u32 size);
 extern s32 (*D_80141698)();
@@ -54,7 +57,25 @@ extern s32 D_8011B318;
 
 INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_80091210);
 
-INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_80091B20);
+void func_8008E568(s32);
+
+/* Adds to the car's counter at 0x6CC, capped at 10; returns how much was added. */
+u8 func_80091B20(Car *c, s32 add) {
+    u8 added = add;
+    s32 total = c->n6CC + add;
+
+    c->n6CC = total;
+    if ((u8)total > 10) {
+        added = add + 10 - total;
+        c->n6CC = 10;
+    }
+    /* TODO(match-debt): n6CC == 10 && unk6CD == 0 is read as one word. */
+    if ((*(u32 *)&c->n6CC & 0xFFFF0000) == 0x0A000000) {
+        func_8008E568(3);
+        c->unk6CD = 1;
+    }
+    return added;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_80091BA0);
 
@@ -79,7 +100,6 @@ typedef Vec3f V3_E30;
 typedef struct { f32 m[3][3]; } M3_E30;
 extern u8 D_8011B31C;
 void func_8008AEC0(s32, s32, s32, s32, s32, s32, s32, u8 *, u16 *, u32 *);
-void func_8008E568(s32);
 void func_800ABF2C(u8, u32, u16, u8);
 static inline V3_E30 mul_E30(M3_E30 *m, V3_E30 *v) {
     V3_E30 r;
@@ -482,11 +502,55 @@ INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_80095804);
 
 INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_80095970);
 
-INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_80095C60);
+/* Returns the car state: position (with offset), rotation, velocity, flags and the 0x13C byte. */
+void func_80095C60(u8 id, Vec3f *pos, Mtx3f *rot, Vec3f *vel, u32 *flags, u8 *out) {
+    Car *c = &D_80118630[id];
+
+    pos->x = c->pos.x + c->v8C.x;
+    pos->y = c->pos.y + c->v8C.y;
+    pos->z = c->pos.z + c->v8C.z;
+    rot->m[0][0] = c->rot.m[0][0];
+    DEBUG_NOP();
+    rot->m[0][1] = c->rot.m[0][1];
+    rot->m[0][2] = c->rot.m[0][2];
+    rot->m[1][0] = c->rot.m[1][0];
+    rot->m[1][1] = c->rot.m[1][1];
+    rot->m[1][2] = c->rot.m[1][2];
+    rot->m[2][0] = c->rot.m[2][0];
+    rot->m[2][1] = c->rot.m[2][1];
+    rot->m[2][2] = c->rot.m[2][2];
+    *vel = c->vel;
+    *flags = c->flags;
+    *out = func_8008D3AC() ? c->b13C : 1;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_80095D5C);
 
-INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_80095FE4);
+extern u8 D_800F3890[];
+/* Returns the speed scaled to 0..255 and the average surface value of the wheels in contact. */
+void func_80095FE4(u8 id, u8 *grip, u8 *speed) {
+    Car *c = &D_80118630[id];
+    s32 v;
+    s32 i;
+    s32 sum;
+    CarPoint *p;
+
+    v = c->fBC / 2304.0f * 255.0f;
+    if (v < 0) {
+        v = 0;
+    }
+    if (v > 255) {
+        v = 255;
+    }
+    *speed = v;
+    sum = 0;
+    for (i = 0, p = c->points; i < c->nPoints; i++, p++) {
+        if (p->contact) {
+            sum += D_800F3890[p->c31];
+        }
+    }
+    *grip = sum / c->nPoints;
+}
 
 Car *func_800960D8(u8 i) {
     return &D_80118630[i];
@@ -711,7 +775,25 @@ INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_8009751C);
 
 INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_800977AC);
 
-INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_800979F4);
+extern void (*D_8014176C)(u8);
+/* Scales the impulse so that the speed becomes 2288 and marks the car (once) as boosted. */
+void func_800979F4(Car *c) {
+    if (2288.0f - c->fBC < 88.0f || c->fBC < 35.2f) {
+        return;
+    }
+    c->impulse.x *= 2288.0f / c->fBC;
+    c->impulse.y *= 2288.0f / c->fBC;
+    c->impulse.z *= 2288.0f / c->fBC;
+    if (c->b4C0 == 0) {
+        if (c->flags & 1) {
+            D_8014C0A8(1, 1, 1.0f, 1.0f);
+        }
+        D_8014176C(c->id);
+        c->b4C0 = 1;
+        c->f4C4 = 2288.0f;
+        c->fBC = 2288.0f;
+    }
+}
 
 typedef Vec3f V3_B00;
 typedef struct { V3_B00 n; f32 d; } P4_B00;
@@ -897,6 +979,28 @@ s32 func_80098BF4(void) {
     return 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_80098D84);
+typedef struct { u8 pad0[0x64]; Car *car; } HitObj98_;
+typedef struct { HitObj98_ *obj; u8 pad4[0xC]; Vec3f dir; } HitEnt98_;
+/* On a hard hit against dir, sends the impact strength (0..255) once every 20 frames. */
+void func_80098D84(HitEnt98_ *e) {
+    Car *c = e->obj->car;
+    f32 d;
+    s32 v;
+
+    if (((s32 *)D_800F38A0)[c->id] == 0) {
+        d = -(c->vel.x * e->dir.x + c->vel.y * e->dir.y + c->vel.z * e->dir.z);
+        if (d > 352.0f) {
+            v = d / 2304.0f * 255.0f;
+            if (v < 0) {
+                v = 0;
+            }
+            if (v > 255) {
+                v = 255;
+            }
+            D_80145590(c->id, v);
+            ((s32 *)D_800F38A0)[c->id] = 20;
+        }
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_80098E84);

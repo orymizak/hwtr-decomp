@@ -402,7 +402,42 @@ u8 func_800667F8(u8 a, s32 b) {
     return func_80066A2C(a, b, 0);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", func_8006681C);
+extern char D_800FE95C[];
+s32 File_LoadAsync(char *name, void *dst);
+s32 func_8006695C(u8 i);
+s32 func_80066B94(u8 i);
+
+/* Starts loading a model file asynchronously, waiting for any previous load in that slot. */
+s32 func_8006681C(u8 id, char *name, u8 mode) {
+    char path[64];
+    u32 i;
+    s32 h;
+
+    if (D_800F0218[id] != 0) {
+        while (!(u8)func_8006695C(id)) {
+        }
+    }
+    D_80138150[id] = mode ^ 1;
+    D_80138156[id] = mode ^ 1;
+    strcpy(path, name);
+    strcat(path, D_800FE95C);
+    if (D_80138174[id] != NULL) {
+        func_80066B94(id);
+    }
+    GfxPools_Shutdown();
+    for (i = 0; i < 6; i++) {
+        if (D_80138174[i] != NULL) {
+            func_800741D8((s32)D_80138174[i]);
+        }
+    }
+    h = File_LoadAsync(path, ((void **)&D_80101E80)[id]);
+    D_80101E88[id] = h;
+    if (h != -1) {
+        D_800F0218[id] = 1;
+        return 1;
+    }
+    return 0;
+}
 
 s32 func_8006695C(u8 i) {
     s32 j;

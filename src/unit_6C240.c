@@ -7,20 +7,20 @@ void func_800CAE10(void);
 void func_800CB034(s32);
 void func_800CB268(void);
 void func_800CB0DC(s32);
-/* TODO (Clean version):
-   Replace temporary decomp structures with documented layout:
-   typedef struct {
-       s16 id;
-       s16 x;
-   } IdEntry;
+    /* TODO (Clean version):
+    Replace temporary decomp structures with documented layout:
+    typedef struct {
+        s16 id;
+        s16 x;
+    } IdEntry;
 
-   typedef struct {
-       u8 pad00[0xC];
-       IdEntry *ids;
-       u8 pad10[3];
-       s8 count;
-   } IdTable;
-*/
+    typedef struct {
+        u8 pad00[0xC];
+        IdEntry *ids;
+        u8 pad10[3];
+        s8 count;
+    } IdTable;
+    */
 typedef struct { s16 id; s16 x; } Id4_;
 typedef struct { u8 pad[0xC]; Id4_ *ids; u8 pad2[3]; s8 n; } IdTab_;
 extern s32 D_800FA264;
@@ -73,18 +73,18 @@ s32 func_800CB640(s16 id) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_6C240", func_800CB694);
 
-/* TODO (Clean version):
-   Indirect call via 'fp' is a matching artifact to pin D_801455A0 in a register.
-   Logic performs edge detection for buttons 0x10 and 0x11 (bits 1 and 4 represent newly pressed state):
-   u32 r = 0;
-   s32 pad = ((u8)D_80125590 != 1);
-   if (D_801455A0(pad, 0x10)) r |= 0x1;
-   if (D_801455A0(pad, 0x11)) r |= 0x8;
-   if ((r & 0x1) != (D_800FA260 & 0x1)) r |= 0x2;
-   if ((r & 0x8) != (D_800FA260 & 0x8)) r |= 0x10;
-   D_800FA260 = r;
-   return r;
-*/
+    /* TODO (Clean version):
+    Indirect call via 'fp' is a matching artifact to pin D_801455A0 in a register.
+    Logic performs edge detection for buttons 0x10 and 0x11 (bits 1 and 4 represent newly pressed state):
+    u32 r = 0;
+    s32 pad = ((u8)D_80125590 != 1);
+    if (D_801455A0(pad, 0x10)) r |= 0x1;
+    if (D_801455A0(pad, 0x11)) r |= 0x8;
+    if ((r & 0x1) != (D_800FA260 & 0x1)) r |= 0x2;
+    if ((r & 0x8) != (D_800FA260 & 0x8)) r |= 0x10;
+    D_800FA260 = r;
+    return r;
+    */
 u32 func_800CC1FC(void) {
     u8 (**fp)(s32, s32);
     s32 pad;
@@ -140,12 +140,12 @@ void func_800CC3A8(void) {
     func_800CA8F0(D_800FA520);
 }
 
-/* TODO (Clean version):
-   (&D_800FA510)[i] accesses contiguous global variables D_800FA510..D_800FA520.
-   Declare as an array:
-   extern s32 D_800FA510[5];
-   func_800CB034(D_800FA510[i]);
-*/
+    /* TODO (Clean version):
+    (&D_800FA510)[i] accesses contiguous global variables D_800FA510..D_800FA520.
+    Declare as an array:
+    extern s32 D_800FA510[5];
+    func_800CB034(D_800FA510[i]);
+    */
 void func_800CC3CC(void) {
     u8 i;
 
@@ -353,18 +353,18 @@ u8 func_800CCEFC(u8 arg0) {
     return v;
 }
 
-/* TODO (Clean version):
-   Offsets 0x87C, 0x87D, and 0x880 into func_800B027C() represent audio settings.
-   Define an options structure:
-   typedef struct {
-       u8 pad00[0x87C];
-       u8 bgm_volume;    // 0x87C
-       u8 sfx_volume;    // 0x87D
-       u8 pad87E[2];
-       u8 voice_volume;  // 0x880
-   } GameSettings;
-   GameSettings *opt = func_800B027C();
-*/
+    /* TODO (Clean version):
+    Offsets 0x87C, 0x87D, and 0x880 into func_800B027C() represent audio settings.
+    Define an options structure:
+    typedef struct {
+        u8 pad00[0x87C];
+        u8 bgm_volume;    // 0x87C
+        u8 sfx_volume;    // 0x87D
+        u8 pad87E[2];
+        u8 voice_volume;  // 0x880
+    } GameSettings;
+    GameSettings *opt = func_800B027C();
+    */
 void func_800CD054(void) {
     u8 *opt = func_800B027C();
     u8 cur = opt[0x87C];
@@ -446,15 +446,15 @@ void func_800CD26C(void) {
     func_800CACA8(D_800FA51C);
 }
 
-/* TODO (Clean version):
-   'fp' is a matching workaround to cache D_8014C0B0 in a register across calls:
-   s32 val = D_8014C0B0();
-   func_800CB168();
-   func_800CB2C0(D_800FA51C, 0);
-   func_800CB4D4(func_8008D460(val), 160, 155, 255, 255, 255);
-   func_800CB4D4(func_8008D48C(val), 160, 175, 255, 255, 255);
-   func_800CB28C();
-*/
+    /* TODO (Clean version):
+    'fp' is a matching workaround to cache D_8014C0B0 in a register across calls:
+    s32 val = D_8014C0B0();
+    func_800CB168();
+    func_800CB2C0(D_800FA51C, 0);
+    func_800CB4D4(func_8008D460(val), 160, 155, 255, 255, 255);
+    func_800CB4D4(func_8008D48C(val), 160, 175, 255, 255, 255);
+    func_800CB28C();
+    */
 void func_800CD290(void) {
     s32 (**fp)() = &D_8014C0B0;
 

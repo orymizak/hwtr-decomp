@@ -13,29 +13,29 @@ extern Ent64_ D_801185B4[];
 extern u8 D_80118620;
 typedef struct { s32 x; s32 y; s32 z; } Pos_;
 typedef Vec3f Vec3f_;
-/* TODO (Clean version): Unify CamE_, Cam90_, Ent64_, and Ent64w_ into a single Camera struct (sizeof 0x64):
-typedef struct {
-    u32 unk0;
-    Vec3f_ pos;
-    Vec3f_ vel;
-    f32 m[3][3];
-    f32 fov;
-    s32 mode;
-    u8 pt;
-    u8 car;
-    u8 b4A;
-    u8 b4B;
-    u8 b4C;
-    u8 pad4D[3];
-    s32 timer;
-    u32 shake;
-    f32 f58;
-    u8 b5C;
-    u8 pad5D[3];
-    u32 b60;
-} Camera;
-extern Camera gCameras[];
-*/
+    /* TODO (Clean version): Unify CamE_, Cam90_, Ent64_, and Ent64w_ into a single Camera struct (sizeof 0x64):
+    typedef struct {
+        u32 unk0;
+        Vec3f_ pos;
+        Vec3f_ vel;
+        f32 m[3][3];
+        f32 fov;
+        s32 mode;
+        u8 pt;
+        u8 car;
+        u8 b4A;
+        u8 b4B;
+        u8 b4C;
+        u8 pad4D[3];
+        s32 timer;
+        u32 shake;
+        f32 f58;
+        u8 b5C;
+        u8 pad5D[3];
+        u32 b60;
+    } Camera;
+    extern Camera gCameras[];
+    */
 typedef struct { u8 p0[0x44]; s32 mode; u8 pt; u8 car; u8 p4A[2]; u8 b4C; u8 p4D[3]; s32 timer; } Cam90_;
 typedef struct { u8 p0[4]; Vec3f_ pos; Vec3f_ vel; f32 m[3][3]; f32 fov; s32 mode; u8 pt; u8 car; u8 b4A; u8 b4B; u8 b4C; u8 p4D[7]; u32 shake; f32 f58; u8 b5C; u8 p5D[3]; u32 b60; } CamE_;
 typedef struct { s32 mode; Vec3f_ ofs; f32 dist; } CamT_;
@@ -547,15 +547,15 @@ s32 func_800908A8(void) {
     return (n - 1) * 200;
 }
 
-/* TODO (Clean version): D_801185B4[i].on and D_801185B8[i].w correspond to fields b5C (0x5C)
- * and b60 (0x60) of CamE_:
- *   for (i = 0; i < D_80118620; i++) {
- *       if (gCameras[i].b5C != 0) {
- *           gCameras[i].b60 = 5000;
- *           gCameras[i].b5C = 0;
- *       }
- *   }
- */
+    /* TODO (Clean version): D_801185B4[i].on and D_801185B8[i].w correspond to fields b5C (0x5C)
+    * and b60 (0x60) of CamE_:
+    *   for (i = 0; i < D_80118620; i++) {
+    *       if (gCameras[i].b5C != 0) {
+    *           gCameras[i].b60 = 5000;
+    *           gCameras[i].b5C = 0;
+    *       }
+    *   }
+    */
 void func_800908E8(void) {
     u32 i;
 
@@ -583,11 +583,11 @@ INCLUDE_ASM("asm/nonmatchings/unit_2F4F0", func_80090D80);
 
 INCLUDE_ASM("asm/nonmatchings/unit_2F4F0", func_80090FA8);
 
-/* TODO (Clean version): Symbols &D_801185A4 and &D_801185AC represent fields b4C (0x4C)
- * and shake (0x54) of ((CamE_ *)D_80118558)[arg0 & 0xFF]:
- *   ((CamE_ *)D_80118558)[arg0 & 0xFF].b4C = 1;
- *   ((CamE_ *)D_80118558)[arg0 & 0xFF].shake = 0xFA;
- */
+    /* TODO (Clean version): Symbols &D_801185A4 and &D_801185AC represent fields b4C (0x4C)
+    * and shake (0x54) of ((CamE_ *)D_80118558)[arg0 & 0xFF]:
+    *   ((CamE_ *)D_80118558)[arg0 & 0xFF].b4C = 1;
+    *   ((CamE_ *)D_80118558)[arg0 & 0xFF].shake = 0xFA;
+    */
 void func_800911B4(s32 arg0) {
     *(u8 *)(&D_801185A4 + ((arg0 & 0xFF) * 0x64)) = 1;
 }

@@ -8,8 +8,6 @@ void func_800C8DE0(void);
 
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_699E0", func_800C8DE0);
-
 extern u8 D_800F64F0[];
 extern u8 (*D_80141008)(u8, u8);
 s8 func_80086F80(u8 font, u8 a, u8 b);
@@ -38,6 +36,17 @@ extern inline u8 Chr_Width(u8 font, u8 c) {
     }
     return D_80141008(font, c);
 }
+s32 func_8008711C(u8 font, u8 a, u8 pct);
+
+/* Passes every character of the table with its width to func_8008711C. */
+void func_800C8DE0(void) {
+    u8 i;
+
+    for (i = 0; i < 75; i++) {
+        func_8008711C(0, D_800F64F0[i], Chr_Width(0, Chr_At(Chr_Index(D_800F64F0[i]))));
+    }
+}
+
 s32 func_800C8EE4(u8 font, u8 a, u8 b) {
     u8 ia;
     u8 ib;
@@ -72,6 +81,23 @@ void func_800C9130(void) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_699E0", func_800C916C);
+/* Returns the character after c in the character table, wrapping around. */
+u8 func_800C916C(u8 c) {
+    u8 i = Chr_Index(c);
 
-INCLUDE_ASM("asm/nonmatchings/unit_699E0", func_800C9200);
+    i++;
+    i %= 75;
+    return Chr_At(i);
+}
+
+/* Returns the character before c in the character table, wrapping around. */
+u8 func_800C9200(u8 c) {
+    u8 i = Chr_Index(c);
+
+    if (i == 0) {
+        i = 74;
+    } else {
+        i--;
+    }
+    return Chr_At(i);
+}

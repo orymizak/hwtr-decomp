@@ -109,7 +109,22 @@ inline void GfxPool_Reset(GfxPool *pool) {
     pool->end = pool->chunks[0] + pool->capacity;
 }
 
-INCLUDE_ASM("asm/nonmatchings/gfx_pools", GfxPool_Submit);
+/* Builds a display list that calls every chunk of the pool and passes it on. */
+void GfxPool_Submit(GfxPool *pool, s32 arg) {
+    Gfx *g = pool->head;
+    u32 i;
+
+    for (i = 0; i < pool->chunkCount; i++) {
+        Gfx *_g = g++;
+
+        _g->w0 = G_DL_BRANCH;
+        _g->w1 = (u32)pool->chunks[i] - 0x80000000; /* K0 to physical */
+    }
+    g->w0 = G_ENDDL;
+    g->w1 = 0;
+    g++;
+    func_8006FA7C(pool->head, (g - pool->head) * sizeof(Gfx), 0, arg);
+}
 
 inline void VtxPool_Init(VtxPool *pool, u32 capacity, Vtx *buffer) {
     pool->capacity = capacity;

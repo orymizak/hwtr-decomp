@@ -63,7 +63,22 @@ void func_80080360(void) {
     D_8010C410.b = 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_20830", func_80080374);
+/* Queues the mesh vertices with their view depth in the current queue. */
+void func_80080374(MeshFC_ *m, s32 v, f32 *mtx) {
+    Queue7F_ *q = ((Queue7F_ **)&D_8010C410)[D_800F2690];
+    s32 j;
+    s32 i;
+
+    if ((u32)(m->n + q->n) < 0x257U) {
+        j = q->n;
+        for (i = 0; i < m->n; j++, i++) {
+            q->a[j] = (s32)(m->p10 + i * 12);
+            q->b[j] = v;
+            q->c[j] = mtx[8] * m->v[i * 3] + mtx[9] * m->v[i * 3 + 1] + mtx[10] * m->v[i * 3 + 2] + mtx[11];
+        }
+        q->n = j;
+    }
+}
 
 void func_80080460(s32 a, s32 b, f32 c) {
     Queue7F_ *q = ((Queue7F_ **)&D_8010C410)[D_800F2690];

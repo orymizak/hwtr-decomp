@@ -5620,7 +5620,15 @@ void func_800C4BA4(void) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800C4D10);
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800C5148);
+void func_800C5148(void) {
+    func_800B3264();
+    func_800B8DC4();
+    func_800B4AA8(D_800F5F08[30], D_800F61D7, -1, -1, -1, -1, -1, D_80124146);
+    if (!D_80124146) {
+        func_800B4E74((Scroll4E_ *)&D_800F6388);
+    }
+    func_800B32D0();
+}
 
 void func_800C51C8(void) {
     func_800B2AFC(D_800F5F80);

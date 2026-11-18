@@ -1,20 +1,20 @@
 #include "common.h"
 #include "include_asm.h"
-/* TODO (Clean version): Replace temporary types TAE_ and E14t_ with unified types once layout is verified:
-   typedef struct {
-       s32 active;
-       u8 pad[16];
-   } TextAnimEntry;
+    /* TODO (Clean version): Replace temporary types TAE_ and E14t_ with unified types once layout is verified:
+    typedef struct {
+        s32 active;
+        u8 pad[16];
+    } TextAnimEntry;
 
-   typedef struct {
-       u8 pad0[0x18];
-       u8 count;
-       u8 pad1[3];
-       s32 flags;
-       u8 pad2[0x10];
-       TextAnimEntry entries[];
-   } TextAnimGroup;
-*/
+    typedef struct {
+        u8 pad0[0x18];
+        u8 count;
+        u8 pad1[3];
+        s32 flags;
+        u8 pad2[0x10];
+        TextAnimEntry entries[];
+    } TextAnimGroup;
+    */
 typedef struct { s32 w; u8 p[16]; } E14t_;
 typedef struct { u8 pad[0x18]; u8 n; u8 p2[3]; s32 w1C; u8 p3[0x10]; E14t_ e[1]; } TAE_;
 extern s32 (*D_801416AC)();

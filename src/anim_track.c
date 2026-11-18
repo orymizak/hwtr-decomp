@@ -7,30 +7,30 @@ typedef struct {
     s32 z;
 } Vec3;
 
-/* TODO (Clean version):
-En lugar de AnimTrack y AnimTrk_ separadas, se debería usar una sola struct con una union:
-typedef struct {
-    u32 duration;
-    u32 keyCount;
-    u8 unk08[4];
-    s32 id;
-    u32 time;
-    u8 active;
-    u32 seekTime;
-    s32 seekMode;
-    union {
-        u8 raw[0x3C];
-        struct {
-            s32 key;
-            Vec3_ pos0;
-            Quat_ rot0;
-            Vec3_ pos1;
-            Quat_ rot1;
-        } anim;
-    } data;
-    Vec3 result;
-} UnifiedAnimTrack;
-*/
+    /* TODO (Clean version):
+    En lugar de AnimTrack y AnimTrk_ separadas, se debería usar una sola struct con una union:
+    typedef struct {
+        u32 duration;
+        u32 keyCount;
+        u8 unk08[4];
+        s32 id;
+        u32 time;
+        u8 active;
+        u32 seekTime;
+        s32 seekMode;
+        union {
+            u8 raw[0x3C];
+            struct {
+                s32 key;
+                Vec3_ pos0;
+                Quat_ rot0;
+                Vec3_ pos1;
+                Quat_ rot1;
+            } anim;
+        } data;
+        Vec3 result;
+    } UnifiedAnimTrack;
+    */
 
 typedef struct {
     /* 0x00 */ u32 duration;

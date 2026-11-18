@@ -9,8 +9,6 @@ u32 osVirtualToPhysical(u32);
 typedef struct ALFilter_ { struct ALFilter_ *source; void *handler; s32 (*setParam)(void *, s32, void *); } ALFilter_;
 typedef struct { u8 pad0[0x18]; void *ctrlList; s32 unk1C; s32 unk20; s32 unk24; u8 pad28[8]; s32 unk30; } ALMix_;
 
-
-
 Acmd_ *alMainBusPull(void *filter, s16 *outp, s32 outCount, s32 sampleOffset, Acmd_ *p) {
     Acmd_ *ptr = p;
     ALBus2_ *m = (ALBus2_ *)filter;

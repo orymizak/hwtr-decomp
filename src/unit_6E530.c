@@ -5,26 +5,25 @@ s32 func_800D59E0(void *);
 extern s8 D_800FABA0;
 extern u8 D_80144450;
 
+    /* TODO (Clean version):
+    func_800D59E0 is osScRemoveClient(&sc, &audioClient) and func_800CE228 triggers voice fadeout:
+    void audioHandleEvent(s16 eventType, s32 param) {
+        switch (eventType) {
+        case AUDIO_EVENT_STOP_ALL: // 2
+            audioFadeOutVoices(VOICE_GROUP_SFX, 25);
+            audioFadeOutVoices(VOICE_GROUP_SEQ, 25);
+            return;
+        case AUDIO_EVENT_SHUTDOWN: // 1
+            if (param == AUDIO_SHUTDOWN_PARAM) { // 0x1C
+                audioEnabled = 0;
+                osScRemoveClient(&sc, &audioClient);
+            }
+            return;
+        }
+    }
+    */
 
-
-/* TODO (Clean version):
-   func_800D59E0 is osScRemoveClient(&sc, &audioClient) and func_800CE228 triggers voice fadeout:
-   void audioHandleEvent(s16 eventType, s32 param) {
-       switch (eventType) {
-       case AUDIO_EVENT_STOP_ALL: // 2
-           audioFadeOutVoices(VOICE_GROUP_SFX, 25);
-           audioFadeOutVoices(VOICE_GROUP_SEQ, 25);
-           return;
-       case AUDIO_EVENT_SHUTDOWN: // 1
-           if (param == AUDIO_SHUTDOWN_PARAM) { // 0x1C
-               audioEnabled = 0;
-               osScRemoveClient(&sc, &audioClient);
-           }
-           return;
-       }
-   }
-*/
-void func_800CD930(s16 arg0, s32 arg1) {
+    void func_800CD930(s16 arg0, s32 arg1) {
     switch (arg0) {
     case 2:
         func_800CE228(2, 0x19);

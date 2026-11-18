@@ -150,23 +150,23 @@ extern u32 D_80118534;
 void func_8008D3B8(u8 *arg0);
 void func_8008D3D4(void);
 s32 func_8008D4E4(u8 *t);
-/* TODO (Clean version / Bug check): Define a unified GameConfig struct for 'cfg' instead of raw byte offsets:
-typedef struct {
-    u32 flags;              // 0x00: bit 0: is_practice, bit 2: has_time_limit
-    u8 pad04[0x14];
-    u8 racer_count;         // 0x18: D_80118494
-    u8 pad19[7];
-    u32 time_limit;         // 0x20: D_800F36EC
-    u8 pad24[12];
-    struct {
-        s32 kind;           // 0x00: 1 = player racer
-        u8 pad04;
-        u8 slot;            // 0x05
-        u8 pad06[14];
-    } racers[6];            // 0x30
-} GameConfig;
-Also remove the redundant function pointer cast on func_8008D4E4(cfg).
-*/
+    /* TODO (Clean version / Bug check): Define a unified GameConfig struct for 'cfg' instead of raw byte offsets:
+    typedef struct {
+        u32 flags;              // 0x00: bit 0: is_practice, bit 2: has_time_limit
+        u8 pad04[0x14];
+        u8 racer_count;         // 0x18: D_80118494
+        u8 pad19[7];
+        u32 time_limit;         // 0x20: D_800F36EC
+        u8 pad24[12];
+        struct {
+            s32 kind;           // 0x00: 1 = player racer
+            u8 pad04;
+            u8 slot;            // 0x05
+            u8 pad06[14];
+        } racers[6];            // 0x30
+    } GameConfig;
+    Also remove the redundant function pointer cast on func_8008D4E4(cfg).
+    */
 s32 func_8008BAA0(u8 *cfg) {
     u8 i;
 
@@ -281,19 +281,19 @@ s32 func_8008BAA0(u8 *cfg) {
     return 1;
 }
 
-/* TODO (Clean version / Bug check): Replace raw buffer 'o' with a structured RaceSummary struct:
-typedef struct {
-    s32 race_result_code;   // 0x00: D_800F36F0
-    u8 pad04[0x2C];
-    struct {
-        u8 pad00[0x12];
-        u8 points;          // 0x12: D_8011849C[i]
-        u8 pad13[0x19];
-    } racers[6];            // 0x30, stride 0x2C
-} RaceSummary;
-Also consider replacing cascading 'err += func() == 0' with a boolean failure accumulator:
-bool ok = D_801417B0(o) && func_800AEFBC(o) && ... && D_801417B4(o);
-*/
+    /* TODO (Clean version / Bug check): Replace raw buffer 'o' with a structured RaceSummary struct:
+    typedef struct {
+        s32 race_result_code;   // 0x00: D_800F36F0
+        u8 pad04[0x2C];
+        struct {
+            u8 pad00[0x12];
+            u8 points;          // 0x12: D_8011849C[i]
+            u8 pad13[0x19];
+        } racers[6];            // 0x30, stride 0x2C
+    } RaceSummary;
+    Also consider replacing cascading 'err += func() == 0' with a boolean failure accumulator:
+    bool ok = D_801417B0(o) && func_800AEFBC(o) && ... && D_801417B4(o);
+    */
 u8 func_8008BE7C(u8 *o) {
     s32 err;
     u8 i;
@@ -328,14 +328,13 @@ u8 func_8008BE7C(u8 *o) {
     return err == 0;
 }
 
-
-/* TODO (Clean version / Bug check): Eliminate dead branch and clean up state dispatch:
-if (D_8014C1A8 != 2) {
-    D_800F36D0[D_8014C1A8]();
-    return 0;
-}
-return 1; // Both if (D_8014C1A8) and else branches redundantly return 1
-*/
+    /* TODO (Clean version / Bug check): Eliminate dead branch and clean up state dispatch:
+    if (D_8014C1A8 != 2) {
+        D_800F36D0[D_8014C1A8]();
+        return 0;
+    }
+    return 1; // Both if (D_8014C1A8) and else branches redundantly return 1
+    */
 s32 func_8008C08C(void) {
   if (D_8014C1A8 != 2) {
     ((s32 (*)()) D_800F36D0[D_8014C1A8])();
@@ -350,16 +349,16 @@ s32 func_8008C08C(void) {
   }
 }
 
-/* TODO (Clean version / Bug check): Use struct assignment and static lookup table for points:
-static const u8 sPointsTable[] = { 10, 8, 7, 6, 5, 4 };
-...
-if (b != i) {
-    tmp = r[i];
-    r[i] = r[b];
-    r[b] = tmp;
-}
-D_8011849C[p->id] = (p->time != 0 && (u32)i < 6) ? sPointsTable[i] : 0;
-*/
+    /* TODO (Clean version / Bug check): Use struct assignment and static lookup table for points:
+    static const u8 sPointsTable[] = { 10, 8, 7, 6, 5, 4 };
+    ...
+    if (b != i) {
+        tmp = r[i];
+        r[i] = r[b];
+        r[b] = tmp;
+    }
+    D_8011849C[p->id] = (p->time != 0 && (u32)i < 6) ? sPointsTable[i] : 0;
+    */
 void func_8008C0D4(void) {
     Res8C_ r[6];
     Res8C_ tmp;
@@ -437,19 +436,19 @@ void func_8008C0D4(void) {
 
 void func_8008CDAC(void);
 u8 func_8008CF90(void);
-/* TODO (Clean version / Bug check): Factor out duplicate car freeze/reset logic into an inline helper:
-static inline void freeze_car(Car *c) {
-    if (c->flags & 3) {
-        c->yaw = 1.0f;
-        c->unk014 = 0.0f;
-        c->unk018 = 0.0f;
-        c->unk024 = 1;
-        c->unk025 = 0;
-        c->unk027 = 0;
+    /* TODO (Clean version / Bug check): Factor out duplicate car freeze/reset logic into an inline helper:
+    static inline void freeze_car(Car *c) {
+        if (c->flags & 3) {
+            c->yaw = 1.0f;
+            c->unk014 = 0.0f;
+            c->unk018 = 0.0f;
+            c->unk024 = 1;
+            c->unk025 = 0;
+            c->unk027 = 0;
+        }
     }
-}
-And define constants for countdown timer thresholds (1200ms, 2550ms, 3800ms, 5000ms).
-*/
+    And define constants for countdown timer thresholds (1200ms, 2550ms, 3800ms, 5000ms).
+    */
 void func_8008C548(void) {
     u32 now;
     u32 delta;
@@ -624,15 +623,15 @@ void func_8008CDAC(void) {
 
 
 void func_8008E80C(void);
-/* TODO (Clean version / Bug check): Hoist shared pause-exit state updates out of the switch cases:
-D_80141784(choice);
-D_801184B0 = 0;
-D_801184AF = 0;
-v = D_80141698();
-D_800F36DC = v;
-D_800F36D8 = v;
-switch (choice) { ... }
-*/
+    /* TODO (Clean version / Bug check): Hoist shared pause-exit state updates out of the switch cases:
+    D_80141784(choice);
+    D_801184B0 = 0;
+    D_801184AF = 0;
+    v = D_80141698();
+    D_800F36DC = v;
+    D_800F36D8 = v;
+    switch (choice) { ... }
+    */
 void func_8008CDFC(void) {
     s32 v;
 
@@ -677,15 +676,15 @@ void func_8008CDFC(void) {
     }
 }
 
-/* TODO (Clean version / Bug check): Define named timeout constant and simplify boolean return:
-#define RACE_TIMEOUT_MS 1799999 // 0x1B773F (~30 minutes)
-if (func_800A76D8() > RACE_TIMEOUT_MS) {
-    return 1;
-}
-if (D_800F36E8 != 0) {
-    return func_800A76D8() >= D_800F36EC;
-}
-*/
+    /* TODO (Clean version / Bug check): Define named timeout constant and simplify boolean return:
+    #define RACE_TIMEOUT_MS 1799999 // 0x1B773F (~30 minutes)
+    if (func_800A76D8() > RACE_TIMEOUT_MS) {
+        return 1;
+    }
+    if (D_800F36E8 != 0) {
+        return func_800A76D8() >= D_800F36EC;
+    }
+    */
 u8 func_8008CF90(void) {
     u8 ok = 1;
     u8 i;
@@ -719,18 +718,18 @@ void func_8008D3B8(u8 *arg0) {
     D_801184B8 = 0;
 }
 
-/* TODO (Clean version / Bug check): Express percentage calculation with named macro:
-#define CALC_PROGRESS_PCT(curr, total) (((curr) * 100) / ((total) - 1))
-D_801416A0(CALC_PROGRESS_PCT(D_801184B8, D_801184B4));
-*/
+    /* TODO (Clean version / Bug check): Express percentage calculation with named macro:
+    #define CALC_PROGRESS_PCT(curr, total) (((curr) * 100) / ((total) - 1))
+    D_801416A0(CALC_PROGRESS_PCT(D_801184B8, D_801184B4));
+    */
 void func_8008D3D4(void) {
     D_801416A0((s32) (D_801184B8 * 0x64) / (s32) (D_801184B4 - 1));
     D_801184B8 += 1;
 }
 
-/* TODO (Clean version / Bug check): Simplify range switch cases 0..6 to a bounds check:
-return (i <= 6) ? D_800F3770[i] : D_80141448;
-*/
+    /* TODO (Clean version / Bug check): Simplify range switch cases 0..6 to a bounds check:
+    return (i <= 6) ? D_800F3770[i] : D_80141448;
+    */
 s32 func_8008D460(u32 i) {
     switch (i) {
         case 0:
@@ -769,12 +768,12 @@ s32 func_8008D4B8(u32 i) {
 }
 
 
-/* TODO (Bug potential): In the loop populating D_801184C8, index 'D_801184C1' (total racer count) is used instead of 'D_801184C2' (player index):
-D_801184C8[D_801184C1].b0 = i; // Overwrites the same slot at index 'n', potentially out of bounds when n == 6!
-Likely intended:
-D_801184C8[D_801184C2].b0 = i;
-D_801184C2++;
-*/
+    /* TODO (Bug potential): In the loop populating D_801184C8, index 'D_801184C1' (total racer count) is used instead of 'D_801184C2' (player index):
+    D_801184C8[D_801184C1].b0 = i; // Overwrites the same slot at index 'n', potentially out of bounds when n == 6!
+    Likely intended:
+    D_801184C8[D_801184C2].b0 = i;
+    D_801184C2++;
+    */
 s32 func_8008D4E4(u8 *t) {
     u8 n;
     u8 i;
@@ -804,17 +803,17 @@ INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", func_8008D9A0);
 
 INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", func_8008DF18);
 
-/* TODO (Clean version / Bug check): Replace raw byte offset dereferencing with proper Vector3 and Entity structs:
-typedef struct {
-    u8 pad00[0x60];
-    struct { u8 pad00[0x84]; f32 x, y, z; } *transform; // 0x60
-    u8 *audio_emitter;                                   // 0x64
-} SoundSource;
-Vec3f diff;
-// diff.x = s1->transform->x - s2->transform->x; ...
-f32 dist = sqrtf(diff.x * diff.x + diff.y * diff.y + diff.z * diff.z);
-D_8014C10C(*s, (dist < 352.0f) ? 2 : (dist < 880.0f) ? 3 : 4, dist / (dist < 352.0f ? 352.0f : dist < 880.0f ? 880.0f : 2304.0f));
-*/
+    /* TODO (Clean version / Bug check): Replace raw byte offset dereferencing with proper Vector3 and Entity structs:
+    typedef struct {
+        u8 pad00[0x60];
+        struct { u8 pad00[0x84]; f32 x, y, z; } *transform; // 0x60
+        u8 *audio_emitter;                                   // 0x64
+    } SoundSource;
+    Vec3f diff;
+    // diff.x = s1->transform->x - s2->transform->x; ...
+    f32 dist = sqrtf(diff.x * diff.x + diff.y * diff.y + diff.z * diff.z);
+    D_8014C10C(*s, (dist < 352.0f) ? 2 : (dist < 880.0f) ? 3 : 4, dist / (dist < 352.0f ? 352.0f : dist < 880.0f ? 880.0f : 2304.0f));
+    */
 void func_8008E0BC(u8 **pair) {
     u8 *s;
     u8 *t;
@@ -864,10 +863,10 @@ void func_8008E2B0(void) {
     }
 }
 
-/* TODO (Clean version / Bug check): Negative function pointer array indexing 'fp[-2]' should be refactored:
-D_8014C130(e->id);
-D_8014C128(e->id); // fp[-2] accesses the pointer at (D_8014C130 - 2 * sizeof(void*)). Group these into an audio driver vtable.
-*/
+    /* TODO (Clean version / Bug check): Negative function pointer array indexing 'fp[-2]' should be refactored:
+    D_8014C130(e->id);
+    D_8014C128(e->id); // fp[-2] accesses the pointer at (D_8014C130 - 2 * sizeof(void*)). Group these into an audio driver vtable.
+    */
 void func_8008E310(void) {
     u32 i;
     Ent8b_ *e;
@@ -939,10 +938,10 @@ void func_8008E568(s32 arg0) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", func_8008E5B8);
 
-/* TODO (Clean version / Bug check): Remove convoluted pointer cast '(*(E10g_ * *)&D_800F3704)[i].id':
-Both E10_ and E10g_ have the id byte at offset 0. Use direct member access:
-D_8014C130(D_800F3704[i].b0);
-*/
+    /* TODO (Clean version / Bug check): Remove convoluted pointer cast '(*(E10g_ * *)&D_800F3704)[i].id':
+    Both E10_ and E10g_ have the id byte at offset 0. Use direct member access:
+    D_8014C130(D_800F3704[i].b0);
+    */
 void func_8008E700(void) {
     u8 i;
     void (**fp)(u8);

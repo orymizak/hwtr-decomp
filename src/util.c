@@ -93,4 +93,47 @@ Texture *func_8007F5C4(s32 width, s32 height) {
 
 INCLUDE_ASM("asm/nonmatchings/util", func_8007F61C);
 
-INCLUDE_ASM("asm/nonmatchings/util", func_8007FB38);
+typedef struct { u8 w; u8 h; u8 fmt; u8 pad; void *data; } Img7F_;
+/* Fills an image with one of its texels (the first one for 16-bit images). */
+void func_8007FB38(Img7F_ *img) {
+    u32 n;
+    u32 mid;
+    u32 i;
+
+    if (img == NULL || img->data == NULL) {
+        return;
+    }
+    n = img->w * img->h;
+    mid = (n + img->h) / 4;
+    switch (img->fmt) {
+        case 0: {
+            u16 *p = img->data;
+            u16 v = p[0];
+
+            for (i = 0; i < n; i++) {
+                p[i] = v;
+            }
+            break;
+        }
+        case 1: {
+            u8 *p = img->data;
+            u8 v = p[mid];
+
+            for (i = 0; i < n; i++) {
+                p[i] = v;
+            }
+            break;
+        }
+        case 2:
+            break;
+        case 3: {
+            u32 *p = img->data;
+            u32 v = p[mid];
+
+            for (i = 0; i < n; i++) {
+                p[i] = v;
+            }
+            break;
+        }
+    }
+}

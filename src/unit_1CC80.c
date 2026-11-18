@@ -58,9 +58,9 @@ void func_8007C2C8(PPool_ *pool) {
     }
 }
 
-/* TODO (Clean version):
-Estructuras locales y duplicadas creadas para func_8007C434. En C limpio deben sustituirse por los tipos estándar de libultra (Gfx, Vtx) y definiciones unificadas de partículas (Particle, ParticlePool, Vec3f, Vec4f), evitando tipos artificiales como Vtx4C4_ y Vtx3C4_ usados para copiar memoria. Se mantienen para el match.
-*/
+    /* TODO (Clean version):
+    Estructuras locales y duplicadas creadas para func_8007C434. En C limpio deben sustituirse por los tipos estándar de libultra (Gfx, Vtx) y definiciones unificadas de partículas (Particle, ParticlePool, Vec3f, Vec4f), evitando tipos artificiales como Vtx4C4_ y Vtx3C4_ usados para copiar memoria. Se mantienen para el match.
+    */
 typedef struct { u32 w0; u32 w1; } GfxWC4_;
 typedef union { GfxWC4_ words; s64 force; } GfxC4_;
 typedef struct { GfxC4_ *f0; GfxC4_ *f4; u8 p8[0x318]; } PoolC4_;
@@ -96,9 +96,9 @@ GfxC4_ *func_8007F61C(GfxC4_ *, PDefC4_ *);
 void func_800A8670(QC4_ *, f32, V3C4_);
 void func_800A8BA4(QC4_, f32 (*)[3]);
 extern PDef_ *D_800F2330[];
-/* TODO (Clean version):
-Función estática inline que duplica exactamente a func_8007C2C8 para forzar el inlining en func_8007C318. En C limpio se llamaría directamente a func_8007C2C8 o se compartiría una única función inline. Se mantiene para el match.
-*/
+    /* TODO (Clean version):
+    Función estática inline que duplica exactamente a func_8007C2C8 para forzar el inlining en func_8007C318. En C limpio se llamaría directamente a func_8007C2C8 o se compartiría una única función inline. Se mantiene para el match.
+    */
 static inline void Pool_Fix(PPool_ *pool) {
     u32 i;
     Prt70_ *e;
@@ -339,10 +339,9 @@ void func_8007C434(PoolPC4_ *pool, f32 (*m)[4]) {
     }
 }
 
-
-/* TODO (Clean version):
-Definición redundante de estructuras matemáticas y de partículas (V3Q_, Q4Q_, PrtQ_, PPoolQ_, M34Q_) locales para func_8007DE54. En C limpio deben sustituirse por tipos globales compartidos (Vec3f, Vec4f, Particle, ParticlePool, Mtx34f). Se mantienen para el match.
-*/
+    /* TODO (Clean version):
+    Definición redundante de estructuras matemáticas y de partículas (V3Q_, Q4Q_, PrtQ_, PPoolQ_, M34Q_) locales para func_8007DE54. En C limpio deben sustituirse por tipos globales compartidos (Vec3f, Vec4f, Particle, ParticlePool, Mtx34f). Se mantienen para el match.
+    */
 typedef struct { f32 x; f32 y; f32 z; } V3Q_;
 typedef struct { f32 x; f32 y; f32 z; f32 w; } Q4Q_;
 typedef struct { Q4Q_ q; f32 f10; f32 f14; f32 f18; f32 f1C; f32 f20; u8 pad24[0x1C]; V3Q_ pos; f32 vx; f32 vy; f32 vz; f32 f58; f32 f5C; PDef_ *def; s16 life; u8 flags; u8 r; u8 g; u8 b; u8 kind; u8 frames; u16 h6C; s16 h6E; } PrtQ_;
@@ -353,9 +352,9 @@ s32 rand(void);
 f32 cosf(f32);
 f32 sinf(f32);
 void func_800A83A0(Q4Q_ *, f32 (*)[3]);
-/* TODO (Clean version):
-Funciones inline locales (RotA_, RotB_, RotC_) que aplican rotaciones a matrices 3x4 en Z, Y y X. En C limpio deberían ser funciones matemáticas compartidas del motor con nombres semánticos. Se mantienen inline para el match.
-*/
+    /* TODO (Clean version):
+    Funciones inline locales (RotA_, RotB_, RotC_) que aplican rotaciones a matrices 3x4 en Z, Y y X. En C limpio deberían ser funciones matemáticas compartidas del motor con nombres semánticos. Se mantienen inline para el match.
+    */
 static inline void RotA_(M34Q_ *m, f32 a) {
     f32 c, s, u, v;
 
@@ -383,9 +382,9 @@ static inline void RotC_(M34Q_ *m, f32 a) {
     u = m->m[1][1] * c + m->m[1][2] * s; v = m->m[1][2] * c - m->m[1][1] * s; m->m[1][1] = u; m->m[1][2] = v;
     u = m->m[2][1] * c + m->m[2][2] * s; v = m->m[2][2] * c - m->m[2][1] * s; m->m[2][1] = u; m->m[2][2] = v;
 }
-/* TODO (Clean version):
-Función inline que replica la lógica de func_8007C318 para insertar partículas en la cola circular e incluye un condicional redundante (if (pool != NULL)) debido al inlining. En C limpio se reutilizaría una función unificada del pool. Se mantiene para el match.
-*/
+    /* TODO (Clean version):
+    Función inline que replica la lógica de func_8007C318 para insertar partículas en la cola circular e incluye un condicional redundante (if (pool != NULL)) debido al inlining. En C limpio se reutilizaría una función unificada del pool. Se mantiene para el match.
+    */
 static inline void PushQ_(PPoolQ_ *pool, PrtQ_ *p) {
     u32 i;
     PrtQ_ *e;

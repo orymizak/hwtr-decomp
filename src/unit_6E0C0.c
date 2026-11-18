@@ -3,13 +3,13 @@
 s32 osCreateThread(void *,s32, void *,s32, void *, s32);
 s32 osInitialize();
 s32 osStartThread(void *);
-/* TODO (Clean version):
-   D_801255A0 and D_80125750 are OSThread instances; D_80127900 and D_80143840 are thread stacks:
-   extern OSThread sIdleThread; // D_801255A0
-   extern u64 sIdleStack[];     // D_80127900
-   extern OSThread sMainThread; // D_80125750
-   extern u64 sMainStack[];     // D_80143840
-*/
+    /* TODO (Clean version):
+    D_801255A0 and D_80125750 are OSThread instances; D_80127900 and D_80143840 are thread stacks:
+    extern OSThread sIdleThread; // D_801255A0
+    extern u64 sIdleStack[];     // D_80127900
+    extern OSThread sMainThread; // D_80125750
+    extern u64 sMainStack[];     // D_80143840
+    */
 extern u8 D_801255A0;
 extern u8 D_80127900;
 void func_800CD524(void *arg);

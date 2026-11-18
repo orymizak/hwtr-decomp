@@ -1,16 +1,17 @@
 #include "common.h"
 #include "include_asm.h"
-/* TODO (Clean version): Unify fragmented partial structs into cohesive audio engine types:
-   1. Unify VoiceW_, VoiceX_, VoiceY_, VoiceZ_, VoiceG_, VoiceC_, VoiceB_, Voice9_,
-      Voice8_, Voice7_, Voice5_, Voice4_, Voice_, VoiceIB_, VoiceEB_ into a single
-      AudioVoice structure of size 0x13C.
-   2. Unify SeqChan6_, SeqChan_, SeqChan2_, SeqChan3_, SeqA_, SeqB_, SeqC_, SeqD_,
-      SeqE_, SeqF_, SeqG_, SeqH_, SeqJ_, SeqK_, SeqN_, SeqO_, SeqP_, SeqZ_, SeqE9_, SeqEnvR_
-      into a single SequenceChannel structure.
-   3. Unify SynD_, SynMB_, SynFX_, SynPV_, SynQ_, SynC_ into standard libultra ALSynth,
-      ALMainBus, ALFx, ALPVoice, and ALSynConfig types.
-*/
-/* Sequence player handle (fields still unidentified). */
+    /* TODO (Clean version): Unify fragmented partial structs into cohesive audio engine types:
+    1. Unify VoiceW_, VoiceX_, VoiceY_, VoiceZ_, VoiceG_, VoiceC_, VoiceB_, Voice9_,
+        Voice8_, Voice7_, Voice5_, Voice4_, Voice_, VoiceIB_, VoiceEB_ into a single
+        AudioVoice structure of size 0x13C.
+    2. Unify SeqChan6_, SeqChan_, SeqChan2_, SeqChan3_, SeqA_, SeqB_, SeqC_, SeqD_,
+        SeqE_, SeqF_, SeqG_, SeqH_, SeqJ_, SeqK_, SeqN_, SeqO_, SeqP_, SeqZ_, SeqE9_, SeqEnvR_
+        into a single SequenceChannel structure.
+    3. Unify SynD_, SynMB_, SynFX_, SynPV_, SynQ_, SynC_ into standard libultra ALSynth,
+        ALMainBus, ALFx, ALPVoice, and ALSynConfig types.
+    */
+
+    /* Sequence player handle (fields still unidentified). */
 typedef struct { u8 p0[4]; s32 unk4; u8 p8[8]; s32 unk10; } SeqPl6_;
 /* Sequence channel as seen by the command handlers (fields still unidentified). */
 typedef struct { u8 p0[0x8]; s32 unk8; u8 pC[0x14]; f32 unk20; f32 unk24; u8 p28[0xC]; s32 unk34; s32 unk38; u8 p3C[0x4]; s32 unk40; s32 unk44; u8 p48[0x20]; f32 unk68; f32 unk6C; f32 unk70; s32 unk74; s32 unk78; u8 p7C[0x8]; s32 unk84; u8 p88[0xC]; s32 unk94; u8 p98[0x12]; u16 unkAA; s16 unkAC; u8 pAE[0x4]; s16 unkB2; s16 unkB4; u8 unkB6; u8 unkB7; u8 unkB8; u8 unkB9; u8 unkBA; u8 pBB[0x1]; u8 unkBC; u8 unkBD; u8 pBE[0xB]; u8 unkC9; u8 unkCA; u8 pCB[0x3]; u8 unkCE; u8 unkCF; u8 unkD0; s8 unkD1; u8 unkD2; u8 unkD3; u8 unkD4; u8 unkD5; u8 unkD6; u8 unkD7; u8 unkD8; u8 unkD9; u8 unkDA; u8 pDB[0x1]; f32 unkDC; } SeqChan6_;
@@ -129,12 +130,13 @@ void func_800D4920(void *);
 void func_800D4970(s32, void *);
 void func_800D242C(void);
 s32 func_800CEBCC(void);
-/* TODO (Clean version): audioDriverInit(AudCfg *cfg):
-   Initializes sound driver voice channels, sequence players, and message queue.
-   - PAL (50Hz) vs NTSC (60Hz) tick interval: 1,000,000 / framerate (microseconds per tick).
-   - Allocates voice structures (count * sizeof(AudioVoice), where sizeof(AudioVoice) == 0x13C).
-   - Initializes ring buffer D_80127980 for asynchronous audio event dispatch.
-*/
+
+    /* TODO (Clean version): audioDriverInit(AudCfg *cfg):
+    Initializes sound driver voice channels, sequence players, and message queue.
+    - PAL (50Hz) vs NTSC (60Hz) tick interval: 1,000,000 / framerate (microseconds per tick).
+    - Allocates voice structures (count * sizeof(AudioVoice), where sizeof(AudioVoice) == 0x13C).
+    - Initializes ring buffer D_80127980 for asynchronous audio event dispatch.
+    */
 void func_800CDB5C(AudCfgB_ *c) {
     s32 i;
     AudMsgB_ msg;
@@ -232,14 +234,14 @@ s32 func_800CE090(s32 id) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CE110);
 
-/* TODO (Clean version): Voice fade-out / release helper:
-   v->unk78 != NULL distinguishes sound effect voices (SFX) from music sequencer voices (BGM).
-   flags & 1 targets SFX voices, flags & 2 targets BGM voices:
-       u32 isSfx = (v->bank != NULL);
-       if (!((isSfx && (flags & VOICE_FLAG_SFX)) || (!isSfx && (flags & VOICE_FLAG_BGM)))) {
-           continue;
-       }
-*/
+    /* TODO (Clean version): Voice fade-out / release helper:
+    v->unk78 != NULL distinguishes sound effect voices (SFX) from music sequencer voices (BGM).
+    flags & 1 targets SFX voices, flags & 2 targets BGM voices:
+        u32 isSfx = (v->bank != NULL);
+        if (!((isSfx && (flags & VOICE_FLAG_SFX)) || (!isSfx && (flags & VOICE_FLAG_BGM)))) {
+            continue;
+        }
+    */
 void func_800CE228(s32 flags, s32 val) {
     s32 i;
     s32 rate;
@@ -852,12 +854,12 @@ f32 func_800CFA04(SeqChan6_ *c) {
     return c->unkD1;
 }
 
-/* TODO (Clean version / Bug check):
-   The original code is missing an explicit return statement for the float return type.
-   In the MIPS 'o32' ABI, the result of the float multiplication is computed directly into $f0,
-   which happens to be the float return register, so $f0 was returned by caller convention:
-       return c->unk68 = sinf(t * c->unkDC) * c->unk20;
-*/
+    /* TODO (Clean version / Bug check):
+    The original code is missing an explicit return statement for the float return type.
+    In the MIPS 'o32' ABI, the result of the float multiplication is computed directly into $f0,
+    which happens to be the float return register, so $f0 was returned by caller convention:
+        return c->unk68 = sinf(t * c->unkDC) * c->unk20;
+    */
 f32 func_800CFA5C(SeqChan6_ *c) {
     s32 t = c->unkAA - c->unkB6;
 
@@ -897,18 +899,18 @@ void func_800CFAC0(SeqP_ *s) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CFB84);
 
-/* TODO (Clean version):
-   Computes 2.0f^x (exp2f(x)) using degree-6 Taylor series polynomial expansion:
-       2^x = exp(x * ln(2)) = 1 + c1*x + c2*x^2 + c3*x^3 + c4*x^4 + c5*x^5 + c6*x^6
-   where c_k = (ln 2)^k / k!:
-       c1 = 0.693147180559945   (ln 2)
-       c2 = 0.240226506959101   ((ln 2)^2 / 2)
-       c3 = 0.055504108664822   ((ln 2)^3 / 6)
-       c4 = 0.009618129107628   ((ln 2)^4 / 24)
-       c5 = 0.001333355814643   ((ln 2)^5 / 120)
-       c6 = 0.000154035303934   ((ln 2)^6 / 720)
-   Negative values evaluate 1.0 / exp2(abs(x)). Unused variables x3, x5, x6 can be removed.
-*/
+    /* TODO (Clean version):
+    Computes 2.0f^x (exp2f(x)) using degree-6 Taylor series polynomial expansion:
+        2^x = exp(x * ln(2)) = 1 + c1*x + c2*x^2 + c3*x^3 + c4*x^4 + c5*x^5 + c6*x^6
+    where c_k = (ln 2)^k / k!:
+        c1 = 0.693147180559945   (ln 2)
+        c2 = 0.240226506959101   ((ln 2)^2 / 2)
+        c3 = 0.055504108664822   ((ln 2)^3 / 6)
+        c4 = 0.009618129107628   ((ln 2)^4 / 24)
+        c5 = 0.001333355814643   ((ln 2)^5 / 120)
+        c6 = 0.000154035303934   ((ln 2)^6 / 720)
+    Negative values evaluate 1.0 / exp2(abs(x)). Unused variables x3, x5, x6 can be removed.
+    */
 f32 func_800CFC98(f32 x) {
     f32 x2;
     f32 x4;
@@ -934,20 +936,20 @@ f32 func_800CFC98(f32 x) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CFE2C);
 
-/* TODO (Clean version):
-   Implements a 32-bit Linear Feedback Shift Register (LFSR) pseudo-random number generator,
-   stepped 8 iterations per sample with polynomial taps at bits 30 and 27 (mask 0x48000000),
-   returning (rand / 2^32) * range:
-       s32 audioRandRange(s32 range) {
-           for (s32 i = 0; i < 8; i++) {
-               s32 next = lfsrState * 2;
-               s32 tap = lfsrState & 0x48000000;
-               s32 feedback = (tap == 0x48000000) || (tap == 0x08000000);
-               lfsrState = feedback ? (next | 1) : next;
-           }
-           return (s32)((f32)range * ((f32)(u32)lfsrState / 4294967296.0f));
-       }
-*/
+    /* TODO (Clean version):
+    Implements a 32-bit Linear Feedback Shift Register (LFSR) pseudo-random number generator,
+    stepped 8 iterations per sample with polynomial taps at bits 30 and 27 (mask 0x48000000),
+    returning (rand / 2^32) * range:
+        s32 audioRandRange(s32 range) {
+            for (s32 i = 0; i < 8; i++) {
+                s32 next = lfsrState * 2;
+                s32 tap = lfsrState & 0x48000000;
+                s32 feedback = (tap == 0x48000000) || (tap == 0x08000000);
+                lfsrState = feedback ? (next | 1) : next;
+            }
+            return (s32)((f32)range * ((f32)(u32)lfsrState / 4294967296.0f));
+        }
+    */
 s32 func_800CFFC4(s32 range) {
     s32 next;
     s32 tap;
@@ -1427,19 +1429,20 @@ void func_800D2AAC(void *, s32, void *);
 s32 func_800D1568(s32 arg0);
 void func_800D3EB0(void);
 void func_800D2620(void);
-/* TODO (Clean version):
-   Standard libultra alSynNew(ALSynth *s, ALSynConfig *c):
-       void alSynNew(ALSynth *s, ALSynConfig *c) {
-           s->head = NULL;
-           s->maxPVoices = c->maxPVoices;
-           s->curSamples = 0;
-           s->outputRate = c->outputRate;
-           s->dramAlignSize = 0xB8;
-           s->mainBus = (ALMainBus *)alHeapDBAlloc(0, 0, c->heap, 1, sizeof(ALMainBus));
-           ...
-       }
-   Replace SynD_, SynMB_, SynFX_, SynPV_, SynC_ with standard libultra ALSynth types.
-*/
+
+    /* TODO (Clean version):
+    Standard libultra alSynNew(ALSynth *s, ALSynConfig *c):
+        void alSynNew(ALSynth *s, ALSynConfig *c) {
+            s->head = NULL;
+            s->maxPVoices = c->maxPVoices;
+            s->curSamples = 0;
+            s->outputRate = c->outputRate;
+            s->dramAlignSize = 0xB8;
+            s->mainBus = (ALMainBus *)alHeapDBAlloc(0, 0, c->heap, 1, sizeof(ALMainBus));
+            ...
+        }
+    Replace SynD_, SynMB_, SynFX_, SynPV_, SynC_ with standard libultra ALSynth types.
+    */
 void func_800D12F8(SynC_ *c) {
     void *hp = c->unk14;
     s32 i;

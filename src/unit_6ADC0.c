@@ -27,7 +27,7 @@ void func_800CA210(void) {
     D_80124D61 = 1;
 }
 
-/* TODO (Bug check): D_80124D62 is set here and cleared in func_800CA1C0, but is never checked in func_800CA230 or anywhere else in this unit. Check if there was a missing state condition (e.g. returning 4). */
+    /* TODO (Bug check): D_80124D62 is set here and cleared in func_800CA1C0, but is never checked in func_800CA230 or anywhere else in this unit. Check if there was a missing state condition (e.g. returning 4). */
 void func_800CA220(void) {
     D_80124D62 = 1;
 }

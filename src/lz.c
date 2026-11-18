@@ -73,22 +73,22 @@ s32 LZ_Decompress(u8 *src, u8 *dst) {
     return hdr->size;
 }
 
-/*
- * El C de esta función aún difiere en la asignación de registros: el original usa $a2 como
- * temporal porque mantiene $a1 ocupado. Equivale a:
- *
- * u8 *LZ_AdvanceBits(register int n, register u8 *p) {
- *     D_8010C400 += n;
- *     while (D_8010C400 >= 8) {
- *         D_8010C400 -= 8;
- *         if (D_8010C400 >= 0x10) {
- *             while (1);
- *         }
- *         p++;
- *     }
- *     return p;
- * }
- */
+    /* TODO
+    * El C de esta función aún difiere en la asignación de registros: el original usa $a2 como
+    * temporal porque mantiene $a1 ocupado. Equivale a:
+    *
+    * u8 *LZ_AdvanceBits(register int n, register u8 *p) {
+    *     D_8010C400 += n;
+    *     while (D_8010C400 >= 8) {
+    *         D_8010C400 -= 8;
+    *         if (D_8010C400 >= 0x10) {
+    *             while (1);
+    *         }
+    *         p++;
+    *     }
+    *     return p;
+    * }
+    */
 __asm__(
     ".text\n"
     ".set noreorder\n"

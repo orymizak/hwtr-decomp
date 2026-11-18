@@ -26,7 +26,7 @@ s32 func_800AEF80(void) {
 }
 
 
-/* TODO (Clean version): func_800AEFBC is identical to func_800AEF80. Both clear D_8011F6A0, D_8011F6A4 and zero 0x1000 bytes in D_8011F6B0. */
+    /* TODO (Clean version): func_800AEFBC is identical to func_800AEF80. Both clear D_8011F6A0, D_8011F6A4 and zero 0x1000 bytes in D_8011F6B0. */
 s32 func_800AEFBC(void) {
     D_8011F6A0 = 0;
     D_8011F6A4 = 0;

@@ -14,8 +14,6 @@ typedef struct { u8 pad0[0x20]; ALDelay_ *delay; } ALFx_;
 extern void _init_lpfilter(LP_ *);
 extern u8 *D_800FB5B0;
 
-
-
 typedef struct FilterP_ { struct FilterP_ *source; Acmd_ *(*handler)(void *, s16 *, s32, s32, Acmd_ *); s32 (*setParam)(void *, s32, void *); u8 pad[8]; } FilterP_;
 typedef struct { FilterP_ filter; s16 *base; s16 *input; u32 length; ALDelay_ *delay; u8 section_count; void *paramHdl; } FxP_;
 Acmd_ *_saveBuffer(Fx_ *r, s16 *curr_ptr, s32 buff, s32 count, Acmd_ *p);
