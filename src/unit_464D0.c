@@ -10,11 +10,11 @@ typedef struct { u8 p0[0x54]; u16 *p54; } P758a5_;
 extern V3a5_ D_80100A00;
 extern u32 (*svcRandRange)(s32);
 void func_800AC880(f32 *, f32, f32, f32, f32, V3a5_);
-void func_8009A4E4(void *);
+void Coll_Register(void *);
 void func_800ACDC8(void *, f32);
 void func_8007A9E0(void *);
 
-s32 func_8009A770(s32 *);
+s32 Coll_Unregister(s32 *);
 extern s32 D_8011E870;
 
 s32 func_800A58D0(void) {
@@ -41,7 +41,7 @@ s32 func_800A5950(void) {
 
     for (i = 0; i < 8; i++, e++) {
         if (e->w0 == 1) {
-            func_8009A770((s32 *)((u8 *)e + 8));
+            Coll_Unregister((s32 *)((u8 *)e + 8));
             e->w0 = 0;
         }
     }
@@ -204,7 +204,7 @@ void func_800A5AB0(Car *c) {
         p->f24 = e->h * 0.5f;
         p->f28 = e->h * 0.5f;
         p->f60 = e->h * 0.5f;
-        func_8009A4E4(p->f8);
+        Coll_Register(p->f8);
     }
 }
 
@@ -214,7 +214,7 @@ void func_800A6630(void *arg0) {
 
     for (i = 0; i < 8; e++, i++) {
         if (e->w0 == 1 && ((u8 *)e)[4] == *(u8 *)arg0) {
-            func_8009A770((s32 *)((u8 *)e + 8));
+            Coll_Unregister((s32 *)((u8 *)e + 8));
             e->w0 = 0;
         }
     }

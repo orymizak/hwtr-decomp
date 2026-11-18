@@ -43,8 +43,8 @@ s32 Race_GetPhase(void);
 void Car_GetSpeedAndGrip(u8, u8 *, u8 *);
 extern u8 D_800F38A0[];
 extern s32 (*svcTimeGetMillis)();
-s32 func_80099434(void *);
-s32 func_8009951C(void *);
+s32 Coll_AddCar(void *);
+s32 Coll_RemoveById(void *);
 
 extern s32 D_8011B318;
 
@@ -560,11 +560,11 @@ void Car_SetState(u8 i, s32 state) {
     Car *car = &gCars[i];
 
     if (car->state == 2) {
-        func_8009951C(car);
+        Coll_RemoveById(car);
     }
     car->state = state;
     if (state == 2) {
-        func_80099434(car);
+        Coll_AddCar(car);
     }
 }
 

@@ -46,7 +46,7 @@ void func_8009013C(Vec3f_, Vec3f_, Vec3f_, Vec3f_ *, f32, f32, f32, f32);
 void func_800A4198(u8, Vec3f_ *);
 u8 func_800A4EE8(u8, Vec3f_ *, Vec3f_ *);
 Vec3f_ func_800A9068(f32 t, Vec3f_ a, Vec3f_ b);
-s32 func_800A58A4(s32 arg0);
+s32 Coll_GetSpawn(s32 arg0);
 extern u8 (*svcTrackGetCameraCount)(void);
 extern void (*svcTrackGetCamera)(u8, Vec3f_ *, void *, s32 *, s32 *);
 extern u8 (*svcRandRange)(s32);
@@ -54,7 +54,7 @@ extern u8 D_80118621;
 extern s32 *D_80118624;
 s32 func_80096100(void);
 extern u8 D_80118558[];
-s32 func_800A5894(void);
+s32 Coll_GetSpawnCount(void);
 extern u8 D_801185AC;
 extern u8 D_801185A4;
 extern u8 D_801185A2;
@@ -291,7 +291,7 @@ void func_8008EA6C(u32 dt) {
             { (t).x = ( f).x * ( ((olen) < ( dist) ? (olen) : ( dist))); (t).y = ( f).y * ( ((olen) < ( dist) ? (olen) : ( dist))); (t).z = ( f).z * ( ((olen) < ( dist) ? (olen) : ( dist))); };
             { (eye).x = ( pos).x - ( t).x; (eye).y = ( pos).y - ( t).y; (eye).z = ( pos).z - ( t).z; };
             if ((*cam).b60 != 0) {
-                sp = (f32 *)func_800A58A4(func_800A5894() - 1);
+                sp = (f32 *)Coll_GetSpawn(Coll_GetSpawnCount() - 1);
                 s = (f32)(5000 - (*cam).b60) / 5000.0f;
                 s = (sinf((s - 0.5f) * 3.14159f) + 1.0f) * 0.5f;
                 tmp = func_800A9068(s, *(Vec3f_ *)&sp[0], eye);
@@ -535,7 +535,7 @@ void func_800908A0(void) {
 }
 
 s32 func_800908A8(void) {
-    s32 n = func_800A5894();
+    s32 n = Coll_GetSpawnCount();
 
     if (n == 0) {
         return 0;

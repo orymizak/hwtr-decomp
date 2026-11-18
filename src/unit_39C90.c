@@ -2,17 +2,17 @@
 #include "ultra64.h"
 #include "include_asm.h"
 #include "car.h"
-extern s32 D_8011B330;
+extern s32 gCollFrame;
 extern s32 D_8011C820;
 extern s32 D_8011C824;
 extern s32 D_8011C828;
-extern u8 D_8011C7A0[];
+extern u8 gCollIdUsed[];
 extern void (*D_801416F8)(void *);
 s32 func_8008182C(void);
-u8 func_80099090(u8 *);
+u8 Coll_LoadLevel(u8 *);
 void func_800C9AF0(s32 n, s32 b);
-extern s32 D_8011B33C;
-extern s32 D_8011B344;
+extern s32 gCollMovers;
+extern s32 gCollCars;
 extern s32 D_8011B348;
 extern s32 D_8011B34C;
 void func_800C9B40(void);
@@ -22,13 +22,13 @@ typedef struct { u8 pad[0x18]; V12_ v[6]; V16_ q[1]; } Cam41_;
 typedef struct Nd4_ { s32 a; struct Nd4_ *prev; struct Nd4_ *next; u16 cnt; } Nd4_;
 typedef struct { u8 pad[0x4C]; void *a; void *b; void *c; u8 pad2[0xC]; s32 id; } Obj95_;
 typedef struct Lnk95_ { Obj95_ *obj; s32 x; struct Lnk95_ *next; } Lnk95_;
-extern Lnk95_ *D_8011B338;
-s32 func_8009A770(s32 *);
+extern Lnk95_ *gCollAll;
+s32 Coll_Unregister(s32 *);
 typedef struct { u8 pad[0x110]; u8 b110; } Obj60_;
 typedef struct { u8 pad[8]; s32 w8; } Obj70_;
 typedef struct { u8 pad[0x60]; Obj60_ *p60; u8 pad2[0xC]; Obj70_ *p70; } ObjA2_;
 typedef struct LnkA2_ { ObjA2_ *obj; s32 x; struct LnkA2_ *next; } LnkA2_;
-extern LnkA2_ *D_8011B340;
+extern LnkA2_ *gCollRacers;
 void func_800A25EC(ObjA2_ *);
 typedef struct { u8 pad[0x40]; void *a; void *b; void *c; } Res40_;
 void Memory_Free(void *);
@@ -90,74 +90,74 @@ void func_800A780C(u8, u8, s32);
 void Car_Boost(u8 *);
 void func_8009751C(u8 *, u16, u8);
 void func_800C9B84(u16);
-void func_800A3978(RObj_ *o, u16 idx, s32 arg2);
-u16 func_8009A9A0(Vec3f pos);
-void func_8009A4E4(RObj_ *o);
-void func_80099C94(u8 *n, u8 *o);
+void Coll_ApplyRoomFlags(RObj_ *o, u16 idx, s32 arg2);
+u16 Coll_FindRoom(Vec3f pos);
+void Coll_Register(RObj_ *o);
+void CollShape_InitPoint(u8 *n, u8 *o);
 void *Memory_Alloc(s32 size);
-void func_800996B8(u8 *, u8 *);
+void CollShape_InitCar(u8 *, u8 *);
 
-extern void *D_8011E860;
-extern Level_ *D_8011B334;
+extern void *gCollNodeFree;
+extern Level_ *gCollLevel;
 
-INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_80099090);
+INCLUDE_ASM("asm/nonmatchings/unit_39C90", Coll_LoadLevel);
 
-s32 func_8009930C(u8 *o) {
+s32 Coll_Init(u8 *o) {
     s32 v = *(s32 *)(o + 0x1C);
 
-    D_8011B330 = 100;
+    gCollFrame = 100;
     D_8011C820 = v;
     D_8011C824 = func_8008182C();
     D_8011C828 = o[0x1A];
-    func_800A3CD8();
-    if (func_80099090(o) == 0) {
+    CollList_InitPool();
+    if (Coll_LoadLevel(o) == 0) {
         return 0;
     }
-    D_801416F8(D_8011B334);
-    func_800C9AF0(D_8011B334->x10, D_8011B334->xD0);
-    memset(D_8011C7A0, 0, 0x80);
+    D_801416F8(gCollLevel);
+    func_800C9AF0(gCollLevel->x10, gCollLevel->xD0);
+    memset(gCollIdUsed, 0, 0x80);
     return 1;
 }
 
 
-void func_800A3D64(Nd3_ **list);
-s32 func_800993B8(void) {
+void CollList_Clear(Nd3_ **list);
+s32 Coll_Shutdown(void) {
     func_800C9B40();
-    func_800A3D64((Nd3_ **)&(*(s32 *)&D_8011B338));
-    func_800A3D64((Nd3_ **)&D_8011B33C);
-    func_800A3D64((Nd3_ **)&(*(s32 *)&D_8011B340));
-    func_800A3D64((Nd3_ **)&D_8011B344);
-    func_800A3D64((Nd3_ **)&D_8011B348);
-    func_800A3D64((Nd3_ **)&D_8011B34C);
-    Memory_Free(D_8011B334);
-    D_8011B334 = NULL;
+    CollList_Clear((Nd3_ **)&(*(s32 *)&gCollAll));
+    CollList_Clear((Nd3_ **)&gCollMovers);
+    CollList_Clear((Nd3_ **)&(*(s32 *)&gCollRacers));
+    CollList_Clear((Nd3_ **)&gCollCars);
+    CollList_Clear((Nd3_ **)&D_8011B348);
+    CollList_Clear((Nd3_ **)&D_8011B34C);
+    Memory_Free(gCollLevel);
+    gCollLevel = NULL;
     return 1;
 }
 
 
-void func_80099434(u8 *o) {
+void Coll_AddCar(u8 *o) {
     u8 *n = Memory_Alloc(0x88);
     u8 i;
 
     memset(n, 0, 0x88);
     if (*(s32 *)(o + 0x6D8) == 2) {
-        func_800996B8(n + 0xC, o);
+        CollShape_InitCar(n + 0xC, o);
         *(s32 *)(n + 0x5C) = 3;
     } else if (*(s32 *)(o + 0x6D8) == 1) {
-        func_80099C94(n + 0xC, o);
+        CollShape_InitPoint(n + 0xC, o);
         *(s32 *)(n + 0x5C) = 4;
     }
     *(u8 **)(n + 0x60) = o + 0x2C;
     *(u8 **)(n + 0x64) = o;
-    func_8009A4E4(n);
+    Coll_Register(n);
     for (i = 0; i < n[0x48]; i++) {
-        func_800A3978(n, (*(u16 **)(n + 0x54))[i], 1);
+        Coll_ApplyRoomFlags(n, (*(u16 **)(n + 0x54))[i], 1);
     }
     *(u8 **)(o + 0x758) = n;
 }
 
-void func_8009951C(s32 id) {
-    Lnk95_ *n = D_8011B338;
+void Coll_RemoveById(s32 id) {
+    Lnk95_ *n = gCollAll;
     Obj95_ *o;
 
     while (n != NULL) {
@@ -168,7 +168,7 @@ void func_8009951C(s32 id) {
         n = n->next;
     }
     if (n != NULL) {
-        func_8009A770((s32 *)o);
+        Coll_Unregister((s32 *)o);
         Memory_Free(o->a);
         Memory_Free(o->b);
         Memory_Free(o->c);
@@ -177,9 +177,9 @@ void func_8009951C(s32 id) {
 }
 
 
-void func_800A3DB8(Nd4_ **list, s32 key);
-void func_800A3E30(Nd4_ **list, s32 key);
-void func_80099594(u8 *obj, s32 room) {
+void CollList_Add(Nd4_ **list, s32 key);
+void CollList_Remove(Nd4_ **list, s32 key);
+void Coll_SetCarRoom(u8 *obj, s32 room) {
     RObj_ *o;
     u8 i;
     u16 k;
@@ -187,20 +187,20 @@ void func_80099594(u8 *obj, s32 room) {
     o = *(RObj_ **)(obj + 0x758);
     for (i = 0; i < o->nRooms; i++) {
         k = o->rooms[i];
-        func_800A3E30(&D_8011B334->rooms[k].list, (s32)o);
-        func_800A3E30(&o->list, k);
+        CollList_Remove(&gCollLevel->rooms[k].list, (s32)o);
+        CollList_Remove(&o->list, k);
     }
     for (i = 0; i < o->nRooms; i++) {
         o->rooms[i] = room;
-        func_800A3DB8(&D_8011B334->rooms[room].list, (s32)o);
-        func_800A3DB8(&o->list, room);
+        CollList_Add(&gCollLevel->rooms[room].list, (s32)o);
+        CollList_Add(&o->list, room);
     }
-    func_800A3978(o, room, 1);
+    Coll_ApplyRoomFlags(o, room, 1);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_800996B8);
+INCLUDE_ASM("asm/nonmatchings/unit_39C90", CollShape_InitCar);
 
-void func_80099C94(u8 *n, u8 *o) {
+void CollShape_InitPoint(u8 *n, u8 *o) {
     s32 zero[3];
     Vec3f v;
     Vec3f p;
@@ -227,14 +227,14 @@ void func_80099C94(u8 *n, u8 *o) {
     p.x = *(f32 *)(o + 0x98) + *(f32 *)(o + 0x8C);
     p.y = *(f32 *)(o + 0x9C) + *(f32 *)(o + 0x90);
     p.z = *(f32 *)(o + 0xA0) + *(f32 *)(o + 0x94);
-    id = func_8009A9A0(p);
+    id = Coll_FindRoom(p);
     for (i = 0; i < n[0x3C]; i++) {
         (*(s16 **)(n + 0x48))[i] = id;
     }
     *(f32 *)(n + 0x4C) = sqrtf(*(f32 *)(n + 0xC) * *(f32 *)(n + 0xC) + *(f32 *)(n + 0x10) * *(f32 *)(n + 0x10) + *(f32 *)(n + 0x14) * *(f32 *)(n + 0x14));
 }
 
-void func_80099E78(u8 *n, Vec3f size, Vec3f pos, f32 *rot, u8 box) {
+void CollShape_InitBox(u8 *n, Vec3f size, Vec3f pos, f32 *rot, u8 box) {
     f32 r[3][4];
     f32 m[3][4];
     Vec3f v;
@@ -311,7 +311,7 @@ void func_80099E78(u8 *n, Vec3f size, Vec3f pos, f32 *rot, u8 box) {
         p.y = r[1][0] * x + r[1][1] * y + r[1][2] * z + r[1][3];
         p.z = r[2][0] * x + r[2][1] * y + r[2][2] * z + r[2][3];
         (*(Vec3f **)(n + 0x44))[i] = p;
-        (*(s16 **)(n + 0x48))[i] = func_8009A9A0(p);
+        (*(s16 **)(n + 0x48))[i] = Coll_FindRoom(p);
     }
     *(Vec3f *)(n + 0x0) = pos;
     ((f32 *)(n + 0x18))[0] = rot[0];
@@ -326,7 +326,7 @@ void func_80099E78(u8 *n, Vec3f size, Vec3f pos, f32 *rot, u8 box) {
     *(f32 *)(n + 0x4C) = sqrtf(*(f32 *)(n + 0xC) * *(f32 *)(n + 0xC) + *(f32 *)(n + 0x10) * *(f32 *)(n + 0x10) + *(f32 *)(n + 0x14) * *(f32 *)(n + 0x14));
 }
 
-void func_8009A488(Res40_ *r) {
+void CollShape_Free(Res40_ *r) {
     if (r->a != NULL) {
         Memory_Free(r->a);
     }
@@ -339,8 +339,8 @@ void func_8009A488(Res40_ *r) {
 }
 
 
-void func_800A3DB8(Nd4_ **list, s32 key);
-void func_8009A4E4(RObj_ *o) {
+void CollList_Add(Nd4_ **list, s32 key);
+void Coll_Register(RObj_ *o) {
     u32 i;
     u16 k;
     Room_ *r;
@@ -350,33 +350,33 @@ void func_8009A4E4(RObj_ *o) {
 
     for (i = 0; i < o->nRooms; i++) {
         k = o->rooms[i];
-        func_800A3DB8(&D_8011B334->rooms[k].list, (s32)o);
-        func_800A3DB8(&o->list, k);
+        CollList_Add(&gCollLevel->rooms[k].list, (s32)o);
+        CollList_Add(&o->list, k);
     }
     if (o->type == 4) {
-        r = &D_8011B334->rooms[o->rooms[0]];
-        pt = &D_8011B334->portals[r->firstPortal];
+        r = &gCollLevel->rooms[o->rooms[0]];
+        pt = &gCollLevel->portals[r->firstPortal];
         for (i = 0; i < r->nPortals; i++, pt++) {
             if (pt->flag == 0) {
-                ((void (*)(void *, void *, u16))func_800A3DB8)(&D_8011B334->rooms[pt->to].list, o, pt->to);
+                ((void (*)(void *, void *, u16))CollList_Add)(&gCollLevel->rooms[pt->to].list, o, pt->to);
             }
         }
     }
-    func_800A3DB8((Nd4_ **)&D_8011B338, (s32)o);
+    CollList_Add((Nd4_ **)&gCollAll, (s32)o);
     if ((o->type != 0) & (o->type != 5)) {
-        func_800A3DB8((Nd4_ **)&D_8011B33C, (s32)o);
+        CollList_Add((Nd4_ **)&gCollMovers, (s32)o);
     }
     if (o->type == 3) {
-        func_800A3DB8((Nd4_ **)&D_8011B340, (s32)o);
+        CollList_Add((Nd4_ **)&gCollRacers, (s32)o);
     }
     if (o->type == 3 || o->type == 4) {
-        func_800A3DB8((Nd4_ **)&D_8011B344, (s32)o);
+        CollList_Add((Nd4_ **)&gCollCars, (s32)o);
     }
     if (((o->type == 1) | (o->type == 3)) || o->type == 6) {
-        func_800A3DB8((Nd4_ **)&D_8011B348, (s32)o);
+        CollList_Add((Nd4_ **)&D_8011B348, (s32)o);
     }
     if (o->type == 4) {
-        func_800A3DB8((Nd4_ **)&D_8011B34C, (s32)o);
+        CollList_Add((Nd4_ **)&D_8011B34C, (s32)o);
     }
     if ((o->type == 0) | (o->type == 5)) {
         lo = 0x20;
@@ -386,17 +386,17 @@ void func_8009A4E4(RObj_ *o) {
         hi = 0x20;
     }
     for (i = lo; i < hi; i++) {
-        if (D_8011C7A0[i] == 0) {
+        if (gCollIdUsed[i] == 0) {
             o->id = i;
-            D_8011C7A0[i] = 1;
+            gCollIdUsed[i] = 1;
             break;
         }
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_8009A770);
+INCLUDE_ASM("asm/nonmatchings/unit_39C90", Coll_Unregister);
 
-u16 func_8009A9A0(Vec3f pos) {
+u16 Coll_FindRoom(Vec3f pos) {
     Vec3f p;
     Vec3f d;
     PlF_ pl;
@@ -412,8 +412,8 @@ u16 func_8009A9A0(Vec3f pos) {
     best = -60000.0f;
     bi = 0;
     m = 0.0f;
-    w = D_8011B334->rooms;
-    for (i = 0; i < D_8011B334->nRooms; w++, i++) {
+    w = gCollLevel->rooms;
+    for (i = 0; i < gCollLevel->nRooms; w++, i++) {
         if (!(w->flags & 0x800)) {
             p.x = w->x << 8;
             p.y = w->y << 8;
@@ -421,7 +421,7 @@ u16 func_8009A9A0(Vec3f pos) {
             d.x = pos.x - p.x;
             d.y = pos.y - p.y;
             d.z = pos.z - p.z;
-            l = &D_8011B334->portals[w->firstPortal];
+            l = &gCollLevel->portals[w->firstPortal];
             for (j = 0; j < w->nPortals; l++, j++) {
                 pl.a = l->nx / 4096.0f;
                 pl.b = l->ny / 4096.0f;
@@ -477,19 +477,19 @@ void func_8009DBF8(void);
 void func_8009EC8C(void);
 void func_8009F7D4(void);
 void func_800A0C44(void);
-void func_8009D574(void);
-extern NdCD8_ D_8011C860[];
-void func_800A3CD8(void);
-extern u8 D_800F38B0[][7];
+void Coll_Solve(void);
+extern NdCD8_ gCollNodePool[];
+void CollList_InitPool(void);
+extern u8 gCollTypeMask[][7];
 void func_8008AA9C(s32, s32);
-void func_8009B56C(void);
-extern u8 D_8011B7A0[][128];
+void Coll_BroadPhase(void);
+extern u8 gCollSepCache[][128];
 extern f32 D_8011B760[];
-u8 func_8009BAF0(BoxC7_ *, BoxC7_ *);
-extern u16 D_8011B350;
-extern EntAB_ D_8011B358[];
-extern u16 D_8011B558;
-extern PairAB_ D_8011B560[];
+u8 CollBox_FindSeparatingAxis(BoxC7_ *, BoxC7_ *);
+extern u16 gCollContactCount;
+extern EntAB_ gCollContacts[];
+extern u16 gCollPairCount;
+extern PairAB_ gCollPairs[];
 extern u8 D_800F38E4[];
 extern void (*svcFxCarScrape)(EntAB_ *, f32);
 void func_8009B0AC(void);
@@ -505,7 +505,7 @@ void func_80098E84(PairAB_ *, s32);
 void func_800A6850(PairAB_ *, s32);
 void func_800ADE1C(PairAB_ *);
 void func_800AEFF8(void);
-void func_8009ABC8(void) {
+void Coll_Update(void) {
     u32 i;
     EntAB_ *e;
     PairAB_ *pr;
@@ -519,14 +519,14 @@ void func_8009ABC8(void) {
     f32 f;
     f32 r;
 
-    D_8011B558 = 0;
-    D_8011B350 = 0;
-    D_8011B330++;
+    gCollPairCount = 0;
+    gCollContactCount = 0;
+    gCollFrame++;
     func_8009B0AC();
-    func_8009B56C();
-    func_8009D574();
-    for (i = 0, e = D_8011B358; i < D_8011B350; e++, i++) {
-        changed = e->obj->frame != D_8011B330;
+    Coll_BroadPhase();
+    Coll_Solve();
+    for (i = 0, e = gCollContacts; i < gCollContactCount; e++, i++) {
+        changed = e->obj->frame != gCollFrame;
         if (changed) {
             RaceAudio_OnContact(e);
         }
@@ -553,7 +553,7 @@ void func_8009ABC8(void) {
             }
             pl->w770 = RaceClock_Get();
         }
-        e->obj->frame = D_8011B330;
+        e->obj->frame = gCollFrame;
         e->obj->pos = e->pos;
         f = D_800F38E4[e->idx] / 100.0f;
         if (isCar && !isRacer && !flag) {
@@ -564,7 +564,7 @@ void func_8009ABC8(void) {
             svcFxCarScrape(e, r);
         }
     }
-    for (i = 0, pr = D_8011B560; i < D_8011B558; pr++, i++) {
+    for (i = 0, pr = gCollPairs; i < gCollPairCount; pr++, i++) {
         pa = NULL;
         if (pr->a->type == 3 || pr->a->type == 4) {
             pa = pr->a->pl;
@@ -625,10 +625,10 @@ void func_8009ABC8(void) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_8009B0AC);
 
-void func_8009C758(ObjC7_ *a, ObjC7_ *b);
+void Coll_ResolveBoxPair(ObjC7_ *a, ObjC7_ *b);
 #define ABS_56C(v) ((v) < 0.0f ? -(v) : (v))
 #define MAX_56C(a, b) ((a) > (b) ? (a) : (b))
-void func_8009B56C(void) {
+void Coll_BroadPhase(void) {
     f32 d[3];
     f32 r;
     f32 m;
@@ -642,7 +642,7 @@ void func_8009B56C(void) {
     s32 res;
     u8 busy;
 
-    for (it = *(Ln_56C **)&D_8011B344; it != NULL; it = it->next) {
+    for (it = *(Ln_56C **)&gCollCars; it != NULL; it = it->next) {
         a = it->obj;
         if (a->flags & 1) {
             continue;
@@ -660,28 +660,28 @@ void func_8009B56C(void) {
             m = MAX_56C(MAX_56C(ABS_56C(d[0]), ABS_56C(d[1])), ABS_56C(d[2]));
             r = pa->rad + pb->rad;
             if (m < r + r * 0.5f) {
-                res = func_8009BAF0(pa, pb);
+                res = CollBox_FindSeparatingAxis(pa, pb);
                 if (res != 0) {
-                    D_8011B7A0[a->id][b->id] = res;
+                    gCollSepCache[a->id][b->id] = res;
                 } else {
-                    func_8009C758(a, b);
+                    Coll_ResolveBoxPair(a, b);
                 }
             }
         }
     }
-    for (it = *(Ln_56C **)&D_8011B33C; it != NULL; it = it->next) {
+    for (it = *(Ln_56C **)&gCollMovers; it != NULL; it = it->next) {
         a = it->obj;
         if ((a->p60 != NULL && a->p60->b110 != 0) || (a->flags & 1)) {
             continue;
         }
         for (ri = a->ri; ri != NULL; ri = ri->next) {
-            Room_ *rm = &D_8011B334->rooms[ri->room];
+            Room_ *rm = &gCollLevel->rooms[ri->room];
             for (jt = rm->list; jt != NULL; jt = jt->next) {
                 b = jt->obj;
-                if (b == a || (b->flags & 1) || ((b->p60 == NULL || b->p60->b110 == 0) && b->frame == D_8011B330)) {
+                if (b == a || (b->flags & 1) || ((b->p60 == NULL || b->p60->b110 == 0) && b->frame == gCollFrame)) {
                     continue;
                 }
-                if (!D_800F38B0[a->type][b->type]) {
+                if (!gCollTypeMask[a->type][b->type]) {
                     continue;
                 }
                 d[0] = b->b.x - a->b.x;
@@ -692,24 +692,24 @@ void func_8009B56C(void) {
                 m = MAX_56C(MAX_56C(ABS_56C(d[0]), ABS_56C(d[1])), ABS_56C(d[2]));
                 r = pa->rad + pb->rad;
                 if (m < r + r * 0.5f) {
-                    res = func_8009BAF0(pa, pb);
+                    res = CollBox_FindSeparatingAxis(pa, pb);
                     if (res != 0) {
-                        D_8011B7A0[a->id][b->id] = res;
+                        gCollSepCache[a->id][b->id] = res;
                     } else if (b->type == 5) {
                         func_8008AA9C(a->w64, b->w68);
                     } else {
-                        func_8009C758(a, b);
+                        Coll_ResolveBoxPair(a, b);
                     }
                 }
             }
         }
-        a->frame = D_8011B330;
+        a->frame = gCollFrame;
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_8009BAF0);
+INCLUDE_ASM("asm/nonmatchings/unit_39C90", CollBox_FindSeparatingAxis);
 
-void func_8009C758(ObjC7_ *a, ObjC7_ *b) {
+void Coll_ResolveBoxPair(ObjC7_ *a, ObjC7_ *b) {
     Vec3f t;
     Vec3f u;
     Vec3f v;
@@ -749,14 +749,14 @@ void func_8009C758(ObjC7_ *a, ObjC7_ *b) {
     if (b->type == 3) {
         vb += b->car->nPoints;
     }
-    code = D_8011B7A0[a->id][b->id];
+    code = gCollSepCache[a->id][b->id];
     if (code == 0 && a->p60 != NULL) {
         t = a->b.pos;
         a->b.pos.x = t.x - a->p60->off.x;
         a->b.pos.y = t.y - a->p60->off.y;
         a->b.pos.z = t.z - a->p60->off.z;
-        code = func_8009BAF0(&a->b, &b->b);
-        D_8011B7A0[a->id][b->id] = code;
+        code = CollBox_FindSeparatingAxis(&a->b, &b->b);
+        gCollSepCache[a->id][b->id] = code;
         a->b.pos = t;
     }
     if (code == 0) {
@@ -830,13 +830,13 @@ void func_8009C758(ObjC7_ *a, ObjC7_ *b) {
                 t = *p;
             }
         }
-        if (D_8011B558 < 16) {
-            RecC7_ *r = &((RecC7_ *)&D_8011B560)[D_8011B558];
+        if (gCollPairCount < 16) {
+            RecC7_ *r = &((RecC7_ *)&gCollPairs)[gCollPairCount];
             r->a = b;
             r->b = a;
             r->p = t;
             r->n = n;
-            D_8011B558++;
+            gCollPairCount++;
         }
     } else if ((code == 2) | (code == 4) || code == 6) {
         n.x = -n.x;
@@ -871,13 +871,13 @@ void func_8009C758(ObjC7_ *a, ObjC7_ *b) {
                 t = *p;
             }
         }
-        if (D_8011B558 < 16) {
-            RecC7_ *r = &((RecC7_ *)&D_8011B560)[D_8011B558];
+        if (gCollPairCount < 16) {
+            RecC7_ *r = &((RecC7_ *)&gCollPairs)[gCollPairCount];
             r->a = a;
             r->b = b;
             r->p = t;
             r->n = n;
-            D_8011B558++;
+            gCollPairCount++;
         }
         n.x = -n.x;
         n.y = -n.y;
@@ -892,13 +892,13 @@ void func_8009C758(ObjC7_ *a, ObjC7_ *b) {
         t.x = x->pos.x + t.x;
         t.y = x->pos.y + t.y;
         t.z = x->pos.z + t.z;
-        if (D_8011B558 < 16) {
-            RecC7_ *r = &((RecC7_ *)&D_8011B560)[D_8011B558];
+        if (gCollPairCount < 16) {
+            RecC7_ *r = &((RecC7_ *)&gCollPairs)[gCollPairCount];
             r->a = b;
             r->b = a;
             r->p = t;
             r->n = n;
-            D_8011B558++;
+            gCollPairCount++;
         }
     }
     n.x *= D_8011B760[code];
@@ -943,27 +943,27 @@ void func_8009C758(ObjC7_ *a, ObjC7_ *b) {
 }
 
 
-void func_8009D67C(void);
+void Coll_UpdateRooms(void);
 void func_800A258C(void);
-void func_8009D574(void) {
+void Coll_Solve(void) {
     LnD57_ *it;
     ObD57_ *o;
     CrD57_ *c;
 
-    func_8009D67C();
+    Coll_UpdateRooms();
     func_8009DBF8();
     func_8009EC8C();
     func_8009F7D4();
     func_800A0C44();
     func_800A258C();
-    for (it = *(LnD57_ **)&D_8011B344; it != NULL; it = it->next) {
+    for (it = *(LnD57_ **)&gCollCars; it != NULL; it = it->next) {
         o = it->obj;
         if (o->flags & 0x10) {
-            func_800A3978((u8 *)o, *o->p54, 0);
+            Coll_ApplyRoomFlags((u8 *)o, *o->p54, 0);
             o->flags &= ~0x10;
         }
     }
-    for (it = *(LnD57_ **)&D_8011B344; it != NULL; it = it->next) {
+    for (it = *(LnD57_ **)&gCollCars; it != NULL; it = it->next) {
         o = it->obj;
         c = o->car;
         if (c->flags & 0x800) {
@@ -976,8 +976,8 @@ void func_8009D574(void) {
     }
 }
 
-void func_800A3E30(Nd4_ **list, s32 key);
-void func_8009D67C(void) {
+void CollList_Remove(Nd4_ **list, s32 key);
+void Coll_UpdateRooms(void) {
     Pl_67C pl;
     Vec3f org;
     Vec3f d;
@@ -996,7 +996,7 @@ void func_8009D67C(void) {
     u8 busy;
     f32 dot;
 
-    for (it = ((Ln_67C *)D_8011B33C); it != NULL; it = it->next) {
+    for (it = ((Ln_67C *)gCollMovers); it != NULL; it = it->next) {
         o = it->obj;
         busy = 0;
         if ((pp = o->p60) != NULL) {
@@ -1012,14 +1012,14 @@ void func_8009D67C(void) {
         }
         for (ri = o->ri; ri != NULL; ri = ri->next) {
             room = ri->room;
-            rm = &D_8011B334->rooms[room];
+            rm = &gCollLevel->rooms[room];
             org.x = rm->x << 8;
             org.y = rm->y << 8;
             org.z = rm->z << 8;
             rel.x = o->b.pos.x - org.x;
             rel.y = o->b.pos.y - org.y;
             rel.z = o->b.pos.z - org.z;
-            p = &D_8011B334->portals[rm->firstPortal];
+            p = &gCollLevel->portals[rm->firstPortal];
             for (i = 0; i < rm->nPortals; p++, i++) {
                 if (p->flag == 0) {
                     pl.a = p->nx / 4096.0f;
@@ -1050,26 +1050,26 @@ void func_8009D67C(void) {
         }
         for (i = 0; i < n; i++) {
             if (new[i] != old[i]) {
-                func_800A3E30(&D_8011B334->rooms[old[i]].list, (s32)o);
-                func_800A3E30(&o->ri, old[i]);
+                CollList_Remove(&gCollLevel->rooms[old[i]].list, (s32)o);
+                CollList_Remove(&o->ri, old[i]);
                 b->rooms[i] = new[i];
-                func_800A3DB8(&D_8011B334->rooms[new[i]].list, (s32)o);
-                func_800A3DB8(&o->ri, new[i]);
+                CollList_Add(&gCollLevel->rooms[new[i]].list, (s32)o);
+                CollList_Add(&o->ri, new[i]);
                 if (i == 0 && (o->type == 3 || o->type == 4)) {
                     o->flags |= 0x10;
                     if (o->type == 4) {
-                        rm = &D_8011B334->rooms[old[0]];
-                        p = &D_8011B334->portals[rm->firstPortal];
+                        rm = &gCollLevel->rooms[old[0]];
+                        p = &gCollLevel->portals[rm->firstPortal];
                         for (k = 0; k < rm->nPortals; p++, k++) {
                             if (p->flag == 0) {
-                                func_800A3E30(&D_8011B334->rooms[p->to].list, (s32)o);
+                                CollList_Remove(&gCollLevel->rooms[p->to].list, (s32)o);
                             }
                         }
-                        rm = &D_8011B334->rooms[new[0]];
-                        p = &D_8011B334->portals[rm->firstPortal];
+                        rm = &gCollLevel->rooms[new[0]];
+                        p = &gCollLevel->portals[rm->firstPortal];
                         for (k = 0; k < rm->nPortals; p++, k++) {
                             if (p->flag == 0) {
-                                func_800A3DB8(&D_8011B334->rooms[p->to].list, (s32)o);
+                                CollList_Add(&gCollLevel->rooms[p->to].list, (s32)o);
                             }
                         }
                     }
@@ -1090,7 +1090,7 @@ INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_800A0C44);
 void func_800A258C(void) {
     LnkA2_ *n;
 
-    for (n = D_8011B340; n != NULL; n = n->next) {
+    for (n = gCollRacers; n != NULL; n = n->next) {
         ObjA2_ *o = n->obj;
 
         if (o->p60->b110 == 0 && o->p70->w8 != 0) {
@@ -1104,12 +1104,12 @@ INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_800A25EC);
 
 INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_800A34B4);
 
-void func_800A3978(RObj_ *o, u16 idx, s32 arg2) {
+void Coll_ApplyRoomFlags(RObj_ *o, u16 idx, s32 arg2) {
     Room_ *r;
     Car *c;
     u32 m;
 
-    r = &D_8011B334->rooms[idx];
+    r = &gCollLevel->rooms[idx];
     if (o->type == 3 || o->type == 4) {
         c = o->car;
         if (c->b4B8 == 0) {
@@ -1196,17 +1196,17 @@ void func_800A3978(RObj_ *o, u16 idx, s32 arg2) {
     }
 }
 
-void func_800A3CD8(void) {
+void CollList_InitPool(void) {
     s32 i;
 
-    D_8011E860 = D_8011C860;
+    gCollNodeFree = gCollNodePool;
     for (i = 0; i < 512; i++) {
-        D_8011C860[i].prev = (i != 0) ? &D_8011C860[i - 1] : NULL;
-        D_8011C860[i].next = (i != 511) ? &D_8011C860[i + 1] : NULL;
+        gCollNodePool[i].prev = (i != 0) ? &gCollNodePool[i - 1] : NULL;
+        gCollNodePool[i].next = (i != 511) ? &gCollNodePool[i + 1] : NULL;
     }
 }
 
-void func_800A3D64(Nd3_ **list) {
+void CollList_Clear(Nd3_ **list) {
     Nd3_ *n = *list;
 
     while (n != NULL) {
@@ -1214,9 +1214,9 @@ void func_800A3D64(Nd3_ **list) {
         Nd3_ *old;
 
         n = n->next;
-        old = (Nd3_ *)D_8011E860;
+        old = (Nd3_ *)gCollNodeFree;
         c->prev = NULL;
-        D_8011E860 = c;
+        gCollNodeFree = c;
         c->next = old;
         old->prev = c;
     }
@@ -1224,7 +1224,7 @@ void func_800A3D64(Nd3_ **list) {
 }
 
 
-void func_800A3DB8(Nd4_ **list, s32 key) {
+void CollList_Add(Nd4_ **list, s32 key) {
     Nd4_ *n;
     Nd4_ *nx;
 
@@ -1234,7 +1234,7 @@ void func_800A3DB8(Nd4_ **list, s32 key) {
         }
     }
     if (n == NULL) {
-        n = (Nd4_ *)D_8011E860;
+        n = (Nd4_ *)gCollNodeFree;
         nx = n->next;
         nx->prev = NULL;
         n->a = key;
@@ -1242,7 +1242,7 @@ void func_800A3DB8(Nd4_ **list, s32 key) {
         n->next = *list;
         n->cnt = 0;
         *list = n;
-        D_8011E860 = nx;
+        gCollNodeFree = nx;
         if (n->next != NULL) {
             n->next->prev = n;
         }
@@ -1251,7 +1251,7 @@ void func_800A3DB8(Nd4_ **list, s32 key) {
 }
 
 
-void func_800A3E30(Nd4_ **list, s32 key) {
+void CollList_Remove(Nd4_ **list, s32 key) {
     Nd4_ *n;
     Nd4_ *free;
 
@@ -1271,9 +1271,9 @@ void func_800A3E30(Nd4_ **list, s32 key) {
             if (n == *list) {
                 *list = n->next;
             }
-            free = (Nd4_ *)D_8011E860;
+            free = (Nd4_ *)gCollNodeFree;
             n->prev = NULL;
-            D_8011E860 = n;
+            gCollNodeFree = n;
             n->next = free;
             free->prev = n;
         }
@@ -1283,9 +1283,9 @@ void func_800A3E30(Nd4_ **list, s32 key) {
 INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_800A3ED4);
 
 void func_800A4120(u8 i, V12_ *v, V16_ *q) {
-    if (D_8011B334 != NULL) {
-        *v = ((Cam41_ *)D_8011B334)->v[i];
-        *q = ((Cam41_ *)D_8011B334)->q[i];
+    if (gCollLevel != NULL) {
+        *v = ((Cam41_ *)gCollLevel)->v[i];
+        *q = ((Cam41_ *)gCollLevel)->q[i];
     }
 }
 
@@ -1294,10 +1294,10 @@ INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_800A4198);
 
 INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_800A4EE8);
 
-s32 func_800A5894(void) {
-    return D_8011B334->nSpawns;
+s32 Coll_GetSpawnCount(void) {
+    return gCollLevel->nSpawns;
 }
 
-s32 func_800A58A4(s32 i) {
-    return (s32)(D_8011B334->spawns + i * 0x18);
+s32 Coll_GetSpawn(s32 i) {
+    return (s32)(gCollLevel->spawns + i * 0x18);
 }

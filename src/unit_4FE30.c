@@ -37,9 +37,9 @@ u8 RaceSfx_Play(Vec3i, u8, u8, s32);
 extern u32 (*svcTrackGetLinkCount)(void);
 extern Vec3f D_80100B00;
 void *Memory_Alloc(s32 size);
-void func_80099E78(Vec3i *, Vec3f, Vec3f, f32 *, s32);
+void CollShape_InitBox(Vec3i *, Vec3f, Vec3f, f32 *, s32);
 void func_800AC880(u8 *, f32, f32, f32, f32, Vec3f);
-void func_8009A4E4(u8 *o);
+void Coll_Register(u8 *o);
 extern void (*svcTrackGetLink)(u32, Vec3i *, f32 *, f32 *, f32 *, f32 *, f32 *, f32 *);
 extern void (*svcTrackSetLinkTransform)(u32, f32, f32, f32, void *);
 void func_800ACDC8(void *, f32);
@@ -47,8 +47,8 @@ void func_8007A9E0(void *);
 extern u8 *D_800F3B90;
 extern void *D_800F3B94;
 extern u32 D_801206C0;
-s32 func_8009A770(s32 *);
-void func_8009A488(void *);
+s32 Coll_Unregister(s32 *);
+void CollShape_Free(void *);
 void Memory_Free(void *);
 
 
@@ -96,7 +96,7 @@ s32 func_800AF230(void) {
         }
         *(u32 *)((u8 *)e + 0x84) = val;
         fl = (info[0] >> 4) & 1;
-        func_80099E78(&e->pos, dir, pos, m, fl);
+        CollShape_InitBox(&e->pos, dir, pos, m, fl);
         if (e->kind == 1) {
             e->obj = obj = Memory_Alloc(0x118);
             memset(obj, 0, 0x118);
@@ -119,7 +119,7 @@ s32 func_800AF230(void) {
             *(f32 *)(e->obj + 0x74) = pos.z - *(f32 *)(e->obj + 0x68);
             e->obj[0x110] = 1;
         }
-        func_8009A4E4((u8 *)e);
+        Coll_Register((u8 *)e);
     }
     return 1;
 }
@@ -132,20 +132,20 @@ s32 func_800AF5B4(void) {
         e = D_800F3B90;
         /* TODO (Clean version): Avoid raw byte-offset casting; access fields via E88_ struct:
            for (i = 0; i < D_801206C0; i++) {
-               func_8009A770((s32 *)e);
+               Coll_Unregister((s32 *)e);
                if (e->kind == 1) {
                    Memory_Free(e->obj);
                }
-               func_8009A488(&e->pos);
+               CollShape_Free(&e->pos);
                e++;
            }
         */
         for (i = 0; i < D_801206C0; i++) {
-            func_8009A770((s32 *)e);
+            Coll_Unregister((s32 *)e);
             if (*(s32 *)(e + 0x5C) == 1) {
                 Memory_Free(*(void **)(e + 0x60));
             }
-            func_8009A488(e + 0xC);
+            CollShape_Free(e + 0xC);
             e += 0x88;
         }
         Memory_Free(D_800F3B90);

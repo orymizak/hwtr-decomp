@@ -68,14 +68,14 @@ void RaceClock_Reset(void);
 void func_800908E8(void);
 s32 func_800908A8(void);
 void func_80090934(void);
-void func_8009ABC8(void);
+void Coll_Update(void);
 void func_80085780(void);
 u8 func_800A90F0(u8 *);
 u8 func_800AEA40(u8 *);
 u8 func_80087990(u8 *);
 u8 func_80080550(u8 *);
 u8 func_80098BC0(u8 *);
-u8 func_8009930C(u8 *);
+u8 Coll_Init(u8 *);
 u8 func_800853F4(u8 *);
 u8 func_80091210(u8 *);
 u8 func_8008E8F0(u8 *);
@@ -110,7 +110,7 @@ u8 RaceAudio_Unload(u8 *);
 u8 func_80091BA0(u8 *);
 u8 func_800858E8(u8 *);
 u8 func_800AEAFC(u8 *);
-u8 func_800993B8(u8 *);
+u8 Coll_Shutdown(u8 *);
 u8 func_80098BEC(u8 *);
 u8 func_800806FC();
 u8 func_80087AD4(u8 *);
@@ -217,7 +217,7 @@ s32 Race_Init(u8 *cfg) {
     if (!func_80098BC0(cfg)) {
         return 0;
     }
-    if (!func_8009930C(cfg)) {
+    if (!Coll_Init(cfg)) {
         return 0;
     }
     Race_LoadProgressStep();
@@ -272,7 +272,7 @@ s32 Race_Init(u8 *cfg) {
     gRaceSimTime = 0;
     gRaceLastTime = 0;
     gRaceAudioTick = svcTimeGetMillis();
-    func_8009ABC8();
+    Coll_Update();
     func_80085780();
     sysInputRumbleResume();
     return 1;
@@ -309,7 +309,7 @@ u8 Race_Shutdown(u8 *o) {
     err += func_80091BA0(o) == 0;
     err += func_800858E8(o) == 0;
     err += func_800AEAFC(o) == 0;
-    err += func_800993B8(o) == 0;
+    err += Coll_Shutdown(o) == 0;
     err += func_80098BEC(o) == 0;
     err += func_800806FC() == 0;
     err += func_80087AD4(o) == 0;
@@ -472,7 +472,7 @@ void Race_Update(void) {
         if (gRaceShowResults == 0) {
             if (gRacePhase != 0) {
                 func_80093998(10);
-                func_8009ABC8();
+                Coll_Update();
                 func_800AF67C();
                 func_800A59B8(10);
             }
