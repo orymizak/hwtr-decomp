@@ -75,7 +75,7 @@ void func_800D15B8();
 extern void *D_8012793C;
 extern u8 D_800FACF8;
 extern s32 D_800FB170;
-extern void *D_800FB174;
+extern void *n_syn;
 typedef struct SynQ_ { struct SynQ_ *next; u8 p4[0x18]; } SynQ_;
 typedef struct { u8 p0[8]; s32 unk8; u8 pC[0x80]; } SynPV_;
 typedef struct { u8 p0[0x14]; s32 unk14; s32 unk18; SynPV_ **unk1C; s32 unk20; s32 unk24[8]; } SynMB_;
@@ -101,8 +101,8 @@ extern s32 D_80127974;
 extern s32 D_80127978;
 extern s32 D_8012797C;
 extern s32 D_80127980;
-s32 func_800D4DD0(s32, s32);
-s32 func_800D4E60(s32);
+s32 n_alSynStartVoice(s32, s32);
+s32 n_alSynStopVoice(s32);
 extern s32 D_80127938;
 extern s32 D_80127948;
 extern s32 D_80127954;
@@ -126,8 +126,8 @@ void func_800CE6D4(s32 arg0);
 void func_800CE89C(u8 *base);
 void func_800D20F0(void *, s32, s32);
 void func_800CDDE4(s32 arg0, s16 arg1);
-void func_800D4920(void *);
-void func_800D4970(s32, void *);
+void n_alSynAddPlayer(void *);
+void n_alSynAllocVoice(s32, void *);
 void func_800D242C(void);
 s32 func_800CEBCC(void);
 
@@ -177,7 +177,7 @@ void func_800CDB5C(AudCfgB_ *c) {
     *q = 0;
     D_80127928 = func_800CEBCC;
     D_80127924 = q;
-    func_800D4920(q);
+    n_alSynAddPlayer(q);
     for (i = 0; i < D_80127934; i++) {
         ((VoiceIB_ *)D_8012793C)[i].unkC9 = 0;
         func_800D0058((VoiceG_ *)&((VoiceIB_ *)D_8012793C)[i]);
@@ -185,7 +185,7 @@ void func_800CDB5C(AudCfgB_ *c) {
         msg.a = c->unkC;
         msg.b = 0;
         if (i >= 4) {
-            func_800D4970(D_80127938 + (i - 4) * 0x1C, &msg);
+            n_alSynAllocVoice(D_80127938 + (i - 4) * 0x1C, &msg);
         }
     }
     func_800D242C();
@@ -705,7 +705,7 @@ s32 func_800CEBCC(void) {
             v->unk4 = 0;
             if (v->unkC9 != 0) {
                 v->unkC9 = 0;
-                func_800D4E60(D_80127938 + i * 0x1C);
+                n_alSynStopVoice(D_80127938 + i * 0x1C);
             }
         }
         if (v->unkC9 != 0) {
@@ -737,10 +737,10 @@ INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CEEBC);
 
 void func_800CF408(SeqChan6_ *c, s32 i) {
     if (c->unkC9 != 0) {
-        func_800D4E60(D_80127938 + i * 0x1C);
+        n_alSynStopVoice(D_80127938 + i * 0x1C);
     }
     c->unkC9 = 1;
-    func_800D4DD0(D_80127938 + i * 0x1C, c->unk8);
+    n_alSynStartVoice(D_80127938 + i * 0x1C, c->unk8);
     c->unk8 = 0;
 }
 
@@ -1414,19 +1414,19 @@ s32 func_800D1284(SeqChan6_ *c, s32 ptr) {
 void func_800D1290(s32 arg0, s32 arg1) {
     if (D_800FB170 == 0) {
         D_800FB170 = arg0;
-        if (D_800FB174 == 0) {
+        if (n_syn == 0) {
             func_800D19E0(arg1);
             D_8014C6D0 = D_800FB170;
-            D_800FB174 = (void *)D_800FB170;
+            n_syn = (void *)D_800FB170;
             func_800D12F8((SynC_ *)arg1);
         }
     }
 }
 
-void func_800D2AAC(void *, s32, void *);
+void _n_initPVoice(void *, s32, void *);
 s32 func_800D1568(s32 arg0);
-void func_800D3EB0(void);
-void func_800D2620(void);
+void n_alFxPull(void);
+void n_alAuxBusPull(void);
 
     /* TODO (Clean version):
     Standard libultra alSynNew(ALSynth *s, ALSynConfig *c):
@@ -1447,53 +1447,53 @@ void func_800D12F8(SynC_ *c) {
     SynPV_ *pv;
     SynQ_ *q;
 
-    ((SynD_ *)D_800FB174)->unk0 = 0;
-    ((SynD_ *)D_800FB174)->unk38 = c->unk4;
-    ((SynD_ *)D_800FB174)->unk20 = 0;
-    ((SynD_ *)D_800FB174)->unk1C = 0;
-    ((SynD_ *)D_800FB174)->unk40 = c->unk18;
-    ((SynD_ *)D_800FB174)->unk44 = 0xB8;
-    ((SynD_ *)D_800FB174)->unk24 = c->unk10;
-    ((SynD_ *)D_800FB174)->unk4C = 1;
-    ((SynD_ *)D_800FB174)->unk48 = 0;
-    ((SynD_ *)D_800FB174)->unk34 = (SynMB_ *)alHeapDBAlloc(0, 0, hp, 1, 0x44);
-    ((SynD_ *)D_800FB174)->unk34->unk14 = 0;
-    ((SynD_ *)D_800FB174)->unk34->unk18 = c->unk4;
-    ((SynD_ *)D_800FB174)->unk34->unk1C = (SynPV_ **)alHeapDBAlloc(0, 0, hp, c->unk4, 4);
-    ((SynD_ *)D_800FB174)->unk30 = (SynFX_ *)alHeapDBAlloc(0, 0, hp, 1, 0x14);
+    ((SynD_ *)n_syn)->unk0 = 0;
+    ((SynD_ *)n_syn)->unk38 = c->unk4;
+    ((SynD_ *)n_syn)->unk20 = 0;
+    ((SynD_ *)n_syn)->unk1C = 0;
+    ((SynD_ *)n_syn)->unk40 = c->unk18;
+    ((SynD_ *)n_syn)->unk44 = 0xB8;
+    ((SynD_ *)n_syn)->unk24 = c->unk10;
+    ((SynD_ *)n_syn)->unk4C = 1;
+    ((SynD_ *)n_syn)->unk48 = 0;
+    ((SynD_ *)n_syn)->unk34 = (SynMB_ *)alHeapDBAlloc(0, 0, hp, 1, 0x44);
+    ((SynD_ *)n_syn)->unk34->unk14 = 0;
+    ((SynD_ *)n_syn)->unk34->unk18 = c->unk4;
+    ((SynD_ *)n_syn)->unk34->unk1C = (SynPV_ **)alHeapDBAlloc(0, 0, hp, c->unk4, 4);
+    ((SynD_ *)n_syn)->unk30 = (SynFX_ *)alHeapDBAlloc(0, 0, hp, 1, 0x14);
     if (c->unk1C != 0) {
-        ((SynD_ *)D_800FB174)->unk34->unk20 = ((s32 (*)(s32, SynC_ *, void *))func_800D1568)(0, c, hp);
-        ((SynD_ *)D_800FB174)->unk30->unk4 = func_800D3EB0;
+        ((SynD_ *)n_syn)->unk34->unk20 = ((s32 (*)(s32, SynC_ *, void *))func_800D1568)(0, c, hp);
+        ((SynD_ *)n_syn)->unk30->unk4 = n_alFxPull;
     } else {
-        ((SynD_ *)D_800FB174)->unk30->unk4 = func_800D2620;
+        ((SynD_ *)n_syn)->unk30->unk4 = n_alAuxBusPull;
     }
-    ((SynD_ *)D_800FB174)->unk4 = 0;
-    ((SynD_ *)D_800FB174)->unk8 = 0;
-    ((SynD_ *)D_800FB174)->unk14 = 0;
-    ((SynD_ *)D_800FB174)->unk18 = 0;
-    ((SynD_ *)D_800FB174)->unkC = 0;
-    ((SynD_ *)D_800FB174)->unk10 = 0;
+    ((SynD_ *)n_syn)->unk4 = 0;
+    ((SynD_ *)n_syn)->unk8 = 0;
+    ((SynD_ *)n_syn)->unk14 = 0;
+    ((SynD_ *)n_syn)->unk18 = 0;
+    ((SynD_ *)n_syn)->unkC = 0;
+    ((SynD_ *)n_syn)->unk10 = 0;
     pv = (SynPV_ *)alHeapDBAlloc(0, 0, hp, c->unk4, 0x8C);
     for (i = 0; i < c->unk4; i++) {
-        alLink(&pv[i], &((SynD_ *)D_800FB174)->unk4);
+        alLink(&pv[i], &((SynD_ *)n_syn)->unk4);
         pv[i].unk8 = 0;
-        func_800D2AAC(&pv[i], ((SynD_ *)D_800FB174)->unk24, hp);
-        ((SynD_ *)D_800FB174)->unk34->unk1C[((SynD_ *)D_800FB174)->unk34->unk14++] = &pv[i];
+        _n_initPVoice(&pv[i], ((SynD_ *)n_syn)->unk24, hp);
+        ((SynD_ *)n_syn)->unk34->unk1C[((SynD_ *)n_syn)->unk34->unk14++] = &pv[i];
     }
     q = (SynQ_ *)alHeapDBAlloc(0, 0, hp, c->unk8, 0x1C);
-    ((SynD_ *)D_800FB174)->unk2C = 0;
+    ((SynD_ *)n_syn)->unk2C = 0;
     for (i = 0; i < c->unk8; i++) {
-        q[i].next = ((SynD_ *)D_800FB174)->unk2C;
-        ((SynD_ *)D_800FB174)->unk2C = &q[i];
+        q[i].next = ((SynD_ *)n_syn)->unk2C;
+        ((SynD_ *)n_syn)->unk2C = &q[i];
     }
-    ((SynD_ *)D_800FB174)->unk28 = hp;
+    ((SynD_ *)n_syn)->unk28 = hp;
 }
 
 s32 func_800D1568(s32 arg0) {
     s32 i = (s16)arg0;
 
-    func_800D15B8(&((SynD_ *)D_800FB174)->unk34->unk24[i]);
-    return ((SynD_ *)D_800FB174)->unk34->unk24[i];
+    func_800D15B8(&((SynD_ *)n_syn)->unk34->unk24[i]);
+    return ((SynD_ *)n_syn)->unk34->unk24[i];
 }
 
 

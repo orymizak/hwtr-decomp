@@ -2,18 +2,18 @@
 #include "n_audio.h"
 #include "include_asm.h"
 
-void func_800D4DD0(N_ALVoice *v, ALWaveTable *w) {
+void n_alSynStartVoice(N_ALVoice *v, ALWaveTable *w) {
     ALStartParam *update;
 
     if (v->pvoice != NULL) {
-        update = (ALStartParam *)func_800D52B8();
+        update = (ALStartParam *)__n_allocParam();
         if (update != NULL) {
-            update->delta = D_800FB174->paramSamples + v->pvoice->offset;
+            update->delta = n_syn->paramSamples + v->pvoice->offset;
             update->type = AL_FILTER_START_VOICE;
             update->wave = w;
             update->next = NULL;
             update->unity = v->unityPitch;
-            func_800D3158(v->pvoice, AL_FILTER_ADD_UPDATE, update);
+            n_alEnvmixerParam(v->pvoice, AL_FILTER_ADD_UPDATE, update);
         }
     }
 }

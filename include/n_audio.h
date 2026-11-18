@@ -84,7 +84,7 @@ typedef struct {
     /* 0x18 */ s32 maxSources;
     /* 0x1C */ N_PVoice **sources;
     /* 0x20 */ ALFx *fx;
-    /* 0x24 */ s32 unk24[8];
+    /* 0x24 */ ALFx *fxSlots[8]; /* filled by n_alSynAllocFX(bus) */
 } N_ALAuxBus; /* size = 0x44 */
 
 /* Main bus: an ALFilter whose handler is called as pull(sampleOffset, cmdList). */
@@ -117,10 +117,49 @@ typedef struct {
     /* 0x4C */ s32 maxAuxBusses;
 } N_ALSynth; /* size = 0x50 */
 
-extern N_ALSynth *D_800FB174; /* the synthesizer (n_syn) */
+extern N_ALSynth *n_syn; /* the synthesizer (n_syn) */
 
-ALParam *func_800D52B8(void);                                   /* takes an ALParam from the free list */
-s32 func_800D3158(N_PVoice *pvoice, s32 paramID, void *param);  /* voice filter chain setParam */
-s32 func_800D53E4(s32 micros);                                  /* microseconds to output samples */
+
+/* Synthesizer */
+void n_alSynNew(ALSynConfig *c);
+Acmd *n_alAudioFrame(Acmd *cmdList, s32 *cmdLen, s16 *outBuf, s32 outLen);
+void n_alSynDelete(void);
+void n_alSynAddPlayer(ALPlayer *client);
+s32 n_alSynAllocVoice(N_ALVoice *voice, ALVoiceConfig *vc);
+ALFx *n_alSynAllocFX(s16 bus, ALSynConfig *c, ALHeap *hp);
+void n_alSynSetFXMix(N_ALVoice *v, s32 fxmix);
+void n_alSynSetPan(N_ALVoice *v, u8 pan);
+void n_alSynSetPitch(N_ALVoice *v, f32 pitch);
+void n_alSynSetVol(N_ALVoice *v, s16 vol, s32 t);
+void n_alSynStartVoice(N_ALVoice *v, ALWaveTable *w);
+void n_alSynStopVoice(N_ALVoice *v);
+ALParam *__n_allocParam(void);
+void __n_freeParam(ALParam *param);
+void _n_collectPVoices(void);
+void _n_freePVoice(N_PVoice *pv);
+s32 _n_allocatePVoice(N_PVoice **pvoice, s16 priority);
+s32 _n_timeToSamplesNoRound(s32 micros);
+s32 _n_timeToSamples(s32 micros);
+void _n_initPVoice(N_PVoice *pv, ALDMANew dmaNew, ALHeap *hp);
+
+/* Filter chain of a voice: ADPCM decoder -> resampler -> envelope mixer */
+Acmd *n_alAdpcmPull(void *filter, s16 *outp, s32 outCount, Acmd *p);
+void n_alLoadParam(N_PVoice *a, s32 paramID, void *param);
+Acmd *_n_decodeChunk(Acmd *ptr, N_PVoice *f, s32 tsam, s32 nbytes, s16 outp, s16 inp, u32 flags);
+Acmd *n_alResamplePull(N_PVoice *f, s16 *outp, Acmd *p);
+s32 n_alResampleParam(N_PVoice *f, s32 paramID, void *param);
+Acmd *n_alEnvmixerPull(void *filter, s32 sampleOffset, Acmd *p);
+s32 n_alEnvmixerParam(N_PVoice *pvoice, s32 paramID, void *param);
+Acmd *_n_pullSubFrame(void *filter, s16 *inp, s16 *outp, s32 outCount, Acmd *p);
+s16 _n_getRate(f64 vol, f64 tgt, s32 count, u16 *ratel);
+s32 _n_getVol(s32 ivol, s32 samples, s16 ratem, s32 ratel);
+
+/* Buses and effects */
+Acmd *n_alAuxBusPull(s32 sampleOffset, Acmd *p);
+Acmd *n_alMainBusPull(s32 sampleOffset, Acmd *cmdList);
+Acmd *n_alSavePull(s32 sampleOffset, Acmd *cmdList);
+void n_alFxNew(ALFx **rp, ALSynConfig *c, ALHeap *hp);
+Acmd *n_alFxPull(s32 sampleOffset, Acmd *p);
+s32 n_alFxParamHdl(void *filter, s32 paramID, void *param);
 
 #endif

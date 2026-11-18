@@ -14,10 +14,10 @@
 #define RANGE   2.0
 #define CONVERT 173123.404906676
 
-INCLUDE_ASM("asm/nonmatchings/unit_74AB0", func_800D3EB0);
+INCLUDE_ASM("asm/nonmatchings/unit_74AB0", n_alFxPull);
 
-/* Effect parameter handler (n_alFxParamHdl): paramID 2 + 8 * section + parameter. */
-s32 func_800D41C0(void *filter, s32 paramID, void *param) {
+/* Effect parameter handler: paramID 2 + 8 * section + parameter. */
+s32 n_alFxParamHdl(void *filter, s32 paramID, void *param) {
     ALFx *f = filter;
     s32 p = (paramID - 2) % 8;
     s32 s = (paramID - 2) / 8;
@@ -40,7 +40,7 @@ s32 func_800D41C0(void *filter, s32 paramID, void *param) {
         f->delay[s].gain = (s16)val;
         break;
     case CHORUSRATE_PARAM:
-        f->delay[s].rsinc = ((((f32)val) / 1000) * RANGE) / D_800FB174->outputRate;
+        f->delay[s].rsinc = ((((f32)val) / 1000) * RANGE) / n_syn->outputRate;
         break;
     case CHORUSDEPTH_PARAM:
         f->delay[s].rsgain = (((f32)val) / CONVERT) * (f->delay[s].output - f->delay[s].input);
@@ -55,10 +55,10 @@ s32 func_800D41C0(void *filter, s32 paramID, void *param) {
     return 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_74AB0", func_800D43B0);
+INCLUDE_ASM("asm/nonmatchings/unit_74AB0", _n_loadOutputBuffer);
 
-/* Loads count samples of the circular delay line at curr_ptr into DMEM buff (_loadBuffer). */
-Acmd *func_800D45C0(ALFx *r, s16 *curr_ptr, s32 buff, s32 count, Acmd *p) {
+/* Loads count samples of the circular delay line at curr_ptr into DMEM buff. */
+Acmd *_n_loadBuffer(ALFx *r, s16 *curr_ptr, s32 buff, s32 count, Acmd *p) {
     Acmd *ptr = p;
     s32 after_end, before_end;
     s16 *updated_ptr, *delay_end;
@@ -79,8 +79,8 @@ Acmd *func_800D45C0(ALFx *r, s16 *curr_ptr, s32 buff, s32 count, Acmd *p) {
     return ptr;
 }
 
-/* Saves 184 samples from DMEM buff into the circular delay line at curr_ptr (_saveBuffer). */
-Acmd *func_800D46E8(ALFx *r, s16 *curr_ptr, s32 buff, Acmd *p) {
+/* Saves 184 samples from DMEM buff into the circular delay line at curr_ptr. */
+Acmd *_n_saveBuffer(ALFx *r, s16 *curr_ptr, s32 buff, Acmd *p) {
     Acmd *ptr = p;
     s32 after_end, before_end;
     s16 *updated_ptr, *delay_end;
@@ -101,10 +101,10 @@ Acmd *func_800D46E8(ALFx *r, s16 *curr_ptr, s32 buff, Acmd *p) {
     return ptr;
 }
 
-/* Low-pass filters DMEM buff (buff is passed as flags >> 8) (_filterBuffer).
+/* Low-pass filters DMEM buff (buff is passed as flags >> 8).
  * TODO(match-debt): the pole-filter command is written in two halves around r = ptr + 2;
  * aLoadADPCM(ptr++) + n_aPoleFilter(ptr++) schedules differently. */
-Acmd *func_800D4800(ALLowPass *lp, s32 flags, Acmd *ptr) {
+Acmd *_n_filterBuffer(ALLowPass *lp, s32 flags, Acmd *ptr) {
     s32 t;
     Acmd *r;
 

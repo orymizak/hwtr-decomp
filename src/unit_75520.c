@@ -3,9 +3,9 @@
 #include "include_asm.h"
 
 /* Adds client to the synthesizer's player list. */
-void func_800D4920(ALPlayer *client) {
+void n_alSynAddPlayer(ALPlayer *client) {
     OSIntMask mask = osSetIntMask(OS_IM_NONE);
-    N_ALSynth *drvr = D_800FB174;
+    N_ALSynth *drvr = n_syn;
 
     client->samplesLeft = drvr->curSamples;
     client->next = drvr->head;

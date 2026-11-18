@@ -2,10 +2,9 @@
 #include "n_audio.h"
 #include "include_asm.h"
 
-Acmd *func_800D3B84(Acmd *ptr, N_PVoice *f, s32 tsam, s32 nbytes, s16 outp, s16 inp, u32 flags);
 
-/* ADPCM decoder pull (n_alAdpcmPull): decodes outCount samples into *outp, handling the loop. */
-Acmd *func_800D35B0(void *filter, s16 *outp, s32 outCount, Acmd *p) {
+/* ADPCM decoder pull: decodes outCount samples into *outp, handling the loop. */
+Acmd *n_alAdpcmPull(void *filter, s16 *outp, s32 outCount, Acmd *p) {
     Acmd *ptr = p;
     s16 inp;
     s32 tsam;
@@ -45,7 +44,7 @@ Acmd *func_800D35B0(void *filter, s16 *outp, s32 outCount, Acmd *p) {
     nbytes = nframes * 9;
 
     if (looped) {
-        ptr = func_800D3B84(ptr, f, tsam, nbytes, *outp, inp, f->dc_first);
+        ptr = _n_decodeChunk(ptr, f, tsam, nbytes, *outp, inp, f->dc_first);
 
         if (f->dc_lastsam)
             *outp += (f->dc_lastsam << 1);
@@ -68,7 +67,7 @@ Acmd *func_800D35B0(void *filter, s16 *outp, s32 outCount, Acmd *p) {
             if (tsam < 0) tsam = 0;
             nframes = (tsam + 16 - 1) >> 4;
             nbytes = nframes * 9;
-            ptr = func_800D3B84(ptr, f, tsam, nbytes, op, inp, f->dc_first | A_LOOP);
+            ptr = _n_decodeChunk(ptr, f, tsam, nbytes, op, inp, f->dc_first | A_LOOP);
             aDMEMMove(ptr++, op + (f->dc_lastsam << 1), bEnd, nSam << 1);
         }
 
@@ -90,7 +89,7 @@ Acmd *func_800D35B0(void *filter, s16 *outp, s32 outCount, Acmd *p) {
 
     if ((nOver - (nOver & 0xf)) < outCount) {
         decoded = 1;
-        ptr = func_800D3B84(ptr, f, nSam - nOver, nbytes, *outp, inp, f->dc_first);
+        ptr = _n_decodeChunk(ptr, f, nSam - nOver, nbytes, *outp, inp, f->dc_first);
 
         if (f->dc_lastsam)
             *outp += (f->dc_lastsam << 1);
@@ -116,7 +115,7 @@ Acmd *func_800D35B0(void *filter, s16 *outp, s32 outCount, Acmd *p) {
     return ptr;
 }
 
-void func_800D39F8(N_PVoice *a, s32 paramID, void *param) {
+void n_alLoadParam(N_PVoice *a, s32 paramID, void *param) {
 
     switch (paramID) {
     case AL_FILTER_SET_WAVETABLE:
@@ -169,7 +168,7 @@ void func_800D39F8(N_PVoice *a, s32 paramID, void *param) {
     }
 }
 
-Acmd *func_800D3B84(Acmd *ptr, N_PVoice *f, s32 tsam, s32 nbytes, s16 outp, s16 inp, u32 flags) {
+Acmd *_n_decodeChunk(Acmd *ptr, N_PVoice *f, s32 tsam, s32 nbytes, s16 outp, s16 inp, u32 flags) {
     s32 dramAlign, dramLoc;
 
     if (nbytes > 0) {
