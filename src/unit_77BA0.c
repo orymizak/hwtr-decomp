@@ -7,14 +7,14 @@ typedef struct { u8 ch; u8 pad[0xF]; } MsgR_;
 
 
 extern PakSlotQ_ D_80140F68[4];
-s32 func_800D7208(u16 cmd, void *args);
-s32 func_800D6FA0(s32 ch) {
+s32 nuSiSendMesg(u16 cmd, void *args);
+s32 nuContRmbCheck(s32 ch) {
     MsgR_ m;
     s32 r;
     s32 mask;
 
     m.ch = ch;
-    r = func_800D7208(0x301, &m);
+    r = nuSiSendMesg(0x301, &m);
     mask = osSetIntMask(1);
     if (r == 0) {
         D_80140F68[ch].y = 2;

@@ -2,17 +2,17 @@
 #include "ultra64.h"
 #include "include_asm.h"
 typedef struct { void *pfs; s32 file_no; s32 error; s32 type; } PakFile73_;
-void func_800D7930(u8 *, void *, s32);
-void func_800D7BF0(u8 *, void *, void *, s32, s32);
-s32 func_800D7208(s32, void *);
+void nuContPakJisToN64(u8 *, void *, s32);
+void nuContPakFileOpen(u8 *, void *, void *, s32, s32);
+s32 nuSiSendMesg(s32, void *);
 
 
 
-void func_800D6770(PakFile73_ *file) {
-    file->error = func_800D7208(0x208, file);
+void nuContPakRepairId(PakFile73_ *file) {
+    file->error = nuSiSendMesg(0x208, file);
 }
 
-void func_800D67A0(u8 *a0, u8 *a1, u8 *a2, s32 a3, s32 a4) {
+void nuContPakFileOpenJis(u8 *a0, u8 *a1, u8 *a2, s32 a3, s32 a4) {
     u8 name[0x20];
     u8 ext[4];
     s32 len;
@@ -32,7 +32,7 @@ void func_800D67A0(u8 *a0, u8 *a1, u8 *a2, s32 a3, s32 a4) {
             len++;
         } while (*p != 0);
     }
-    func_800D7930(a1, name, len);
-    func_800D7930(a2, ext, 1);
-    func_800D7BF0(a0, name, ext, a3, a4);
+    nuContPakJisToN64(a1, name, len);
+    nuContPakJisToN64(a2, ext, 1);
+    nuContPakFileOpen(a0, name, ext, a3, a4);
 }

@@ -6,6 +6,6 @@ extern u8 D_80144460;
 
 
 
-void func_800D6390(void) {
+void nuContDataReadStart(void) {
     osSendMesg(&D_80144460, &D_800FB1A0, 1);
 }

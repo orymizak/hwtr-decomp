@@ -2,15 +2,15 @@
 #include "include_asm.h"
 typedef struct { u8 jis; u8 n64; } JisT_;
 extern JisT_ D_800FB260[];
-s32 func_800D7208(s32,s32);
+s32 nuSiSendMesg(s32,s32);
 
 
 
-void func_800D7910(void) {
-    func_800D7208(0x103, 0);
+void nuContQueryRead(void) {
+    nuSiSendMesg(0x103, 0);
 }
 
-void func_800D7930(u8 *src, u8 *dest, u32 len) {
+void nuContPakJisToN64(u8 *src, u8 *dest, u32 len) {
     u32 cnt;
     u32 i;
     u8 c;
@@ -54,7 +54,7 @@ void func_800D7930(u8 *src, u8 *dest, u32 len) {
     }
 }
 
-void func_800D7A7C(u8 *src, u8 *dest, u32 len) {
+void nuContPakN64ToJis(u8 *src, u8 *dest, u32 len) {
     u32 cnt;
     u32 i;
     u8 c;

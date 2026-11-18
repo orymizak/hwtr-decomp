@@ -12,7 +12,7 @@ void func_8007C224(void);
 void func_80078980(s32);
 typedef struct Node64_ { u8 pad[0xC]; f32 v; u8 pad2[4]; struct Node64_ *next; u8 pad3[2]; u8 id; } Node64_;
 extern Node64_ *D_800F0100;
-void func_800D6240(u32 devAddr, void *dram, u32 size);
+void nuPiReadRom(u32 devAddr, void *dram, u32 size);
 void func_800CE6D4(void *data, s32 a);
 typedef struct { s32 a; s32 b; s32 c; } Vec3J_;
 extern Vec3J_ D_800EFF14;
@@ -1368,24 +1368,24 @@ f32 func_80064E68(Vec3f *a, Vec3f *b) {
 }
 
 void func_80064EA4(u32 devAddr, u32 size, s32 a) {
-    func_800D6240(devAddr, (void *)0x80010400, size);
+    nuPiReadRom(devAddr, (void *)0x80010400, size);
     func_800CE6D4((void *)0x80010400, a);
 }
 
 
 void func_80064EE8(u32 a, u32 sizeA, u32 b, u32 sizeB) {
-    func_800D6240(a, (void *)0x80010400, sizeA);
+    nuPiReadRom(a, (void *)0x80010400, sizeA);
     D_80101E70 = Memory_Alloc(sizeB);
-    func_800D6240(b, D_80101E70, sizeB);
+    nuPiReadRom(b, D_80101E70, sizeB);
     func_800CE6D4((void *)0x80010400, (s32)D_80101E70);
 }
 
 
 void func_80064F5C(s32 arg0, u32 arg1) {
-    func_800D6240(arg0, 0x80020400, (arg1 & 1) + arg1);
+    nuPiReadRom(arg0, 0x80020400, (arg1 & 1) + arg1);
 }
 
 void func_80064F84(s32 arg0, u32 arg1) {
-    func_800D6240(arg0, 0x80000400, (arg1 & 1) + arg1);
+    nuPiReadRom(arg0, 0x80000400, (arg1 & 1) + arg1);
     func_800CE89C((void *)0x80000400);
 }

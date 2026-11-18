@@ -5,6 +5,6 @@
 /* Graphics task: the frame buffer pointer lives at 0xC (as in OSScTask). */
 
 
-void func_800D5FF0(NUScTask *task) {
+void nuGfxSwapCfb(NUScTask *task) {
     osViSwapBuffer(task->framebuffer);
 }

@@ -14,7 +14,7 @@ extern s8 D_800FABA0;
 extern u8 D_800FABA8;
 extern void *D_80138AD0;
 extern void *D_80138B08;
-s32 func_800D5910(void *, void *,s32);
+s32 nuScAddClient(void *, void *,s32);
 extern OSMesg D_80127900[4];
 extern OSMesg D_80127910[1];
 extern OSMesgQueue D_80134780; /* audio task reply queue */
@@ -44,7 +44,7 @@ void func_800CD600(s32 arg0) {
 void func_800CD6C4(void) {
     osCreateMesgQueue(&D_80145528, D_80127900, 4);
     osCreateMesgQueue(&D_80134780, D_80127910, 1);
-    func_800D5910(&D_80144450, &D_80145528, 3);
+    nuScAddClient(&D_80144450, &D_80145528, 3);
 }
 
 void func_800CD728(void) {

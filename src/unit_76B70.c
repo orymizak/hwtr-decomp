@@ -2,12 +2,12 @@
 #include "ultra64.h"
 #include "include_asm.h"
 
-extern s32 D_800FB194;
+extern s32 nuGfxPreNMIFunc;
 
-void func_800D5F70(s32 arg0) {
+void nuGfxPreNMIFuncSet(s32 arg0) {
     s32 mask;
 
     mask = osSetIntMask(1);
-    D_800FB194 = arg0;
+    nuGfxPreNMIFunc = arg0;
     osSetIntMask(mask);
 }

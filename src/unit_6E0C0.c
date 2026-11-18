@@ -25,15 +25,15 @@ void main(void) {
 extern void (*D_801455B4)(void);
 extern u8 D_80125750;
 extern u8 D_80143840;
-void func_800D6200(void);
-void func_800D5560(s32, s32);
+void nuPiInit(void);
+void nuScCreateScheduler(s32, s32);
 void osViSetSpecialFeatures(u32);
 void osSetThreadPri(void *, s32);
 void Game_Init(void);
 void func_800CD524(void *arg) {
     D_801455B4 = 0;
-    func_800D6200();
-    func_800D5560(2, 1);
+    nuPiInit();
+    nuScCreateScheduler(2, 1);
     /* TODO (Clean version): 0x5A is OS_VI_DITHER_ON | OS_VI_GAMMA_ON | OS_VI_GAMMA_DITHER_ON | OS_VI_DIVOT_ON */
     osViSetSpecialFeatures(0x5A);
     osCreateThread(&D_80125750, 3, Game_Init, 0, &D_80143840, 10);

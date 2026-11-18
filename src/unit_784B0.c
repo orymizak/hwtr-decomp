@@ -2,20 +2,20 @@
 #include "ultra64.h"
 #include "include_asm.h"
 
-extern s32 D_801380AC;
+extern s32 nuContDataLockKey;
 
-void func_800D78B0(void) {
+void nuContDataClose(void) {
     s32 mask;
 
     mask = osSetIntMask(1);
-    D_801380AC = 1;
+    nuContDataLockKey = 1;
     osSetIntMask(mask);
 }
 
-void func_800D78E0(void) {
+void nuContDataOpen(void) {
     s32 mask;
 
     mask = osSetIntMask(1);
-    D_801380AC = 0;
+    nuContDataLockKey = 0;
     osSetIntMask(mask);
 }

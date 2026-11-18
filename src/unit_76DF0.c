@@ -5,22 +5,22 @@ extern u8 D_8012FD90;
 extern u8 D_8012FDA8;
 extern s32 D_80148040;
 
-extern s32 D_80140E44;
-s32 func_800D6460();
-s32 func_800D69E0();
-s32 func_800D7170();
-s32 func_800D7570();
+extern s32 nuGfxDisplay;
+s32 nuContPakMgrInit();
+s32 nuContRmbMgrInit();
+s32 nuSiMgrInit();
+s32 nuContMgrInit();
 
-void func_800D61F0(void) {
-    D_80140E44 = 0x80;
+void nuGfxDisplayOn(void) {
+    nuGfxDisplay = 0x80;
 }
 
-void func_800D6200(void) {
+void nuPiInit(void) {
     osCreatePiManager(0x96, &D_8012FD90, &D_8012FDA8, 0x32);
     D_80148040 = osCartRomInit();
 }
 
-void func_800D6240(u32 rom, void *buf, u32 size) {
+void nuPiReadRom(u32 rom, void *buf, u32 size) {
     OSIoMesg io;
     OSMesgQueue mq;
     void *msg;
@@ -47,12 +47,12 @@ void func_800D6240(u32 rom, void *buf, u32 size) {
     }
 }
 
-s32 func_800D6300(void) {
+s32 nuContInit(void) {
     s32 ok;
 
-    ok = func_800D7170();
-    func_800D7570();
-    func_800D6460();
-    func_800D69E0();
+    ok = nuSiMgrInit();
+    nuContMgrInit();
+    nuContPakMgrInit();
+    nuContRmbMgrInit();
     return ok & 0xFF;
 }

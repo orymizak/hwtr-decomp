@@ -23,18 +23,18 @@ void func_80078964();
 extern f32 D_800F2110;
 extern void (*D_800F1CB4)(Msg6F_ *);
 extern void (*D_800F1CB8)(Msg6F_ *);
-extern s32 D_80140E44;
+extern s32 nuGfxDisplay;
 void func_8006F7B0(void *arg);
 void func_8006E00C(void *);
 extern u8 D_800FF7B0;
 extern OSViMode D_800FB6F0[];
-void func_800D6030(s32);
+void nuGfxRetraceWait(s32);
 extern u8 D_800F20F5;
 void func_8007863C(s32, s32, s32, s32);
 void func_800761D4(s32, s32, s32, s32, s32);
 void func_8006DFBC(void);
 void func_80066C9C(s32, s32);
-void func_800D61F0(void);
+void nuGfxDisplayOn(void);
 s32 GfxPools_Shutdown();
 extern NUScTask D_8014C1D0[];
 extern s16 D_8010A226;
@@ -47,7 +47,7 @@ extern u8 D_8014CD80[];
 extern u8 D_80138E40[];
 extern u8 D_80140E40[];
 extern u8 D_80143850[];
-void func_800D61C0(void);
+void nuGfxDisplayOff(void);
 void func_8006F8C4(void);
 extern L16_ D_800F1DE8[];
 void MtxPool_Grow(void *, u32);
@@ -55,7 +55,7 @@ extern NUScTask *D_8010A220;
 extern s32 *D_80141690;
 extern u16 D_800F1CBC;
 extern s32 D_8014C648;
-extern volatile s32 D_80145484;
+extern volatile s32 nuGfxTaskSpool;
 extern s32 D_801380B0;
 extern s32 D_801380A8;
 extern u8 D_800FB9C0[];
@@ -66,10 +66,10 @@ extern s32 D_800F1CC8;
 extern s16 D_8010A224;
 extern u8 D_8014D33C;
 extern u8 D_F1CF8;
-void func_800D5ED0(void);
-void func_800D60B0(void *, s32);
-void func_800D5FB0(void *);
-void func_800D5FF0(void);
+void nuGfxThreadStart(void);
+void nuGfxSetCfb(void *, s32);
+void nuGfxSwapCfbFuncSet(void *);
+void nuGfxSwapCfb(void);
 extern u8 D_800F20F7;
 extern f32 D_800F2114;
 extern f32 D_800F2118;
@@ -81,7 +81,7 @@ extern f32 D_800F212C;
 extern f32 D_800F2130;
 extern f32 D_800F2134;
 
-s32 func_800D6010();
+s32 nuGfxTaskAllEndWait();
 
 void func_8006F7B0(void *arg) {
     Msg6F_ *msg;
@@ -95,9 +95,9 @@ void func_8006F7B0(void *arg) {
             if (D_800F1CB4 != NULL) {
                 D_800F1CB4(msg);
             }
-            if (D_80140E44 & 0x80) {
+            if (nuGfxDisplay & 0x80) {
                 osViBlack(0);
-                D_80140E44 = 1;
+                nuGfxDisplay = 1;
             }
             break;
         case 8:
@@ -109,7 +109,7 @@ void func_8006F7B0(void *arg) {
             continue;
         }
         mask = osSetIntMask(1);
-        D_80145484--;
+        nuGfxTaskSpool--;
         osSetIntMask(mask);
     }
 }
@@ -119,8 +119,8 @@ void func_8006F8C4(void) {
 
     D_8010A224 = 8;
     D_8010A226 = 4;
-    D_80145484 = 0;
-    func_800D61C0();
+    nuGfxTaskSpool = 0;
+    nuGfxDisplayOff();
     osCreateThread(D_8010A228, 5, func_8006F7B0, 0, D_8010C3E0, 0x3C);
     osStartThread(D_8010A228);
     for (i = 0; i < 10; i++) {
@@ -178,7 +178,7 @@ void func_8006FA7C(Gfx *dl, s32 size, s32 ucode, u32 flags) {
         D_8010A220->msg = &D_8010A224;
     }
     mask = osSetIntMask(1);
-    D_80145484++;
+    nuGfxTaskSpool++;
     osSetIntMask(mask);
     osWritebackDCacheAll();
     osSendMesg(&D_8014D33C, D_8010A220, 1);
@@ -197,10 +197,10 @@ s32 func_8006FBF0(void) {
     osViBlack(0);
     D_800F20FA = 640;
     D_800F20FC = 480;
-    func_800D5ED0();
-    func_800D60B0(&D_800F1CC0, 2);
+    nuGfxThreadStart();
+    nuGfxSetCfb(&D_800F1CC0, 2);
     D_801380A8 = 0x8023E000;
-    func_800D5FB0(func_800D5FF0);
+    nuGfxSwapCfbFuncSet(nuGfxSwapCfb);
     D_80141690 = &D_800F1CC8;
     func_8006F8C4();
     t = D_8010A220;
@@ -222,12 +222,12 @@ s32 func_8006FBF0(void) {
     D_800F1CBC = 0;
     D_8010A220->msg = &D_8010A224;
     mask = osSetIntMask(1);
-    D_80145484++;
+    nuGfxTaskSpool++;
     osSetIntMask(mask);
     osWritebackDCacheAll();
     osSendMesg(&D_8014D33C, D_8010A220, 1);
     D_8010A220 = D_8010A220->next;
-    func_800D6010();
+    nuGfxTaskAllEndWait();
     return 1;
 }
 
@@ -484,25 +484,25 @@ u8 func_800717C8(f32 (*m)[4], f32 (*o)[4], f32 r) {
 }
 
 void func_80071924(void) {
-    func_800D6010();
+    nuGfxTaskAllEndWait();
 }
 
 s32 func_80071940(void) {
     osViSetMode(&D_800FB6F0[D_801380B0]);
-    func_800D61C0();
-    func_800D6030(2);
+    nuGfxDisplayOff();
+    nuGfxRetraceWait(2);
     osViSetSpecialFeatures(0x5A);
     ((u32 *)&D_800F1CC0)[0] = 0x803B5000;
     ((u32 *)&D_800F1CC0)[1] = 0x803DA800;
     D_800F20F5 = 1;
-    func_800D60B0(&D_800F1CC0, 2);
+    nuGfxSetCfb(&D_800F1CC0, 2);
     D_800F20FA = 320;
     D_800F20FC = 240;
     func_8007863C(0, 0, 320, 240);
     func_800761D4(0, 0, 0, D_800F20FA, D_800F20FC);
     func_8006DFBC();
     func_80066C9C(1, 1);
-    func_800D61F0();
+    nuGfxDisplayOn();
     GfxPools_Shutdown();
     return 1;
 }
@@ -511,12 +511,12 @@ s32 func_80071A40(void) {
     u16 *p;
 
     osViSetMode(&((OSViMode *)&D_800FB9C0)[D_801380B0]);
-    func_800D61C0();
-    func_800D6030(2);
+    nuGfxDisplayOff();
+    nuGfxRetraceWait(2);
     osViSetSpecialFeatures(0x5A);
     ((u32 *)&D_800F1CC0)[0] = 0x802D4000;
     ((u32 *)&D_800F1CC0)[1] = 0x8036A000;
-    func_800D60B0(&D_800F1CC0, 2);
+    nuGfxSetCfb(&D_800F1CC0, 2);
     p = &D_800F20FA;
     *p = 640;
     D_800F20FC = 480;
@@ -526,6 +526,6 @@ s32 func_80071A40(void) {
     func_80066C9C(0, 0);
     func_8006E00C(&D_800FF7B0);
     GfxPools_Shutdown();
-    func_800D61F0();
+    nuGfxDisplayOn();
     return 1;
 }

@@ -36,10 +36,10 @@ void func_8007BE30(void);
 void func_8007F420(void);
 void func_80087720(void);
 void func_8008777C(void);
-void func_800D5F30(void (*callback)(s32));
-void func_800D5F70(void (*callback)(void));
-void func_800D61C0(void);
-void func_800D61F0(void);
+void nuGfxFuncSet(void (*callback)(s32));
+void nuGfxPreNMIFuncSet(void (*callback)(void));
+void nuGfxDisplayOff(void);
+void nuGfxDisplayOn(void);
 
 void func_80078BA4(s32 arg0);
 void func_80078BD0(void);
@@ -97,12 +97,12 @@ void Game_Init(void) {
     Font_Init();
     func_8007BE30();
     func_80077FD0();
-    func_800D5F70(func_80078BD0);
+    nuGfxPreNMIFuncSet(func_80078BD0);
     func_80087720();
     func_8006DA88();
     func_8006DC90();
-    func_800D5F30(func_80078BA4);
-    func_800D61F0();
+    nuGfxFuncSet(func_80078BA4);
+    nuGfxDisplayOn();
 }
 
 void func_80078BA4(s32 arg0) {
@@ -113,5 +113,5 @@ void func_80078BA4(s32 arg0) {
 
 void func_80078BD0(void) {
     func_8006C468();
-    func_800D61C0();
+    nuGfxDisplayOff();
 }

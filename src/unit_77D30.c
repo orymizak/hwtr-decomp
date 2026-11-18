@@ -6,35 +6,35 @@ extern NodeT_ *D_800FB220;
 extern u8 D_8014EB40[];
 extern void *D_8012FE70[];
 extern u8 D_80132040[];
-void func_800D72AC(void *arg);
+void nuSiMgrThread(void *arg);
 typedef struct { u16 cmd; OSMesgQueue *mq; s32 result; void *args; } ReqI_;
 extern u8 D_80144460[];
-s32 func_800D7208(u16 cmd, void *args);
+s32 nuSiSendMesg(u16 cmd, void *args);
 
 extern s32 D_8012FE90;
 
-void func_800D7130(void) {
-    func_800D7208(0x304, 0);
+void nuContRmbForceStop(void) {
+    nuSiSendMesg(0x304, 0);
 }
 
-void func_800D7150(void) {
-    func_800D7208(0x305, 0);
+void nuContRmbForceStopEnd(void) {
+    nuSiSendMesg(0x305, 0);
 }
 
-u8 func_800D7170(void) {
+u8 nuSiMgrInit(void) {
     OSContStatus status[4];
     u8 pattern;
 
     osCreateMesgQueue(D_8014EB40, D_8012FE70, 8);
     osSetEventMesg(5, D_8014EB40, 0);
     osContInit(D_8014EB40, &pattern, status);
-    osCreateThread(((u8 *)&D_8012FE90), 5, func_800D72AC, 0, D_80132040, 0x73);
+    osCreateThread(((u8 *)&D_8012FE90), 5, nuSiMgrThread, 0, D_80132040, 0x73);
     ((void (*)(void *t))osStartThread)(((u8 *)&D_8012FE90));
     return pattern;
 }
 
 
-s32 func_800D7208(u16 cmd, void *args) {
+s32 nuSiSendMesg(u16 cmd, void *args) {
     OSMesgQueue mq;
     ReqI_ req;
     void *msgbuf;
@@ -48,19 +48,19 @@ s32 func_800D7208(u16 cmd, void *args) {
     return req.result;
 }
 
-void func_800D726C(void) {
-    func_800D7208(0x7F00, 0);
+void nuSiMgrStop(void) {
+    nuSiSendMesg(0x7F00, 0);
 }
 
-void func_800D728C(void) {
+void nuSiMgrRestart(void) {
     osStartThread(&D_8012FE90);
 }
 
 typedef struct { s16 mesg; u8 p2[2]; void *rtnMesgQ; s32 error; } SiMesgT_;
 typedef struct { u8 b[0x10]; } SiClientT_;
-void func_800D5910(void *c, void *mq, s32 flags);
+void nuScAddClient(void *c, void *mq, s32 flags);
 void func_800D59A0(void *arg0, s16 arg1);
-void func_800D72AC(void *arg) {
+void nuSiMgrThread(void *arg) {
     SiClientT_ client;
     void *buf[8];
     SiMesgT_ *msg;
@@ -70,7 +70,7 @@ void func_800D72AC(void *arg) {
     u16 minor;
 
     osCreateMesgQueue(D_80144460, buf, 8);
-    func_800D5910(&client, D_80144460, 1);
+    nuScAddClient(&client, D_80144460, 1);
     while (1) {
         osRecvMesg(D_80144460, (void **)&msg, 1);
         cb = &D_800FB220;
@@ -112,7 +112,7 @@ void func_800D72AC(void *arg) {
     }
 }
 
-void func_800D7450(NodeT_ *n) {
+void nuSiCallBackAdd(NodeT_ *n) {
     NodeT_ **pp = &D_800FB220;
     s32 cnt;
     s32 mask;
@@ -132,7 +132,7 @@ void func_800D7450(NodeT_ *n) {
     osSetIntMask(mask);
 }
 
-void func_800D74F0(NodeT_ *n) {
+void nuSiCallBackRemove(NodeT_ *n) {
     NodeT_ **pp;
     s32 mask;
 

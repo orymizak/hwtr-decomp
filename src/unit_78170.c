@@ -2,33 +2,33 @@
 #include "ultra64.h"
 #include "include_asm.h"
 extern u8 D_8014EB40[];
-s32 func_800D76B4(void *data, s32 mask);
+s32 contReadData(void *data, s32 mask);
 extern s32 (*D_800FB230)(s16);
-extern u8 D_801347A0;
-extern s32 D_801380AC;
-extern u8 D_80141090;
-extern u8 D_8014ECB0;
+extern u8 nuContWaitMesgQ;
+extern s32 nuContDataLockKey;
+extern u8 nuContData;
+extern u8 nuContDataMutexQ;
 
-s32 func_800D74F0(s32 *);
-extern s32 D_800FB248;
+s32 nuSiCallBackRemove(s32 *);
+extern s32 nuContCallBack;
 
 extern OSContStatus D_801380B8[4];
 extern s32 D_80132040;
 extern s32 D_80132044;
 extern s32 D_80143840;
-void func_800D78E0(void);
-void func_800D7910(void);
-s32 func_800D7450(void *);
-u8 func_800D7570(void) {
+void nuContDataOpen(void);
+void nuContQueryRead(void);
+s32 nuSiCallBackAdd(void *);
+u8 nuContMgrInit(void) {
     s32 i;
     s32 pattern;
     s32 bit;
 
-    func_800D78E0();
-    osCreateMesgQueue(&D_801347A0, &D_80132040, 1);
-    osCreateMesgQueue(&D_8014ECB0, &D_80132044, 1);
-    func_800D7450(&D_800FB248);
-    func_800D7910();
+    nuContDataOpen();
+    osCreateMesgQueue(&nuContWaitMesgQ, &D_80132040, 1);
+    osCreateMesgQueue(&nuContDataMutexQ, &D_80132044, 1);
+    nuSiCallBackAdd(&nuContCallBack);
+    nuContQueryRead();
     bit = 1;
     pattern = 0;
     D_80143840 = 0;
@@ -45,58 +45,58 @@ u8 func_800D7570(void) {
     return pattern;
 }
 
-void func_800D7644(void) {
-    func_800D74F0(&D_800FB248);
+void nuContMgrRemove(void) {
+    nuSiCallBackRemove(&nuContCallBack);
 }
 
-void func_800D7664(void) {
-    osSendMesg(&D_8014ECB0, 0, 1);
+void nuContDataLock(void) {
+    osSendMesg(&nuContDataMutexQ, 0, 1);
 }
 
-void func_800D768C(void) {
-    osRecvMesg(&D_8014ECB0, 0, 1);
+void nuContDataUnLock(void) {
+    osRecvMesg(&nuContDataMutexQ, 0, 1);
 }
 
-s32 func_800D76B4(void *data, s32 mask) {
+s32 contReadData(void *data, s32 mask) {
     s32 r = osContStartReadData(D_8014EB40);
 
     if (r != 0) {
         return r;
     }
     ((s32 (*)(void *mq, void **msg, s32 flag))osRecvMesg)(D_8014EB40, 0, 1);
-    if (mask & D_801380AC) {
+    if (mask & nuContDataLockKey) {
         return 0;
     }
-    func_800D7664();
+    nuContDataLock();
     osContGetReadData(data);
-    func_800D768C();
+    nuContDataUnLock();
     return 0;
 }
 
 
 INCLUDE_ASM("asm/nonmatchings/unit_78170", func_800D773C);
 
-s32 func_800D778C(s16 *arg0) {
-    if (D_801380AC == 0) {
-        osRecvMesg(&D_801347A0, 0, 0);
-        func_800D76B4(&D_80141090, 1);
+s32 contRetrace(s16 *arg0) {
+    if (nuContDataLockKey == 0) {
+        osRecvMesg(&nuContWaitMesgQ, 0, 0);
+        contReadData(&nuContData, 1);
         if (D_800FB230 != NULL) {
             D_800FB230(*arg0);
         }
-        osSendMesg(&D_801347A0, 0, 0);
+        osSendMesg(&nuContWaitMesgQ, 0, 0);
     }
     return 0;
 }
 
-void func_800D7818(u8 *mesg) {
-    func_800D76B4(*(void **)(mesg + 0xC), 0);
+void contRead(u8 *mesg) {
+    contReadData(*(void **)(mesg + 0xC), 0);
 }
 
-s32 func_800D7838(s16 *p) {
+s32 contReadNW(s16 *p) {
     s32 r;
 
-    osRecvMesg(&D_801347A0, 0, 0);
-    r = func_800D76B4(&D_80141090, 0);
+    osRecvMesg(&nuContWaitMesgQ, 0, 0);
+    r = contReadData(&nuContData, 0);
     if (r != 0) {
         return r;
     }

@@ -268,13 +268,13 @@ s32 File_LoadLZChunked(s32 index, u8 *dst);
 s32 File_LoadLZChunkedAsync();
 void *Memory_Alloc(u32 size);
 void Memory_Free(void *ptr);
-void func_800D6240(u32 romAddr, void *dst, u32 size);
-void func_800D66D0(PakHandle *handle, s32 port);
-void func_800D6770(PakHandle *handle);
+void nuPiReadRom(u32 romAddr, void *dst, u32 size);
+void nuContPakOpen(PakHandle *handle, s32 port);
+void nuContPakRepairId(PakHandle *handle);
 void func_800D7030(s32 port, s32 arg1);
 u8 func_8006C4BC(u8 port);
-void func_800D67A0(PakHandle *handle, const char *name, const char *ext, s32 create, s32 size);
-void func_800D68D0(PakHandle *handle, s32 offset, s32 size, void *buffer, s32 write);
+void nuContPakFileOpenJis(PakHandle *handle, const char *name, const char *ext, s32 create, s32 size);
+void nuContPakFileReadWrite(PakHandle *handle, s32 offset, s32 size, void *buffer, s32 write);
 s32 func_8006E578(s32 port);
 s32 File_LoadLZAsync(s32 index, void *dst, s32 slot);
 s32 File_FinishLZAsync(s32 slot);
@@ -340,15 +340,15 @@ s32 File_Load(char *name, void *dst) {
         default:
             size = gFileSystem.table[mid].size;
             if (size & 1) {
-                func_800D6240(gFileSystem.table[mid].romStart, dst, size + 1);
+                nuPiReadRom(gFileSystem.table[mid].romStart, dst, size + 1);
             } else {
-                func_800D6240(gFileSystem.table[mid].romStart, dst, size);
+                nuPiReadRom(gFileSystem.table[mid].romStart, dst, size);
             }
             /* TODO (Clean version):
             CHECK_1
             The odd-size alignment check can be cleanly encapsulated in an alignment macro:
             #define ALIGN_2(val) (((val) + 1) & ~1)
-            func_800D6240(romStart, dst, ALIGN_2(size));
+            nuPiReadRom(romStart, dst, ALIGN_2(size));
             */
             break;
     }
@@ -458,7 +458,7 @@ s32 func_8006E578(s32 port) {
     }
     handle = Memory_Alloc(sizeof(PakHandle));
     memset(handle, 0, sizeof(PakHandle));
-    func_800D66D0(handle, port);
+    nuContPakOpen(handle, port);
     if (port == 0) {
         osSyncPrintf(sPakStatusFormat, handle->status);
     }
@@ -506,7 +506,7 @@ s32 func_8006E578(s32 port) {
     if (D_800F03F8[port].unk00 == 2) {
         func_800D7030(port, 0);
     }
-    func_800D67A0(handle, sPakGameName, sPakExtName, 0, 0);
+    nuContPakFileOpenJis(handle, sPakGameName, sPakExtName, 0, 0);
     if (handle->status != 0) {
         gFileSystem.handles[port] = handle;
         switch (handle->status) {
@@ -595,9 +595,9 @@ s32 Save_Read(s32 port, SaveBlock *dst) {
     D_800F1C98[port] = 0;
     handle = gFileSystem.handles[port];
     if (handle != NULL && gFileSystem.initialized[port]) {
-        func_800D68D0(handle, 0, sizeof(SaveBlock), blocks[0], 0);
+        nuContPakFileReadWrite(handle, 0, sizeof(SaveBlock), blocks[0], 0);
         errors[0] = handle->status != 0;
-        func_800D68D0(handle, sizeof(SaveBlock), sizeof(SaveBlock), blocks[1], 0);
+        nuContPakFileReadWrite(handle, sizeof(SaveBlock), sizeof(SaveBlock), blocks[1], 0);
         errors[1] = handle->status != 0;
         if (Save_IsChecksumValid(blocks[0]) && !errors[0]) {
             goto first_valid;
@@ -614,11 +614,11 @@ s32 Save_Read(s32 port, SaveBlock *dst) {
         if (valid0) {
             *dst = *blocks[0];
             if (!valid1) {
-                func_800D68D0(handle, sizeof(SaveBlock), sizeof(SaveBlock), blocks[0], 1);
+                nuContPakFileReadWrite(handle, sizeof(SaveBlock), sizeof(SaveBlock), blocks[0], 1);
             }
         } else if (valid1) {
             *dst = *blocks[1];
-            func_800D68D0(handle, 0, sizeof(SaveBlock), blocks[1], 1);
+            nuContPakFileReadWrite(handle, 0, sizeof(SaveBlock), blocks[1], 1);
         } else {
             // Handle total read/checksum failure
             Memory_Free(blocks[0]);
@@ -632,13 +632,13 @@ s32 Save_Read(s32 port, SaveBlock *dst) {
     return 0;
 
 second_only:
-    func_800D68D0(handle, 0, sizeof(SaveBlock), blocks[1], 1);
+    nuContPakFileReadWrite(handle, 0, sizeof(SaveBlock), blocks[1], 1);
     *dst = *blocks[1];
     goto done;
 
 first_valid:
     if (!Save_IsChecksumValid(blocks[1]) || errors[1]) {
-        func_800D68D0(handle, sizeof(SaveBlock), sizeof(SaveBlock), blocks[0], 1);
+        nuContPakFileReadWrite(handle, sizeof(SaveBlock), sizeof(SaveBlock), blocks[0], 1);
         *dst = *blocks[0];
     } else {
         *dst = *blocks[0];
@@ -659,14 +659,14 @@ s32 Save_Write(s32 port, SaveBlock *src) {
         return 0;
     }
     if (!gFileSystem.initialized[port]) {
-        func_800D67A0(handle, sPakGameName, sPakExtName, 1, 0x1B40);
+        nuContPakFileOpenJis(handle, sPakGameName, sPakExtName, 1, 0x1B40);
         if (handle->status != 0) {
             return 0;
         }
         gFileSystem.initialized[port] = 1;
     }
-    func_800D68D0(handle, 0, sizeof(SaveBlock), src, 1);
-    func_800D68D0(handle, sizeof(SaveBlock), sizeof(SaveBlock), src, 1);
+    nuContPakFileReadWrite(handle, 0, sizeof(SaveBlock), src, 1);
+    nuContPakFileReadWrite(handle, sizeof(SaveBlock), sizeof(SaveBlock), src, 1);
     return handle->status == 0;
     /* TODO (Clean version):
     Document the dual-write strategy for backup resilience:
@@ -682,7 +682,7 @@ s32 func_8006EDD4(s32 port) {
     if (handle == NULL) {
         return 0;
     }
-    func_800D6770(handle);
+    nuContPakRepairId(handle);
     if (handle->status == 0) {
         return func_8006E578(port) != 10;
     }
@@ -699,9 +699,9 @@ s32 File_LoadLZ(s32 index, void *dst) {
     }
     size = gFileSystem.table[index].storedSize;
     if (size & 1) {
-        func_800D6240(gFileSystem.table[index].romStart, buffer, size + 1);
+        nuPiReadRom(gFileSystem.table[index].romStart, buffer, size + 1);
     } else {
-        func_800D6240(gFileSystem.table[index].romStart, buffer, size);
+        nuPiReadRom(gFileSystem.table[index].romStart, buffer, size);
     }
     LZ_Decompress(buffer, dst);
     Memory_Free(buffer);

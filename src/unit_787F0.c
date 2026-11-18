@@ -3,4 +3,4 @@
 
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_787F0", func_800D7BF0);
+INCLUDE_ASM("asm/nonmatchings/unit_787F0", nuContPakFileOpen);

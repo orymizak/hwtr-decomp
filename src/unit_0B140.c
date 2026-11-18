@@ -4,7 +4,7 @@
 typedef struct { s32 state; u8 pad[0x50]; } SlotC_;
 extern SlotC_ D_800F03F8[];
 extern u8 D_800F0548[];
-void func_800D7150(void);
+void nuContRmbForceStopEnd(void);
 typedef struct { u16 button; s8 stick_x; s8 stick_y; u8 errnum; u8 pad; } Pad_;
 typedef struct { u8 buf[8]; s32 st; s32 mode; } PakSt_;
 typedef struct { s32 keys[6]; u8 pad[0x54 - 0x18]; } KeySet_;
@@ -36,11 +36,11 @@ void func_8007AFD4(s32, f32 (*)[4], f32 (*)[4]);
 s32 func_80070BA4(f32 (*)[4]);
 extern Row6B_ D_800F043C[];
 extern KeySet_ D_800F0404[];
-void func_800D63C0(Pad_ *, s32);
-s32 func_800D6FA0(s32);
+void nuContDataGet(Pad_ *, s32);
+s32 nuContRmbCheck(s32);
 void func_800D7030(s32, s32);
-void func_800D66D0(PakSt_ *, s32);
-extern void func_800D6420(Pad_ *);
+void nuContPakOpen(PakSt_ *, s32);
+extern void nuContDataGetAll(Pad_ *);
 extern u8 D_800F0403;
 extern s32 D_800F0390[];
 extern u8 D_800F03EB;
@@ -63,7 +63,7 @@ s32 Memory_Free(void *);
 extern void *D_80102208[3];
 extern s32 D_800F0414;
 extern u8 D_800F03F4;
-s32 func_800D7130();
+s32 nuContRmbForceStop();
 
 INCLUDE_ASM("asm/nonmatchings/unit_0B140", func_8006A540);
 
@@ -219,7 +219,7 @@ s32 func_8006B6B8(u8 ch, s32 key) {
     Pad_ pad[4];
     u16 mask;
 
-    func_800D6420(pad);
+    nuContDataGetAll(pad);
     switch (key) {
     case 14:
         if (pad[ch].stick_y > 0x28) {
@@ -299,7 +299,7 @@ s32 func_8006B894(s32 key) {
     Pad_ pad[4];
     u16 mask;
 
-    func_800D6420(pad);
+    nuContDataGetAll(pad);
     switch (key) {
     case 14:
         if (pad[0].stick_y > 0x28 || pad[1].stick_y > 0x28 || pad[2].stick_y > 0x28 || pad[3].stick_y > 0x28) {
@@ -392,7 +392,7 @@ s32 func_8006BE34(u8 ch, s32 slot) {
     Pad_ pad;
     s32 mask;
 
-    func_800D63C0(&pad, ch);
+    nuContDataGet(&pad, ch);
     mask = 0;
     if (mask == 0 && pad.stick_x > 0x28) mask = 0x10000;
     if (mask == 0 && pad.stick_x < -0x28) mask = 0x20000;
@@ -534,19 +534,19 @@ s32 func_8006C3D4(u8 *out, u8 ch) {
 }
 
 s32 func_8006C468(void) {
-    func_800D7130();
+    nuContRmbForceStop();
     return 1;
 }
 
 s32 func_8006C488(void) {
-    func_800D7150();
+    nuContRmbForceStopEnd();
     memset(D_800F0548, 0, 2);
     return 1;
 }
 
 
 s32 func_8006C4BC(u8 i) {
-    if (func_800D6FA0(i) == 0) {
+    if (nuContRmbCheck(i) == 0) {
         D_800F03F8[i].state = 2;
         func_800D7030(i, 2);
         return 1;
@@ -555,19 +555,19 @@ s32 func_8006C4BC(u8 i) {
 }
 
     /* TODO (Bug potential):
-    Si func_800D6FA0 retorna un estado distinto de 0 y 11 (o si st == 11 pero st != 10 tras func_800D66D0), s.mode queda sin inicializar en la primera iteración o retiene el valor de una iteración previa, asignando datos no inicializados o desactualizados a D_800F03F8[i].state.
+    Si nuContRmbCheck retorna un estado distinto de 0 y 11 (o si st == 11 pero st != 10 tras nuContPakOpen), s.mode queda sin inicializar en la primera iteración o retiene el valor de una iteración previa, asignando datos no inicializados o desactualizados a D_800F03F8[i].state.
     */
 s32 func_8006C520(void) {
     PakSt_ s;
     s32 i;
 
     for (i = 0; i < 4; i++) {
-        s.st = func_800D6FA0(i);
+        s.st = nuContRmbCheck(i);
         if (s.st == 0) {
             s.mode = 2;
             func_800D7030(i, 2);
         } else if (s.st == 11) {
-            func_800D66D0(&s, i);
+            nuContPakOpen(&s, i);
             if (s.st == 10) {
                 s.mode = 1;
             }

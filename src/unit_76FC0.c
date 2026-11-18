@@ -1,14 +1,14 @@
 #include "common.h"
 #include "ultra64.h"
 #include "include_asm.h"
-s32 func_800D7664();
-s32 func_800D768C();
-extern u8 D_80141090;
+s32 nuContDataLock();
+s32 nuContDataUnLock();
+extern u8 nuContData;
 
 
 
-void func_800D63C0(s32 arg0, s32 arg1) {
-    func_800D7664();
-    bcopy((arg1 * 6) + &D_80141090, arg0, 6);
-    func_800D768C();
+void nuContDataGet(s32 arg0, s32 arg1) {
+    nuContDataLock();
+    bcopy((arg1 * 6) + &nuContData, arg0, 6);
+    nuContDataUnLock();
 }

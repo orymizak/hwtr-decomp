@@ -11,32 +11,32 @@ typedef struct { u8 p0[0xC]; ArgsS_ *args; } ReqS_;
 typedef struct { void *pfs; s32 file_no; } PakFileB_;
 typedef struct { PakFileB_ *file; s32 offset; s32 size; u8 flag; u8 *buffer; } ReqArgB_;
 typedef struct { u8 p0[0xC]; ReqArgB_ *args; } ReqB_;
-s32 func_800D7664();
-s32 func_800D768C();
-extern u8 D_80141090;
+s32 nuContDataLock();
+s32 nuContDataUnLock();
+extern u8 nuContData;
 
-s32 func_800D7450(s32 *);
-extern s32 D_800FB1E0;
-s32 func_800D74F0(s32 *);
+s32 nuSiCallBackAdd(s32 *);
+extern s32 nuContPakCallBack;
+s32 nuSiCallBackRemove(s32 *);
 extern s32 D_8014EB40;
 extern u16 D_800FB1B0;
 extern s32 D_800FB1B4;
 
-void func_800D6420(s32 arg0) {
-    func_800D7664();
-    bcopy(&D_80141090, arg0, 0x18);
-    func_800D768C();
+void nuContDataGetAll(s32 arg0) {
+    nuContDataLock();
+    bcopy(&nuContData, arg0, 0x18);
+    nuContDataUnLock();
 }
 
-void func_800D6460(void) {
-    func_800D7450(&D_800FB1E0);
+void nuContPakMgrInit(void) {
+    nuSiCallBackAdd(&nuContPakCallBack);
 }
 
-void func_800D6480(void) {
-    func_800D74F0(&D_800FB1E0);
+void nuContPakMgrRemove(void) {
+    nuSiCallBackRemove(&nuContPakCallBack);
 }
 
-s32 func_800D64A0(NuSiMesg_ *mesg) {
+s32 contPakOpen(NuSiMesg_ *mesg) {
     NuPakFile_ *file = mesg->data;
     s32 ret;
 
@@ -48,17 +48,17 @@ s32 func_800D64A0(NuSiMesg_ *mesg) {
     return ret;
 }
 
-void func_800D64F0(NuSiMesg_ *mesg) {
+void contPakFree(NuSiMesg_ *mesg) {
     osPfsFreeBlocks(*(s32 *)((NuPakFile_ *)mesg->data)->pfs, &((NuPakFile_ *)mesg->data)->file_no);
 }
 
-s32 func_800D6518(ReqB_ *r) {
+s32 contPakFileReadWrite(ReqB_ *r) {
     ReqArgB_ *a = r->args;
     return ((s32 (*)(void *pfs, s32 file_no, u8 flag, s32 offset, s32 size, u8 *data_buffer))osPfsReadWriteFile)(a->file->pfs, a->file->file_no, a->flag, a->offset, a->size, a->buffer);
 }
 
 
-s32 func_800D6558(ReqS_ *r) {
+s32 contPakFileOpen(ReqS_ *r) {
     ArgsS_ *a = r->args;
     PakFileS_ *f = a->file;
     s32 ret;
@@ -70,24 +70,24 @@ s32 func_800D6558(ReqS_ *r) {
     return ret;
 }
 
-void func_800D6610(NuSiMesg_ *mesg) {
+void contPakFileDelete(NuSiMesg_ *mesg) {
     ArgsS_ *a = mesg->data;
 
     osPfsDeleteFile(a->file->pfs, D_800FB1B0, D_800FB1B4, a->name, a->ext);
 }
 
-void func_800D6650(NuSiMesg_ *mesg) {
+void contPakFileState(NuSiMesg_ *mesg) {
     ArgsS_ *a = mesg->data;
 
     osPfsFileState((s32)a->file->pfs, a->file->file_no, (s32)a->name);
 }
 
-void func_800D667C(NuSiMesg_ *mesg) {
+void contPakFileNum(NuSiMesg_ *mesg) {
     ArgsS_ *a = mesg->data;
 
     osPfsNumFiles(a->file->pfs, a->name, a->ext);
 }
 
-void func_800D66A8(NuSiMesg_ *mesg) {
+void contPakRepairId(NuSiMesg_ *mesg) {
     osPfsRepairId(((NuPakFile_ *)mesg->data)->pfs);
 }

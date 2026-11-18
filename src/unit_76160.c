@@ -8,7 +8,7 @@ typedef struct { u8 b[0x10]; } ClientR_;
 typedef struct { u8 p0[0xC]; void *fb; } FrameR_;
 extern u8 D_8012DBE0;
 extern u8 D_8012FD90;
-void func_800D5E00(void *arg);
+void nuGfxThread(void *arg);
 
 extern s32 D_8014D304;
 extern s32 D_8014D33C;
@@ -16,7 +16,7 @@ extern s8 D_8014D97D;
 extern u8 D_8014D97C;
 typedef struct ClientS_ { struct ClientS_ *next; void *mq; s16 mask; } ClientS_;
 typedef struct { s16 retraceMsg; s16 prenmiMsg; OSMesgQueue audioRequestMQ; void *audioBuf[8]; OSMesgQueue gfxMQ; void *gfxBuf[8]; OSMesgQueue retraceMQ; void *retraceBuf[8]; OSMesgQueue rspMQ; void *rspBuf[8]; OSMesgQueue rdpMQ; void *rdpBuf[8]; OSMesgQueue waitMQ; void *waitBuf[8]; u8 p154[4]; u8 schedulerThread[0x1B0]; u8 audioThread[0x1B0]; u8 graphicsThread[0x1B0]; ClientS_ *clientList; NUScTask *curGraphicsTask; NUScTask *curAudioTask; NUScTask *graphicsTaskSuspended; u32 frameRate; u8 retraceCount; u8 frameBufferNum; } SchedS_;
-extern SchedS_ D_8014D300;
+extern SchedS_ nusched;
 extern s32 osTvType;
 extern OSViMode osViModeTable[];
 extern u8 D_80129BC0[];
@@ -24,68 +24,68 @@ extern u8 D_8012BBC0[];
 extern void *D_8012DBC0[];
 extern s32 D_80140E40;
 extern void (*D_800FB180)(void);
-void func_800D57C4(void);
-void func_800D5ABC(void);
-void func_800D5C18(void);
-void func_800D5A5C(s16 *msg);
-void func_800D5D5C(FrameR_ *f);
+void nuScEventHandler(void);
+void nuScExecuteAudio(void);
+void nuScExecuteGraphics(void);
+void nuScEventBroadcast(s16 *msg);
+void nuScWaitTaskReady(FrameR_ *f);
 extern u8 D_801345B0;
 
-void func_800D5560(u8 mode, u8 numFields) {
-    D_8014D300.curGraphicsTask = 0;
-    D_8014D300.curAudioTask = 0;
-    D_8014D300.graphicsTaskSuspended = 0;
-    D_8014D300.clientList = 0;
-    D_8014D300.retraceMsg = 1;
-    D_8014D300.prenmiMsg = 2;
-    D_8014D300.frameRate = numFields;
-    D_8014D300.frameBufferNum = 2;
+void nuScCreateScheduler(u8 mode, u8 numFields) {
+    nusched.curGraphicsTask = 0;
+    nusched.curAudioTask = 0;
+    nusched.graphicsTaskSuspended = 0;
+    nusched.clientList = 0;
+    nusched.retraceMsg = 1;
+    nusched.prenmiMsg = 2;
+    nusched.frameRate = numFields;
+    nusched.frameBufferNum = 2;
     if (osTvType == 0) {
-        D_8014D300.retraceCount = 50;
+        nusched.retraceCount = 50;
     } else {
-        D_8014D300.retraceCount = 60;
+        nusched.retraceCount = 60;
     }
     D_801345B0 = 0;
-    osCreateMesgQueue(&D_8014D300.retraceMQ, D_8014D300.retraceBuf, 8);
-    osCreateMesgQueue(&D_8014D300.rspMQ, D_8014D300.rspBuf, 8);
-    osCreateMesgQueue(&D_8014D300.rdpMQ, D_8014D300.rdpBuf, 8);
-    osCreateMesgQueue(&D_8014D300.gfxMQ, D_8014D300.gfxBuf, 8);
-    osCreateMesgQueue(&D_8014D300.audioRequestMQ, D_8014D300.audioBuf, 8);
-    osCreateMesgQueue(&D_8014D300.waitMQ, D_8014D300.waitBuf, 8);
+    osCreateMesgQueue(&nusched.retraceMQ, nusched.retraceBuf, 8);
+    osCreateMesgQueue(&nusched.rspMQ, nusched.rspBuf, 8);
+    osCreateMesgQueue(&nusched.rdpMQ, nusched.rdpBuf, 8);
+    osCreateMesgQueue(&nusched.gfxMQ, nusched.gfxBuf, 8);
+    osCreateMesgQueue(&nusched.audioRequestMQ, nusched.audioBuf, 8);
+    osCreateMesgQueue(&nusched.waitMQ, nusched.waitBuf, 8);
     osCreateViManager(0xFE);
     osViSetMode(&osViModeTable[mode]);
     osViBlack(1);
-    osViSetEvent(&D_8014D300.retraceMQ, (void *)0x29A, numFields);
-    osSetEventMesg(4, &D_8014D300.rspMQ, (void *)0x29B);
-    osSetEventMesg(9, &D_8014D300.rdpMQ, (void *)0x29C);
-    osSetEventMesg(0xE, &D_8014D300.retraceMQ, (void *)0x29D);
-    osCreateThread(D_8014D300.schedulerThread, 19, func_800D57C4, (s32)&D_8014D300, D_80129BC0, 120);
-    osStartThread(D_8014D300.schedulerThread);
-    osCreateThread(D_8014D300.audioThread, 18, func_800D5ABC, (s32)&D_8014D300, D_8012BBC0, 110);
-    osStartThread(D_8014D300.audioThread);
-    osCreateThread(D_8014D300.graphicsThread, 17, func_800D5C18, (s32)&D_8014D300, D_8012DBC0, 100);
-    osStartThread(D_8014D300.graphicsThread);
+    osViSetEvent(&nusched.retraceMQ, (void *)0x29A, numFields);
+    osSetEventMesg(4, &nusched.rspMQ, (void *)0x29B);
+    osSetEventMesg(9, &nusched.rdpMQ, (void *)0x29C);
+    osSetEventMesg(0xE, &nusched.retraceMQ, (void *)0x29D);
+    osCreateThread(nusched.schedulerThread, 19, nuScEventHandler, (s32)&nusched, D_80129BC0, 120);
+    osStartThread(nusched.schedulerThread);
+    osCreateThread(nusched.audioThread, 18, nuScExecuteAudio, (s32)&nusched, D_8012BBC0, 110);
+    osStartThread(nusched.audioThread);
+    osCreateThread(nusched.graphicsThread, 17, nuScExecuteGraphics, (s32)&nusched, D_8012DBC0, 100);
+    osStartThread(nusched.graphicsThread);
 }
 
-s32 *func_800D57AC(void) {
+s32 *nuScGetAudioMQ(void) {
     return &D_8014D304;
 }
 
-s32 *func_800D57B8(void) {
+s32 *nuScGetGfxMQ(void) {
     return &D_8014D33C;
 }
 
-void func_800D57C4(void) {
+void nuScEventHandler(void) {
     void *msg;
     s32 beforeResetFrame;
 
     D_80140E40 = 0;
     while (1) {
-        osRecvMesg(&D_8014D300.retraceMQ, (void **)&msg, 1);
+        osRecvMesg(&nusched.retraceMQ, (void **)&msg, 1);
         switch ((s32)msg) {
         case 0x29A:
             D_80140E40++;
-            func_800D5A5C(&D_8014D300.retraceMsg);
+            nuScEventBroadcast(&nusched.retraceMsg);
             if (D_801345B0) {
                 if (beforeResetFrame) {
                     beforeResetFrame--;
@@ -99,26 +99,26 @@ void func_800D57C4(void) {
             break;
         case 0x29D:
             D_801345B0 = 1;
-            func_800D5A5C(&D_8014D300.prenmiMsg);
+            nuScEventBroadcast(&nusched.prenmiMsg);
             if (D_800FB180) {
                 D_800FB180();
             }
-            beforeResetFrame = (D_8014D300.retraceCount >> 1) / D_8014D300.frameRate - 3;
+            beforeResetFrame = (nusched.retraceCount >> 1) / nusched.frameRate - 3;
             break;
         }
     }
 }
 
-void func_800D5910(ClientS_ *c, void *mq, u16 flags) {
+void nuScAddClient(ClientS_ *c, void *mq, u16 flags) {
     s32 mask;
 
     mask = osSetIntMask(1);
     c->mq = mq;
-    c->next = D_8014D300.clientList;
+    c->next = nusched.clientList;
     c->mask = flags;
-    D_8014D300.clientList = c;
+    nusched.clientList = c;
     if ((flags & 2) && D_801345B0 != 0) {
-        osSendMesg(mq, &D_8014D300.prenmiMsg, 0);
+        osSendMesg(mq, &nusched.prenmiMsg, 0);
     }
     osSetIntMask(mask);
 }
@@ -131,20 +131,20 @@ void func_800D59A0(RetraceCfg_ *cfg, s16 count) {
     osSetIntMask(mask);
 }
 
-void func_800D59E0(ClientS_ *c) {
+void nuScRemoveClient(ClientS_ *c) {
     s32 mask;
     ClientS_ *p;
     ClientS_ *prev;
 
     mask = osSetIntMask(1);
     prev = 0;
-    p = D_8014D300.clientList;
+    p = nusched.clientList;
     while (p != 0) {
         if (p == c) {
             if (prev != 0) {
                 prev->next = p->next;
             } else {
-                D_8014D300.clientList = p->next;
+                nusched.clientList = p->next;
             }
             break;
         }
@@ -155,92 +155,92 @@ void func_800D59E0(ClientS_ *c) {
 }
 
 /* nuScEventBroadcast: sends msg to every client whose mask includes its type. */
-void func_800D5A5C(s16 *msg) {
+void nuScEventBroadcast(s16 *msg) {
     ClientS_ *p;
 
-    for (p = D_8014D300.clientList; p != 0; p = p->next) {
+    for (p = nusched.clientList; p != 0; p = p->next) {
         if (p->mask & *msg) {
             osSendMesg(p->mq, msg, 0);
         }
     }
 }
 
-void func_800D5ABC(void) {
+void nuScExecuteAudio(void) {
     NUScTask *gfxTask;
     NUScTask *audioTask;
     void *msg;
     u32 yieldFlag;
 
     while (1) {
-        osRecvMesg(&D_8014D300.audioRequestMQ, (void **)&audioTask, 1);
+        osRecvMesg(&nusched.audioRequestMQ, (void **)&audioTask, 1);
         if (!(D_801345B0 & 2)) {
             osWritebackDCacheAll();
             yieldFlag = 0;
-            gfxTask = D_8014D300.curGraphicsTask;
+            gfxTask = nusched.curGraphicsTask;
             if (gfxTask) {
                 osSpTaskYield();
-                osRecvMesg(&D_8014D300.rspMQ, (void **)&msg, 1);
+                osRecvMesg(&nusched.rspMQ, (void **)&msg, 1);
                 if (osSpTaskYielded(&gfxTask->list)) {
                     yieldFlag = 1;
                 } else {
                     yieldFlag = 2;
                 }
             }
-            D_8014D300.curAudioTask = audioTask;
+            nusched.curAudioTask = audioTask;
             osSpTaskLoad(&audioTask->list);
             osSpTaskStartGo(&audioTask->list);
-            osRecvMesg(&D_8014D300.rspMQ, (void **)&msg, 1);
-            D_8014D300.curAudioTask = 0;
-            if (D_8014D300.graphicsTaskSuspended) {
-                osSendMesg(&D_8014D300.waitMQ, &msg, 1);
+            osRecvMesg(&nusched.rspMQ, (void **)&msg, 1);
+            nusched.curAudioTask = 0;
+            if (nusched.graphicsTaskSuspended) {
+                osSendMesg(&nusched.waitMQ, &msg, 1);
             }
             if (yieldFlag == 1) {
                 osSpTaskLoad(&gfxTask->list);
                 osSpTaskStartGo(&gfxTask->list);
             } else if (yieldFlag == 2) {
-                osSendMesg(&D_8014D300.rspMQ, &msg, 1);
+                osSendMesg(&nusched.rspMQ, &msg, 1);
             }
         }
         osSendMesg(audioTask->msgQ, audioTask->msg, 1);
     }
 }
 
-void func_800D5C18(void) {
+void nuScExecuteGraphics(void) {
     s32 mask;
     NUScTask *gfxTask;
     void *msg;
 
     while (1) {
-        osRecvMesg(&D_8014D300.gfxMQ, (void **)&gfxTask, 1);
+        osRecvMesg(&nusched.gfxMQ, (void **)&gfxTask, 1);
         if (!(D_801345B0 & 2)) {
-            func_800D5D5C((FrameR_ *)gfxTask);
+            nuScWaitTaskReady((FrameR_ *)gfxTask);
             mask = osSetIntMask(1);
-            if (D_8014D300.curAudioTask) {
-                D_8014D300.graphicsTaskSuspended = gfxTask;
+            if (nusched.curAudioTask) {
+                nusched.graphicsTaskSuspended = gfxTask;
                 osSetIntMask(mask);
-                osRecvMesg(&D_8014D300.waitMQ, (void **)&msg, 1);
+                osRecvMesg(&nusched.waitMQ, (void **)&msg, 1);
                 mask = osSetIntMask(1);
-                D_8014D300.graphicsTaskSuspended = 0;
+                nusched.graphicsTaskSuspended = 0;
             }
             osSetIntMask(mask);
             mask = osSetIntMask(1);
-            D_8014D300.curGraphicsTask = gfxTask;
+            nusched.curGraphicsTask = gfxTask;
             osSetIntMask(mask);
             osSpTaskLoad(&gfxTask->list);
             osSpTaskStartGo(&gfxTask->list);
-            osRecvMesg(&D_8014D300.rspMQ, (void **)&msg, 1);
+            osRecvMesg(&nusched.rspMQ, (void **)&msg, 1);
             mask = osSetIntMask(1);
-            D_8014D300.curGraphicsTask = 0;
+            nusched.curGraphicsTask = 0;
             osSetIntMask(mask);
             if (!(gfxTask->flags & 2)) {
-                osRecvMesg(&D_8014D300.rdpMQ, (void **)&msg, 1);
+                osRecvMesg(&nusched.rdpMQ, (void **)&msg, 1);
             }
         }
         osSendMesg(gfxTask->msgQ, gfxTask, 1);
     }
 }
 
-void func_800D5D5C(FrameR_ *f) {
+void nuScWaitTaskReady(FrameR_ *f) {
     u8 *base = &D_8014D97D;
     void *fb = f->fb;
     u8 *mq;
@@ -251,48 +251,48 @@ void func_800D5D5C(FrameR_ *f) {
     }
     mq = base - 0x561;
     while (osViGetCurrentFramebuffer() == fb || osViGetNextFramebuffer() == fb) {
-        func_800D5910((ClientS_ *)&c, mq, 1);
+        nuScAddClient((ClientS_ *)&c, mq, 1);
         osRecvMesg(mq, 0, 1);
-        func_800D59E0((ClientS_ *)&c);
+        nuScRemoveClient((ClientS_ *)&c);
     }
 }
 
-void func_800D5DE8(s8 arg0) {
+void nuScSetFrameBufferNum(s8 arg0) {
     D_8014D97D = arg0;
 }
 
-u8 func_800D5DF4(void) {
+u8 nuScGetFrameRate(void) {
     return D_8014D97C;
 }
 
 extern u8 D_80141598[];
-extern s32 D_80145484;
-extern void (*D_800FB190)(s32);
-extern void (*D_800FB194)(void);
-void func_800D5E00(void *arg) {
+extern s32 nuGfxTaskSpool;
+extern void (*nuGfxFunc)(s32);
+extern void (*nuGfxPreNMIFunc)(void);
+void nuGfxThread(void *arg) {
     ClientW_ c;
     s16 *msg;
 
     osCreateMesgQueue(D_80141598, D_8012DBC0, 8);
-    func_800D5910((ClientS_ *)&c, D_80141598, 3);
+    nuScAddClient((ClientS_ *)&c, D_80141598, 3);
     while (1) {
         osRecvMesg(D_80141598, (void **)&msg, 1);
         switch (*msg) {
             case 1:
-                if (D_800FB190 != 0) {
-                    D_800FB190(D_80145484);
+                if (nuGfxFunc != 0) {
+                    nuGfxFunc(nuGfxTaskSpool);
                 }
                 break;
             case 2:
-                if (D_800FB194 != 0) {
-                    D_800FB194();
+                if (nuGfxPreNMIFunc != 0) {
+                    nuGfxPreNMIFunc();
                 }
                 break;
         }
     }
 }
 
-void func_800D5ED0(void) {
-    osCreateThread(&D_8012DBE0, 4, &func_800D5E00, 0, &D_8012FD90, 0x32);
+void nuGfxThreadStart(void) {
+    osCreateThread(&D_8012DBE0, 4, &nuGfxThread, 0, &D_8012FD90, 0x32);
     osStartThread(&D_8012DBE0);
 }
