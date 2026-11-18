@@ -1,4 +1,5 @@
 #include "common.h"
+#include "math.h"
 #include "include_asm.h"
 typedef struct { u8 kind; u8 frames; } PDef_;
 typedef struct {
@@ -68,9 +69,7 @@ typedef struct { s16 x; s16 y; s16 z; u16 flag; s16 s; s16 t; u8 c[4]; } VtxC4_;
 typedef struct { s32 w[16]; } Vtx4C4_;
 typedef struct { s32 w[12]; } Vtx3C4_;
 typedef struct { u8 kind; u8 frames; u8 p2[2]; f32 scale; } PDefC4_;
-typedef struct { f32 x; f32 y; f32 z; f32 w; } QC4_;
-typedef struct { f32 x; f32 y; f32 z; } V3C4_;
-typedef struct { QC4_ q; V3C4_ axis; f32 angle; f32 f20; u8 pad24[0x1C]; V3C4_ pos; f32 vx; f32 vy; f32 vz; f32 f58; f32 f5C; PDefC4_ *def; u16 life; u8 flags; u8 r; u8 g; u8 b; u8 kind; u8 frames; u16 h6C; s16 h6E; } PrtC4_;
+typedef struct { Quat q; Vec3f axis; f32 angle; f32 f20; u8 pad24[0x1C]; Vec3f pos; f32 vx; f32 vy; f32 vz; f32 f58; f32 f5C; PDefC4_ *def; u16 life; u8 flags; u8 r; u8 g; u8 b; u8 kind; u8 frames; u16 h6C; s16 h6E; } PrtC4_;
 typedef struct { u32 cap; s32 tail; s32 head; PrtC4_ *buf; } PoolPC4_;
 extern PoolC4_ D_8014C740[];
 extern s32 D_8014C540;
@@ -93,8 +92,8 @@ s32 func_80070BA4(f32 (*)[4]);
 u8 func_800717C8(f32 (*)[4], f32 (*)[4], f32);
 void func_8007AFD4(f32 (*)[4], f32 (*)[4], f32 (*)[4]);
 GfxC4_ *func_8007F61C(GfxC4_ *, PDefC4_ *);
-void func_800A8670(QC4_ *, f32, V3C4_);
-void func_800A8BA4(QC4_, f32 (*)[3]);
+void func_800A8670(Quat *, f32, Vec3f);
+void func_800A8BA4(Quat, f32 (*)[3]);
 extern PDef_ *D_800F2330[];
     /* TODO (Clean version):
     Función estática inline que duplica exactamente a func_8007C2C8 para forzar el inlining en func_8007C318. En C limpio se llamaría directamente a func_8007C2C8 o se compartiría una única función inline. Se mantiene para el match.
@@ -142,7 +141,7 @@ void func_8007C434(PoolPC4_ *pool, f32 (*m)[4]) {
     f32 r[3][3];
     f32 ma[3][3];
     f32 mb[3][3];
-    QC4_ q;
+    Quat q;
     u8 *last;
     s32 i;
     PrtC4_ *p;
@@ -340,22 +339,19 @@ void func_8007C434(PoolPC4_ *pool, f32 (*m)[4]) {
 }
 
     /* TODO (Clean version):
-    Definición redundante de estructuras matemáticas y de partículas (V3Q_, Q4Q_, PrtQ_, PPoolQ_, M34Q_) locales para func_8007DE54. En C limpio deben sustituirse por tipos globales compartidos (Vec3f, Vec4f, Particle, ParticlePool, Mtx34f). Se mantienen para el match.
+    Definición redundante de estructuras matemáticas y de partículas (Vec3f, Quat, PrtQ_, PPoolQ_, Mtx34f) locales para func_8007DE54. En C limpio deben sustituirse por tipos globales compartidos (Vec3f, Vec4f, Particle, ParticlePool, Mtx34f). Se mantienen para el match.
     */
-typedef struct { f32 x; f32 y; f32 z; } V3Q_;
-typedef struct { f32 x; f32 y; f32 z; f32 w; } Q4Q_;
-typedef struct { Q4Q_ q; f32 f10; f32 f14; f32 f18; f32 f1C; f32 f20; u8 pad24[0x1C]; V3Q_ pos; f32 vx; f32 vy; f32 vz; f32 f58; f32 f5C; PDef_ *def; s16 life; u8 flags; u8 r; u8 g; u8 b; u8 kind; u8 frames; u16 h6C; s16 h6E; } PrtQ_;
+typedef struct { Quat q; f32 f10; f32 f14; f32 f18; f32 f1C; f32 f20; u8 pad24[0x1C]; Vec3f pos; f32 vx; f32 vy; f32 vz; f32 f58; f32 f5C; PDef_ *def; s16 life; u8 flags; u8 r; u8 g; u8 b; u8 kind; u8 frames; u16 h6C; s16 h6E; } PrtQ_;
 typedef struct { u32 cap; s32 tail; s32 head; PrtQ_ *buf; } PPoolQ_;
-typedef struct { f32 m[3][4]; } M34Q_;
 extern PPoolQ_ D_80148088;
 s32 rand(void);
 f32 cosf(f32);
 f32 sinf(f32);
-void func_800A83A0(Q4Q_ *, f32 (*)[3]);
+void func_800A83A0(Quat *, f32 (*)[3]);
     /* TODO (Clean version):
     Funciones inline locales (RotA_, RotB_, RotC_) que aplican rotaciones a matrices 3x4 en Z, Y y X. En C limpio deberían ser funciones matemáticas compartidas del motor con nombres semánticos. Se mantienen inline para el match.
     */
-static inline void RotA_(M34Q_ *m, f32 a) {
+static inline void RotA_(Mtx34f *m, f32 a) {
     f32 c, s, u, v;
 
     c = cosf(a);
@@ -364,7 +360,7 @@ static inline void RotA_(M34Q_ *m, f32 a) {
     u = m->m[1][0] * c + m->m[1][1] * s; v = m->m[1][1] * c - m->m[1][0] * s; m->m[1][0] = u; m->m[1][1] = v;
     u = m->m[2][0] * c + m->m[2][1] * s; v = m->m[2][1] * c - m->m[2][0] * s; m->m[2][0] = u; m->m[2][1] = v;
 }
-static inline void RotB_(M34Q_ *m, f32 a) {
+static inline void RotB_(Mtx34f *m, f32 a) {
     f32 c, s, u, v;
 
     c = cosf(a);
@@ -373,7 +369,7 @@ static inline void RotB_(M34Q_ *m, f32 a) {
     u = m->m[1][0] * c - m->m[1][2] * s; v = m->m[1][2] * c + m->m[1][0] * s; m->m[1][0] = u; m->m[1][2] = v;
     u = m->m[2][0] * c - m->m[2][2] * s; v = m->m[2][2] * c + m->m[2][0] * s; m->m[2][0] = u; m->m[2][2] = v;
 }
-static inline void RotC_(M34Q_ *m, f32 a) {
+static inline void RotC_(Mtx34f *m, f32 a) {
     f32 c, s, u, v;
 
     c = cosf(a);
@@ -423,7 +419,7 @@ INCLUDE_ASM("asm/nonmatchings/unit_1CC80", func_8007D14C);
 INCLUDE_ASM("asm/nonmatchings/unit_1CC80", func_8007D364);
 
 /* Spawns a coloured particle of the given kind at pos, sized by size. */
-void func_8007D808(V3Q_ pos, u32 size, s32 kind, s32 r, s32 g, s32 b) {
+void func_8007D808(Vec3f pos, u32 size, s32 kind, s32 r, s32 g, s32 b) {
     PrtQ_ p;
 
     p.pos = pos;
@@ -449,7 +445,7 @@ void func_8007D808(V3Q_ pos, u32 size, s32 kind, s32 r, s32 g, s32 b) {
 
 extern PPoolQ_ D_80134FC0;
 /* Spawns a particle of the given kind near pos (jittered by up to 64 units), sized by size. */
-void func_8007DB10(V3Q_ pos, u32 size, s32 kind) {
+void func_8007DB10(Vec3f pos, u32 size, s32 kind) {
     PrtQ_ p;
 
     p.pos = pos;
@@ -476,12 +472,12 @@ void func_8007DB10(V3Q_ pos, u32 size, s32 kind) {
     PushQ_(&D_80134FC0, &p);
 }
 
-void func_8007DE54(V3Q_ pos, u32 n, PDef_ *def, V3Q_ vel) {
+void func_8007DE54(Vec3f pos, u32 n, PDef_ *def, Vec3f vel) {
     PrtQ_ p;
-    M34Q_ m;
-    V3Q_ t;
+    Mtx34f m;
+    Vec3f t;
     f32 r[3][3];
-    Q4Q_ q;
+    Quat q;
     s32 bits;
     f32 a;
 
@@ -570,7 +566,7 @@ void func_8007DE54(V3Q_ pos, u32 n, PDef_ *def, V3Q_ vel) {
 }
 
 /* Spawns a kind-11 particle at pos with a velocity jittered around vel. */
-void func_8007E694(V3Q_ pos, V3Q_ vel) {
+void func_8007E694(Vec3f pos, Vec3f vel) {
     PrtQ_ p;
 
     p.pos = pos;
@@ -595,7 +591,7 @@ void func_8007E694(V3Q_ pos, V3Q_ vel) {
 }
 
 /* Spawns a kind-12 particle at pos moving with vel. */
-void func_8007E974(V3Q_ pos, V3Q_ vel) {
+void func_8007E974(Vec3f pos, Vec3f vel) {
     PrtQ_ p;
 
     p.pos = pos;

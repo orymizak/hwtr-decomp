@@ -1,4 +1,5 @@
 #include "common.h"
+#include "math.h"
 #include "include_asm.h"
 typedef struct { u16 magic; u8 pad[0xA]; s32 c; s32 w10; u32 p14; u32 p18; u32 p1C; u32 p20; u32 p24; u32 p28; u32 p2C; s32 w30; } Hdr79_;
 extern s32 D_80138E38;
@@ -97,26 +98,25 @@ INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_8007A004);
 
 INCLUDE_ASM("asm/nonmatchings/unit_19D40", func_8007A858);
 
-typedef struct { f32 x; f32 y; f32 z; } V3o_;
-static inline void V3o_Normalize(V3o_ *v) {
+static inline void V3o_Normalize(Vec3f *v) {
     f32 inv = 1.0f / sqrtf(v->x * v->x + v->y * v->y + v->z * v->z);
 
     v->x *= inv;
     v->y *= inv;
     v->z *= inv;
 }
-static inline void V3o_Cross(V3o_ *r, V3o_ *a, V3o_ *b) {
+static inline void V3o_Cross(Vec3f *r, Vec3f *a, Vec3f *b) {
     r->x = a->y * b->z - b->y * a->z;
     r->y = b->x * a->z - a->x * b->z;
     r->z = a->x * b->y - b->x * a->y;
 }
 /* Re-orthonormalises the rotation part of a 3x3 matrix, keeping the direction of its first column. */
 void func_8007A9E0(f32 *m) {
-    V3o_ a;
-    V3o_ b;
-    V3o_ c;
-    V3o_ t;
-    V3o_ u;
+    Vec3f a;
+    Vec3f b;
+    Vec3f c;
+    Vec3f t;
+    Vec3f u;
 
     a.x = m[0];
     a.y = m[3];

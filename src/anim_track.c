@@ -1,11 +1,7 @@
 #include "common.h"
+#include "math.h"
 #include "include_asm.h"
 
-typedef struct {
-    s32 x;
-    s32 y;
-    s32 z;
-} Vec3;
 
     /* TODO (Clean version):
     En lugar de AnimTrack y AnimTrk_ separadas, se debería usar una sola struct con una union:
@@ -22,13 +18,13 @@ typedef struct {
             u8 raw[0x3C];
             struct {
                 s32 key;
-                Vec3_ pos0;
-                Quat_ rot0;
-                Vec3_ pos1;
-                Quat_ rot1;
+                Vec3f pos0;
+                Quat rot0;
+                Vec3f pos1;
+                Quat rot1;
             } anim;
         } data;
-        Vec3 result;
+        Vec3i result;
     } UnifiedAnimTrack;
     */
 
@@ -42,7 +38,7 @@ typedef struct {
     /* 0x18 */ u32 seekTime;
     /* 0x1C */ s32 seekMode;
     /* 0x20 */ u8 unk20[0x3C];
-    /* 0x5C */ Vec3 result;
+    /* 0x5C */ Vec3i result;
 } AnimTrack; /* size = 0x68 */
 
 extern u32 D_800F3010;
@@ -132,9 +128,6 @@ void func_80087B08(void) {
     }
 }
 
-typedef struct { f32 x; f32 y; f32 z; f32 w; } Quat_;
-typedef struct { f32 x; f32 y; f32 z; } Vec3_;
-typedef struct { f32 m[3][3]; } Mat3_;
 typedef struct {
     /* 0x00 */ u32 duration;
     /* 0x04 */ u32 keyCount;
@@ -145,29 +138,29 @@ typedef struct {
     /* 0x18 */ u32 seekTime;
     /* 0x1C */ s32 seekMode;
     /* 0x20 */ s32 key;
-    /* 0x24 */ Vec3_ pos0;
-    /* 0x30 */ Quat_ rot0;
-    /* 0x40 */ Vec3_ pos1;
-    /* 0x4C */ Quat_ rot1;
-    /* 0x5C */ Vec3_ result;
+    /* 0x24 */ Vec3f pos0;
+    /* 0x30 */ Quat rot0;
+    /* 0x40 */ Vec3f pos1;
+    /* 0x4C */ Quat rot1;
+    /* 0x5C */ Vec3f result;
 } AnimTrk_;
-extern void (*D_80141728)(s32, s32, Vec3_ *, Quat_ *);
-extern void (*D_8014172C)(s32, Vec3_ *, Mat3_ *);
-Vec3_ func_800A9068(f32 t, Vec3_ a, Vec3_ b);
-Quat_ func_800A8EBC(f32 t, Quat_ a, Quat_ b);
-void func_800A8BA4(Quat_ q, Mat3_ *out);
+extern void (*D_80141728)(s32, s32, Vec3f *, Quat *);
+extern void (*D_8014172C)(s32, Vec3f *, Mtx3f *);
+Vec3f func_800A9068(f32 t, Vec3f a, Vec3f b);
+Quat func_800A8EBC(f32 t, Quat a, Quat b);
+void func_800A8BA4(Quat q, Mtx3f *out);
 
 void func_80087C28(s32 index) {
     AnimTrk_ *t = (AnimTrk_ *)&D_800F3014[index];
-    Mat3_ m;
-    Mat3_ m2;
-    Quat_ q;
-    Vec3_ v;
+    Mtx3f m;
+    Mtx3f m2;
+    Quat q;
+    Vec3f v;
     u32 kc1;
     s32 key;
     s32 key1;
     f32 f;
-    void (**fp)(s32, s32, Vec3_ *, Quat_ *);
+    void (**fp)(s32, s32, Vec3f *, Quat *);
 
     t->time = t->time % t->duration;
     kc1 = t->keyCount - 1;
@@ -202,7 +195,7 @@ void func_80087C28(s32 index) {
     D_8014172C(index, &t->result, &m2);
 }
 
-void func_80087EA4(s32 index, Vec3 *out) {
+void func_80087EA4(s32 index, Vec3i *out) {
     AnimTrack *track = &D_800F3014[index];
 
     *out = track->result;

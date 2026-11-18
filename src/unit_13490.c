@@ -1,4 +1,5 @@
 #include "common.h"
+#include "math.h"
 #include "include_asm.h"
 typedef struct { u8 pad[0x10]; s32 p10; } Sub14_;
 typedef struct { u8 pad[0x14]; Sub14_ *sub; u8 pad2[0x18]; s32 p30; } Item34_;
@@ -87,27 +88,26 @@ void func_80072890(Node72_ *n, Node72_ *nodes, s32 mats) {
     n->child = NULL;
 }
 
-typedef struct { f32 x; f32 y; f32 z; } V3o_;
 f32 sqrtf(f32);
-static inline void V3o_Normalize(V3o_ *v) {
+static inline void V3o_Normalize(Vec3f *v) {
     f32 inv = 1.0f / sqrtf(v->x * v->x + v->y * v->y + v->z * v->z);
 
     v->x *= inv;
     v->y *= inv;
     v->z *= inv;
 }
-static inline void V3o_Cross(V3o_ *r, V3o_ *a, V3o_ *b) {
+static inline void V3o_Cross(Vec3f *r, Vec3f *a, Vec3f *b) {
     r->x = a->y * b->z - b->y * a->z;
     r->y = b->x * a->z - a->x * b->z;
     r->z = a->x * b->y - b->x * a->y;
 }
 /* Re-orthonormalises the rotation part of a 3x4 matrix, keeping the direction of its first column. */
 void func_80072928(f32 *m) {
-    V3o_ a;
-    V3o_ b;
-    V3o_ c;
-    V3o_ t;
-    V3o_ u;
+    Vec3f a;
+    Vec3f b;
+    Vec3f c;
+    Vec3f t;
+    Vec3f u;
 
     a.x = m[0];
     a.y = m[4];

@@ -32,7 +32,6 @@ void func_800A25EC(ObjA2_ *);
 typedef struct { u8 pad[0x40]; void *a; void *b; void *c; } Res40_;
 void Memory_Free(void *);
 typedef struct Nd3_ { s32 a; struct Nd3_ *prev; struct Nd3_ *next; } Nd3_;
-typedef struct { f32 x; f32 y; f32 z; } Vec3f_;
 /* Room (0x14), portal (0xC) and level header shared by the room/collision code. */
 typedef struct {
     /* 0x00 */ u16 flags;
@@ -91,7 +90,7 @@ void func_800979F4(u8 *);
 void func_8009751C(u8 *, u16, u8);
 void func_800C9B84(u16);
 void func_800A3978(RObj_ *o, u16 idx, s32 arg2);
-u16 func_8009A9A0(Vec3f_ pos);
+u16 func_8009A9A0(Vec3f pos);
 void func_8009A4E4(RObj_ *o);
 void func_80099C94(u8 *n, u8 *o);
 void *Memory_Alloc(s32 size);
@@ -202,19 +201,19 @@ INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_800996B8);
 
 void func_80099C94(u8 *n, u8 *o) {
     s32 zero[3];
-    Vec3f_ v;
-    Vec3f_ p;
+    Vec3f v;
+    Vec3f p;
     s16 id;
     u8 i;
 
     zero[0] = 0;
     zero[1] = 0;
     zero[2] = 0;
-    v = *(Vec3f_ *)(o + 0x5E8);
+    v = *(Vec3f *)(o + 0x5E8);
     v.x *= 0.5f;
     v.y *= 0.5f;
     v.z *= 0.5f;
-    *(Vec3f_ *)(n + 0xC) = v;
+    *(Vec3f *)(n + 0xC) = v;
     n[0x3C] = 1;
     *(void **)(n + 0x40) = Memory_Alloc(0xC);
     *(void **)(n + 0x44) = Memory_Alloc(n[0x3C] * 0xC);
@@ -234,12 +233,12 @@ void func_80099C94(u8 *n, u8 *o) {
     *(f32 *)(n + 0x4C) = sqrtf(*(f32 *)(n + 0xC) * *(f32 *)(n + 0xC) + *(f32 *)(n + 0x10) * *(f32 *)(n + 0x10) + *(f32 *)(n + 0x14) * *(f32 *)(n + 0x14));
 }
 
-void func_80099E78(u8 *n, Vec3f_ size, Vec3f_ pos, f32 *rot, u8 box) {
+void func_80099E78(u8 *n, Vec3f size, Vec3f pos, f32 *rot, u8 box) {
     f32 r[3][4];
     f32 m[3][4];
-    Vec3f_ v;
-    Vec3f_ p;
-    Vec3f_ *q;
+    Vec3f v;
+    Vec3f p;
+    Vec3f *q;
     u8 i;
     f32 x;
     f32 y;
@@ -249,37 +248,37 @@ void func_80099E78(u8 *n, Vec3f_ size, Vec3f_ pos, f32 *rot, u8 box) {
     v.x *= 0.5f;
     v.y *= 0.5f;
     v.z *= 0.5f;
-    *(Vec3f_ *)(n + 0xC) = v;
+    *(Vec3f *)(n + 0xC) = v;
     n[0x3C] = box ? 8 : 1;
     *(void **)(n + 0x40) = Memory_Alloc(n[0x3C] * 0xC);
     *(void **)(n + 0x44) = Memory_Alloc(n[0x3C] * 0xC);
     memset(*(void **)(n + 0x40), 0, n[0x3C] * 0xC);
     memset(*(void **)(n + 0x44), 0, n[0x3C] * 0xC);
     if (box) {
-        (*(Vec3f_ **)(n + 0x40))[0].x = v.x;
-        (*(Vec3f_ **)(n + 0x40))[0].y = v.y;
-        (*(Vec3f_ **)(n + 0x40))[0].z = v.z;
-        (*(Vec3f_ **)(n + 0x40))[1].x = v.x;
-        (*(Vec3f_ **)(n + 0x40))[1].y = v.y;
-        (*(Vec3f_ **)(n + 0x40))[1].z = -v.z;
-        (*(Vec3f_ **)(n + 0x40))[2].x = v.x;
-        (*(Vec3f_ **)(n + 0x40))[2].y = -v.y;
-        (*(Vec3f_ **)(n + 0x40))[2].z = v.z;
-        (*(Vec3f_ **)(n + 0x40))[3].x = v.x;
-        (*(Vec3f_ **)(n + 0x40))[3].y = -v.y;
-        (*(Vec3f_ **)(n + 0x40))[3].z = -v.z;
-        (*(Vec3f_ **)(n + 0x40))[4].x = -v.x;
-        (*(Vec3f_ **)(n + 0x40))[4].y = v.y;
-        (*(Vec3f_ **)(n + 0x40))[4].z = v.z;
-        (*(Vec3f_ **)(n + 0x40))[5].x = -v.x;
-        (*(Vec3f_ **)(n + 0x40))[5].y = v.y;
-        (*(Vec3f_ **)(n + 0x40))[5].z = -v.z;
-        (*(Vec3f_ **)(n + 0x40))[6].x = -v.x;
-        (*(Vec3f_ **)(n + 0x40))[6].y = -v.y;
-        (*(Vec3f_ **)(n + 0x40))[6].z = v.z;
-        (*(Vec3f_ **)(n + 0x40))[7].x = -v.x;
-        (*(Vec3f_ **)(n + 0x40))[7].y = -v.y;
-        (*(Vec3f_ **)(n + 0x40))[7].z = -v.z;
+        (*(Vec3f **)(n + 0x40))[0].x = v.x;
+        (*(Vec3f **)(n + 0x40))[0].y = v.y;
+        (*(Vec3f **)(n + 0x40))[0].z = v.z;
+        (*(Vec3f **)(n + 0x40))[1].x = v.x;
+        (*(Vec3f **)(n + 0x40))[1].y = v.y;
+        (*(Vec3f **)(n + 0x40))[1].z = -v.z;
+        (*(Vec3f **)(n + 0x40))[2].x = v.x;
+        (*(Vec3f **)(n + 0x40))[2].y = -v.y;
+        (*(Vec3f **)(n + 0x40))[2].z = v.z;
+        (*(Vec3f **)(n + 0x40))[3].x = v.x;
+        (*(Vec3f **)(n + 0x40))[3].y = -v.y;
+        (*(Vec3f **)(n + 0x40))[3].z = -v.z;
+        (*(Vec3f **)(n + 0x40))[4].x = -v.x;
+        (*(Vec3f **)(n + 0x40))[4].y = v.y;
+        (*(Vec3f **)(n + 0x40))[4].z = v.z;
+        (*(Vec3f **)(n + 0x40))[5].x = -v.x;
+        (*(Vec3f **)(n + 0x40))[5].y = v.y;
+        (*(Vec3f **)(n + 0x40))[5].z = -v.z;
+        (*(Vec3f **)(n + 0x40))[6].x = -v.x;
+        (*(Vec3f **)(n + 0x40))[6].y = -v.y;
+        (*(Vec3f **)(n + 0x40))[6].z = v.z;
+        (*(Vec3f **)(n + 0x40))[7].x = -v.x;
+        (*(Vec3f **)(n + 0x40))[7].y = -v.y;
+        (*(Vec3f **)(n + 0x40))[7].z = -v.z;
     } else {
         (*(s32 **)(n + 0x40))[0] = 0;
         (*(s32 **)(n + 0x40))[1] = 0;
@@ -304,16 +303,16 @@ void func_80099E78(u8 *n, Vec3f_ size, Vec3f_ pos, f32 *rot, u8 box) {
     r[2][2] = m[2][0] * rot[2] + m[2][1] * rot[5] + m[2][2] * rot[8];
     r[2][3] = m[2][3];
     for (i = 0; i < n[0x3C]; i++) {
-        x = (*(Vec3f_ **)(n + 0x40))[i].x;
-        y = (*(Vec3f_ **)(n + 0x40))[i].y;
-        z = (*(Vec3f_ **)(n + 0x40))[i].z;
+        x = (*(Vec3f **)(n + 0x40))[i].x;
+        y = (*(Vec3f **)(n + 0x40))[i].y;
+        z = (*(Vec3f **)(n + 0x40))[i].z;
         p.x = r[0][0] * x + r[0][1] * y + r[0][2] * z + r[0][3];
         p.y = r[1][0] * x + r[1][1] * y + r[1][2] * z + r[1][3];
         p.z = r[2][0] * x + r[2][1] * y + r[2][2] * z + r[2][3];
-        (*(Vec3f_ **)(n + 0x44))[i] = p;
+        (*(Vec3f **)(n + 0x44))[i] = p;
         (*(s16 **)(n + 0x48))[i] = func_8009A9A0(p);
     }
-    *(Vec3f_ *)(n + 0x0) = pos;
+    *(Vec3f *)(n + 0x0) = pos;
     ((f32 *)(n + 0x18))[0] = rot[0];
     ((f32 *)(n + 0x18))[1] = rot[1];
     ((f32 *)(n + 0x18))[2] = rot[2];
@@ -396,9 +395,9 @@ void func_8009A4E4(RObj_ *o) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_8009A770);
 
-u16 func_8009A9A0(Vec3f_ pos) {
-    Vec3f_ p;
-    Vec3f_ d;
+u16 func_8009A9A0(Vec3f pos) {
+    Vec3f p;
+    Vec3f d;
     PlF_ pl;
     f32 best;
     f32 m;
@@ -446,29 +445,26 @@ u16 func_8009A9A0(Vec3f_ pos) {
     return bi;
 }
 
-typedef struct { f32 x; f32 y; f32 z; } V3AB_;
 typedef struct {
     u8 pad0[4]; u32 flags; u8 pad8[0x4B0]; u8 b4B8; u8 pad4B9[0x205]; u8 b6BE; u8 b6BF; u8 pad6C0[0x50]; u8 b710; u8 pad711[0xF];
-    V3AB_ n720; u8 pad72C[0x44]; s32 w770;
+    Vec3f n720; u8 pad72C[0x44]; s32 w770;
 } PlAB_;
-typedef struct { u8 pad0[4]; u32 flags; u8 pad8[0x54]; s32 type; u8 pad60[4]; PlAB_ *pl; u8 pad68[0xC]; s32 frame; V3AB_ pos; } ObjAB_;
-typedef struct { ObjAB_ *obj; u8 pad4[0xC]; V3AB_ pos; u8 idx; u8 pad1D[3]; } EntAB_;
+typedef struct { u8 pad0[4]; u32 flags; u8 pad8[0x54]; s32 type; u8 pad60[4]; PlAB_ *pl; u8 pad68[0xC]; s32 frame; Vec3f pos; } ObjAB_;
+typedef struct { ObjAB_ *obj; u8 pad4[0xC]; Vec3f pos; u8 idx; u8 pad1D[3]; } EntAB_;
 typedef struct { ObjAB_ *a; ObjAB_ *b; u8 pad8[0x18]; } PairAB_;
-typedef struct { f32 x; f32 y; f32 z; } V3C7_;
-typedef struct { V3C7_ pos; f32 ext[3]; f32 m[3][3]; u8 cnt; u8 p3D[7]; V3C7_ *verts; u8 p48[4]; f32 rad; } BoxC7_;
-typedef struct { u8 p0[0x60]; V3C7_ v60; V3C7_ v6C; u8 p78[0xC]; V3C7_ off; u8 p90[0x80]; u8 b110; } PrC7_;
+typedef struct { Vec3f pos; f32 ext[3]; f32 m[3][3]; u8 cnt; u8 p3D[7]; Vec3f *verts; u8 p48[4]; f32 rad; } BoxC7_;
+typedef struct { u8 p0[0x60]; Vec3f v60; Vec3f v6C; u8 p78[0xC]; Vec3f off; u8 p90[0x80]; u8 b110; } PrC7_;
 typedef struct { s32 id; u32 flags; u8 p8[4]; BoxC7_ b; s32 type; PrC7_ *p60; Car *car; u8 p68[0x1C]; u32 w84; } ObjC7_;
-typedef struct { ObjC7_ *a; ObjC7_ *b; V3C7_ p; V3C7_ n; } RecC7_;
+typedef struct { ObjC7_ *a; ObjC7_ *b; Vec3f p; Vec3f n; } RecC7_;
 typedef struct { f32 x; f32 y; f32 z; u8 pC[0x40]; f32 rad; } B_56C;
 typedef struct { u8 p0[0x110]; u8 b110; } P60_56C;
 typedef struct Ln_56C { void *obj; s32 x; struct Ln_56C *next; } Ln_56C;
 typedef struct Ri_56C { s32 room; s32 x; struct Ri_56C *next; } Ri_56C;
 typedef struct { s32 id; u32 flags; u8 p8[4]; B_56C b; s32 type; P60_56C *p60; s32 w64; s32 w68; s32 frame; Ri_56C *ri; } O_56C;
-typedef struct { f32 x, y, z; } V3_67C;
 typedef struct { f32 a; f32 b; f32 c; f32 d; s16 e; u16 f; } Pl_67C;
 typedef struct Ri_67C { s32 room; s32 x; struct Ri_67C *next; } Ri_67C;
 typedef struct { u8 p0[0x110]; u8 b110; } P60_67C;
-typedef struct { V3_67C pos; u8 pC[0x30]; u8 n; u8 p3D[7]; V3_67C *pts; u16 *rooms; } B_67C;
+typedef struct { Vec3f pos; u8 pC[0x30]; u8 n; u8 p3D[7]; Vec3f *pts; u16 *rooms; } B_67C;
 typedef struct { u8 p0[4]; u32 flags; u8 p8[4]; B_67C b; f32 rad; s32 type; P60_67C *p60; u8 p64[0xC]; Ri_67C *ri; } O_67C;
 typedef struct Ln_67C { O_67C *obj; s32 x; struct Ln_67C *next; } Ln_67C;
 typedef struct NdCD8_ { s32 a; struct NdCD8_ *prev; struct NdCD8_ *next; s32 c; } NdCD8_;
@@ -714,13 +710,13 @@ void func_8009B56C(void) {
 INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_8009BAF0);
 
 void func_8009C758(ObjC7_ *a, ObjC7_ *b) {
-    V3C7_ t;
-    V3C7_ u;
-    V3C7_ v;
-    V3C7_ n;
+    Vec3f t;
+    Vec3f u;
+    Vec3f v;
+    Vec3f n;
     BoxC7_ *pa;
-    V3C7_ *va;
-    V3C7_ *vb;
+    Vec3f *va;
+    Vec3f *vb;
     u8 flag;
     BoxC7_ *pb;
     BoxC7_ *x;
@@ -728,7 +724,7 @@ void func_8009C758(ObjC7_ *a, ObjC7_ *b) {
     PrC7_ *qa;
     PrC7_ *qb;
     u8 code;
-    V3C7_ *p;
+    Vec3f *p;
     f32 best;
     f32 d;
     f32 dd;
@@ -983,9 +979,9 @@ void func_8009D574(void) {
 void func_800A3E30(Nd4_ **list, s32 key);
 void func_8009D67C(void) {
     Pl_67C pl;
-    V3_67C org;
-    V3_67C d;
-    V3_67C rel;
+    Vec3f org;
+    Vec3f d;
+    Vec3f rel;
     s32 old[14];
     s32 new[14];
     Ln_67C *it;

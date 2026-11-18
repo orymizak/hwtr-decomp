@@ -1,4 +1,5 @@
 #include "common.h"
+#include "math.h"
 #include "include_asm.h"
 /* TODO(match-debt): empty loop needed to match (scheduling barrier). Assumed to be a debug hook
  * compiled out in release builds; verify against a real cause when one turns up. */
@@ -51,8 +52,7 @@ extern u8 (*D_80145578)(s32, s32);
 extern u8 (*D_80140F9C)(void *);
 extern u8 (*D_80140FA8)(void);
 extern void (*D_80140FAC)(s32, s32, f32, f32);
-typedef struct { f32 x; f32 y; f32 z; } V3f3_;
-extern V3f3_ D_80123E40[];
+extern Vec3f D_80123E40[];
 s32 strcmp(const char *, const char *);
 u32 func_800B042C(u8);
 extern u8 D_800F6102;
@@ -95,9 +95,8 @@ typedef struct { u8 n; u8 p1[3]; It2C_ *it; } Ls2C_;
 typedef struct { s32 a; s32 b; s32 c; } V12c_;
 typedef struct { u8 *s; s16 n; s16 x6; s16 x8; s16 y; u8 pC[2]; u8 e; u8 f; u8 g; u8 p11[3]; } ItAA4_;
 typedef struct { u8 p0[0x1C]; ItAA4_ *it; } MnAA4_;
-typedef struct { f32 x; f32 y; f32 z; } V3B37_;
 typedef struct { f32 a; f32 b; f32 c; f32 d; } V4B37_;
-typedef struct { V3B37_ p; u8 pC[0xC]; f32 f18; f32 f1C; f32 f20; u8 p24[0xE]; s16 s32; } EnB37_;
+typedef struct { Vec3f p; u8 pC[0xC]; f32 f18; f32 f1C; f32 f20; u8 p24[0xE]; s16 s32; } EnB37_;
 typedef struct { s32 *a; u8 p4[0xC]; } RfB37_;
 typedef struct { u8 p0[0x20]; u8 n; u8 p21[3]; RfB37_ *r; EnB37_ *e; } ObB37_;
 typedef struct { u8 p0[0xC]; f32 fC; f32 f10; u8 p14[0x20]; } ElC05_;
@@ -384,7 +383,7 @@ f32 func_800B1294(s32);
 f32 func_800B12C4(s32);
 f32 func_800B1308(s32);
 extern f32 D_80123E70;
-extern V3B37_ D_80123E74;
+extern Vec3f D_80123E74;
 void func_800B4578(void);
 extern f32 D_80123E80;
 extern f32 D_80123E84;
@@ -867,7 +866,7 @@ void func_800B3D9C(u8 i, s32 a, s32 b, s32 c) {
 }
 
 
-extern V3f3_ D_80123E58[];
+extern Vec3f D_80123E58[];
 /* TODO (Bug potential): Missing return value in non-void function. Return type is s32 but control
  * reaches end without returning a value. Either change signature to void func_800B3E24(...) or return 0.
  */
@@ -929,7 +928,7 @@ extern s32 D_80100BD0;
 void func_800B463C(s8 unused) {
     f32 m[3][4];
     f32 k;
-    V3B37_ d;
+    Vec3f d;
 
     func_800B318C(m);
     k = func_800B2F30(3);

@@ -1,23 +1,20 @@
 #include "common.h"
+#include "math.h"
 #include "include_asm.h"
 f32 sqrtf(f32);
     /* TODO (Clean version): Unify duplicate physics structs across unit files into a shared header (e.g. physics.h):
-    - Replace V3a_, V3e_, V3f_ with Vec3f.
+    - Replace Vec3f, Vec3f, Vec3f with Vec3f.
     - Replace BodyA_, BodyE_, BodyF_ with a unified RigidBody struct (offsets 0x6C pos, 0x78 mom, 0x84 vel, 0x94 rot, 0xB8 am, 0xC4 iw, 0xE8 w, 0xF8 f, 0x104 t).
     - Replace OwnA_, OwnF_ with Collider (offset 0x5C kind, 0x60 body, 0x84 mass/weight).
     - Replace CtA_, CtF_ with Contact / CollisionPair.
     */
-typedef struct { f32 x; f32 y; f32 z; } V3a_;
-typedef struct { u8 pad0[0x4C]; f32 im; u8 pad50[0x1C]; V3a_ pos; V3a_ mom; V3a_ vel; u8 pad90[0x28]; V3a_ am; f32 m[9]; V3a_ w; } BodyA_;
+typedef struct { u8 pad0[0x4C]; f32 im; u8 pad50[0x1C]; Vec3f pos; Vec3f mom; Vec3f vel; u8 pad90[0x28]; Vec3f am; f32 m[9]; Vec3f w; } BodyA_;
 typedef struct { u8 pad0[0x5C]; s32 kind; BodyA_ *b; } OwnA_;
-typedef struct { OwnA_ *o; V3a_ p; V3a_ n; } CtA_;
-typedef struct { f32 x; f32 y; f32 z; } V3e_;
-typedef struct { f32 m[3][3]; } M3e_;
-typedef struct { u8 pad0[0x24]; M3e_ ib; f32 f48; f32 im; f32 f50; V3e_ g; V3e_ f60; V3e_ pos; V3e_ mom; V3e_ vel; f32 speed; M3e_ r; V3e_ am; M3e_ iw; V3e_ w; f32 wlen; V3e_ f; V3e_ t; u8 frozen; u8 pad111[3]; s32 x114; } BodyE_;
-typedef struct { f32 x; f32 y; f32 z; } V3f_;
-typedef struct { u8 pad0[0x4C]; f32 im; u8 pad50[0x1C]; V3f_ pos; V3f_ mom; V3f_ vel; u8 pad90[0x28]; V3f_ am; f32 m[9]; V3f_ w; } BodyF_;
+typedef struct { OwnA_ *o; Vec3f p; Vec3f n; } CtA_;
+typedef struct { u8 pad0[0x24]; Mtx3f ib; f32 f48; f32 im; f32 f50; Vec3f g; Vec3f f60; Vec3f pos; Vec3f mom; Vec3f vel; f32 speed; Mtx3f r; Vec3f am; Mtx3f iw; Vec3f w; f32 wlen; Vec3f f; Vec3f t; u8 frozen; u8 pad111[3]; s32 x114; } BodyE_;
+typedef struct { u8 pad0[0x4C]; f32 im; u8 pad50[0x1C]; Vec3f pos; Vec3f mom; Vec3f vel; u8 pad90[0x28]; Vec3f am; f32 m[9]; Vec3f w; } BodyF_;
 typedef struct { u8 pad0[4]; s32 flags; u8 pad8[0x54]; s32 kind; BodyF_ *b; u8 pad64[0x20]; u32 u84; } OwnF_;
-typedef struct { OwnF_ *o0; OwnF_ *o1; V3f_ p; V3f_ n; } CtF_;
+typedef struct { OwnF_ *o0; OwnF_ *o1; Vec3f p; Vec3f n; } CtF_;
 typedef struct { f32 i[9]; f32 ib[9]; f32 m; } BodyI_;
 extern u8 D_80138D38[];
 
@@ -26,10 +23,10 @@ extern u8 D_80138D38[];
 void func_800AE8F4(BodyI_ *o, f32 x, f32 y, f32 z);
 /* Resets a rigid body: mass, identity orientation, zero motion, gravity of 386 units/s^2 along -Z,
  * box inertia from x/y/z, and the derived world inverse inertia and angular velocity. */
-void func_800AC880(BodyE_ *b, f32 mass, f32 x, f32 y, f32 z, V3e_ p) {
-    M3e_ rt;
-    M3e_ ri;
-    V3e_ wv;
+void func_800AC880(BodyE_ *b, f32 mass, f32 x, f32 y, f32 z, Vec3f p) {
+    Mtx3f rt;
+    Mtx3f ri;
+    Vec3f wv;
 
     b->f48 = mass;
     b->im = 1.0f / mass;
@@ -110,14 +107,14 @@ void func_800AC880(BodyE_ *b, f32 mass, f32 x, f32 y, f32 z, V3e_ p) {
         b->t = (Vec3f){0, 0, 0};
     */
 void func_800ACDC8(BodyE_ *b, f32 dt) {
-    V3e_ tmp;
-    V3e_ v;
-    M3e_ dr;
-    V3e_ wd;
-    M3e_ s;
-    M3e_ rt;
-    M3e_ ri;
-    V3e_ wv;
+    Vec3f tmp;
+    Vec3f v;
+    Mtx3f dr;
+    Vec3f wd;
+    Mtx3f s;
+    Mtx3f rt;
+    Mtx3f ri;
+    Vec3f wv;
     f32 k1;
     f32 k;
 
@@ -261,17 +258,17 @@ void func_800ACDC8(BodyE_ *b, f32 dt) {
         b->am += vec3_cross(r, J); b->w = mat3_mul_vec3(b->inv_inertia, b->am);
     */
 f32 func_800AD774(CtA_ *c, f32 fr) {
-    V3a_ p;
-    V3a_ n;
-    V3a_ v;
-    V3a_ r;
-    V3a_ x;
-    V3a_ a;
-    V3a_ j;
-    V3a_ t;
-    V3a_ tot;
-    V3a_ m;
-    V3a_ wr;
+    Vec3f p;
+    Vec3f n;
+    Vec3f v;
+    Vec3f r;
+    Vec3f x;
+    Vec3f a;
+    Vec3f j;
+    Vec3f t;
+    Vec3f tot;
+    Vec3f m;
+    Vec3f wr;
     BodyA_ *b;
     f32 vn;
     f32 e;
@@ -374,20 +371,20 @@ f32 func_800AD774(CtA_ *c, f32 fr) {
         b2->mom -= j2; b2->am -= vec3_cross(r2, j2);
     */
 f32 func_800ADE1C(CtF_ *c) {
-    V3f_ p;
-    V3f_ n;
-    V3f_ v1;
-    V3f_ v2;
-    V3f_ dv;
-    V3f_ r1;
-    V3f_ r2;
-    V3f_ x;
-    V3f_ a;
-    V3f_ j1;
-    V3f_ j2;
-    V3f_ m;
-    V3f_ wr1;
-    V3f_ wr2;
+    Vec3f p;
+    Vec3f n;
+    Vec3f v1;
+    Vec3f v2;
+    Vec3f dv;
+    Vec3f r1;
+    Vec3f r2;
+    Vec3f x;
+    Vec3f a;
+    Vec3f j1;
+    Vec3f j2;
+    Vec3f m;
+    Vec3f wr1;
+    Vec3f wr2;
     OwnF_ *o0;
     OwnF_ *o1;
     BodyF_ *b1;

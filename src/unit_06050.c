@@ -1,13 +1,12 @@
 #include "common.h"
+#include "math.h"
 #include "include_asm.h"
-typedef struct { f32 x; f32 y; f32 z; } V3f6_;
 typedef struct { s32 a; s32 b; s32 c; } V12_;
 typedef struct { s32 a; s32 b; s32 c; s32 d; } V16_;
 typedef struct { V16_ q; V12_ v; } E1C_;
 typedef struct { s32 a; u16 node; u16 h6; s32 b; s32 c; E1C_ *p; } E14_;
 typedef struct { s32 idx; s32 a; s32 b; s32 c; } Rec16_;
-typedef struct { f32 x; f32 y; f32 z; } Vec3f_;
-typedef struct { Vec3f_ v; f32 s; u16 node; char name[0xE]; } Ent20_;
+typedef struct { Vec3f v; f32 s; u16 node; char name[0xE]; } Ent20_;
 extern void *D_80138170;
 void func_800734F4(void *);
 void func_8006AA34(void);
@@ -21,9 +20,7 @@ void Memory_Free(void *);
 typedef struct { s32 a; s32 b; s32 c; s32 d; } Vec4L_;
 u8 func_80066A2C(u8 a, s32 b, s32 c);
 typedef struct { u16 unk0; s16 x; s16 y; s16 z; s32 unk8; s32 unkC; s32 unk10; s32 unk14; } Node_;
-typedef struct { f32 x; f32 y; f32 z; } Vec3_;
-typedef struct { s32 x; s32 y; s32 z; } Pos_;
-typedef struct { Pos_ p; f32 m[9]; s32 d; f32 e; } Cam_;
+typedef struct { Vec3i p; f32 m[9]; s32 d; f32 e; } Cam_;
 typedef struct { f32 m[21]; } Node54_;
 typedef struct {
     /* 0x00 */ u8 p0[6];
@@ -34,8 +31,8 @@ typedef struct {
     /* 0x0E */ u16 nE;
     /* 0x10 */ u16 n10;
     /* 0x12 */ u8 p12[2];
-    /* 0x14 */ Vec3_ v14;
-    /* 0x20 */ Vec3_ v20;
+    /* 0x14 */ Vec3f v14;
+    /* 0x20 */ Vec3f v20;
     /* 0x2C */ Node54_ *nodes;
     /* 0x30 */ u8 p30[8];
     /* 0x38 */ Node_ *links;
@@ -74,12 +71,10 @@ typedef struct {
     /* 0x160 */ f32 m160[3][4];
 } Model_;
 typedef struct { s32 cur[6]; s32 tgt[6]; s32 dt; } Fade65_;
-typedef struct { f32 x; f32 y; f32 z; } V3f69_;
-typedef struct { f32 f0; s32 i4; f32 f8; f32 fC; u8 p10[0x30]; V3f69_ pos; V3f69_ vel; f32 f58; f32 f5C; u8 p60[4]; s16 h64; u8 b66; u8 c[3]; u8 b6A; u8 p6B; u16 s6C; s16 s6E; } Pt94_;
-typedef struct { f32 x, y, z; } V3_9A4;
+typedef struct { f32 f0; s32 i4; f32 f8; f32 fC; u8 p10[0x30]; Vec3f pos; Vec3f vel; f32 f58; f32 f5C; u8 p60[4]; s16 h64; u8 b66; u8 c[3]; u8 b6A; u8 p6B; u16 s6C; s16 s6E; } Pt94_;
 typedef struct { u8 p0[0xC]; f32 x; u8 p10[0xC]; f32 y; u8 p20[0xC]; f32 z; u8 p30[8]; f32 r; } O_9A4;
-void func_8007E694(V3_9A4, V3_9A4);
-void func_8007E974(V3_9A4, V3_9A4);
+void func_8007E694(Vec3f, Vec3f);
+void func_8007E974(Vec3f, Vec3f);
 extern u8 D_80138A6C[];
 extern s32 D_80138A90[];
 extern u8 D_800F20F6;
@@ -99,7 +94,7 @@ void func_800674DC(void);
 s32 rand(void);
 f32 sqrtf(f32);
 void func_8007A858(u8 *, u8 *, s32 *, s32);
-void func_8007DE54(Vec3f_, u32, u8 *, Vec3f_);
+void func_8007DE54(Vec3f, u32, u8 *, Vec3f);
 s32 File_GetSize(char *);
 extern char D_800FE964[];
 s32 func_800682A4(s32 unused, char *name, Big114_ *a, Big40_ *b);
@@ -194,7 +189,7 @@ World_ *func_800731DC(s32);
 void func_800734AC(World_ *);
 void func_8006DD34(World_ *);
 void func_8006572C(char *, u8);
-void func_8006A540(Vec3_ *, Vec3_ *, u8, u8, u8);
+void func_8006A540(Vec3f *, Vec3f *, u8, u8, u8);
 
 /* Loads "<name><variant>.WLD" and applies the matching per-track RGB color (white if none). */
 s32 func_800655CC(TrackName_ *t) {
@@ -249,7 +244,7 @@ u16 func_800658C4(void) {
     return D_8013816C->n10;
 }
 
-void func_800658D4(s32 i, Vec3f_ *pos, s32 *a, s32 *b, s32 *c) {
+void func_800658D4(s32 i, Vec3f *pos, s32 *a, s32 *b, s32 *c) {
     Rec16_ *r = &D_8013816C->recs[i];
     f32 *m = D_8013816C->nodes[r->idx].m;
 
@@ -641,7 +636,7 @@ void func_800687E8(s32 i, f32 *pos, f32 *rot, f32 *a3, s32 *a4, s32 *a5, s32 *a6
     *a7 = n->unk14;
 }
 
-void func_800688F4(s32 idx, Vec3_ pos, f32 *m) {
+void func_800688F4(s32 idx, Vec3f pos, f32 *m) {
     f32 *q = D_8013816C->nodes[D_8013816C->links[idx].unk0].m;
 
     q[0] = m[0];
@@ -658,9 +653,9 @@ void func_800688F4(s32 idx, Vec3_ pos, f32 *m) {
     q[11] = pos.z;
 }
 
-void func_800689A4(O_9A4 *o, V3_9A4 v) {
-    V3_9A4 d;
-    V3_9A4 p;
+void func_800689A4(O_9A4 *o, Vec3f v) {
+    Vec3f d;
+    Vec3f p;
     u32 s;
     f32 len;
     u32 i, n;
@@ -704,9 +699,9 @@ void func_800689A4(O_9A4 *o, V3_9A4 v) {
     }
 }
 
-void func_80068E98(u8 *o, Vec3f_ vel, u8 *verts) {
-    Vec3f_ v;
-    Vec3f_ p;
+void func_80068E98(u8 *o, Vec3f vel, u8 *verts) {
+    Vec3f v;
+    Vec3f p;
     s32 idx[16];
     u8 *m;
     u32 n;
@@ -751,7 +746,7 @@ void func_80068E98(u8 *o, Vec3f_ vel, u8 *verts) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", func_80069214);
 
-void func_8006936C(V3f69_ pos, V3f69_ vel) {
+void func_8006936C(Vec3f pos, Vec3f vel) {
     Pt94_ pt;
 
     pt.pos = pos;
@@ -777,7 +772,7 @@ void func_8006936C(V3f69_ pos, V3f69_ vel) {
 }
 
 
-void func_80069494(u8 **car, f32 speed, V3f69_ pos, V3f69_ vel) {
+void func_80069494(u8 **car, f32 speed, Vec3f pos, Vec3f vel) {
     Pt94_ pt;
     Model_ *o;
     f32 r;
@@ -828,12 +823,12 @@ void func_80069494(u8 **car, f32 speed, V3f69_ pos, V3f69_ vel) {
     func_8007C318(&D_80145488, &pt);
 }
 
-typedef struct { u8 p0[0x6C]; V3f69_ pos; u8 p78[0xC]; V3f69_ vel; f32 speed; f32 r[3][3]; } Bds9_;
+typedef struct { u8 p0[0x6C]; Vec3f pos; u8 p78[0xC]; Vec3f vel; f32 speed; f32 r[3][3]; } Bds9_;
 typedef struct { u8 p0[0x18]; f32 w; f32 h; f32 l; u8 p24[0x3C]; Bds9_ *body; } Cars9_;
-typedef struct { Cars9_ *car; V3f69_ pos; V3f69_ n; u8 flag; } Hits9_;
+typedef struct { Cars9_ *car; Vec3f pos; Vec3f n; u8 flag; } Hits9_;
 extern u32 (*D_8014169C)(s32);
 
-extern inline void Sparks9_(V3f69_ pos, V3f69_ vel) {
+extern inline void Sparks9_(Vec3f pos, Vec3f vel) {
     f32 pad[2];
     Pt94_ pt;
 
@@ -860,13 +855,13 @@ extern inline void Sparks9_(V3f69_ pos, V3f69_ vel) {
 }
 
 void func_800698C0(Hits9_ *h, f32 speed) {
-    V3f69_ t;
-    V3f69_ v;
-    V3f69_ ax;
-    V3f69_ ay;
-    V3f69_ az;
-    V3f69_ q;
-    V3f69_ p;
+    Vec3f t;
+    Vec3f v;
+    Vec3f ax;
+    Vec3f ay;
+    Vec3f az;
+    Vec3f q;
+    Vec3f p;
     Bds9_ *b;
     f32 dx;
     f32 dy;
@@ -994,7 +989,7 @@ void func_8006A234(s32 a, s32 b, V12_ *v, V16_ *q) {
     *q = D_8013816C->paths[a].p[b].q;
 }
 
-void func_8006A2B8(s32 i, V3f6_ *t, f32 *m) {
+void func_8006A2B8(s32 i, Vec3f *t, f32 *m) {
     f32 *d = D_8013816C->nodes[D_8013816C->paths[i].node].m;
 
     d[0] = m[0];
@@ -1015,7 +1010,7 @@ u8 func_8006A358(void) {
     return D_8013816C->bB;
 }
 
-void func_8006A368(u8 i, Pos_ *a1, f32 *a2, s32 *a3, f32 *a4) {
+void func_8006A368(u8 i, Vec3i *a1, f32 *a2, s32 *a3, f32 *a4) {
     Cam_ *c = &D_8013816C->cams[i];
 
     *a1 = c->p;
@@ -1045,7 +1040,7 @@ u16 func_8006A450(void) {
     return D_8013816C->nE;
 }
 
-void func_8006A460(s32 i, Vec3f_ *v, f32 *s, char *name) {
+void func_8006A460(s32 i, Vec3f *v, f32 *s, char *name) {
     *v = D_8013816C->ents[i].v;
     *s = D_8013816C->ents[i].s;
     strcpy(name, D_8013816C->ents[i].name);

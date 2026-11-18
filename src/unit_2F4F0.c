@@ -2,7 +2,6 @@
 #include "include_asm.h"
 #include "car.h"
 typedef struct { s32 a; s32 b; s32 c; } V12_;
-typedef struct { f32 x; f32 y; f32 z; } V3f_;
 extern V12_ D_8011855C;
 extern V12_ D_80118568;
 extern f32 D_80118578[3][3];
@@ -11,7 +10,6 @@ extern Ent64w_ D_801185B8[];
 typedef struct { u8 on; u8 pad[0x63]; } Ent64_;
 extern Ent64_ D_801185B4[];
 extern u8 D_80118620;
-typedef struct { s32 x; s32 y; s32 z; } Pos_;
 typedef Vec3f Vec3f_;
     /* TODO (Clean version): Unify CamE_, Cam90_, Ent64_, and Ent64w_ into a single Camera struct (sizeof 0x64):
     typedef struct {
@@ -385,10 +383,10 @@ void func_8008EA6C(u32 dt) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_2F4F0", func_8009013C);
 
-void func_80090410(u8 i, Pos_ *a1, f32 *a2, f32 *a3, f32 *a4, f32 *a5, s8 *a6, u8 *a7) {
+void func_80090410(u8 i, Vec3i *a1, f32 *a2, f32 *a3, f32 *a4, f32 *a5, s8 *a6, u8 *a7) {
     /* TODO (Clean version): Replace raw byte indexing with Camera struct member accesses:
      *   CamE_ *cam = &((CamE_ *)D_80118558)[i];
-     *   *a1 = *(Pos_ *)&cam->pos;
+     *   *a1 = *(Vec3i *)&cam->pos;
      *   a2[0] = cam->m[0][0]; a2[1] = cam->m[1][0]; a2[2] = cam->m[2][0];
      *   a3[0] = cam->m[0][1]; a3[1] = cam->m[1][1]; a3[2] = cam->m[2][1];
      *   a4[0] = cam->m[0][2]; a4[1] = cam->m[1][2]; a4[2] = cam->m[2][2];
@@ -398,7 +396,7 @@ void func_80090410(u8 i, Pos_ *a1, f32 *a2, f32 *a3, f32 *a4, f32 *a5, s8 *a6, u
      */
     u8 *p = D_80118558 + i * 0x64;
 
-    *a1 = *(Pos_ *)(p + 4);
+    *a1 = *(Vec3i *)(p + 4);
     a2[0] = *(f32 *)(p + 0x1C);
     a2[1] = *(f32 *)(p + 0x28);
     a2[2] = *(f32 *)(p + 0x34);
@@ -413,7 +411,7 @@ void func_80090410(u8 i, Pos_ *a1, f32 *a2, f32 *a3, f32 *a4, f32 *a5, s8 *a6, u
     *a7 = p[0x49];
 }
 
-void func_800904C4(V12_ *a, V12_ *b, V3f_ *c, V3f_ *d) {
+void func_800904C4(V12_ *a, V12_ *b, Vec3f *c, Vec3f *d) {
     /* TODO (Clean version): D_8011855C, D_80118568, and D_80118578 are pos, vel, and rot columns
      * of the first camera in D_80118558:
      *   CamE_ *cam0 = (CamE_ *)D_80118558;

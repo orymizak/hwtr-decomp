@@ -4,10 +4,7 @@
 /* TODO(match-debt): empty loop needed to match (scheduling barrier). Assumed to be a debug hook
  * compiled out in release builds; verify against a real cause when one turns up. */
 #define DEBUG_NOP() do { } while (0)
-typedef struct { s32 x; s32 y; s32 z; } V3i9_;
 typedef struct { s32 d[0x22]; } B88_;
-typedef struct { f32 m[3][4]; } M_D34;
-typedef struct { f32 x; f32 y; f32 z; } V3_164;
 typedef Vec3f V3_1B0;
 typedef Mtx3f M3_1B0;
 extern void (*D_80141760)(u8, u8, V3_1B0);
@@ -15,7 +12,6 @@ extern void (*D_80145590)(u8, u8);
 extern void (*D_8014C11C)(u8, f32);
 extern void (*D_8014C114)(u8, s32, s32);
 extern u8 D_80138D6A;
-typedef struct { f32 x; f32 y; f32 z; } V3_954;
 extern u8 D_80138D6D;
 extern u8 D_80138D6E;
 extern u8 D_80138D6F;
@@ -96,11 +92,10 @@ void func_80091DC4(Car *car) {
 }
 
 typedef Vec3f V3_E30;
-typedef struct { f32 m[3][3]; } M3_E30;
 extern u8 D_8011B31C;
 void func_8008AEC0(s32, s32, s32, s32, s32, s32, s32, u8 *, u16 *, u32 *);
 void func_800ABF2C(u8, u32, u16, u8);
-static inline V3_E30 mul_E30(M3_E30 *m, V3_E30 *v) {
+static inline V3_E30 mul_E30(Mtx3f *m, V3_E30 *v) {
     V3_E30 r;
 
     r.x = m->m[0][0] * v->x + m->m[0][1] * v->y + m->m[0][2] * v->z;
@@ -113,7 +108,7 @@ void func_80091E30(Car *p, f32 dt) {
     s32 b[3];
     V3_E30 v;
     V3_E30 w;
-    M3_E30 t;
+    Mtx3f t;
     s32 ms;
     u8 n;
     u16 x;
@@ -242,7 +237,7 @@ void func_80091E30(Car *p, f32 dt) {
 INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_80092534);
 
 void func_80093164(Car *p, f32 dt) {
-    V3_164 col;
+    Vec3f col;
     u8 f;
     f32 v;
 
@@ -397,7 +392,7 @@ void func_80093D34(Car *car) {
     Vec3f col0;
     Vec3f r1;
     Vec3f r2;
-    M_D34 m;
+    Mtx34f m;
     Vec3f rel;
     Vec3f t;
     Vec3f a;
@@ -666,8 +661,8 @@ void func_800961B0(Car *p, u8 id, u8 flip) {
     }
 }
 
-static inline void push_954(Car *c, V3_954 *at, V3_954 *f, V3_954 *a) {
-    V3_954 tq;
+static inline void push_954(Car *c, Vec3f *at, Vec3f *f, Vec3f *a) {
+    Vec3f tq;
 
     a->x = at->x - c->pos.x;
     a->y = at->y - c->pos.y;
@@ -684,12 +679,12 @@ static inline void push_954(Car *c, V3_954 *at, V3_954 *f, V3_954 *a) {
 }
 
 void func_80096954(Car *c) {
-    V3_954 axis;
-    V3_954 pos;
-    V3_954 pt;
-    V3_954 fl;
-    V3_954 F;
-    V3_954 tmp;
+    Vec3f axis;
+    Vec3f pos;
+    Vec3f pt;
+    Vec3f fl;
+    Vec3f F;
+    Vec3f tmp;
     f32 d;
     f32 f;
     s32 (**rnd)(s32);
@@ -706,7 +701,7 @@ void func_80096954(Car *c) {
         /* TODO(match-debt): the 0x75C/0x760 counters only match through raw casts. */
         *(u32 *)((u8 *)c + 0x75C) += 10;
         if (*(u32 *)((u8 *)c + 0x75C) > D_80138D6D) {
-            V3_954 tq;
+            Vec3f tq;
             f = c->unk5E8 * c->unk5E8 + c->unk5F0 * c->unk5F0;
             if (d > 0.0f) {
                 f = -f;

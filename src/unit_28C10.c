@@ -10,8 +10,7 @@ s32 sprintf(char *, const char *, ...);
 typedef struct Lnk89_ { s32 *obj; s32 x; struct Lnk89_ *next; } Lnk89_;
 typedef struct { u8 *def; s32 t; u8 pad8; u8 hold; } Tmr89_;
 typedef struct { s32 pad0; u8 id; u8 pad5[3]; s32 on; s32 t; u8 fired; u8 pad11[7]; } Evt18_;
-typedef struct { f32 x, y, z; } V3_8010;
-typedef struct { u8 p0[0x34]; s32 flags; f32 f[0x18]; V3_8010 v; f32 fA4; u8 col[4]; } P_8010;
+typedef struct { u8 p0[0x34]; s32 flags; f32 f[0x18]; Vec3f v; f32 fA4; u8 col[4]; } P_8010;
 extern u16 D_800F302A;
 extern u16 D_800F302C;
 extern u16 D_800F302E;
@@ -42,9 +41,9 @@ extern s32 (*D_80141768)(u8,s32);
 void func_80088010(u8 *arg0, u8 *arg1) {
     P_8010 *p = (P_8010 *)arg0;
     Car *c = (Car *)arg1;
-    V3_8010 v;
-    V3_8010 d;
-    V3_8010 t;
+    Vec3f v;
+    Vec3f d;
+    Vec3f t;
 
     if (c->state != 2) {
         return;

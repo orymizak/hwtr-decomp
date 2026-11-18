@@ -1,18 +1,17 @@
 #include "common.h"
+#include "math.h"
 #include "include_asm.h"
 f32 func_8007AD24(f32);
 f32 cosf(f32);
 f32 sinf(f32);
-typedef struct { f32 x; f32 y; f32 z; f32 w; } Quat_;
-typedef struct { f32 x; f32 y; f32 z; } Vec3_;
 
 
 
 extern s32 D_800F3920[3];
 f32 sqrtf(f32);
 /* Converts a rotation matrix to a quaternion (Shoemake's method). */
-Quat_ func_800A83A0(f32 m[3][3]) {
-    Quat_ q;
+Quat func_800A83A0(f32 m[3][3]) {
+    Quat q;
     f32 *p[3] = { &q.x, &q.y, &q.z };
     f32 tr;
     f32 s;
@@ -48,8 +47,8 @@ Quat_ func_800A83A0(f32 m[3][3]) {
     return q;
 }
 
-Quat_ func_800A8670(f32 angle, Vec3_ axis) {
-    Quat_ t;
+Quat func_800A8670(f32 angle, Vec3f axis) {
+    Quat t;
     f32 half = angle / 2.0f;
     f32 s = sinf(half);
 
@@ -60,7 +59,7 @@ Quat_ func_800A8670(f32 angle, Vec3_ axis) {
     return t;
 }
 
-static inline void Vec3_Normalize_(Vec3_ *v) {
+static inline void Vec3_Normalize_(Vec3f *v) {
     f32 inv = 1.0f / sqrtf(v->x * v->x + v->y * v->y + v->z * v->z);
 
     v->x *= inv;
@@ -70,11 +69,11 @@ static inline void Vec3_Normalize_(Vec3_ *v) {
 
 /* Builds the rotation that points the forward (Y) axis along dir: makes a basis from dir, a
  * horizontal side vector and their cross product, then converts it as func_800A83A0 does. */
-Quat_ func_800A8710(Vec3_ *dir) {
-    Quat_ q = { 1.0f, 0.0f, 0.0f, 0.0f };
-    Vec3_ f;
-    Vec3_ side;
-    Vec3_ up;
+Quat func_800A8710(Vec3f *dir) {
+    Quat q = { 1.0f, 0.0f, 0.0f, 0.0f };
+    Vec3f f;
+    Vec3f side;
+    Vec3f up;
     f32 m[3][3];
     f32 *p[3] = { &q.x, &q.y, &q.z };
     f32 tr;
@@ -135,7 +134,7 @@ INCLUDE_ASM("asm/nonmatchings/unit_48FA0", func_800A8BA4);
 
 INCLUDE_ASM("asm/nonmatchings/unit_48FA0", func_800A8C94);
 
-void func_800A8E14(Quat_ *q) {
+void func_800A8E14(Quat *q) {
     f32 w = q->w;
     f32 x = q->x;
     f32 y = q->y;
@@ -148,8 +147,8 @@ void func_800A8E14(Quat_ *q) {
     q->z *= inv;
 }
 
-Quat_ func_800A8EBC(f32 t, Quat_ a, Quat_ b) {
-    Quat_ r;
+Quat func_800A8EBC(f32 t, Quat a, Quat b) {
+    Quat r;
     f32 c = a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w;
     f32 s0, s1, om, sinom;
 
@@ -176,7 +175,7 @@ Quat_ func_800A8EBC(f32 t, Quat_ a, Quat_ b) {
     return r;
 }
 
-Vec3_ func_800A9068(f32 t, Vec3_ a, Vec3_ b) {
+Vec3f func_800A9068(f32 t, Vec3f a, Vec3f b) {
     f32 s = 1.0f - t;
 
     a.x = a.x * s + b.x * t;

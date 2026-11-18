@@ -1,16 +1,13 @@
 #include "common.h"
 #include "include_asm.h"
 #include "car.h"
-typedef struct { f32 x; f32 y; f32 z; } Vec3f_;
-typedef struct { u8 id; u8 p1[3]; u8 *car; u8 p8[0x1C]; f32 f24; u8 p28[0x1E4]; f32 f20C; u8 p210[8]; f32 f218; u8 p21C[0xC]; Vec3f_ v228; u8 p234[0xC]; Vec3f_ v240; u8 p24C[0x5C]; } Slot85_;
-typedef struct { f32 x; f32 y; f32 z; } V3d_;
-typedef struct { V3d_ p; u8 pad[0x7C]; } BlkD_;
+typedef struct { u8 id; u8 p1[3]; u8 *car; u8 p8[0x1C]; f32 f24; u8 p28[0x1E4]; f32 f20C; u8 p210[8]; f32 f218; u8 p21C[0xC]; Vec3f v228; u8 p234[0xC]; Vec3f v240; u8 p24C[0x5C]; } Slot85_;
+typedef struct { Vec3f p; u8 pad[0x7C]; } BlkD_;
 typedef struct { u8 id; u8 p1[0xBF]; f32 m[3][3]; } CarD_;
-typedef struct { u8 id; u8 p1[7]; BlkD_ blk; u8 p90[4]; V3d_ v94[4]; f32 m[3][3]; V3d_ h1[10]; s32 n160; V3d_ h2[10]; s32 n1DC; V3d_ v1E0; V3d_ v1EC; s32 z1F8; u8 p1FC[4]; s32 z200; s32 z204; u8 p208[0xC]; s32 z214; f32 f218; V3d_ v21C; V3d_ v228; V3d_ v234; V3d_ v240; V3d_ v24C; u8 p258[0x10]; s32 z268; s32 z26C; u8 p270[0x38]; } SlotD_;
-typedef struct { f32 x; f32 y; f32 z; } V3g_;
-typedef struct { V3g_ p; u8 pad[0x7C]; } BlkG_;
-typedef struct { u8 id; u8 p1[0x7B]; V3g_ v7C; f32 f88; u8 p8C[0xC]; V3g_ pos; V3g_ vA4; u8 pB0[0xC]; s32 zBC; f32 m[3][3]; V3g_ vE4; u8 pF0[0x444]; f32 f534; } CarG_;
-typedef struct { u8 id; u8 p1[7]; BlkG_ blk; u8 ok; u8 p91[3]; V3g_ v94[4]; f32 m[3][3]; V3g_ h1[10]; s32 n160; V3g_ h2[10]; s32 n1DC; V3g_ v1E0; V3g_ v1EC; s32 z1F8; f32 f1FC; s32 z200; s32 z204; u8 b208; u8 p209[3]; f32 f20C; u8 p210[4]; s32 z214; f32 f218; V3g_ v21C; V3g_ v228; V3g_ v234; V3g_ v240; V3g_ v24C; f32 f258; f32 f25C; f32 f260; u32 u264; s32 z268; s32 z26C; u8 p270[0x30]; s32 s2A0; u8 b2A4; u8 b2A5; u8 p2A6[2]; } SlotG_;
+typedef struct { u8 id; u8 p1[7]; BlkD_ blk; u8 p90[4]; Vec3f v94[4]; f32 m[3][3]; Vec3f h1[10]; s32 n160; Vec3f h2[10]; s32 n1DC; Vec3f v1E0; Vec3f v1EC; s32 z1F8; u8 p1FC[4]; s32 z200; s32 z204; u8 p208[0xC]; s32 z214; f32 f218; Vec3f v21C; Vec3f v228; Vec3f v234; Vec3f v240; Vec3f v24C; u8 p258[0x10]; s32 z268; s32 z26C; u8 p270[0x38]; } SlotD_;
+typedef struct { Vec3f p; u8 pad[0x7C]; } BlkG_;
+typedef struct { u8 id; u8 p1[0x7B]; Vec3f v7C; f32 f88; u8 p8C[0xC]; Vec3f pos; Vec3f vA4; u8 pB0[0xC]; s32 zBC; f32 m[3][3]; Vec3f vE4; u8 pF0[0x444]; f32 f534; } CarG_;
+typedef struct { u8 id; u8 p1[7]; BlkG_ blk; u8 ok; u8 p91[3]; Vec3f v94[4]; f32 m[3][3]; Vec3f h1[10]; s32 n160; Vec3f h2[10]; s32 n1DC; Vec3f v1E0; Vec3f v1EC; s32 z1F8; f32 f1FC; s32 z200; s32 z204; u8 b208; u8 p209[3]; f32 f20C; u8 p210[4]; s32 z214; f32 f218; Vec3f v21C; Vec3f v228; Vec3f v234; Vec3f v240; Vec3f v24C; f32 f258; f32 f25C; f32 f260; u32 u264; s32 z268; s32 z26C; u8 p270[0x30]; s32 s2A0; u8 b2A4; u8 b2A5; u8 p2A6[2]; } SlotG_;
 extern u8 D_80138D3E;
 extern u8 D_80138D3F;
 extern f32 D_80115828;
@@ -40,7 +37,7 @@ void func_80084FDC(void) {
     u32 i;
     Car *c1;
     Car *car;
-    Vec3f_ t;
+    Vec3f t;
     s32 n;
 
     for (i = 0; i < 6; i++) {

@@ -5,8 +5,7 @@
  * Merged from the partial per-unit car types; fields named unkXXX/kXXX/vXXX/bXXX are not
  * identified yet. Every offset is fixed by the matching build. */
 
-typedef struct { f32 x, y, z; } Vec3f;
-typedef struct { f32 m[3][3]; } Mtx3f;
+#include "math.h"
 
 /* Wheel/contact point (0x70). */
 typedef struct {

@@ -1,4 +1,5 @@
 #include "common.h"
+#include "math.h"
 #include "include_asm.h"
 
 #define SCREEN_BG_BUFFER_SIZE 0x4B200
@@ -212,16 +213,15 @@ void func_8007863C(s16 x, s16 y, s16 width, s16 height) {
     func_80070F38();
 }
 
-typedef struct { f32 m[3][4]; } M34S_;
-extern M34S_ D_800F2138;
-s32 func_80070BA4(M34S_ *);
+extern Mtx34f D_800F2138;
+s32 func_80070BA4(Mtx34f *);
     /* TODO (Clean version):
     Passing model-view matrices through custom transformation pipelines (`func_80070BA4`) 
     and manually writing low-level display list commands with hardware offsets (`0xDA380003`) 
     should be encapsulated into a clean matrix stack helper (e.g., `Matrix_LoadModelView(...)`).
     */
-void func_80078684(M34S_ *m) {
-    M34S_ t;
+void func_80078684(Mtx34f *m) {
+    Mtx34f t;
     D_800F2138 = *m;
     t = *m;
     D_800F216C[0] = func_80070BA4(&t);

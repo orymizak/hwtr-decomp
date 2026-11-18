@@ -15,7 +15,6 @@ typedef struct { s32 w; u8 p[16]; } E14t_;
 typedef struct { u8 pad[0x30]; E14t_ e[1]; } T8D_;
 typedef struct { u8 pad[0x12]; u8 b; u8 pad2[0x19]; } E2Cd_;
 typedef struct { u8 pad[0x30]; E2Cd_ e[1]; } T8B_;
-typedef struct { f32 x; f32 y; f32 z; } V3E0_;
 typedef struct { s32 kind; u8 p4; u8 slot; u8 p6[14]; } E20_;
 typedef struct { u8 p0[0x30]; E20_ ent[6]; } Cfg8B_;
 typedef struct { u32 time; u32 best; u8 id; } Res8C_;
@@ -817,7 +816,7 @@ void func_8008E0BC(u8 **pair) {
     u8 *s;
     u8 *t;
     f32 d;
-    V3E0_ v;
+    Vec3f v;
 
     if (D_80118528 != 1) {
         s = *(u8 **) (pair[0] + 0x64);
@@ -878,10 +877,10 @@ void func_8008E310(void) {
     memset(((Ent8b_ *)&D_80118538), 0, 16);
 }
 
-extern void (*D_8014C124)(u8, V3E0_);
+extern void (*D_8014C124)(u8, Vec3f);
 extern void (*D_8014C134)(u8, f32);
 /* Plays a sound on the free channel used least recently; returns the channel or 0xFF. */
-u8 func_8008E38C(V3E0_ pos, u8 bank, u8 vol, u8 loop) {
+u8 func_8008E38C(Vec3f pos, u8 bank, u8 vol, u8 loop) {
     u32 now;
     u32 best;
     u32 i;
@@ -924,7 +923,7 @@ void func_8008E510(u8 i) {
 }
 
 
-void func_8008E558(s32 a, V3E0_ b) {
+void func_8008E558(s32 a, Vec3f b) {
 }
 
 void func_8008E568(s32 arg0) {

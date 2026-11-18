@@ -17,9 +17,8 @@ typedef struct { s32 a; s32 b; s32 c; } Vec3J_;
 extern Vec3J_ D_800EFF14;
 typedef struct { s32 a; s32 b; s32 c; } Vec3I_;
 extern Vec3I_ D_800EFF08;
-typedef struct { f32 x; f32 y; f32 z; } Vec3_;
-extern Vec3_ D_800EFF20;
-extern Vec3_ D_800EFF2C;
+extern Vec3f D_800EFF20;
+extern Vec3f D_800EFF2C;
 typedef struct { f32 f0; } S_D_800F01B4;
 extern S_D_800F01B4 D_800F01B4[];
 typedef struct { f32 f0; u8 p4[0x48]; } S_D_800EFF54;
@@ -29,9 +28,7 @@ typedef struct { s32 f0; } S_D_800EFC78;
 typedef struct { u8 kind; u8 mode; u8 pad[2]; u8 flag; u8 pad2[0x47]; } Slot_;
 typedef struct { s32 h[6]; f32 rpm; f32 f1C; f32 f20; f32 f24; f32 f28; u8 p2C[0x18]; u8 b44; u8 b45; u8 p46[6]; } Snd29_;
 typedef struct Nd29_ { u8 p0[0x10]; s32 h; struct Nd29_ *next; } Nd29_;
-typedef struct { f32 x; f32 y; f32 z; } V3c_;
 typedef struct N64c_ { f32 x; f32 y; f32 z; f32 v; s32 f10; struct N64c_ *next; u8 b18; u8 b19; u8 id; u8 b1B; } N64c_;
-typedef struct { f32 x; f32 y; f32 z; } V3r_;
 typedef struct { s32 w; u8 p4[0x10]; } E14s_;
 typedef struct { u32 f0; u8 p4[0x14]; u8 n18; u8 p19[3]; u32 f1C; u8 p20[0x10]; E14s_ e[1]; } Cfg9_;
 f32 func_800649F8(void *pos, void *vel);
@@ -52,7 +49,7 @@ extern s32 D_800F0140[];
 extern s32 D_800F0158;
 s32 func_8007F498(s32);
 extern s32 D_800EFC64;
-extern V3c_ D_800FE7B8;
+extern Vec3f D_800FE7B8;
 extern u8 D_800F01B0;
 extern f64 D_800FE848;
 void func_800CE810(s32);
@@ -492,10 +489,10 @@ u8 func_80061B88(void);
 s32 func_80061C70();
 s32 func_80062950(void);
 s32 func_80063434(Vec3I_ v);
-s32 func_80063468(Vec3_ a, Vec3_ b);
+s32 func_80063468(Vec3f a, Vec3f b);
 s32 func_800634C0(Vec3J_ v);
-s32 func_800634F4(u8 i, Vec3_ v);
-s32 func_80063550(u8 i, Vec3_ v);
+s32 func_800634F4(u8 i, Vec3f v);
+s32 func_80063550(u8 i, Vec3f v);
 s32 func_800635AC(s32 a, f32 v);
 s32 func_8006365C();
 s32 func_80063938(u8 i);
@@ -517,7 +514,7 @@ s32 func_80064364();
 s32 func_80064418();
 s32 func_800645BC(u8 id);
 s32 func_80064638(u8 id, f32 v);
-s32 func_80064308(u8 id, Vec3_ v);
+s32 func_80064308(u8 id, Vec3f v);
 s32 func_80061B94(s32 kind);
 extern s32 D_8014C13C;
 extern s32 D_8014C140;
@@ -967,7 +964,7 @@ s32 func_80063434(Vec3I_ v) {
     return 1;
 }
 
-s32 func_80063468(Vec3_ a, Vec3_ b) {
+s32 func_80063468(Vec3f a, Vec3f b) {
     D_800EFF20 = a;
     D_800EFF2C = b;
     return 1;
@@ -979,14 +976,14 @@ s32 func_800634C0(Vec3J_ v) {
 }
 
 
-s32 func_800634F4(u8 i, Vec3_ v) {
-    *(Vec3_ *)((u8 *)&D_800EFF54[i] + 0x10) = v;
+s32 func_800634F4(u8 i, Vec3f v) {
+    *(Vec3f *)((u8 *)&D_800EFF54[i] + 0x10) = v;
     return 1;
 }
 
 
-s32 func_80063550(u8 i, Vec3_ v) {
-    *(Vec3_ *)((u8 *)&D_800EFF54[i] + 0x1C) = v;
+s32 func_80063550(u8 i, Vec3f v) {
+    *(Vec3f *)((u8 *)&D_800EFF54[i] + 0x1C) = v;
     return 1;
 }
 
@@ -1150,7 +1147,7 @@ s32 func_80064204(s32 arg0, s32 arg1) {
 }
 
 u8 func_80064230(void) {
-    V3c_ v = D_800FE7B8;
+    Vec3f v = D_800FE7B8;
     N64c_ *n = Memory_Alloc(0x1C);
     N64c_ *p;
     N64c_ **head;
@@ -1181,14 +1178,14 @@ u8 func_80064230(void) {
     return n->id;
 }
 
-s32 func_80064308(u8 id, Vec3_ v) {
+s32 func_80064308(u8 id, Vec3f v) {
     Node64_ *p = D_800F0100;
 
     while (p != NULL) {
         if (p->id == id) {
-            ((Vec3_ *)p)->x = v.x;
-            ((Vec3_ *)p)->y = v.y;
-            ((Vec3_ *)p)->z = v.z;
+            ((Vec3f *)p)->x = v.x;
+            ((Vec3f *)p)->y = v.y;
+            ((Vec3f *)p)->z = v.z;
             return 1;
         }
         p = p->next;
@@ -1295,7 +1292,7 @@ s32 func_80064980(void) {
     return 1;
 }
 
-f32 func_80064E68(Vec3_ *a, Vec3_ *b);
+f32 func_80064E68(Vec3f *a, Vec3f *b);
 f32 func_80064988(void *a) {
     f32 d = func_80064E68(a, &D_800EFF08);
 
@@ -1308,7 +1305,7 @@ f32 func_80064988(void *a) {
 }
 
 
-f32 func_80064D3C(V3r_ *a, V3r_ *off, V3r_ *b);
+f32 func_80064D3C(Vec3f *a, Vec3f *off, Vec3f *b);
 /* Doppler pitch offset (clamped to +-7) for a source at pos moving at vel. */
 f32 func_800649F8(void *pos, void *vel) {
     f32 a;
@@ -1316,8 +1313,8 @@ f32 func_800649F8(void *pos, void *vel) {
     f32 ratio;
 
     /* The listener velocity (D_800EFF14) directly follows its position (D_800EFF08). */
-    a = func_80064D3C(pos, &((V3r_ *)&D_800EFF08)[1], (V3r_ *)&D_800EFF08);
-    b = func_80064D3C((V3r_ *)&D_800EFF08, vel, pos);
+    a = func_80064D3C(pos, &((Vec3f *)&D_800EFF08)[1], (Vec3f *)&D_800EFF08);
+    b = func_80064D3C((Vec3f *)&D_800EFF08, vel, pos);
     if (b == 1.0f) {
         return 0.0f;
     }
@@ -1340,7 +1337,7 @@ f32 func_800649F8(void *pos, void *vel) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_01050", func_80064B58);
 
-f32 func_80064D3C(V3r_ *a, V3r_ *off, V3r_ *b) {
+f32 func_80064D3C(Vec3f *a, Vec3f *off, Vec3f *b) {
     f32 d[3];
     f32 len;
     f32 nx;
@@ -1362,7 +1359,7 @@ f32 func_80064D3C(V3r_ *a, V3r_ *off, V3r_ *b) {
     return len + (nx * (b->x + off->x) + ny * (b->y + off->y) + nz * (b->z + off->z) + da);
 }
 
-f32 func_80064E68(Vec3_ *a, Vec3_ *b) {
+f32 func_80064E68(Vec3f *a, Vec3f *b) {
     f32 dx = a->x - b->x;
     f32 dy = a->y - b->y;
     f32 dz = a->z - b->z;

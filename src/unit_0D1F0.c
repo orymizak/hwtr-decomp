@@ -1,4 +1,5 @@
 #include "common.h"
+#include "math.h"
 #include "include_asm.h"
 typedef struct { u8 p0[4]; u16 *unk4; } BufD_;
 typedef struct { u32 w0; u32 w1; } GfxA_;
@@ -15,8 +16,7 @@ typedef struct { Vtx6D_ v[32]; u8 p200[0x30]; f32 r; f32 a; u8 p238; u8 mode; } 
     Definición duplicada idéntica a S_D_801455C0 empleada para forzar el casteo en func_8006DC28. En C limpio debe eliminarse y reutilizar S_D_801455C0; se mantiene para preservar el matching binario.
     */
 typedef struct { s32 f0; s32 f4; u8 p8[0x548]; } S_D2_;
-typedef struct { f32 x; f32 y; f32 z; } V3D6_;
-typedef struct { u32 t; V3D6_ pos; V3D6_ vel; f32 m[9]; } MvD6_;
+typedef struct { u32 t; Vec3f pos; Vec3f vel; f32 m[9]; } MvD6_;
 void func_8006D608(MvD6_ *o, u32 dt);
 f64 func_800E6E80(f64);
 f64 func_800E6F60(f64);
@@ -75,7 +75,7 @@ void func_8006CF10(s32 *p, s32 dt) {
 INCLUDE_ASM("asm/nonmatchings/unit_0D1F0", func_8006D15C);
 
 void func_8006D608(MvD6_ *o, u32 dt) {
-    V3D6_ v;
+    Vec3f v;
     f32 x;
     f32 y;
     f32 z;

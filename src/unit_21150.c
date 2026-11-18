@@ -1,4 +1,5 @@
 #include "common.h"
+#include "math.h"
 #include "include_asm.h"
 typedef struct { s32 a; s32 b; s32 c; } V12_;
 typedef struct { u8 busy; u8 pad[3]; V12_ v; u8 pad2[0x28]; } Q817_;
@@ -57,7 +58,6 @@ s32 func_80080AD0(TrAD_ *t, u8 i) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_21150", func_80080C20);
 
-typedef struct { f32 x; f32 y; f32 z; } V3f81_;
 typedef struct { u16 a; u16 key; f32 x; f32 y; f32 z; f32 rx; f32 ry; f32 rz; } Wp81_;
 typedef struct { u16 n0; u16 n; u16 ids[6]; u8 *p20; u8 *recs; } WpTbl81_;
 extern WpTbl81_ D_80114810;
@@ -66,7 +66,7 @@ extern WpTbl81_ D_80114810;
 #define RD16(p) ((p)[0] | ((p)[1] << 8))
 /* Picks the record for the given time: binary-searches the table by key (time / 10), then steps
  * forward (wrapping) past every record lying within 120 units of one of the n positions. */
-u8 func_80081384(u32 time, u32 n, V3f81_ *pts, Wp81_ *out) {
+u8 func_80081384(u32 time, u32 n, Vec3f *pts, Wp81_ *out) {
     u32 i = 0;
     u32 lo;
     u32 hi;
