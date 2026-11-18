@@ -40,7 +40,6 @@ void func_80087B08(void);
 void func_800ABC80(u8, s32, u8);
 void func_800AEE20(u32);
 void func_800A76FC(void);
-Car *func_800960D8(u8);
 u32 func_800AF174(void);
 void func_800AF180(u32);
 void func_800CC2B4(u8);
@@ -165,7 +164,7 @@ s32 func_8008D4E4(u8 *t);
     } GameConfig;
     Also remove the redundant function pointer cast on func_8008D4E4(cfg).
     */
-s32 func_8008BAA0(u8 *cfg) {
+s32 Race_Init(u8 *cfg) {
     u8 i;
 
     D_800F36F0 = 0;
@@ -548,7 +547,7 @@ void func_8008C548(void) {
                 D_801417B8(2);
                 D_800F36F0 = 1;
                 for (i = 0; i < D_80118494; i++) {
-                    c = func_800960D8(i);
+                    c = Car_Get(i);
                     if (c->flags & 3) {
                         c->yaw = 1.0f;
                         c->unk014 = 0.0f;
@@ -568,7 +567,7 @@ void func_8008C548(void) {
         func_8008C0D4();
         D_800F36F4 = 3;
         for (i = 0; i < D_80118494; i++) {
-            c = func_800960D8(i);
+            c = Car_Get(i);
             if (c->flags & 3) {
                 c->yaw = 1.0f;
                 c->unk014 = 0.0f;

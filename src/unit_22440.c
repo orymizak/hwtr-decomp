@@ -19,7 +19,6 @@ u32 func_800A76D8(void);
 extern Slot85_ D_80114830[];
 extern s32 D_80115824;
 extern f32 D_80115820;
-Car *func_800960D8(u8);
 void func_80084B9C(u8 *);
 extern u8 D_80114838;
 
@@ -41,7 +40,7 @@ void func_80084FDC(void) {
     s32 n;
 
     for (i = 0; i < 6; i++) {
-        c1 = func_800960D8(i);
+        c1 = Car_Get(i);
         if (c1->state != 1) {
             D_80114830[i].f24 = c1->unk474 / 1000.0f;
         }
@@ -49,7 +48,7 @@ void func_80084FDC(void) {
         D_80114830[i].f218 = (u32)(n - c1->lap) * D_80115820 + D_80114830[i].f24;
     }
     for (i = 0; i < 6; i++) {
-        car = func_800960D8(D_80114830[i].id);
+        car = Car_Get(D_80114830[i].id);
         if (car->state != 1 || car->b4B8 != 0 || car->finished != 0) {
             continue;
         }
@@ -102,7 +101,7 @@ void func_80085780(void) {
     u32 i;
     f32 k;
 
-    car = func_800960D8(0);
+    car = Car_Get(0);
     if (D_80115850 == 0 && car->state != 1) {
         k = 1.0f - D_80115838 * (1.0f - car->k538);
         for (i = 0; i < func_80096100(); i++) {
@@ -112,7 +111,7 @@ void func_80085780(void) {
     D_8011584C = NULL;
     D_80115848 = NULL;
     for (i = 0; i < 6; i++) {
-        c = func_800960D8(i);
+        c = Car_Get(i);
         if (c->state == 1) {
             continue;
         }

@@ -22,7 +22,6 @@ extern void (*D_801416DC)(s32, s32, u16, u16, s32);
 extern void (*D_801416E0)(s32, s32, s32);
 extern E0Cb_ D_800F3B18[];
 extern u8 D_800F3B42;
-Car *func_800960D8(u8);
 extern E240_ D_800F3951[];
 extern E240_ D_800F3961[];
 extern s32 (*D_801416D4)(s32);
@@ -57,7 +56,7 @@ void func_800A9604(u8 idx, u8 flag) {
     s32 y;
     s32 laps;
 
-    p = func_800960D8((&D_800F3B40)[idx]);
+    p = Car_Get((&D_800F3B40)[idx]);
     if (p->flags & 0x4000) {
         return;
     }
@@ -108,7 +107,7 @@ void func_800A978C(u8 idx, u8 flag) {
     s32 color;
     s32 t;
 
-    p = func_800960D8((&D_800F3B40)[idx]);
+    p = Car_Get((&D_800F3B40)[idx]);
     D_801416E0(0xFF, 0xFF, 0xFF);
     if (flag == 0) {
         x = 0xCB;
@@ -152,7 +151,7 @@ void func_800A99D0(u8 idx, u8 flag) {
     s32 color;
     u32 t;
 
-    p = func_800960D8((&D_800F3B40)[idx]);
+    p = Car_Get((&D_800F3B40)[idx]);
     D_801416E0(0xFF, 0xFF, 0xFF);
     if (flag == 0) {
         x = 0xCB;
@@ -211,7 +210,7 @@ void func_800A9EDC(u8 idx, u8 flag) {
     }
     D_801416DC(1, 1, x, y, 2);
     D_801416E0(0xFF, 0, 0);
-    sprintf(buf, D_80100A90, func_800960D8((&D_800F3B40)[idx])->unk4B0);
+    sprintf(buf, D_80100A90, Car_Get((&D_800F3B40)[idx])->unk4B0);
     if (flag == 0) {
         x = 0x11E;
         y = 0x20;
@@ -253,7 +252,7 @@ s32 func_800AA80C(u8 idx) {
         func_800A93B4(idx, two);
     }
     if (D_800F3B34[idx] & 0x10) {
-        p = func_800960D8((&D_800F3B40)[idx]);
+        p = Car_Get((&D_800F3B40)[idx]);
         D_801416E0(0xFF, 0xFF, 0xFF);
         if (p->unk6DC != 0) {
             if ((u8)two == 0) {
@@ -396,7 +395,7 @@ INCLUDE_ASM("asm/nonmatchings/unit_49CF0", func_800ABF2C);
 void func_800AC6EC(u8 i, s32 n) {
     if (i < D_800F3B42) {
         D_800F3B18[i].t = ((s32 (*)(void))func_800A76D8)();
-        D_800F3B18[i].a = func_800960D8((&D_800F3B40)[i])->n6CC;
+        D_800F3B18[i].a = Car_Get((&D_800F3B40)[i])->n6CC;
         D_800F3B18[i].b = n;
         if (D_800F3B18[i].a + (u8)n >= 11) {
             D_800F3B18[i].b = 10 - D_800F3B18[i].a;

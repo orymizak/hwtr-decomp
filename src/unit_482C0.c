@@ -6,10 +6,9 @@ typedef struct { u8 p0[0x440]; s32 w440; u8 b444[0xC]; s32 w450[8]; s32 w470; u8
 extern void (*D_801416E4)(s32);
 s32 func_8008182C(void);
 extern s32 D_800F3914;
-s32 func_8009610C(s32);
+s32 Car_IsPlayer(s32);
 extern void (*D_8014C0A8)(s32, s32, f32, f32);
 void func_800ABEC8(u8, u32, u8);
-Car *func_800960D8(u8);
 extern s32 D_800F3908;
 extern s32 D_800F390C;
 extern s32 D_800F3910;
@@ -49,7 +48,7 @@ void func_800A76FC(void) {
     D_800F3904 = D_800F3900;
     D_800F3900 = 0;
     for (i = 0; i < 6; i++) {
-        c = func_800960D8(i);
+        c = Car_Get(i);
         c->w440 = z;
         c->b478 = 0;
         c->w470 = 0;
@@ -74,7 +73,7 @@ s32 func_800A780C(u8 ch, u8 cp) {
     u8 best;
     u32 t;
 
-    c = func_800960D8(ch);
+    c = Car_Get(ch);
     best = 0;
     if (c->finished != 0) {
         return 1;
@@ -88,7 +87,7 @@ s32 func_800A780C(u8 ch, u8 cp) {
         }
     }
     if ((D_800F391A == 0) & (ok == 0)) {
-        if ((u8)func_8009610C(ch) != 0) {
+        if ((u8)Car_IsPlayer(ch) != 0) {
             if (c->checkpoint != 0 || k != D_800F3910 - 1) {
                 if (k != c->checkpoint - 1) {
                     D_8014C0A8(11, 0, 1.0f, 1.0f);
@@ -101,7 +100,7 @@ s32 func_800A780C(u8 ch, u8 cp) {
     }
     if (k < (u32)(D_800F3910 - 1)) {
         if (D_800F391A == 0) {
-            if ((u8)func_8009610C(ch) != 0) {
+            if ((u8)Car_IsPlayer(ch) != 0) {
                 D_8014C0A8(10, 0, 1.0f, 1.0f);
             }
         }
@@ -113,7 +112,7 @@ s32 func_800A780C(u8 ch, u8 cp) {
         return 1;
     }
     if (D_800F391A == 0) {
-        if ((u8)func_8009610C(ch) != 0) {
+        if ((u8)Car_IsPlayer(ch) != 0) {
             D_8014C0A8(12, 0, 1.0f, 1.0f);
         }
         t = D_800F3900;
@@ -122,7 +121,7 @@ s32 func_800A780C(u8 ch, u8 cp) {
                 c->bestLap = t - c->lapStart[0];
                 best = 1;
             }
-            if ((u8)func_8009610C(ch) != 0) {
+            if ((u8)Car_IsPlayer(ch) != 0) {
                 func_800ABEC8(c->unk00C, t - c->lapStart[0], best);
             }
             c->lapStart[0] = t;
@@ -132,7 +131,7 @@ s32 func_800A780C(u8 ch, u8 cp) {
                 c->bestLap = t - c->lapStart[c->lap - 1];
                 best = 1;
             }
-            if ((u8)func_8009610C(ch) != 0) {
+            if ((u8)Car_IsPlayer(ch) != 0) {
                 func_800ABEC8(c->unk00C, t - c->lapStart[c->lap - 1], best);
             }
             c->lapStart[c->lap] = t;
@@ -180,7 +179,7 @@ s32 func_800A7C2C(void) {
 }
 
 s32 func_800A7C34(u8 i) {
-    Car *p = func_800960D8(i);
+    Car *p = Car_Get(i);
 
     if (p->finished != 0) {
         p->unk014 = 0.0f;

@@ -53,7 +53,6 @@ extern u8 (*D_8014169C)(s32);
 extern u8 D_80118621;
 extern s32 *D_80118624;
 s32 func_80096100(void);
-Car *func_800960D8(u8);
 extern u8 D_80118558[];
 s32 func_800A5894(void);
 extern u8 D_801185AC;
@@ -114,7 +113,7 @@ void func_8008EA6C(u32 dt) {
             continue;
         }
         vis = 1;
-        car = func_800960D8((*cam).car);
+        car = Car_Get((*cam).car);
         pos.x = car->pos.x + car->v8C.x;
         pos.y = car->pos.y + car->v8C.y;
         pos.z = car->pos.z + car->v8C.z;
@@ -484,7 +483,7 @@ void func_80090578(Cam90_ *cam, u32 dt) {
             }
             mind = 0.0f;
             for (j = 0; j < func_80096100(); j++) {
-                car = func_800960D8(j);
+                car = Car_Get(j);
                 d.x = p.x - car->pos.x;
                 d.y = p.y - car->pos.y;
                 d.z = p.z - car->pos.z;
@@ -520,7 +519,7 @@ void func_80090578(Cam90_ *cam, u32 dt) {
             cam->mode = w;
             for (j = 0; j < 10; j++) {
                 cam->car = D_8014169C(func_80096100());
-                if (func_800960D8(cam->car)->b4B8 == 0) {
+                if (Car_Get(cam->car)->b4B8 == 0) {
                     break;
                 }
             }

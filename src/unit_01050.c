@@ -8,7 +8,7 @@ extern void *D_80101E70;
 extern u8 D_80138AB0;
 void func_8006B838(void);
 u8 func_8008BE7C(s32);
-void func_8007C224(void);
+void Particles_FreeAll(void);
 void func_80078980(s32);
 typedef struct Node64_ { u8 pad[0xC]; f32 v; u8 pad2[4]; struct Node64_ *next; u8 pad3[2]; u8 id; } Node64_;
 extern Node64_ *D_800F0100;
@@ -40,7 +40,7 @@ extern u8 D_80138AB1;
 void func_8007F4D0(void);
 void func_8007C080(void);
 void func_80066C9C(s32, u8);
-u8 func_8008BAA0(Cfg9_ *);
+u8 Race_Init(Cfg9_ *);
 extern s32 D_800F0108[];
 extern s32 D_800F0120;
 extern s32 D_800F0124[];
@@ -57,7 +57,6 @@ extern Snd29_ D_800EFF38[];
 void func_800CE4E0(s32, s32);
 extern Slot_ D_800EFF7C[];
 extern u8 D_800F0104;
-Car *func_800960D8(u8);
 s32 func_800CE550(s32 id, f32 val);
 extern s32 D_800F01A0;
 extern s32 D_800F01A4;
@@ -431,7 +430,7 @@ u8 func_800609C8(Cfg9_ *c) {
     } else {
         func_80078980(1);
     }
-    return func_8008BAA0(c);
+    return Race_Init(c);
 }
 
 s32 func_80061B40(void);
@@ -446,7 +445,7 @@ u8 func_80060AFC(s32 a) {
     }
     *p = 0;
     r = func_8008BE7C(a);
-    func_8007C224();
+    Particles_FreeAll();
     func_80078980(0);
     return r;
 }
@@ -612,7 +611,7 @@ void func_80061454(s32 unused, u8 count, u8 *info) {
 
     for (i = 0; i < count; i++) {
         D_800EFF7C[i].flag = 0;
-        type = func_800960D8(i)->w540 & 0xFF000000;
+        type = Car_Get(i)->w540 & 0xFF000000;
         switch (type) {
         case 0x00000000:
             D_800EFF7C[i].kind = 4;

@@ -19,7 +19,7 @@ extern u16 D_800F3032;
 extern u16 D_800F3034;
 void func_800AC6EC(u8, s32);
 void func_800B0614(u8, s32);
-void func_80088010(u8 *arg0, u8 *arg1);
+void Car_ApplyPickup(u8 *arg0, u8 *arg1);
 extern void (*D_8014C0A8)(s32, s32, f32, f32);
 void func_800A8268(Lnk89_ **, s32 *);
 void *Memory_Alloc(u32 size);
@@ -28,7 +28,6 @@ s32 func_80089FC4(u8 *);
 extern Evt18_ *D_800F3020;
 extern u32 D_800F3024;
 extern void (*D_80141714)(u8, s32, f32);
-Car *func_800960D8(u8);
 s32 func_800A76D8(void);
 extern Lnk89_ **D_80118470[];
 void func_800A82F8(Lnk89_ **, s32 *);
@@ -38,7 +37,7 @@ extern s32 (*D_80141768)(u8,s32);
 
 
 
-void func_80088010(u8 *arg0, u8 *arg1) {
+void Car_ApplyPickup(u8 *arg0, u8 *arg1) {
     P_8010 *p = (P_8010 *)arg0;
     Car *c = (Car *)arg1;
     Vec3f v;
@@ -287,7 +286,7 @@ s32 func_8008AA9C(u8 *o, u8 *q) {
         }
         func_800A8268(D_80118470[*o], (s32 *) nt);
         if (nt->hold == 0) {
-            func_80088010(d, func_800960D8(*o));
+            Car_ApplyPickup(d, Car_Get(*o));
         }
         D_80141714(q[4], 0, 0.0f);
         r = func_80089FC4(d);
@@ -315,7 +314,7 @@ void func_8008AD04(void) {
 
     now = func_800A76D8();
     for (i = 0; i < 6; i++) {
-        p = func_800960D8(i);
+        p = Car_Get(i);
         l = *D_80118470[i];
         n = 0;
         while (l != NULL) {

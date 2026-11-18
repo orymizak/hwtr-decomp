@@ -19,7 +19,7 @@ extern s32 D_8014C6FC;
 
 INCLUDE_ASM("asm/nonmatchings/unit_1CC80", func_8007C080);
 
-void func_8007C224(void) {
+void Particles_FreeAll(void) {
     if (D_8014C6FC != 0) {
         Memory_Free(D_8014C6FC);
     }
@@ -38,14 +38,14 @@ void func_8007C224(void) {
     D_800F2630 = 0;
 }
 
-void func_8007C2B4(PPool_ *pool, Prt70_ *buf, u32 cap) {
+void ParticlePool_Init(PPool_ *pool, Prt70_ *buf, u32 cap) {
     pool->tail = 0;
     pool->head = 0;
     pool->buf = buf;
     pool->cap = cap;
 }
 
-void func_8007C2C8(PPool_ *pool) {
+void ParticlePool_FadeOldest(PPool_ *pool) {
     u32 i;
     Prt70_ *p;
 
@@ -62,7 +62,7 @@ void func_8007C2C8(PPool_ *pool) {
 }
 
     /* TODO (Clean version):
-    Estructuras locales y duplicadas creadas para func_8007C434. En C limpio deben sustituirse por los tipos estándar de libultra (Gfx, Vtx) y definiciones unificadas de partículas (Particle, ParticlePool, Vec3f, Vec4f), evitando tipos artificiales como Vtx4C4_ y Vtx3C4_ usados para copiar memoria. Se mantienen para el match.
+    Estructuras locales y duplicadas creadas para Particles_Draw. En C limpio deben sustituirse por los tipos estándar de libultra (Gfx, Vtx) y definiciones unificadas de partículas (Particle, ParticlePool, Vec3f, Vec4f), evitando tipos artificiales como Vtx4C4_ y Vtx3C4_ usados para copiar memoria. Se mantienen para el match.
     */
 typedef struct { s32 w[16]; } Vtx4C4_;
 typedef struct { s32 w[12]; } Vtx3C4_;
@@ -90,7 +90,7 @@ void func_800A8670(Quat *, f32, Vec3f);
 void func_800A8BA4(Quat, f32 (*)[3]);
 extern PDef_ *D_800F2330[];
     /* TODO (Clean version):
-    Función estática inline que duplica exactamente a func_8007C2C8 para forzar el inlining en func_8007C318. En C limpio se llamaría directamente a func_8007C2C8 o se compartiría una única función inline. Se mantiene para el match.
+    Función estática inline que duplica exactamente a ParticlePool_FadeOldest para forzar el inlining en ParticlePool_Push. En C limpio se llamaría directamente a ParticlePool_FadeOldest o se compartiría una única función inline. Se mantiene para el match.
     */
 static inline void Pool_Fix(PPool_ *pool) {
     u32 i;
@@ -107,7 +107,7 @@ static inline void Pool_Fix(PPool_ *pool) {
         }
     }
 }
-void func_8007C318(PPool_ *pool, Prt70_ *p) {
+void ParticlePool_Push(PPool_ *pool, Prt70_ *p) {
     if (pool != NULL) {
         if (!(p->flags & 0x80)) {
             p->def = D_800F2330[p->kind];
@@ -129,7 +129,7 @@ void func_8007C318(PPool_ *pool, Prt70_ *p) {
     }
 }
 
-void func_8007C434(PoolPC4_ *pool, f32 (*m)[4]) {
+void Particles_Draw(PoolPC4_ *pool, f32 (*m)[4]) {
     f32 a[3][4];
     f32 b[3][4];
     f32 r[3][3];
@@ -333,11 +333,11 @@ void func_8007C434(PoolPC4_ *pool, f32 (*m)[4]) {
 }
 
     /* TODO (Clean version):
-    Definición redundante de estructuras matemáticas y de partículas (Vec3f, Quat, PrtQ_, PPoolQ_, Mtx34f) locales para func_8007DE54. En C limpio deben sustituirse por tipos globales compartidos (Vec3f, Vec4f, Particle, ParticlePool, Mtx34f). Se mantienen para el match.
+    Definición redundante de estructuras matemáticas y de partículas (Vec3f, Quat, PrtQ_, PPoolQ_, Mtx34f) locales para Particle_SpawnBurst. En C limpio deben sustituirse por tipos globales compartidos (Vec3f, Vec4f, Particle, ParticlePool, Mtx34f). Se mantienen para el match.
     */
 typedef struct { Quat q; f32 f10; f32 f14; f32 f18; f32 f1C; f32 f20; u8 pad24[0x1C]; Vec3f pos; f32 vx; f32 vy; f32 vz; f32 f58; f32 f5C; PDef_ *def; s16 life; u8 flags; u8 r; u8 g; u8 b; u8 kind; u8 frames; u16 h6C; s16 h6E; } PrtQ_;
 typedef struct { u32 cap; s32 tail; s32 head; PrtQ_ *buf; } PPoolQ_;
-extern PPoolQ_ D_80148088;
+extern PPoolQ_ gParticles;
 s32 rand(void);
 void func_800A83A0(Quat *, f32 (*)[3]);
     /* TODO (Clean version):
@@ -371,7 +371,7 @@ static inline void RotC_(Mtx34f *m, f32 a) {
     u = m->m[2][1] * c + m->m[2][2] * s; v = m->m[2][2] * c - m->m[2][1] * s; m->m[2][1] = u; m->m[2][2] = v;
 }
     /* TODO (Clean version):
-    Función inline que replica la lógica de func_8007C318 para insertar partículas en la cola circular e incluye un condicional redundante (if (pool != NULL)) debido al inlining. En C limpio se reutilizaría una función unificada del pool. Se mantiene para el match.
+    Función inline que replica la lógica de ParticlePool_Push para insertar partículas en la cola circular e incluye un condicional redundante (if (pool != NULL)) debido al inlining. En C limpio se reutilizaría una función unificada del pool. Se mantiene para el match.
     */
 static inline void PushQ_(PPoolQ_ *pool, PrtQ_ *p) {
     u32 i;
@@ -411,7 +411,7 @@ INCLUDE_ASM("asm/nonmatchings/unit_1CC80", func_8007D14C);
 INCLUDE_ASM("asm/nonmatchings/unit_1CC80", func_8007D364);
 
 /* Spawns a coloured particle of the given kind at pos, sized by size. */
-void func_8007D808(Vec3f pos, u32 size, s32 kind, s32 r, s32 g, s32 b) {
+void Particle_SpawnColored(Vec3f pos, u32 size, s32 kind, s32 r, s32 g, s32 b) {
     PrtQ_ p;
 
     p.pos = pos;
@@ -432,12 +432,12 @@ void func_8007D808(Vec3f pos, u32 size, s32 kind, s32 r, s32 g, s32 b) {
     p.g = g;
     p.b = b;
     p.f5C = 100.0f;
-    PushQ_(&D_80148088, &p);
+    PushQ_(&gParticles, &p);
 }
 
-extern PPoolQ_ D_80134FC0;
+extern PPoolQ_ gParticlesAlt;
 /* Spawns a particle of the given kind near pos (jittered by up to 64 units), sized by size. */
-void func_8007DB10(Vec3f pos, u32 size, s32 kind) {
+void Particle_SpawnJittered(Vec3f pos, u32 size, s32 kind) {
     PrtQ_ p;
 
     p.pos = pos;
@@ -461,10 +461,10 @@ void func_8007DB10(Vec3f pos, u32 size, s32 kind) {
     p.g = (rand() & 0xF) + 90;
     p.b = (rand() & 0x1F) + 100;
     p.f5C = 100.0f;
-    PushQ_(&D_80134FC0, &p);
+    PushQ_(&gParticlesAlt, &p);
 }
 
-void func_8007DE54(Vec3f pos, u32 n, PDef_ *def, Vec3f vel) {
+void Particle_SpawnBurst(Vec3f pos, u32 n, PDef_ *def, Vec3f vel) {
     PrtQ_ p;
     Mtx34f m;
     Vec3f t;
@@ -554,11 +554,11 @@ void func_8007DE54(Vec3f pos, u32 n, PDef_ *def, Vec3f vel) {
     p.g = 0xDC;
     p.b = 0xDC;
     p.def = def;
-    PushQ_(&D_80148088, &p);
+    PushQ_(&gParticles, &p);
 }
 
 /* Spawns a kind-11 particle at pos with a velocity jittered around vel. */
-void func_8007E694(Vec3f pos, Vec3f vel) {
+void Particle_SpawnJitteredVel(Vec3f pos, Vec3f vel) {
     PrtQ_ p;
 
     p.pos = pos;
@@ -579,11 +579,11 @@ void func_8007E694(Vec3f pos, Vec3f vel) {
     p.g = 200;
     p.b = 200;
     p.f5C = 100.0f;
-    PushQ_(&D_80148088, &p);
+    PushQ_(&gParticles, &p);
 }
 
 /* Spawns a kind-12 particle at pos moving with vel. */
-void func_8007E974(Vec3f pos, Vec3f vel) {
+void Particle_SpawnWithVel(Vec3f pos, Vec3f vel) {
     PrtQ_ p;
 
     p.pos = pos;
@@ -604,5 +604,5 @@ void func_8007E974(Vec3f pos, Vec3f vel) {
     p.g = 200;
     p.b = 200;
     p.f5C = 100.0f;
-    PushQ_(&D_80148088, &p);
+    PushQ_(&gParticles, &p);
 }

@@ -1,7 +1,7 @@
 #ifndef CAR_H
 #define CAR_H
 
-/* Car state (one per player/AI, array of 0x77C-byte entries at D_80118630).
+/* Car state (one per player/AI, array of 0x77C-byte entries, gCars).
  * Merged from the partial per-unit car types; fields named unkXXX/kXXX/vXXX/bXXX are not
  * identified yet. Every offset is fixed by the matching build. */
 
@@ -185,6 +185,8 @@ typedef struct Car {
     /* 0x779 */ u8 pad779[0x3];
 } Car; /* size = 0x77C */
 
-extern Car D_80118630[];
+extern Car gCars[];
+
+Car *Car_Get(u8 i);
 
 #endif

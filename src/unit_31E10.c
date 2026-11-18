@@ -40,7 +40,7 @@ extern void (*D_8014556C)(s32);
 extern s32 (*D_80145570)(s32, s32);
 extern void (*D_8014558C)(s32, s32, s32);
 s32 func_8008D3AC(void);
-void func_80095FE4(u8, u8 *, u8 *);
+void Car_GetSpeedAndGrip(u8, u8 *, u8 *);
 extern u8 D_800F38A0[];
 extern s32 (*D_80141698)();
 s32 func_80099434(void *);
@@ -495,8 +495,8 @@ INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_80095804);
 INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_80095970);
 
 /* Returns the car state: position (with offset), rotation, velocity, flags and the 0x13C byte. */
-void func_80095C60(u8 id, Vec3f *pos, Mtx3f *rot, Vec3f *vel, u32 *flags, u8 *out) {
-    Car *c = &D_80118630[id];
+void Car_GetState(u8 id, Vec3f *pos, Mtx3f *rot, Vec3f *vel, u32 *flags, u8 *out) {
+    Car *c = &gCars[id];
 
     pos->x = c->pos.x + c->v8C.x;
     pos->y = c->pos.y + c->v8C.y;
@@ -520,8 +520,8 @@ INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_80095D5C);
 
 extern u8 D_800F3890[];
 /* Returns the speed scaled to 0..255 and the average surface value of the wheels in contact. */
-void func_80095FE4(u8 id, u8 *grip, u8 *speed) {
-    Car *c = &D_80118630[id];
+void Car_GetSpeedAndGrip(u8 id, u8 *grip, u8 *speed) {
+    Car *c = &gCars[id];
     s32 v;
     s32 i;
     s32 sum;
@@ -544,20 +544,20 @@ void func_80095FE4(u8 id, u8 *grip, u8 *speed) {
     *grip = sum / c->nPoints;
 }
 
-Car *func_800960D8(u8 i) {
-    return &D_80118630[i];
+Car *Car_Get(u8 i) {
+    return &gCars[i];
 }
 
 s32 func_80096100(void) {
     return D_8011B318;
 }
 
-s32 func_8009610C(u8 i) {
-    return D_80118630[i].flags & 1;
+s32 Car_IsPlayer(u8 i) {
+    return gCars[i].flags & 1;
 }
 
-void func_80096138(u8 i, s32 state) {
-    Car *car = &D_80118630[i];
+void Car_SetState(u8 i, s32 state) {
+    Car *car = &gCars[i];
 
     if (car->state == 2) {
         func_8009951C(car);
@@ -568,7 +568,7 @@ void func_80096138(u8 i, s32 state) {
     }
 }
 
-void func_800961B0(Car *p, u8 id, u8 flip) {
+void Car_StartCrash(Car *p, u8 id, u8 flip) {
     V3_1B0 v;
     M3_1B0 t;
     M3_1B0 a;
@@ -756,7 +756,7 @@ void func_80096954(Car *c) {
                 tmp.x = c->rot.m[0][0] * fl.x + c->rot.m[0][1] * fl.y + c->rot.m[0][2] * fl.z; tmp.y = c->rot.m[1][0] * fl.x + c->rot.m[1][1] * fl.y + c->rot.m[1][2] * fl.z; tmp.z = c->rot.m[2][0] * fl.x + c->rot.m[2][1] * fl.y + c->rot.m[2][2] * fl.z; F = tmp; axis.x *= c->scale; axis.y *= c->scale; axis.z *= c->scale; pt.x = pos.x + axis.x; pt.y = pos.y + axis.y; pt.z = pos.z + axis.z; push_954(c, &pt, &F, &tmp); axis.x = -axis.x; axis.y = -axis.y; axis.z = -axis.z; pt.x = pos.x + axis.x; pt.y = pos.y + axis.y; pt.z = pos.z + axis.z; F.x = -F.x; F.y = -F.y; F.z = -F.z; push_954(c, &pt, &F, &tmp);
             }
         } else if (c->unk764 > D_80138D71 * 10) {
-            func_800961B0(c, 0, 0);
+            Car_StartCrash(c, 0, 0);
         }
     } else {
         c->unk764 = 0;
@@ -769,7 +769,7 @@ INCLUDE_ASM("asm/nonmatchings/unit_31E10", func_800977AC);
 
 extern void (*D_8014176C)(u8);
 /* Scales the impulse so that the speed becomes 2288 and marks the car (once) as boosted. */
-void func_800979F4(Car *c) {
+void Car_Boost(Car *c) {
     if (2288.0f - c->fBC < 88.0f || c->fBC < 35.2f) {
         return;
     }
@@ -799,7 +799,7 @@ extern T_B00 D_80141754;
 u32 func_800AEF70(void);
 void func_80090410(u8, V3_B00 *, V3_B00 *, V3_B00 *, V3_B00 *, s32 *, u8 *, u8 *);
 static inline f32 maxf_B00(f32 a, f32 b) { return a > b ? a : b; }
-void func_80097B00(u32 dt) {
+void Cars_CollideObstacles(u32 dt) {
     V3_B00 d;
     V3_B00 o;
     V3_B00 v1;
@@ -828,7 +828,7 @@ void func_80097B00(u32 dt) {
         func_80090410(i, &o, &v1, &v2, &v3, &s90, &s94, &j);
         for (j = 0; j < cnt; j++) {
             if (near[j] == 0) {
-                c = &D_80118630[j];
+                c = &gCars[j];
                 d.x = c->pos.x + c->v8C.x;
                 d.y = c->pos.y + c->v8C.y;
                 d.z = c->pos.z + c->v8C.z;
@@ -843,7 +843,7 @@ void func_80097B00(u32 dt) {
     for (i = 0; i < cnt; i++) {
         V3_B00 w;
 
-        c = &D_80118630[i];
+        c = &gCars[i];
         o.x = c->pos.x + c->v8C.x;
         o.y = c->pos.y + c->v8C.y;
         o.z = c->pos.z + c->v8C.z;
@@ -944,10 +944,10 @@ s32 func_80098BF4(void) {
         }
     }
     for (i = 0; i < 2; i++) {
-        e = func_800960D8(i);
+        e = Car_Get(i);
         if (e != NULL && (((s32 *) e)[1] & 1)) {
             if (func_8008D3AC() == 1) {
-                func_80095FE4(i, &a, &b);
+                Car_GetSpeedAndGrip(i, &a, &b);
                 D_8014558C(i, a, b);
             }
             n++;
@@ -974,7 +974,7 @@ s32 func_80098BF4(void) {
 typedef struct { u8 pad0[0x64]; Car *car; } HitObj98_;
 typedef struct { HitObj98_ *obj; u8 pad4[0xC]; Vec3f dir; } HitEnt98_;
 /* On a hard hit against dir, sends the impact strength (0..255) once every 20 frames. */
-void func_80098D84(HitEnt98_ *e) {
+void Car_ReportImpact(HitEnt98_ *e) {
     Car *c = e->obj->car;
     f32 d;
     s32 v;

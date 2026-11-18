@@ -224,7 +224,7 @@ void func_800A6630(void *arg0) {
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 typedef struct { u8 p0[0x64]; Car *car; } ContactObj_;
 typedef struct { ContactObj_ *obj; u8 p4[0xC]; Vec3f n; } Contact_;
-void func_800961B0(Car *p, u8 id, u8 flip);
+void Car_StartCrash(Car *p, u8 id, u8 flip);
 /* Crashes the car when the impact speed along the contact normal exceeds a threshold that grows with
  * its k53C factor (clamped to [0.25, 4]) and the normal's alignment with the car's forward axis. */
 void func_800A66C0(Contact_ *h) {
@@ -256,7 +256,7 @@ void func_800A66C0(Contact_ *h) {
         limit = (s - 1.0f) * 821.3333f + 0.0f + 2112.0f;
     }
     if (limit < speed) {
-        func_800961B0(car, 0, 0);
+        Car_StartCrash(car, 0, 0);
     }
 }
 

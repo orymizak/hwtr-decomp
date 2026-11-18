@@ -22,7 +22,7 @@ extern s32 (*D_801416AC)();
 extern s32 (*D_801416B0)();
 extern void (*D_801416DC)(s32, u8, u16, s32, s32);
 extern char D_80100AF0[];
-void func_80097B00(void);
+void Cars_CollideObstacles(void);
 void func_800A5A1C(u32);
 void func_800AEB28(u32);
 void func_800ABCA4(void);
@@ -79,7 +79,7 @@ void func_800AEE20(u32 dt) {
     f32 fps;
     u16 i;
 
-    func_80097B00();
+    Cars_CollideObstacles();
     func_800A5A1C(dt);
     D_801416A4();
     D_801416AC();

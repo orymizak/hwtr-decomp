@@ -74,16 +74,16 @@ typedef struct {
 typedef struct { s32 cur[6]; s32 tgt[6]; s32 dt; } Fade65_;
 typedef struct { f32 f0; s32 i4; f32 f8; f32 fC; u8 p10[0x30]; Vec3f pos; Vec3f vel; f32 f58; f32 f5C; u8 p60[4]; s16 h64; u8 b66; u8 c[3]; u8 b6A; u8 p6B; u16 s6C; s16 s6E; } Pt94_;
 typedef struct { u8 p0[0xC]; f32 x; u8 p10[0xC]; f32 y; u8 p20[0xC]; f32 z; u8 p30[8]; f32 r; } O_9A4;
-void func_8007E694(Vec3f, Vec3f);
-void func_8007E974(Vec3f, Vec3f);
+void Particle_SpawnJitteredVel(Vec3f, Vec3f);
+void Particle_SpawnWithVel(Vec3f, Vec3f);
 extern u8 D_80138A6C[];
 extern s32 D_80138A90[];
 extern u8 D_800F20F6;
-void func_8007C318(void *, Pt94_ *);
+void ParticlePool_Push(void *, Pt94_ *);
 extern Fade65_ D_80138A78;
 extern u8 D_80138AAC;
-extern u8 D_80148088;
-extern u8 D_80134FC0;
+extern u8 gParticles;
+extern u8 gParticlesAlt;
 extern u8 D_80145488;
 void func_8007D14C(void *);
 void func_8006DAC4(s32);
@@ -94,7 +94,7 @@ void func_80075720(s32);
 void func_800674DC(void);
 s32 rand(void);
 void func_8007A858(u8 *, u8 *, s32 *, s32);
-void func_8007DE54(Vec3f, u32, u8 *, Vec3f);
+void Particle_SpawnBurst(Vec3f, u32, u8 *, Vec3f);
 s32 File_GetSize(char *);
 extern char D_800FE964[];
 s32 func_800682A4(s32 unused, char *name, Big114_ *a, Big40_ *b);
@@ -265,8 +265,8 @@ void func_80065940(s32 dt) {
 
     D_80138A78.dt = dt;
     if (dt != 0) {
-        func_8007D14C(&D_80148088);
-        func_8007D14C(&D_80134FC0);
+        func_8007D14C(&gParticles);
+        func_8007D14C(&gParticlesAlt);
         func_8007D14C(&D_80145488);
         func_8006DAC4(dt);
         func_800738C0(D_8013816C, dt);
@@ -678,7 +678,7 @@ void func_800689A4(O_9A4 *o, Vec3f v) {
         d.x = v.x + ((f32)(rand() & 0x7F) - 64.0f) / 64.0f * len;
         d.y = v.y + ((f32)(rand() & 0x7F) - 64.0f) / 64.0f * len;
         d.z = v.z + ((f32)(rand() & 0x7F) - 64.0f) / 64.0f * len;
-        func_8007E694(p, d);
+        Particle_SpawnJitteredVel(p, d);
     }
     n = (rand() & 7) + 12;
     v.x /= 3.0f;
@@ -694,7 +694,7 @@ void func_800689A4(O_9A4 *o, Vec3f v) {
         d.x = v.x + ((f32)(rand() & 0x7F) - 64.0f) / 127.0f * len;
         d.y = v.y + ((f32)(rand() & 0x7F) - 64.0f) / 127.0f * len;
         d.z = v.z + ((f32)(rand() & 0x7F) - 64.0f) / 127.0f * len;
-        func_8007E974(p, d);
+        Particle_SpawnWithVel(p, d);
     }
 }
 
@@ -739,7 +739,7 @@ void func_80068E98(u8 *o, Vec3f vel, u8 *verts) {
         v.x = vel.x + ((rand() & 0x7F) - 64.0f) / 127.0f * sp;
         v.y = vel.y + ((rand() & 0x7F) - 64.0f) / 127.0f * sp;
         v.z = vel.z + ((rand() & 0x7F) - 64.0f) / 127.0f * sp;
-        func_8007DE54(p, sz, verts + idx[rand() & 0xF] * 8, v);
+        Particle_SpawnBurst(p, sz, verts + idx[rand() & 0xF] * 8, v);
     }
 }
 
@@ -767,7 +767,7 @@ void func_8006936C(Vec3f pos, Vec3f vel) {
     pt.c[1] = (rand() & 0xF) - 0x65;
     pt.c[0] = (rand() & 0xF) - 0x65;
     pt.f5C = 100.0f;
-    func_8007C318(&D_80145488, &pt);
+    ParticlePool_Push(&D_80145488, &pt);
 }
 
 
@@ -819,7 +819,7 @@ void func_80069494(u8 **car, f32 speed, Vec3f pos, Vec3f vel) {
         pt.c[0] >>= 2;
     }
     pt.f5C = 100.0f;
-    func_8007C318(&D_80145488, &pt);
+    ParticlePool_Push(&D_80145488, &pt);
 }
 
 typedef struct { u8 p0[0x6C]; Vec3f pos; u8 p78[0xC]; Vec3f vel; f32 speed; f32 r[3][3]; } Bds9_;
@@ -850,7 +850,7 @@ extern inline void Sparks9_(Vec3f pos, Vec3f vel) {
     pt.c[1] = (rand() & 0xF) - 0x65;
     pt.c[0] = (rand() & 0xF) - 0x65;
     pt.f5C = 100.0f;
-    func_8007C318(&D_80145488, &pt);
+    ParticlePool_Push(&D_80145488, &pt);
 }
 
 void func_800698C0(Hits9_ *h, f32 speed) {

@@ -87,7 +87,7 @@ typedef struct {
 typedef struct { f32 a; f32 b; f32 c; f32 d; s16 e; u16 f; } PlF_;
 extern u32 D_8011C830[];
 void func_800A780C(u8, u8, s32);
-void func_800979F4(u8 *);
+void Car_Boost(u8 *);
 void func_8009751C(u8 *, u16, u8);
 void func_800C9B84(u16);
 void func_800A3978(RObj_ *o, u16 idx, s32 arg2);
@@ -472,7 +472,7 @@ typedef struct NdCD8_ { s32 a; struct NdCD8_ *prev; struct NdCD8_ *next; s32 c; 
 typedef struct { u8 p0[4]; u32 flags; } CrD57_;
 typedef struct { u8 p0[4]; u32 flags; u8 p8[0x4C]; u16 *p54; u8 p58[0xC]; CrD57_ *car; } ObD57_;
 typedef struct LnD57_ { ObD57_ *obj; s32 x; struct LnD57_ *next; } LnD57_;
-void func_800961B0(Car *p, u8 id, u8 flip);
+void Car_StartCrash(Car *p, u8 id, u8 flip);
 void func_8009DBF8(void);
 void func_8009EC8C(void);
 void func_8009F7D4(void);
@@ -495,7 +495,7 @@ extern void (*D_8014177C)(EntAB_ *, f32);
 void func_8009B0AC(void);
 void func_8008DF18(EntAB_ *);
 void func_80091DC4(PlAB_ *);
-void func_80098D84(EntAB_ *);
+void Car_ReportImpact(EntAB_ *);
 void func_800A66C0(EntAB_ *);
 void func_80096954(PlAB_ *, EntAB_ *);
 s32 func_800A76D8(void);
@@ -544,7 +544,7 @@ void func_8009ABC8(void) {
             if (changed) {
                 func_80091DC4(pl);
                 if (pl->flags & 1) {
-                    func_80098D84(e);
+                    Car_ReportImpact(e);
                 }
             }
             func_800A66C0(e);
@@ -967,11 +967,11 @@ void func_8009D574(void) {
         o = it->obj;
         c = o->car;
         if (c->flags & 0x800) {
-            func_800961B0(c, 0, 1);
+            Car_StartCrash(c, 0, 1);
         } else if (c->flags & 0x1000) {
-            func_800961B0(c, 0, 0);
+            Car_StartCrash(c, 0, 0);
         } else if (c->flags & 0x2000) {
-            func_800961B0(c, 0, 0);
+            Car_StartCrash(c, 0, 0);
         }
     }
 }
@@ -1184,7 +1184,7 @@ void func_800A3978(RObj_ *o, u16 idx, s32 arg2) {
             }
             if ((r->flags & 0x4000) && c->state == 2) {
                 if (r->flags & 0x800) {
-                    func_800979F4(c);
+                    Car_Boost(c);
                 } else {
                     func_8009751C(c, r->param.val, r->b4);
                 }
