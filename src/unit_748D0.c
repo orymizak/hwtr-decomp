@@ -1,45 +1,35 @@
 #include "common.h"
-#include "ultra64.h"
+#include "n_audio.h"
 #include "include_asm.h"
-typedef struct { u32 w0; u32 w1; } AcmdR_;
-typedef struct { u8 p0[0x40]; void *state; f32 ratio; s32 upitch; f32 delta; s32 first; } ResR_;
-AcmdR_ *func_800D35B0(void *, s16 *, s32, AcmdR_ *);
 
+Acmd *func_800D35B0(N_PVoice *f, s16 *outp, s32 byteCount, Acmd *p);
 s32 func_800D39F8();
 
-AcmdR_ *func_800D3CD0(void *filter, s16 *outp, AcmdR_ *p) {
-    ResR_ *f = (ResR_ *)filter;
-    AcmdR_ *ptr = p;
+/* Resampler pull: decodes enough input for 184 output samples and resamples it (n_alResamplePull). */
+Acmd *func_800D3CD0(N_PVoice *f, s16 *outp, Acmd *p) {
+    Acmd *ptr = p;
     s16 inp;
     s32 inCount;
     s32 incr;
     f32 finCount;
 
     inp = 0x170;
-    if (f->upitch) {
+    if (f->rs_upitch) {
         ptr = func_800D35B0(f, &inp, 184, p);
-        {
-            AcmdR_ *_a = ptr++;
-            _a->w0 = (10 << 24) | (inp & 0xFFFFFF);
-            _a->w1 = ((*outp & 0xFFFF) << 16) | (0x170 & 0xFFFF);
-        }
+        aDMEMMove(ptr++, inp, *outp, 184 << 1);
     } else {
-        if (f->ratio > 1.99996) {
-            f->ratio = 1.99996;
+        if (f->rs_ratio > 1.99996) {
+            f->rs_ratio = 1.99996;
         }
-        f->ratio = (s32)(f->ratio * 32768.0f);
-        f->ratio = f->ratio / 32768.0f;
-        finCount = f->delta + (f->ratio * 184.0f);
+        f->rs_ratio = (s32)(f->rs_ratio * 32768.0f);
+        f->rs_ratio = f->rs_ratio / 32768.0f;
+        finCount = f->rs_delta + (f->rs_ratio * 184.0f);
         inCount = (s32)finCount;
-        f->delta = finCount - (f32)inCount;
+        f->rs_delta = finCount - (f32)inCount;
         ptr = func_800D35B0(f, &inp, inCount, p);
-        incr = (s32)(f->ratio * 32768.0f);
-        {
-            AcmdR_ *_a = ptr++;
-            _a->w0 = (5 << 24) | (osVirtualToPhysical(f->state) & 0xFFFFFF);
-            _a->w1 = (f->first << 30) | ((incr & 0xFFFF) << 14) | ((inp & 0xFFF) << 2);
-        }
-        f->first = 0;
+        incr = (s32)(f->rs_ratio * 32768.0f);
+        n_aResample(ptr++, osVirtualToPhysical(f->rs_state), f->rs_first, incr, inp, 0);
+        f->rs_first = 0;
     }
     return ptr;
 }

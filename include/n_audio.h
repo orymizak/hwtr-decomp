@@ -87,11 +87,15 @@ typedef struct {
     /* 0x24 */ s32 unk24[8];
 } N_ALAuxBus; /* size = 0x44 */
 
-/* Main bus: only its pull routine is used, called as pull(sampleOffset, cmdList). */
+/* Main bus: an ALFilter whose handler is called as pull(sampleOffset, cmdList). */
 typedef struct {
-    /* 0x00 */ s32 unk0;
+    /* 0x00 */ ALFilter *source;
     /* 0x04 */ Acmd *(*pull)(s32 sampleOffset, Acmd *cmdList);
-} N_ALMainBus;
+    /* 0x08 */ ALSetParam setParam;
+    /* 0x0C */ s16 inp;
+    /* 0x0E */ s16 outp;
+    /* 0x10 */ s32 type;
+} N_ALMainBus; /* size = 0x14 */
 
 typedef struct {
     /* 0x00 */ ALPlayer *head;

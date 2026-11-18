@@ -49,4 +49,11 @@
         _a->words.w1 = _SHIFTL(t, 24, 8) | _SHIFTL(s, 0, 24);                             \
     }
 
+#define n_aADPCMdec(pkt, s, f, c, a, d)                                                   \
+    {                                                                                     \
+        Acmd *_a = (Acmd *)pkt;                                                           \
+        _a->words.w0 = _SHIFTL(A_ADPCM, 24, 8) | _SHIFTL(s, 0, 24);                       \
+        _a->words.w1 = _SHIFTL(f, 28, 4) | _SHIFTL(c, 16, 12) | _SHIFTL(a, 12, 4) | _SHIFTL(d, 0, 12); \
+    }
+
 #endif

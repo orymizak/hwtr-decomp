@@ -1,22 +1,12 @@
 #include "common.h"
-#include "ultra64.h"
+#include "n_audio.h"
 #include "include_asm.h"
-typedef struct { u32 w0; u32 w1; } Acmd_;
-typedef struct { u8 p0[0xC]; u32 state; u32 lstate; u8 p14[0x14]; s32 (*dma)(s32, s32, void *); void *dmaState; u8 p30[8]; s32 first; s32 memin; } Load_;
-typedef struct { u32 start; u32 end; u32 count; u8 state[0x20]; } LoopL_;
-typedef struct { s32 order; s32 npredictors; } BookL_;
-typedef struct { u8 *base; s32 len; u8 type; u8 flags; u8 p[2]; LoopL_ *loop; BookL_ *book; } WaveL_;
-typedef struct { u8 p0[0x10]; void *lstate; u32 start; u32 end; u32 count; WaveL_ *table; s32 bookSize; u8 p28[8]; s32 sample; s32 lastsam; s32 first; s32 memin; } LoadL_;
-typedef struct { u32 w0; u32 w1; } AcmdA_;
-typedef struct { s32 order; s32 npredictors; s16 book[1]; } BookA_;
-typedef struct { s32 base; s32 len; u8 type; u8 flags; u8 p[2]; void *loop; BookA_ *book; } WaveA_;
-typedef struct { u8 p0[0x10]; void *lstate; u32 start; u32 end; u32 count; WaveA_ *table; s32 bookSize; u8 p28[8]; s32 sample; s32 lastsam; s32 first; s32 memin; } LoadA_;
 
+Acmd *func_800D3B84(Acmd *ptr, N_PVoice *f, s32 tsam, s32 nbytes, s16 outp, s16 inp, u32 flags);
 
-
-Acmd_ *func_800D3B84(Acmd_ *ptr, Load_ *f, s32 tsam, s32 nbytes, s16 outp, s16 inp, u32 flags);
-AcmdA_ *func_800D35B0(void *filter, s16 *outp, s32 outCount, AcmdA_ *p) {
-    AcmdA_ *ptr = p;
+/* ADPCM decoder pull (n_alAdpcmPull): decodes outCount samples into *outp, handling the loop. */
+Acmd *func_800D35B0(void *filter, s16 *outp, s32 outCount, Acmd *p) {
+    Acmd *ptr = p;
     s16 inp;
     s32 tsam;
     s32 nframes;
@@ -30,26 +20,22 @@ AcmdA_ *func_800D35B0(void *filter, s16 *outp, s32 outCount, AcmdA_ *p) {
     s32 bEnd;
     s32 decoded = 0;
     s32 looped = 0;
-    LoadA_ *f = (LoadA_ *)filter;
+    N_PVoice *f = (N_PVoice *)filter;
 
     if (outCount == 0)
         return ptr;
 
     inp = 0;
-    {
-        AcmdA_ *_a = ptr++;
-        _a->w0 = 0x0B000000 | (f->bookSize & 0xFFFFFF);
-        _a->w1 = (u32)f->table->book->book & 0x1FFFFFFF;
-    }
+    aLoadADPCM(ptr++, f->dc_bookSize, K0_TO_PHYS(f->dc_table->waveInfo.adpcmWave.book->book));
 
-    looped = (outCount + f->sample > f->end) && (f->count != 0);
+    looped = (outCount + f->dc_sample > f->dc_loop.end) && (f->dc_loop.count != 0);
     if (looped)
-        nSam = f->end - f->sample;
+        nSam = f->dc_loop.end - f->dc_sample;
     else
         nSam = outCount;
 
-    if (f->lastsam)
-        nLeft = 16 - f->lastsam;
+    if (f->dc_lastsam)
+        nLeft = 16 - f->dc_lastsam;
     else
         nLeft = 0;
     tsam = nSam - nLeft;
@@ -59,45 +45,41 @@ AcmdA_ *func_800D35B0(void *filter, s16 *outp, s32 outCount, AcmdA_ *p) {
     nbytes = nframes * 9;
 
     if (looped) {
-        ptr = func_800D3B84(ptr, f, tsam, nbytes, *outp, inp, f->first);
+        ptr = func_800D3B84(ptr, f, tsam, nbytes, *outp, inp, f->dc_first);
 
-        if (f->lastsam)
-            *outp += (f->lastsam << 1);
+        if (f->dc_lastsam)
+            *outp += (f->dc_lastsam << 1);
         else
             *outp += (16 << 1);
 
-        f->lastsam = f->start & 0xf;
-        f->memin = (s32)f->table->base + 9 * ((s32)(f->start >> 4) + 1);
-        f->sample = f->start;
+        f->dc_lastsam = f->dc_loop.start & 0xf;
+        f->dc_memin = (s32)f->dc_table->base + 9 * ((s32)(f->dc_loop.start >> 4) + 1);
+        f->dc_sample = f->dc_loop.start;
 
         bEnd = *outp;
         while (outCount > nSam) {
             outCount -= nSam;
             op = (bEnd + ((nframes + 1) << 5) + 16) & ~0x1f;
             bEnd += (nSam << 1);
-            if ((f->count != -1) && (f->count != 0))
-                f->count--;
-            nSam = ((u32)outCount < f->end - f->start) ? outCount : f->end - f->start;
-            tsam = nSam - 16 + f->lastsam;
+            if ((f->dc_loop.count != -1) && (f->dc_loop.count != 0))
+                f->dc_loop.count--;
+            nSam = ((u32)outCount < f->dc_loop.end - f->dc_loop.start) ? outCount : f->dc_loop.end - f->dc_loop.start;
+            tsam = nSam - 16 + f->dc_lastsam;
             if (tsam < 0) tsam = 0;
             nframes = (tsam + 16 - 1) >> 4;
             nbytes = nframes * 9;
-            ptr = func_800D3B84(ptr, f, tsam, nbytes, op, inp, f->first | 2);
-            {
-                AcmdA_ *_a = ptr++;
-                _a->w0 = 0x0A000000 | ((op + (f->lastsam << 1)) & 0xFFFFFF);
-                _a->w1 = (bEnd << 16) | ((nSam << 1) & 0xFFFF);
-            }
+            ptr = func_800D3B84(ptr, f, tsam, nbytes, op, inp, f->dc_first | A_LOOP);
+            aDMEMMove(ptr++, op + (f->dc_lastsam << 1), bEnd, nSam << 1);
         }
 
-        f->lastsam = (outCount + f->lastsam) & 0xf;
-        f->sample += outCount;
-        f->memin += 9 * nframes;
+        f->dc_lastsam = (outCount + f->dc_lastsam) & 0xf;
+        f->dc_sample += outCount;
+        f->dc_memin += 9 * nframes;
         return ptr;
     }
 
     nSam = nframes << 4;
-    overFlow = f->memin + nbytes - ((s32)f->table->base + f->table->len);
+    overFlow = f->dc_memin + nbytes - ((s32)f->dc_table->base + f->dc_table->len);
     if (overFlow < 0)
         overFlow = 0;
     nOver = (overFlow / 9) << 4;
@@ -108,83 +90,78 @@ AcmdA_ *func_800D35B0(void *filter, s16 *outp, s32 outCount, AcmdA_ *p) {
 
     if ((nOver - (nOver & 0xf)) < outCount) {
         decoded = 1;
-        ptr = func_800D3B84(ptr, f, nSam - nOver, nbytes, *outp, inp, f->first);
+        ptr = func_800D3B84(ptr, f, nSam - nOver, nbytes, *outp, inp, f->dc_first);
 
-        if (f->lastsam)
-            *outp += (f->lastsam << 1);
+        if (f->dc_lastsam)
+            *outp += (f->dc_lastsam << 1);
         else
             *outp += (16 << 1);
 
-        f->lastsam = (outCount + f->lastsam) & 0xf;
-        f->sample += outCount;
-        f->memin += 9 * nframes;
+        f->dc_lastsam = (outCount + f->dc_lastsam) & 0xf;
+        f->dc_sample += outCount;
+        f->dc_memin += 9 * nframes;
     } else {
-        f->lastsam = 0;
-        f->memin += 9 * nframes;
+        f->dc_lastsam = 0;
+        f->dc_memin += 9 * nframes;
     }
 
     if (nOver) {
-        f->lastsam = 0;
+        f->dc_lastsam = 0;
         if (decoded)
             startZero = (nLeft + nSam - nOver) << 1;
         else
             startZero = 0;
-        {
-            AcmdA_ *_a = ptr++;
-            _a->w0 = 0x02000000 | ((startZero + *outp) & 0xFFFFFF);
-            _a->w1 = nOver << 1;
-        }
+        aClearBuffer(ptr++, startZero + *outp, nOver << 1);
     }
     return ptr;
 }
 
-void func_800D39F8(void *filter, s32 paramID, void *param) {
-    LoadL_ *a = (LoadL_ *)filter;
+void func_800D39F8(N_PVoice *a, s32 paramID, void *param) {
 
     switch (paramID) {
-    case 5:
-        a->table = (WaveL_ *)param;
-        a->memin = (s32)a->table->base;
-        a->sample = 0;
-        switch (a->table->type) {
-        case 0:
-            a->table->len = 9 * ((s32)(a->table->len / 9));
-            a->bookSize = 2 * a->table->book->order * a->table->book->npredictors * 8;
-            if (a->table->loop) {
-                a->start = a->table->loop->start;
-                a->end = a->table->loop->end;
-                a->count = a->table->loop->count;
-                alCopy(a->table->loop->state, a->lstate, 0x20);
+    case AL_FILTER_SET_WAVETABLE:
+        a->dc_table = (ALWaveTable *)param;
+        a->dc_memin = (s32)a->dc_table->base;
+        a->dc_sample = 0;
+        switch (a->dc_table->type) {
+        case AL_ADPCM_WAVE:
+            a->dc_table->len = 9 * ((s32)(a->dc_table->len / 9));
+            a->dc_bookSize = 2 * a->dc_table->waveInfo.adpcmWave.book->order * a->dc_table->waveInfo.adpcmWave.book->npredictors * 8;
+            if (a->dc_table->waveInfo.adpcmWave.loop) {
+                a->dc_loop.start = a->dc_table->waveInfo.adpcmWave.loop->start;
+                a->dc_loop.end = a->dc_table->waveInfo.adpcmWave.loop->end;
+                a->dc_loop.count = a->dc_table->waveInfo.adpcmWave.loop->count;
+                alCopy(a->dc_table->waveInfo.adpcmWave.loop->state, a->dc_lstate, 0x20);
             } else {
-                a->start = a->end = a->count = 0;
+                a->dc_loop.start = a->dc_loop.end = a->dc_loop.count = 0;
             }
             break;
-        case 1:
-            if (a->table->loop) {
-                a->start = a->table->loop->start;
-                a->end = a->table->loop->end;
-                a->count = a->table->loop->count;
+        case AL_RAW16_WAVE:
+            if (a->dc_table->waveInfo.rawWave.loop) {
+                a->dc_loop.start = a->dc_table->waveInfo.rawWave.loop->start;
+                a->dc_loop.end = a->dc_table->waveInfo.rawWave.loop->end;
+                a->dc_loop.count = a->dc_table->waveInfo.rawWave.loop->count;
             } else {
-                a->start = a->end = a->count = 0;
+                a->dc_loop.start = a->dc_loop.end = a->dc_loop.count = 0;
             }
             break;
         default:
             break;
         }
         break;
-    case 4:
-        a->lastsam = 0;
-        a->first = 1;
-        a->sample = 0;
-        if (a->table) {
-            a->memin = (s32)a->table->base;
-            if (a->table->type == 0) {
-                if (a->table->loop) {
-                    a->count = a->table->loop->count;
+    case AL_FILTER_RESET:
+        a->dc_lastsam = 0;
+        a->dc_first = 1;
+        a->dc_sample = 0;
+        if (a->dc_table) {
+            a->dc_memin = (s32)a->dc_table->base;
+            if (a->dc_table->type == AL_ADPCM_WAVE) {
+                if (a->dc_table->waveInfo.adpcmWave.loop) {
+                    a->dc_loop.count = a->dc_table->waveInfo.adpcmWave.loop->count;
                 }
-            } else if (a->table->type == 1) {
-                if (a->table->loop) {
-                    a->count = a->table->loop->count;
+            } else if (a->dc_table->type == AL_RAW16_WAVE) {
+                if (a->dc_table->waveInfo.rawWave.loop) {
+                    a->dc_loop.count = a->dc_table->waveInfo.rawWave.loop->count;
                 }
             }
         }
@@ -192,33 +169,21 @@ void func_800D39F8(void *filter, s32 paramID, void *param) {
     }
 }
 
-Acmd_ *func_800D3B84(Acmd_ *ptr, Load_ *f, s32 tsam, s32 nbytes, s16 outp, s16 inp, u32 flags) {
+Acmd *func_800D3B84(Acmd *ptr, N_PVoice *f, s32 tsam, s32 nbytes, s16 outp, s16 inp, u32 flags) {
     s32 dramAlign, dramLoc;
 
     if (nbytes > 0) {
-        dramLoc = f->dma(f->memin, nbytes, f->dmaState);
+        dramLoc = f->dc_dma(f->dc_memin, nbytes, f->dc_dmaState);
         dramAlign = dramLoc & 7;
         nbytes += dramAlign;
-        {
-            Acmd_ *a = ptr++;
-            a->w0 = (4 << 24) | (((nbytes + 8 - (nbytes & 7)) & 0xFFF) << 12) | (inp & 0xFFF);
-            a->w1 = dramLoc - dramAlign;
-        }
+        n_aLoadBuffer(ptr++, nbytes + 8 - (nbytes & 7), inp, dramLoc - dramAlign);
     } else {
         dramAlign = 0;
     }
-    if (flags & 2) {
-        {
-            Acmd_ *a = ptr++;
-            a->w0 = 0x0F000000;
-            a->w1 = f->lstate & 0x1FFFFFFF;
-        }
+    if (flags & A_LOOP) {
+        aSetLoop(ptr++, K0_TO_PHYS(f->dc_lstate));
     }
-    {
-        Acmd_ *a = ptr++;
-        a->w0 = (1 << 24) | (f->state & 0xFFFFFF);
-        a->w1 = (flags << 28) | (((tsam << 1) & 0xFFF) << 16) | (dramAlign << 12) | (outp & 0xFFF);
-    }
-    f->first = 0;
+    n_aADPCMdec(ptr++, f->dc_state, flags, tsam << 1, dramAlign, outp);
+    f->dc_first = 0;
     return ptr;
 }

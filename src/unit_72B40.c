@@ -2,35 +2,42 @@
 #include "ultra64.h"
 #include "PR/sched.h"
 #include "include_asm.h"
-/* Scheduler client used by the audio thread: client node plus two message queues. */
-typedef struct { u8 client[8]; u8 q[0x18]; void *qbuf[4]; u8 q2[0x18]; void *q2buf[4]; } AudClient_;
+/* Scheduler client of the audio thread: retrace/PRENMI messages arrive on msgQ, the end of an
+ * audio RSP task on taskMsgQ. */
+typedef struct {
+    /* 0x00 */ OSScClient client;
+    /* 0x08 */ OSMesgQueue msgQ;
+    /* 0x20 */ OSMesg msgBuf[4];
+    /* 0x30 */ OSMesgQueue taskMsgQ;
+    /* 0x48 */ OSMesg taskMsgBuf[4];
+} AudClient; /* size = 0x58 */
 typedef struct { void *data; u32 size; void *ucode; void *ucode_data; } AudInfoT_;
-s32 func_800D23FC();
-extern s32 D_801279D4;
+void *func_800D23FC(s32 size);
+extern AudClient *D_801279D4;
 
-extern s32 D_801279D0;
+extern OSSched *D_801279D0;
 
-void func_800D1F40(s32 arg0) {
-    D_801279D0 = arg0;
+void func_800D1F40(OSSched *sc) {
+    D_801279D0 = sc;
 }
 
 void func_800D1F4C(void) {
-    AudClient_ *c;
+    AudClient *c;
 
-    c = (AudClient_ *)func_800D23FC(sizeof(AudClient_));
-    D_801279D4 = (s32)c;
-    osCreateMesgQueue((s32)c->q, (s32)c->qbuf, 4);
-    osCreateMesgQueue((s32)((AudClient_ *)D_801279D4)->q2, (s32)((AudClient_ *)D_801279D4)->q2buf, 4);
-    osScAddClient(D_801279D0, D_801279D4, (s32)((AudClient_ *)D_801279D4)->q);
+    c = func_800D23FC(sizeof(AudClient));
+    D_801279D4 = c;
+    osCreateMesgQueue(&c->msgQ, c->msgBuf, 4);
+    osCreateMesgQueue(&D_801279D4->taskMsgQ, D_801279D4->taskMsgBuf, 4);
+    osScAddClient(D_801279D0, &D_801279D4->client, &D_801279D4->msgQ);
 }
 
 void func_800D1FB0(void) {
-    s16 *sp10;
+    s16 *msg;
 
     do {
-        osRecvMesg(D_801279D4 + 8, &sp10, 1);
-        osRecvMesg(D_801279D4 + 8, NULL, 0);
-    } while (*sp10 != 1);
+        osRecvMesg(&D_801279D4->msgQ, (OSMesg *)&msg, OS_MESG_BLOCK);
+        osRecvMesg(&D_801279D4->msgQ, NULL, OS_MESG_NOBLOCK);
+    } while (*msg != OS_SC_RETRACE_MSG);
 }
 
 extern u8 D_800E7AA0[];
@@ -40,7 +47,7 @@ void func_800D2010(AudInfoT_ *a) {
     u8 msg[0x20];
 
     t.next = 0;
-    t.msgQ = D_801279D4 + 0x30;
+    t.msgQ = &D_801279D4->taskMsgQ;
     t.msg = msg;
     t.flags = OS_SC_NEEDS_RSP;
     t.list.t.data_ptr = a->data;
@@ -59,6 +66,6 @@ void func_800D2010(AudInfoT_ *a) {
     t.list.t.output_buff_size = NULL;
     t.list.t.yield_data_ptr = NULL;
     t.list.t.yield_data_size = 0;
-    osSendMesg(osScGetCmdQ(D_801279D0), &t, 1);
-    osRecvMesg(D_801279D4 + 0x30, 0, 1);
+    osSendMesg(osScGetCmdQ(D_801279D0), &t, OS_MESG_BLOCK);
+    osRecvMesg(&D_801279D4->taskMsgQ, NULL, OS_MESG_BLOCK);
 }
