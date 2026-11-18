@@ -22,7 +22,7 @@ typedef struct { s32 a; s32 b; s32 c; } V12_;
 extern void (*sysModelLoadAsync)(s32, char *, s32);
 extern void (*sysCarInfoLoad)(char *, void *, void *);
 extern void (*D_80140FD8)(void);
-void func_800C46C4(void);
+void HighScores_UpdateArrows(void);
 extern void (*D_80141024)(s32);
 extern u8 (*sysPakRepair)(u8);
 extern s32 D_80124CE4;
@@ -57,8 +57,8 @@ extern Vec3f gMenuCarPos[];
 s32 strcmp(const char *, const char *);
 u32 func_800B042C(u8);
 extern u8 gChampProfileChoice;
-void func_800C0B68(void);
-u8 func_800C1664(void);
+void Controls_UpdateArrowsP1(void);
+u8 Controls_HasConflict(void);
 extern u8 D_80124C7E;
 extern u8 D_80124C7F;
 extern u8 D_80124160;
@@ -121,7 +121,7 @@ void Cheat_ClearP2(void);
 s32 Config_CheckCheatCode(char *code, void *cfg);
 void MainMenu_InputP2(s32);
 extern char D_80100FEC[];
-void func_800C3560(s32 x, s32 y);
+void Register_PlaceCursor(s32 x, s32 y);
 extern s32 D_800F5F70;
 extern s32 D_800F5F74;
 extern u8 D_800F63D0;
@@ -130,7 +130,7 @@ void Menu_Advance(void);
 extern u8 D_801410A8[];
 extern u8 D_800F6400;
 extern char *D_800F649C[];
-void func_800C0A20(u8 which, u8 name, s32 x, s32 y, u8 val);
+void Controls_PlaceArrow(u8 which, u8 name, s32 x, s32 y, u8 val);
 extern u8 D_80100DC0;
 extern u8 D_80100DC8;
 u8 Lang_Load(void *);
@@ -232,7 +232,7 @@ extern u8 D_80100FC4;
 extern u8 D_80124CA0;
 extern u8 D_80124CC0;
 extern char *D_800F64A8[];
-void func_800C4564(s32 i, s32 x, s32 y, s32 c);
+void HighScores_PlaceArrow(s32 i, s32 x, s32 y, s32 c);
 extern char *D_800F6478[];
 void Championship_PlaceArrow(s32 i, s32 x, s32 y, s32 c);
 extern char *D_800F646C[];
@@ -280,7 +280,7 @@ void Track_SelectNext(void);
 extern s32 D_8014122C;
 extern u8 D_80100CA4;
 void Profile_InitDefault(void *arg0, s32 arg1);
-void func_800C0BE0(void);
+void Controls_UpdateArrowsP2(void);
 extern u8 D_800F648C;
 extern u8 D_800F648D;
 extern u8 gPakErrorPort;
@@ -344,8 +344,8 @@ extern s32 D_80124154;
 extern void *D_800F5F6C;
 extern u8 gKeyboardText;
 extern u8 D_800F64A4;
-extern s8 D_80124106;
-extern s8 D_80124105;
+extern s8 gControlsRemapP2;
+extern s8 gControlsRemapP1;
 s32 func_8008744C(void *);
 extern u8 D_800F2FA0;
 extern u8 D_800F2FC0;
@@ -492,7 +492,7 @@ extern s8 D_801240B2;
 extern u8 D_801240B5;
 extern u8 gLoadPlayer;
 extern u8 D_801240B7;
-s32 func_800B0024();
+s32 Save_Commit();
 s32 SaveSlot_Delete(u8, s32);
 extern s32 D_800F5F7C;
 extern s32 D_800F5F78;
@@ -1651,7 +1651,7 @@ void Save_CreateNew(void) {
     *(s32 *)(gActiveSave + 0x884) = *(s32 *)(gProfileP1 + 4);
     gProfileP2 = (s32)p;
     *(s32 *)(gActiveSave + 0x888) = ((s32 *)p)[1];
-    func_800B0024();
+    Save_Commit();
     gSaveLoaded = 1;
     Menu_Advance();
 }
@@ -1719,7 +1719,7 @@ void Save_ApplyProfiles(void) {
     if (((s32 *)gProfileP2)[5] == 0) {
         Profile_InitDefault((void *)gProfileP2, 1);
     }
-    if ((u8)func_800B0024() != 0) {
+    if ((u8)Save_Commit() != 0) {
     if (((s32 *)gProfileP1)[1] == 0) {
         Fsm_Trigger(&gMenuFsm, 0x31);
     } else {
@@ -4433,11 +4433,11 @@ void Controls_LoadFont(void) {
 }
 
 
-void func_800C09FC(void) {
+void Controls_FreeFont(void) {
     sysFontFree(2);
 }
 
-void func_800C0A20(u8 which, u8 name, s32 x, s32 y, u8 val) {
+void Controls_PlaceArrow(u8 which, u8 name, s32 x, s32 y, u8 val) {
     MnC0_ *m;
     u8 i;
 
@@ -4459,23 +4459,23 @@ void func_800C0A20(u8 which, u8 name, s32 x, s32 y, u8 val) {
     }
 }
 
-void func_800C0B68(void) {
-    func_800C0A20(0, 0, 200, 310, D_80124107 ? 120 : 0);
-    func_800C0A20(0, 1, 250, 870, D_80124109 < 13 ? 100 : 0);
+void Controls_UpdateArrowsP1(void) {
+    Controls_PlaceArrow(0, 0, 200, 310, D_80124107 ? 120 : 0);
+    Controls_PlaceArrow(0, 1, 250, 870, D_80124109 < 13 ? 100 : 0);
 }
 
 
-void func_800C0BE0(void) {
+void Controls_UpdateArrowsP2(void) {
     if (gNumPlayers == 2) {
-        func_800C0A20(1, 0, 775, 310, D_80124108 ? 120 : 0);
+        Controls_PlaceArrow(1, 0, 775, 310, D_80124108 ? 120 : 0);
         if (D_8012410A < 13) {
-            func_800C0A20(1, 1, 825, 870, 100);
+            Controls_PlaceArrow(1, 1, 825, 870, 100);
         } else {
-            func_800C0A20(1, 1, 825, 870, 0);
+            Controls_PlaceArrow(1, 1, 825, 870, 0);
         }
     } else {
-        func_800C0A20(1, 0, 700, 310, 0);
-        func_800C0A20(1, 1, 750, 870, 0);
+        Controls_PlaceArrow(1, 0, 700, 310, 0);
+        Controls_PlaceArrow(1, 1, 750, 870, 0);
     }
 }
 
@@ -4488,8 +4488,8 @@ void Controls_Enter(void) {
     fp = &D_801455A8;
     (*fp)(gProfileP1 + 0x40, 0);
     (*fp)(gProfileP2 + 0x40, 1);
-    D_80124105 = 0;
-    D_80124106 = 0;
+    gControlsRemapP1 = 0;
+    gControlsRemapP2 = 0;
     Menu_StartEnter(gMenuObjs[17]);
     Menu_StartEnter(D_800F5F50);
     Menu_StartEnter(D_800F5F54);
@@ -4504,8 +4504,8 @@ void Controls_Enter(void) {
     D_80124108 = 0;
     D_80124109 = 5;
     D_8012410A = 5;
-    func_800C0B68();
-    func_800C0BE0();
+    Controls_UpdateArrowsP1();
+    Controls_UpdateArrowsP2();
     Menu_ResetTicker(&D_800F63B8);
 }
 
@@ -4540,7 +4540,7 @@ void Controls_ScrollUp(void) {
         D_80124107 -= 1;
         D_80124109 -= 1;
     }
-    func_800C0B68();
+    Controls_UpdateArrowsP1();
 }
 
 void Controls_ScrollDown(void) {
@@ -4550,7 +4550,7 @@ void Controls_ScrollDown(void) {
         D_80124109 += 1;
         D_80124107 += 1;
     }
-    func_800C0B68();
+    Controls_UpdateArrowsP1();
 }
 
 void Controls_CursorUp(void) {
@@ -4560,7 +4560,7 @@ void Controls_CursorUp(void) {
         D_80124108 -= 1;
         D_8012410A -= 1;
     }
-    func_800C0BE0();
+    Controls_UpdateArrowsP2();
 }
 
 void Controls_CursorDown(void) {
@@ -4570,7 +4570,7 @@ void Controls_CursorDown(void) {
         D_8012410A += 1;
         D_80124108 += 1;
     }
-    func_800C0BE0();
+    Controls_UpdateArrowsP2();
 }
 
 void Controls_Leave(void) {
@@ -4608,10 +4608,10 @@ void Controls_ResetTexts(void) {
     Menu_ResetTexts(D_800F5F58);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", func_800C1664);
+INCLUDE_ASM("asm/nonmatchings/unit_53B30", Controls_HasConflict);
 
-void func_800C1824(void) {
-    if (func_800C1664() != 0) {
+void Controls_CheckExit(void) {
+    if (Controls_HasConflict() != 0) {
         sysSfxPlay(0x35, 1, 1.0f, 1.0f);
         Menu_StartDim();
         Fsm_Trigger(&gMenuFsm, 0x65);
@@ -4621,49 +4621,49 @@ void func_800C1824(void) {
 }
 
 
-void func_800C1898(void) {
-    D_80124105 = 1;
+void Controls_StartRemapP1(void) {
+    gControlsRemapP1 = 1;
 }
 
-void func_800C18A8(void) {
+void Controls_StartRemapP2(void) {
     if (gNumPlayers == 1) {
         gNumPlayers = 2;
-        func_800C0BE0();
+        Controls_UpdateArrowsP2();
         return;
     }
-    D_80124106 = 1;
+    gControlsRemapP2 = 1;
 }
 
-void func_800C18F0(void) {
+void Controls_ResetP1(void) {
     D_801455B0(0);
 }
 
-void func_800C1914(void) {
+void Controls_ResetP2(void) {
     D_801455B0(1);
 }
 
-void func_800C1938(void) {
+void Controls_RemapP1(void) {
     D_8014556C(0);
     if (D_80145578(0, D_80124107 + D_8012410B) != 0) {
-        D_80124105 = 0;
+        gControlsRemapP1 = 0;
         Fsm_Trigger(&gMenuFsm, 0x64);
     }
 }
 
 
-void func_800C19A4(void) {
+void Controls_RemapP2(void) {
     D_8014556C(1);
     if (D_80145578(1, D_80124108 + D_8012410C) != 0) {
-        D_80124106 = 0;
+        gControlsRemapP2 = 0;
         Fsm_Trigger(&gMenuFsm, 0x64);
     }
 }
 
 
-void func_800C1A10(void) {
+void Controls_InputP1(void) {
     s32 screen;
 
-    if ((*(u8 *)&D_80124105) == 0) {
+    if ((*(u8 *)&gControlsRemapP1) == 0) {
         screen = 0x70;
         if ((D_80124107 != 0) || (D_8012410B != 0)) {
             screen = 0x71;
@@ -4674,13 +4674,13 @@ void func_800C1A10(void) {
         Menu_HandlePad1(screen & 0xFFFF);
         return;
     }
-    func_800C1938();
+    Controls_RemapP1();
 }
 
-void func_800C1A94(void) {
+void Controls_InputP2(void) {
     s32 screen;
 
-    if ((*(u8 *)&D_80124106) == 0) {
+    if ((*(u8 *)&gControlsRemapP2) == 0) {
         if (gNumPlayers == 1) {
             screen = 0x50;
         } else {
@@ -4695,19 +4695,19 @@ void func_800C1A94(void) {
         Menu_HandlePad2(screen & 0xFFFF);
         return;
     }
-    func_800C19A4();
+    Controls_RemapP2();
 }
 
-void func_800C1B34(void) {
+void Controls_Input(void) {
     if (D_800F64A4 == 0) {
         D_800F64A4 = 1;
-        func_800C1A10();
-        func_800C1A94();
+        Controls_InputP1();
+        Controls_InputP2();
         return;
     }
     D_800F64A4 = 0;
-    func_800C1A94();
-    func_800C1A10();
+    Controls_InputP2();
+    Controls_InputP1();
 }
 
 void ControlsError_Enter(void) {
@@ -4735,7 +4735,7 @@ void ControlsError_Draw(void) {
     Menu_EndFrame();
 }
 
-void func_800C1D78(void) {
+void ControlsConflict_Input(void) {
     Menu_HandlePad1(0x50);
     if (gNumPlayers == 2) {
         Menu_HandlePad2(0x50);
@@ -4885,7 +4885,7 @@ void LoadConfirm_Select(void) {
 
 
 /* TODO(match-debt): the local pointer to gLoadSlotP2 is only needed to match (forces a reload on one path). */
-void func_800C28C4(void) {
+void LoadGame_Input(void) {
     u8 *sel2;
     s32 a;
     s32 b;
@@ -4965,7 +4965,7 @@ void LoadConfirm_Open(void) {
     D_801240B2 = 1;
 }
 
-void func_800C2B04(void) {
+void LoadGame_ApplySlot(void) {
     if (gLoadPlayer == 0) {
         D_80124150 = (*(s32 *)((u8 *)(SaveSlot_Get((u32) gLoadPakP1, gLoadSlotP1 - 1)) + 0x4));
     } else {
@@ -5061,10 +5061,10 @@ void func_800C30C4(void) {
 }
 
 
-void func_800C3108(void) {
+void Keyboard_SaveName(void) {
     DEBUG_NOP();
     strcpy(*(s32 *)&D_80124CE0 + 8, &gKeyboardText);
-    if (func_800B0024() & 0xFF) {
+    if (Save_Commit() & 0xFF) {
         Menu_Advance();
         return;
     }
@@ -5114,7 +5114,7 @@ void LoadGame_DeleteSelected(void) {
         pak = gLoadPakP2;
     }
     SaveSlot_Delete(pak, entry - 1);
-    func_800B0024();
+    Save_Commit();
 }
 
 void Keyboard_OpenPlayerName(void) {
@@ -5191,7 +5191,7 @@ void Keyboard_OpenNewName(void) {
     D_801240D6 += 3;
 }
 
-void func_800C3504(void) {
+void Keyboard_TrimText(void) {
     u8 r = 10;
     u8 i;
 
@@ -5206,7 +5206,7 @@ void func_800C3504(void) {
 }
 
 
-void func_800C3560(s32 x, s32 y) {
+void Register_PlaceCursor(s32 x, s32 y) {
     MnC3_ *m;
     u8 i;
 
@@ -5228,7 +5228,7 @@ void Register_LayoutTexts(void) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_53B30", Register_Enter);
 
-void func_800C3954(void) {
+void Register_ApplyChoice(void) {
     E140b_ l;
     s32 p;
 
@@ -5258,7 +5258,7 @@ void func_800C3954(void) {
                 strcpy((s32 *)l.name, (s32)&gKeyboardText);
                 func_800B0454(gLoadPakP2, &l);
             }
-            if ((u8)func_800B0024() != 0) {
+            if ((u8)Save_Commit() != 0) {
                 Fsm_Trigger(&gMenuFsm, 0x76);
             } else {
                 Menu_StartDim();
@@ -5274,7 +5274,7 @@ void func_800C3954(void) {
     }
 }
 
-void func_800C3AF8(void) {
+void Register_Cancel(void) {
     switch ((u32)D_801240D8) {
         case 1:
             Fsm_Trigger(&gMenuFsm, 0x76);
@@ -5290,7 +5290,7 @@ void func_800C3AF8(void) {
     }
 }
 
-void func_800C3B70(void) {
+void Register_Input(void) {
     u16 f = 0x60;
     u8 n;
 
@@ -5345,7 +5345,7 @@ void Register_Draw(void) {
 void Register_MoveLeft(void) {
     if (gRegisterKey != 0) {
         gRegisterKey--;
-        func_800C3560(D_800F610C[gRegisterKey], D_800F6170[gRegisterKey]);
+        Register_PlaceCursor(D_800F610C[gRegisterKey], D_800F6170[gRegisterKey]);
     }
 }
 
@@ -5355,11 +5355,11 @@ void Register_MoveRight(void) {
 
     if (i == n - 2) {
         gRegisterKey = i + 1;
-        func_800C3560(D_800F616C, D_800F61D0);
+        Register_PlaceCursor(D_800F616C, D_800F61D0);
     } else if (i < n - 1) {
         i++;
         gRegisterKey = i;
-        func_800C3560(D_800F610C[i], D_800F6170[i]);
+        Register_PlaceCursor(D_800F610C[i], D_800F6170[i]);
     }
 }
 
@@ -5370,7 +5370,7 @@ void Register_MoveUp(void) {
     } else if (gRegisterKey - 8 >= 0) {
         gRegisterKey -= 8;
     }
-    func_800C3560(D_800F610C[gRegisterKey], D_800F6170[gRegisterKey]);
+    Register_PlaceCursor(D_800F610C[gRegisterKey], D_800F6170[gRegisterKey]);
 }
 
 void Register_MoveDown(void) {
@@ -5380,11 +5380,11 @@ void Register_MoveDown(void) {
     if (i + 8 >= n - 1) {
         D_801240DF = i;
         gRegisterKey = n - 1;
-        func_800C3560(D_800F616C, D_800F61D0);
+        Register_PlaceCursor(D_800F616C, D_800F61D0);
     } else if (i + 8 < n) {
         i += 8;
         gRegisterKey = i;
-        func_800C3560(D_800F610C[i], D_800F6170[i]);
+        Register_PlaceCursor(D_800F610C[i], D_800F6170[i]);
     }
 }
 
@@ -5439,7 +5439,7 @@ void func_800C452C(void) {
     Menu_HandlePad2(0x30);
 }
 
-void func_800C4564(s32 i, s32 x, s32 y, s32 c) {
+void HighScores_PlaceArrow(s32 i, s32 x, s32 y, s32 c) {
     TBL_ *t = (TBL_ *)D_800F5F80;
     u8 j;
 
@@ -5460,19 +5460,19 @@ void func_800C4564(s32 i, s32 x, s32 y, s32 c) {
 }
 
 
-void func_800C46C4(void) {
+void HighScores_UpdateArrows(void) {
     switch (gHighScoresPage) {
         case 0:
-            func_800C4564(0, 80, 390, 100);
-            func_800C4564(1, 425, 387, 100);
+            HighScores_PlaceArrow(0, 80, 390, 100);
+            HighScores_PlaceArrow(1, 425, 387, 100);
             break;
         case 1:
-            func_800C4564(0, 80, 480, 100);
-            func_800C4564(1, 425, 477, 100);
+            HighScores_PlaceArrow(0, 80, 480, 100);
+            HighScores_PlaceArrow(1, 425, 477, 100);
             break;
         default:
-            func_800C4564(0, -1, -1, 0);
-            func_800C4564(1, -1, -1, 0);
+            HighScores_PlaceArrow(0, -1, -1, 0);
+            HighScores_PlaceArrow(1, -1, -1, 0);
             break;
     }
 }
@@ -5495,7 +5495,7 @@ void HighScores_Enter(void) {
     gHighScoresCategory = 0;
     D_80124101 = 0;
     D_80124102 = 0;
-    func_800C46C4();
+    HighScores_UpdateArrows();
     Menu_ResetTicker(&D_800F6388);
 }
 
@@ -5562,14 +5562,14 @@ void HighScores_PageLeft(void) {
     if (gHighScoresPage != 0) {
         gHighScoresPage -= 1;
     }
-    func_800C46C4();
+    HighScores_UpdateArrows();
 }
 
 void HighScores_PageRight(void) {
     if (gHighScoresPage == 0) {
         gHighScoresPage += 1;
     }
-    func_800C46C4();
+    HighScores_UpdateArrows();
 }
 
 INCLUDE_ASM("asm/nonmatchings/unit_53B30", HighScores_PrevCategory);

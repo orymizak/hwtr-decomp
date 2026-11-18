@@ -178,7 +178,7 @@ s32 func_800AFC40(u32 i) {
 INCLUDE_ASM("asm/nonmatchings/unit_50510", func_800AFD1C);
 
 void func_800B0624(void);
-s32 func_800B0024(void) {
+s32 Save_Commit(void) {
     u8 *buf;
     u32 i;
     u32 j;
