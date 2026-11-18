@@ -1,6 +1,6 @@
 #include "common.h"
+#include "ultra64.h"
 #include "include_asm.h"
-s32 alHeapDBAlloc(s32,s32, void *,s32, s32);
 
 extern s32 D_80127BA0;
 extern s32 D_80127BA4;

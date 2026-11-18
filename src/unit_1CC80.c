@@ -1,4 +1,5 @@
 #include "common.h"
+#include "ultra64.h"
 #include "gfx.h"
 #include "math.h"
 #include "include_asm.h"
@@ -339,8 +340,6 @@ typedef struct { Quat q; f32 f10; f32 f14; f32 f18; f32 f1C; f32 f20; u8 pad24[0
 typedef struct { u32 cap; s32 tail; s32 head; PrtQ_ *buf; } PPoolQ_;
 extern PPoolQ_ D_80148088;
 s32 rand(void);
-f32 cosf(f32);
-f32 sinf(f32);
 void func_800A83A0(Quat *, f32 (*)[3]);
     /* TODO (Clean version):
     Funciones inline locales (RotA_, RotB_, RotC_) que aplican rotaciones a matrices 3x4 en Z, Y y X. En C limpio deberían ser funciones matemáticas compartidas del motor con nombres semánticos. Se mantienen inline para el match.

@@ -1,7 +1,7 @@
 #include "common.h"
+#include "ultra64.h"
 #include "include_asm.h"
 typedef struct { void *pfs; s32 file_no; s32 error; s32 type; } PakFile73_;
-void bzero(void *, s32);
 void func_800D7930(u8 *, void *, s32);
 void func_800D7BF0(u8 *, void *, void *, s32, s32);
 s32 func_800D7208(s32, void *);

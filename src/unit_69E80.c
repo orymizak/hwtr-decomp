@@ -1,4 +1,5 @@
 #include "common.h"
+#include "ultra64.h"
 #include "include_asm.h"
 typedef struct { s32 *t; s16 a; s16 b; s32 c; s32 d; s32 e; s16 f; s16 g; } Seq9_;
 typedef struct { s32 a; s32 b; s32 c; } V12_;
@@ -15,7 +16,6 @@ extern char D_80101080[];
 extern s32 (*D_80140FE4)(char *);
 extern s32 (*D_80140FE0)(char *, void *);
 extern u8 D_80138D38[];
-s32 sprintf(char *, const char *, ...);
 void func_80087F7C(u16, u16, s32);
 void func_80087EA4(u16, V12_ *);
 u8 func_8008E38C(V12_, u8, u8, s32);

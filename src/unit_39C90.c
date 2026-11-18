@@ -1,4 +1,5 @@
 #include "common.h"
+#include "ultra64.h"
 #include "include_asm.h"
 #include "car.h"
 extern s32 D_8011B330;
@@ -485,7 +486,6 @@ void func_8009B56C(void);
 extern u8 D_8011B7A0[][128];
 extern f32 D_8011B760[];
 u8 func_8009BAF0(BoxC7_ *, BoxC7_ *);
-f32 sqrtf(f32);
 extern u16 D_8011B350;
 extern EntAB_ D_8011B358[];
 extern u16 D_8011B558;

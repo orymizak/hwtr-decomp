@@ -1,4 +1,5 @@
 #include "common.h"
+#include "ultra64.h"
 #include "gfx.h"
 #include "math.h"
 #include "include_asm.h"
@@ -81,7 +82,6 @@ void func_80072890(Node72_ *n, Node72_ *nodes, s32 mats) {
     n->child = NULL;
 }
 
-f32 sqrtf(f32);
 static inline void V3o_Normalize(Vec3f *v) {
     f32 inv = 1.0f / sqrtf(v->x * v->x + v->y * v->y + v->z * v->z);
 

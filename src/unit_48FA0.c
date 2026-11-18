@@ -1,14 +1,12 @@
 #include "common.h"
+#include "ultra64.h"
 #include "math.h"
 #include "include_asm.h"
 f32 func_8007AD24(f32);
-f32 cosf(f32);
-f32 sinf(f32);
 
 
 
 extern s32 D_800F3920[3];
-f32 sqrtf(f32);
 /* Converts a rotation matrix to a quaternion (Shoemake's method). */
 Quat func_800A83A0(f32 m[3][3]) {
     Quat q;

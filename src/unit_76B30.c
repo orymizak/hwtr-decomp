@@ -1,8 +1,8 @@
 #include "common.h"
+#include "ultra64.h"
 #include "include_asm.h"
 
 s32 func_800D6010();
-s32 osSetIntMask(s32);
 extern s32 D_800FB190;
 
 void func_800D5F30(s32 arg0) {

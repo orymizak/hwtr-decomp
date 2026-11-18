@@ -1,4 +1,5 @@
 #include "common.h"
+#include "ultra64.h"
 #include "include_asm.h"
 typedef struct { u32 w0; u32 w1; } Acmd_;
 typedef struct { u8 p0[0xC]; u32 state; u32 lstate; u8 p14[0x14]; s32 (*dma)(s32, s32, void *); void *dmaState; u8 p30[8]; s32 first; s32 memin; } Load_;
@@ -10,7 +11,6 @@ typedef struct { u32 w0; u32 w1; } AcmdA_;
 typedef struct { s32 order; s32 npredictors; s16 book[1]; } BookA_;
 typedef struct { s32 base; s32 len; u8 type; u8 flags; u8 p[2]; void *loop; BookA_ *book; } WaveA_;
 typedef struct { u8 p0[0x10]; void *lstate; u32 start; u32 end; u32 count; WaveA_ *table; s32 bookSize; u8 p28[8]; s32 sample; s32 lastsam; s32 first; s32 memin; } LoadA_;
-void alCopy(void *, void *, s32);
 
 
 

@@ -1,4 +1,5 @@
 #include "common.h"
+#include "ultra64.h"
 #include "include_asm.h"
 #include "car.h"
 /* TODO(match-debt): empty loop needed to match (scheduling barrier). Assumed to be a debug hook
@@ -30,9 +31,6 @@ void func_800AEFF8(void);
 void func_80095804(u8 *);
 void func_80091E30(Car *, f32);
 void func_8009887C(u8 *);
-f32 sinf(f32);
-f32 cosf(f32);
-f32 sqrtf(f32);
 void func_80094234(void);
 void func_800863A4(u8 *, u8 *);
 B88_ *func_8008637C(u8 *);

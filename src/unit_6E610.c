@@ -1,4 +1,5 @@
 #include "common.h"
+#include "ultra64.h"
 #include "include_asm.h"
     /* TODO (Clean version): Unify fragmented partial structs into cohesive audio engine types:
     1. Unify VoiceW_, VoiceX_, VoiceY_, VoiceZ_, VoiceG_, VoiceC_, VoiceB_, Voice9_,
@@ -65,7 +66,6 @@ typedef struct { u8 type; u8 pad[3]; s32 arg; } AudMsg_;
 typedef struct { u8 p0[0x2C]; f32 unk2C; u8 p30[0x20]; f32 unk50; u8 p54[0x64]; u8 unkB8; } SeqChan_;
 extern s32 D_800FAE80;
 extern u8 D_800FAE84;
-f32 sinf(f32);
 s32 func_800D0444(BankG_ *b, s32 idx, s32 a2, s32 a3, s32 prio);
 typedef struct { s32 a; s32 b; } Ent89_;
 typedef struct { s32 n; u8 p4[8]; s32 flags; s32 unk10; s32 unk14; Ent89_ e[1]; } Bank89_;
@@ -1423,8 +1423,6 @@ void func_800D1290(s32 arg0, s32 arg1) {
     }
 }
 
-s32 alHeapDBAlloc(s32, s32, void *, s32, s32);
-void alLink(void *, void *);
 void func_800D2AAC(void *, s32, void *);
 s32 func_800D1568(s32 arg0);
 void func_800D3EB0(void);
@@ -1499,7 +1497,6 @@ s32 func_800D1568(s32 arg0) {
 }
 
 
-s32 alHeapDBAlloc(s32, s32, void *, s32, s32);
 s32 alFxParamHdl();
 extern s32 D_8014C6E0;
 extern s32 D_8014C6E4;

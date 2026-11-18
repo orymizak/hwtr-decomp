@@ -1,6 +1,6 @@
 #include "common.h"
+#include "ultra64.h"
 #include "include_asm.h"
-s32 osRecvMesg(void *,s32,s32);
 extern u8 D_801347A0;
 s32 func_800D7208(s32, s32);
 

@@ -1,4 +1,5 @@
 #include "common.h"
+#include "ultra64.h"
 #include "include_asm.h"
 typedef struct { u16 a; u16 b; u16 id; u8 state; u8 flags; u8 x; u8 y; } PakSlotQ_;
 typedef struct { u16 a; u16 b; u8 p4[2]; u8 state; } PakInfoQ_;
@@ -7,11 +8,9 @@ typedef struct { u8 p0[0xC]; ArgsQ_ *args; } ReqQ_;
 typedef struct { u16 id; u8 state; u8 flags; u8 pad[6]; } PakSlotJ_;
 extern PakSlotJ_ D_80140F6C[4];
 void func_800D7450(void *a);
-typedef struct { u8 b[0x68]; } PfsG_;
 typedef struct { u8 p0[0xC]; u8 *args; } ReqG_;
 extern u8 D_8014EB40[];
-extern PfsG_ D_8014E998[];
-s32 osMotorInit(void *mq, PfsG_ *pfs, s32 channel);
+extern OSPfs D_8014E998[];
 typedef struct { u8 *unk0; } ReqArgA_;
 typedef struct { u8 p0[0xC]; u8 *args; } ReqA_;
 extern u8 D_80140F6A[];
@@ -36,7 +35,6 @@ void func_800D6A40(void) {
     func_800D74F0(&D_800FB210);
 }
 
-s32 __osMotorAccess(PfsG_ *, s32);
 extern PakSlotQ_ D_80140F68[4];
 extern u32 D_800FB1F0;
 s32 func_800D6A60(PakSlotQ_ *r, u32 ch) {

@@ -1,7 +1,7 @@
 #include "common.h"
+#include "ultra64.h"
 #include "include_asm.h"
 
-s32 osSetIntMask(s32);
 extern s32 D_801380AC;
 
 void func_800D78B0(void) {

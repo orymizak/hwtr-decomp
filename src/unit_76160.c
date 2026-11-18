@@ -1,49 +1,30 @@
 #include "common.h"
+#include "ultra64.h"
 #include "include_asm.h"
 typedef struct { u8 p0[8]; s16 count; } RetraceCfg_;
 typedef struct { u8 b[0x10]; } ClientW_;
 typedef struct { u8 b[0x10]; } ClientR_;
 typedef struct { u8 p0[0xC]; void *fb; } FrameR_;
-s32 osCreateThread(void *,s32, void *,s32, void *, s32);
-s32 osStartThread(void *);
 extern u8 D_8012DBE0;
 extern u8 D_8012FD90;
 void func_800D5E00(void *arg);
 
 extern s32 D_8014D304;
 extern s32 D_8014D33C;
-s32 osSetIntMask(s32);
 extern s8 D_8014D97D;
 extern u8 D_8014D97C;
 typedef struct ClientS_ { struct ClientS_ *next; void *mq; s16 mask; } ClientS_;
-typedef struct { u8 b[0x18]; } MqS_;
 typedef struct { u8 p0[0x10]; u8 list[0x40]; void *msgQ; void *msg; } ScTaskS_;
-typedef struct { s16 retraceMsg; s16 prenmiMsg; MqS_ audioRequestMQ; void *audioBuf[8]; MqS_ gfxMQ; void *gfxBuf[8]; MqS_ retraceMQ; void *retraceBuf[8]; MqS_ rspMQ; void *rspBuf[8]; MqS_ rdpMQ; void *rdpBuf[8]; MqS_ waitMQ; void *waitBuf[8]; u8 p154[4]; u8 schedulerThread[0x1B0]; u8 audioThread[0x1B0]; u8 graphicsThread[0x1B0]; ClientS_ *clientList; ScTaskS_ *curGraphicsTask; ScTaskS_ *curAudioTask; ScTaskS_ *graphicsTaskSuspended; u32 frameRate; u8 retraceCount; u8 frameBufferNum; } SchedS_;
+typedef struct { s16 retraceMsg; s16 prenmiMsg; OSMesgQueue audioRequestMQ; void *audioBuf[8]; OSMesgQueue gfxMQ; void *gfxBuf[8]; OSMesgQueue retraceMQ; void *retraceBuf[8]; OSMesgQueue rspMQ; void *rspBuf[8]; OSMesgQueue rdpMQ; void *rdpBuf[8]; OSMesgQueue waitMQ; void *waitBuf[8]; u8 p154[4]; u8 schedulerThread[0x1B0]; u8 audioThread[0x1B0]; u8 graphicsThread[0x1B0]; ClientS_ *clientList; ScTaskS_ *curGraphicsTask; ScTaskS_ *curAudioTask; ScTaskS_ *graphicsTaskSuspended; u32 frameRate; u8 retraceCount; u8 frameBufferNum; } SchedS_;
 typedef struct { u8 p0[8]; u32 flags; u8 pC[4]; u8 list[0x40]; void *msgQ; } ScTaskG_;
-typedef struct { u8 b[0x50]; } ViModeS_;
 extern SchedS_ D_8014D300;
 extern s32 osTvType;
-extern ViModeS_ osViModeTable[];
+extern OSViMode osViModeTable[];
 extern u8 D_80129BC0[];
 extern u8 D_8012BBC0[];
 extern void *D_8012DBC0[];
 extern s32 D_80140E40;
 extern void (*D_800FB180)(void);
-s32 osRecvMesg(void *mq, void **msg, s32 flag);
-s32 osSendMesg(void *, void *, s32);
-void osCreateMesgQueue(void *mq, void **msg, s32 count);
-void osCreateViManager(s32);
-void osViSetMode(void *);
-void osViBlack(u8);
-void osViSetEvent(void *, void *, u32);
-void osSetEventMesg(s32, void *, void *);
-void osWritebackDCacheAll(void);
-void osSpTaskYield(void);
-s32 osSpTaskYielded(void *);
-void osSpTaskLoad(void *);
-void osSpTaskStartGo(void *);
-void osAfterPreNMI(void);
-void osViSetYScale(f32);
 void func_800D57C4(void);
 void func_800D5ABC(void);
 void func_800D5C18(void);
@@ -260,8 +241,6 @@ void func_800D5C18(void) {
     }
 }
 
-void *osViGetCurrentFramebuffer(void);
-void *osViGetNextFramebuffer(void);
 void func_800D5D5C(FrameR_ *f) {
     u8 *base = &D_8014D97D;
     void *fb = f->fb;

@@ -1,4 +1,5 @@
 #include "common.h"
+#include "ultra64.h"
 #include "include_asm.h"
 #include "car.h"
 extern u8 D_800F3B3C[];
@@ -19,7 +20,6 @@ extern s32 D_800F3B30;
 extern char D_80100A9C[];
 extern void (*D_801416DC)(s32, s32, u16, u16, s32);
 extern void (*D_801416E0)(s32, s32, s32);
-s32 sprintf(char *, const char *, ...);
 extern E0Cb_ D_800F3B18[];
 extern u8 D_800F3B42;
 Car *func_800960D8(u8);

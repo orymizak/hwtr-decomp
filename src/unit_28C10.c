@@ -1,4 +1,5 @@
 #include "common.h"
+#include "ultra64.h"
 #include "include_asm.h"
 #include "car.h"
 typedef struct { u8 b; u8 pad[3]; s32 w[6]; } E1C8_;
@@ -6,7 +7,6 @@ extern E1C8_ D_800F316C[];
 extern u8 (*D_8014169C)(u8);
 extern s32 D_801410E0[];
 extern char D_8010080C[];
-s32 sprintf(char *, const char *, ...);
 typedef struct Lnk89_ { s32 *obj; s32 x; struct Lnk89_ *next; } Lnk89_;
 typedef struct { u8 *def; s32 t; u8 pad8; u8 hold; } Tmr89_;
 typedef struct { s32 pad0; u8 id; u8 pad5[3]; s32 on; s32 t; u8 fired; u8 pad11[7]; } Evt18_;

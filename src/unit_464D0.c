@@ -1,4 +1,5 @@
 #include "common.h"
+#include "ultra64.h"
 #include "include_asm.h"
 #include "car.h"
 typedef struct { s32 w0; u8 pad[0x8C]; u8 x90[0x94]; u8 x124[0xA0]; } Ent1C4_;
@@ -10,7 +11,6 @@ extern V3a5_ D_80100A00;
 extern u32 (*D_8014169C)(s32);
 void func_800AC880(f32 *, f32, f32, f32, f32, V3a5_);
 void func_8009A4E4(void *);
-f32 sqrtf(f32);
 void func_800ACDC8(void *, f32);
 void func_8007A9E0(void *);
 

@@ -1,4 +1,5 @@
 #include "common.h"
+#include "ultra64.h"
 #include "include_asm.h"
 
 typedef struct {
@@ -13,8 +14,6 @@ extern s32 D_800F2190;
 extern s32 D_800F2194;
 extern s32 D_800F2198;
 
-u32 osGetCount(void);
-u64 osGetTime(void);
 void srand(u32 seed);
 u32 rand(void);
 void *Memory_Alloc(u32 size);

@@ -1,12 +1,11 @@
 #include "common.h"
+#include "ultra64.h"
 #include "include_asm.h"
 typedef struct { u8 p0[0x20]; void *ucode; u8 p24[4]; void *ucode_data; u8 p2C[0x14]; void *data_ptr; u32 data_size; } ScTaskI_;
 extern ScTaskI_ D_80138AB8;
 extern u8 D_8014D304[];
 extern u8 D_800FABA1;
 extern void (*D_800FABA4)(s32, u8);
-s32 osSendMesg(void *mq, void *msg, s32 flag);
-s32 osRecvMesg(void *mq, void **msg, s32 flag);
 s32 func_800CDB5C(s32);
 s32 func_800CE95C(void *);
 extern u8 D_800E7AA0;
@@ -26,7 +25,6 @@ extern s32 D_80138B04;
 extern void *D_80138B08;
 extern s32 D_80138B0C;
 s32 func_800D5910(void *, void *,s32);
-s32 osCreateMesgQueue(void *, void *,s32);
 extern u8 D_80127900;
 extern u8 D_80127910;
 extern u8 D_80134780;

@@ -1,4 +1,5 @@
 #include "common.h"
+#include "ultra64.h"
 #include "include_asm.h"
 /* nusys Controller Pak manager types (NUSiCommonMesg / NUContPakFile). */
 typedef struct { s32 status; void *queue; s32 channel; } Pfs7_;
@@ -10,10 +11,6 @@ typedef struct { u8 p0[0xC]; ArgsS_ *args; } ReqS_;
 typedef struct { void *pfs; s32 file_no; } PakFileB_;
 typedef struct { PakFileB_ *file; s32 offset; s32 size; u8 flag; u8 *buffer; } ReqArgB_;
 typedef struct { u8 p0[0xC]; ReqArgB_ *args; } ReqB_;
-s32 osPfsRepairId();
-s32 osPfsNumFiles();
-s32 osPfsDeleteFile();
-s32 bcopy(void *, s32,s32);
 s32 func_800D7664();
 s32 func_800D768C();
 extern u8 D_80141090;
@@ -21,15 +18,9 @@ extern u8 D_80141090;
 s32 func_800D7450(s32 *);
 extern s32 D_800FB1E0;
 s32 func_800D74F0(s32 *);
-s32 osPfsInitPak(s32 *, void *, s32);
 extern s32 D_8014EB40;
-s32 osPfsFreeBlocks(s32, void *);
-s32 osPfsReadWriteFile(s32, s32, u8, s32, s32, s32);
-s32 osPfsAllocateFile(s32, u16, s32, s32, s32, s32, s32);
-s32 osPfsFindFile(s32, u16, s32, s32, s32, s32);
 extern u16 D_800FB1B0;
 extern s32 D_800FB1B4;
-s32 osPfsFileState(s32, s32, s32);
 
 void func_800D6420(s32 arg0) {
     func_800D7664();

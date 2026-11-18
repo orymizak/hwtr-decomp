@@ -1,28 +1,23 @@
 #include "common.h"
+#include "ultra64.h"
 #include "include_asm.h"
 extern u8 D_8014EB40[];
-s32 osContStartReadData(void *mq);
-void osContGetReadData(void *data);
 s32 func_800D76B4(void *data, s32 mask);
 extern s32 (*D_800FB230)(s16);
 extern u8 D_801347A0;
 extern s32 D_801380AC;
 extern u8 D_80141090;
-s32 osRecvMesg(void *,s32,s32);
-s32 osSendMesg(void *,s32,s32);
 extern u8 D_8014ECB0;
 
 s32 func_800D74F0(s32 *);
 extern s32 D_800FB248;
 
-typedef struct { u16 type; u8 status; u8 errnum; } ContStatusM_;
-extern ContStatusM_ D_801380B8[4];
+extern OSContStatus D_801380B8[4];
 extern s32 D_80132040;
 extern s32 D_80132044;
 extern s32 D_80143840;
 void func_800D78E0(void);
 void func_800D7910(void);
-void osCreateMesgQueue(void *, void *, s32);
 s32 func_800D7450(void *);
 u8 func_800D7570(void) {
     s32 i;
@@ -38,7 +33,7 @@ u8 func_800D7570(void) {
     pattern = 0;
     D_80143840 = 0;
     for (i = 0; i < 4; i++) {
-        if (D_801380B8[i].errnum != 0) {
+        if (D_801380B8[i].errno != 0) {
             continue;
         }
         if ((D_801380B8[i].type & 0x1F07) == 5) {

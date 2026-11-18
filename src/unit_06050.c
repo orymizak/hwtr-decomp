@@ -1,4 +1,5 @@
 #include "common.h"
+#include "ultra64.h"
 #include "math.h"
 #include "include_asm.h"
 typedef struct { s32 a; s32 b; s32 c; } V12_;
@@ -92,7 +93,6 @@ void func_800756A0(s32);
 void func_80075720(s32);
 void func_800674DC(void);
 s32 rand(void);
-f32 sqrtf(f32);
 void func_8007A858(u8 *, u8 *, s32 *, s32);
 void func_8007DE54(Vec3f, u32, u8 *, Vec3f);
 s32 File_GetSize(char *);
@@ -180,7 +180,6 @@ typedef struct { u8 p0[4]; char name[0x13]; u8 variant; } TrackName_;
 extern char D_800FE944[];
 extern char *D_800F01E0[8];
 extern u8 D_800F0200[8][3];
-s32 sprintf(char *, const char *, ...);
 s32 strcmp(const char *a, const char *b);
 char *strlwr(char *);
 s32 func_8006586C(void);

@@ -1,4 +1,5 @@
 #include "common.h"
+#include "ultra64.h"
 #include "include_asm.h"
 s32 strcmp(const char *, const char *);
 typedef struct { u8 d[0x2C]; } E2C5_;
@@ -648,7 +649,6 @@ void func_800B1F00(t)
     }
 }
 
-typedef struct { u8 d[0x18]; } E18c_;
 typedef struct { u8 d[0x2C]; } E2Cc_;
 
 void func_800B1FE4(t)
@@ -660,10 +660,10 @@ void func_800B1FE4(t)
         func_800B1A3C((u8 *)&(*(E2Cc_ **)(t + 4))[i]);
     }
     for (i = 0; i < t[8]; i++) {
-        func_800B1C70((T0A2_ *)&(*(E18c_ **)(t + 0xC))[i]);
+        func_800B1C70((T0A2_ *)&(*(OSMesgQueue **)(t + 0xC))[i]);
     }
     for (i = 0; i < t[0x10]; i++) {
-        func_800B1E40((T0A2_ *)&(*(E18c_ **)(t + 0x14))[i]);
+        func_800B1E40((T0A2_ *)&(*(OSMesgQueue **)(t + 0x14))[i]);
     }
 }
 

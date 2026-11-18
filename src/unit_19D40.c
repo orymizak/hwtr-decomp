@@ -1,4 +1,5 @@
 #include "common.h"
+#include "ultra64.h"
 #include "math.h"
 #include "include_asm.h"
 typedef struct { u16 magic; u8 pad[0xA]; s32 c; s32 w10; u32 p14; u32 p18; u32 p1C; u32 p20; u32 p24; u32 p28; u32 p2C; s32 w30; } Hdr79_;
@@ -13,7 +14,6 @@ void GfxPools_Shutdown(void);
 void func_800734F4(s32);
 extern u8 D_800F20F6;
 void func_80079EF4(Hdr7E_ *h);
-f32 sqrtf(f32);
 extern f64 D_800FF8E0;
 
 s32 Memory_Alloc(s32);

@@ -1,4 +1,5 @@
 #include "common.h"
+#include "ultra64.h"
 #include "math.h"
 #include "include_asm.h"
 typedef struct { u8 p0[4]; u16 *unk4; } BufD_;
@@ -9,7 +10,6 @@ extern s32 D_8014C1A8;
 typedef struct { s32 f0; s32 f4; u8 p8[0x548]; } S_D_801455C0;
 void func_80075600(s32 arg0, s8 arg1, s8 arg2, s8 arg3);
 void func_80075640(s32 arg0, f32 arg1, f32 arg2, f32 arg3, f32 arg4);
-f32 sinf(f32);
 typedef struct { s16 x; s16 y; s16 z; u8 pad[10]; } Vtx6D_;
 typedef struct { Vtx6D_ v[32]; u8 p200[0x30]; f32 r; f32 a; u8 p238; u8 mode; } Ring6D_;
     /* TODO (Clean version):

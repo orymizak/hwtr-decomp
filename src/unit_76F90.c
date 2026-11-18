@@ -1,6 +1,6 @@
 #include "common.h"
+#include "ultra64.h"
 #include "include_asm.h"
-s32 osSendMesg(void *, void *,s32);
 extern u8 D_800FB1A0;
 extern u8 D_80144460;
 

@@ -1,4 +1,5 @@
 #include "common.h"
+#include "ultra64.h"
 #include "include_asm.h"
 #include "car.h"
 void func_800CE480(s32, s32);
@@ -40,7 +41,6 @@ void func_8007F4D0(void);
 void func_8007C080(void);
 void func_80066C9C(s32, u8);
 u8 func_8008BAA0(Cfg9_ *);
-f32 sqrtf(f32);
 extern s32 D_800F0108[];
 extern s32 D_800F0120;
 extern s32 D_800F0124[];

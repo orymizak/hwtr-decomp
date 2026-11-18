@@ -1,17 +1,15 @@
 #include "common.h"
+#include "ultra64.h"
 #include "include_asm.h"
-typedef struct { u8 b[0x18]; } MqM_;
 typedef struct { u8 b[0x10]; } ClientM_;
-void osCreateMesgQueue(void *mq, void **msg, s32 count);
-s32 osRecvMesg(void *mq, void **msg, s32 flag);
-void func_800D5910(ClientM_ *c, MqM_ *mq, s32 mask);
+void func_800D5910(ClientM_ *c, OSMesgQueue *mq, s32 mask);
 void func_800D59E0(ClientM_ *c);
 
 
 
 void func_800D6030(s32 n) {
     ClientM_ client;
-    MqM_ mq;
+    OSMesgQueue mq;
     void *msgbuf;
 
     osCreateMesgQueue(&mq, &msgbuf, 1);

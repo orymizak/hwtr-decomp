@@ -1,4 +1,5 @@
 #include "common.h"
+#include "ultra64.h"
 #include "include_asm.h"
 
 
@@ -12,14 +13,11 @@ extern s32 D_80127B98;
 extern AmBuf_ *D_80127B94;
 extern s32 D_80127B90;
 s32 func_800D1AE0(s32, s32);
-s32 osAiSetFrequency(u32);
 s32 func_800D2444(void);
 void func_800D1290(void *, SynCfg_ *);
 s32 func_800D24F0(s32, s32, s32, s32);
 s32 func_800D23FC(s32);
 void func_800D2228(void *);
-void osCreateThread(void *, s32, void (*)(void *), void *, void *, s32);
-void osStartThread(void *);
 
 void func_800D20F0(AmCfg_ *c, s32 a1, u8 fx) {
     SynCfg_ sc;

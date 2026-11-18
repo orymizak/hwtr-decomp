@@ -1,7 +1,7 @@
 #include "common.h"
+#include "ultra64.h"
 #include "include_asm.h"
 typedef struct DmaBuf_ { struct DmaBuf_ *next; struct DmaBuf_ *prev; s32 count; } DmaBuf_;
-s32 osRecvMesg(void *, void *,s32);
 extern void **D_80127990;
 extern void **D_80127994;
 extern s32 D_801279A8;
@@ -9,7 +9,6 @@ extern u8 D_801279B0;
 
 typedef struct { u8 p0[0xC]; u32 unkC; u32 unk10; } Seg_;
 Seg_ *func_800D1D9C();
-u32 osVirtualToPhysical(void *);
 u32 func_800D1D30(u32 addr);
 
 typedef struct DmaC_ { struct DmaC_ *prev; struct DmaC_ *next; s32 frame; u32 addr; s32 ptr; } DmaC_;
@@ -19,10 +18,8 @@ extern s32 D_801279A4;
 extern IoMesgD_ *D_8012799C;
 extern DmaC_ *D_80127998;
 extern void *D_801279A0;
-void *osCartRomInit(void);
 void *func_800D23FC(s32);
 void func_800D2450(void *, u8, s32);
-void osCreateMesgQueue(void *, void *, s32);
 s32 *func_800D1D24(void);
 /* Sets up the ROM DMA cache: n buffers of size bytes in a doubly linked free list, plus the PI
  * message queue; returns the cached-DMA callback. */
@@ -107,7 +104,6 @@ u32 func_800D1D30(u32 addr) {
 
 extern void *D_80138144;
 extern s32 D_80145564;
-s32 osEPiStartDma(void *, IoMesgD_ *, s32);
 
 Seg_ *func_800D1D9C(u32 addr, s32 len) {
     void *h;

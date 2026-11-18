@@ -1,7 +1,7 @@
 #include "common.h"
+#include "ultra64.h"
 #include "math.h"
 #include "include_asm.h"
-f32 sqrtf(f32);
     /* TODO (Clean version): Unify duplicate physics structs across unit files into a shared header (e.g. physics.h):
     - Replace Vec3f, Vec3f, Vec3f with Vec3f.
     - Replace BodyA_, BodyE_, BodyF_ with a unified RigidBody struct (offsets 0x6C pos, 0x78 mom, 0x84 vel, 0x94 rot, 0xB8 am, 0xC4 iw, 0xE8 w, 0xF8 f, 0x104 t).

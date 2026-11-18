@@ -1,11 +1,11 @@
 #include "common.h"
+#include "ultra64.h"
 #include "include_asm.h"
 extern char D_800FFAB8[];
 extern s32 (*D_80140FE4)(char *);
 extern u32 (*D_80140FE0)(char *, void *);
 extern u8 D_801410A8[];
 extern u8 D_80116870[];
-s32 sprintf(char *, const char *, ...);
 
 
 

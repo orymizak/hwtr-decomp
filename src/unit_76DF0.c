@@ -1,7 +1,6 @@
 #include "common.h"
+#include "ultra64.h"
 #include "include_asm.h"
-s32 osCartRomInit();
-s32 osCreatePiManager(s32, void *, void *,s32);
 extern u8 D_8012FD90;
 extern u8 D_8012FDA8;
 extern s32 D_80148040;
@@ -21,15 +20,10 @@ void func_800D6200(void) {
     D_80148040 = osCartRomInit();
 }
 
-typedef struct { u8 b[0x18]; } MqP_;
-typedef struct { u16 type; u8 pri; u8 status; MqP_ *retQueue; void *dramAddr; u32 devAddr; u32 size; void *piHandle; } IoMesgP_;
-void osCreateMesgQueue(void *, void *, s32);
-void osInvalDCache(void *, s32);
-s32 osEPiStartDma(s32, void *, s32);
-s32 osRecvMesg(void *, void *, s32);
+typedef struct { u16 type; u8 pri; u8 status; OSMesgQueue *retQueue; void *dramAddr; u32 devAddr; u32 size; void *piHandle; } IoMesgP_;
 void func_800D6240(u32 rom, void *buf, u32 size) {
     IoMesgP_ io;
-    MqP_ mq;
+    OSMesgQueue mq;
     void *msg;
     u32 n;
 

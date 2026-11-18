@@ -1,6 +1,6 @@
 #include "common.h"
+#include "ultra64.h"
 #include "include_asm.h"
-s32 bcopy(void *, s32,s32);
 s32 func_800D7664();
 s32 func_800D768C();
 extern u8 D_80141090;

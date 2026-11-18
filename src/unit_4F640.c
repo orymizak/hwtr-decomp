@@ -1,4 +1,5 @@
 #include "common.h"
+#include "ultra64.h"
 #include "include_asm.h"
     /* TODO (Clean version): Replace temporary types TAE_ and E14t_ with unified types once layout is verified:
     typedef struct {
@@ -25,7 +26,6 @@ void func_80097B00(void);
 void func_800A5A1C(u32);
 void func_800AEB28(u32);
 void func_800ABCA4(void);
-s32 sprintf(char *, const char *, ...);
 u32 strlen(const char *);
 extern s32 D_801415B8;
 extern u8 D_800F3B80;

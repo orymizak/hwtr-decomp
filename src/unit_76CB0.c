@@ -1,4 +1,5 @@
 #include "common.h"
+#include "ultra64.h"
 #include "include_asm.h"
 
 
@@ -9,7 +10,6 @@ extern u32 D_80138D30;
 extern u32 D_8014C648;
 void func_800D6030(s32);
 void func_800D5DE8(u8);
-u32 osViGetCurrentFramebuffer(void);
 void func_800D60B0(u32 *fb, u32 num) {
     u32 i;
 

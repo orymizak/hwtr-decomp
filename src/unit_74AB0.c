@@ -1,10 +1,10 @@
 #include "common.h"
+#include "ultra64.h"
 #include "include_asm.h"
 typedef struct { u32 w0; u32 w1; } AcmdO_;
 typedef struct { u8 p0[0x14]; s16 *base; u8 p18[4]; s32 length; } FxO_;
 typedef struct { u32 w0; u32 w1; } Acmd_;
 typedef struct { u8 p0[0x14]; s16 *base; u8 p18[4]; s32 length; } Fx_;
-u32 osVirtualToPhysical(void *);
 typedef struct { u16 fc; } LP_;
 typedef struct { u32 input; u32 output; s16 ffcoef; s16 fbcoef; s16 gain; s16 pad; f32 rsinc; f32 rsval; s32 rsdelta; f32 rsgain; LP_ *lp; s32 pad24; } ALDelay_;
 typedef struct { u8 pad0[0x20]; ALDelay_ *delay; } ALFx_;

@@ -1,4 +1,5 @@
 #include "common.h"
+#include "ultra64.h"
 #include "include_asm.h"
 typedef struct { u8 ch; s8 k; } Kern2_;
 typedef struct { Kern2_ *list; u8 n; u8 ch; u8 has; u8 pad; } Kern1_;
@@ -12,7 +13,6 @@ extern s32 (*D_80140FE0)(char *, void *);
 extern u32 (*D_80140FE4)(char *);
 extern u8 *D_801410E0[];
 extern char D_800FFAC0[];
-s32 sprintf(char *, const char *, ...);
 extern KernFont_ D_800F2800[];
 extern s32 D_800F2808;
 extern u8 D_80140F90;

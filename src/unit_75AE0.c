@@ -1,4 +1,5 @@
 #include "common.h"
+#include "ultra64.h"
 #include "include_asm.h"
 typedef struct LinkM_ { struct LinkM_ *next; struct LinkM_ *prev; } LinkM_;
 typedef struct ParamM_ { struct ParamM_ *next; u8 p4[0x18]; } ParamM_;
@@ -12,8 +13,6 @@ typedef struct PlayerL_ { struct PlayerL_ *next; void *clientData; s32 (*handler
 typedef struct { PlayerL_ *head; u8 p4[0x18]; s32 paramSamples; s32 curSamples; u8 p24[0x20]; s32 maxOutSamples; s16 *outBuf; } SynthL_;
 typedef struct ALParamB_ { struct ALParamB_ *next; } ALParamB_;
 typedef struct { u8 pad[0x2C]; ALParamB_ *paramList; } SynthB_;
-s32 alLink(s32, void *);
-s32 alUnlink(s32);
 
 extern void *D_800FB174;
 extern f64 D_801017B0;
@@ -21,7 +20,6 @@ extern f64 D_801017B8;
 extern f64 D_801017C0;
 extern f64 D_801017C8;
 
-void *alHeapDBAlloc(u8 *file, s32 line, void *hp, s32 num, s32 size);
 void *func_800D5490(s32 a, SynConfigM_ *c, void *hp);
 void func_800D2AAC(PVoiceM_ *pv, void *dma, void *hp);
 void func_800D3EB0();

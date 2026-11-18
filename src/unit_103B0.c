@@ -1,4 +1,5 @@
 #include "common.h"
+#include "ultra64.h"
 #include "gfx.h"
 #include "include_asm.h"
 typedef struct { s8 a; s8 b; s8 c; u8 pad[0xD]; } Ent6F_;
@@ -11,8 +12,6 @@ extern S_D_8014EB58 D_8014EB58[];
 extern s32 D_8014108C;
 typedef struct Task6F_ { struct Task6F_ *next; s32 w4; s32 w8; s32 wC; s32 w10; s32 w14; s32 w18; s32 w1C; s32 w20; s32 w24; s32 w28; s32 w2C; s32 w30; s32 w34; s32 w38; s32 w3C; Gfx *dl; s32 dlsize; s32 w48; s32 w4C; s32 w50; void *msg; } Task6F_;
 typedef struct { u8 r; u8 g; u8 b; u8 pad3; u8 r2; u8 g2; u8 b2; u8 pad[9]; } L16_;
-typedef struct { u8 b[0x50]; } ViMode7_;
-typedef struct { u8 b[0x50]; } ViMode8_;
 typedef struct { u8 p[0x54]; s16 *type; } Msg6F_;
 typedef struct { f32 r; f32 g; f32 b; } ColF_;
 extern ColF_ D_800F1E58[6];
@@ -25,12 +24,10 @@ extern f32 D_800F2110;
 extern void (*D_800F1CB4)(Msg6F_ *);
 extern void (*D_800F1CB8)(Msg6F_ *);
 extern s32 D_80140E44;
-void osCreateMesgQueue(void *, void *, s32);
-s32 osRecvMesg(void *, void *, s32);
 void func_8006F7B0(void *arg);
 void func_8006E00C(void *);
 extern u8 D_800FF7B0;
-extern ViMode7_ D_800FB6F0[];
+extern OSViMode D_800FB6F0[];
 void func_800D6030(s32);
 extern u8 D_800F20F5;
 void func_8007863C(s32, s32, s32, s32);
@@ -51,12 +48,9 @@ extern u8 D_80138E40[];
 extern u8 D_80140E40[];
 extern u8 D_80143850[];
 void func_800D61C0(void);
-void osCreateThread(void *, s32, void (*)(void *), void *, void *, s32);
-void osStartThread(void *);
 void func_8006F8C4(void);
 extern L16_ D_800F1DE8[];
 void MtxPool_Grow(void *, u32);
-void guLookAtReflect(void *, void *, f32, f32, f32, f32, f32, f32, f32, f32, f32);
 extern Task6F_ *D_8010A220;
 extern s32 *D_80141690;
 extern u16 D_800F1CBC;
@@ -72,19 +66,11 @@ extern s32 D_800F1CC8;
 extern s16 D_8010A224;
 extern u8 D_8014D33C;
 extern u8 D_F1CF8;
-void osViBlack(u8);
-void osViSetMode(void *);
-void osViSetSpecialFeatures(u32);
-u32 osSetIntMask(u32);
-void osWritebackDCacheAll(void);
-s32 osSendMesg(void *, void *, s32);
 void func_800D5ED0(void);
 void func_800D60B0(void *, s32);
 void func_800D5FB0(void *);
 void func_800D5FF0(void);
 extern u8 D_800F20F7;
-f32 cosf(f32);
-f32 sinf(f32);
 extern f32 D_800F2114;
 extern f32 D_800F2118;
 extern f32 D_800F211C;
@@ -524,7 +510,7 @@ s32 func_80071940(void) {
 s32 func_80071A40(void) {
     u16 *p;
 
-    osViSetMode(&((ViMode8_ *)&D_800FB9C0)[D_801380B0]);
+    osViSetMode(&((OSViMode *)&D_800FB9C0)[D_801380B0]);
     func_800D61C0();
     func_800D6030(2);
     osViSetSpecialFeatures(0x5A);

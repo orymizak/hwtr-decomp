@@ -1,4 +1,5 @@
 #include "common.h"
+#include "ultra64.h"
 #include "include_asm.h"
 /* Physical voice as initialised by func_800D2AAC: load (decoder), resample and envmixer state. */
 typedef struct { u8 p0[0xC]; s32 decState; s32 decLState; u8 p14[0x14]; s32 decDma; s32 decDmaState; u8 p30[0x4]; s32 decLastsam; s32 decFirst; s32 decMemin; s32 rsState; f32 rsRatio; s32 rsUpitch; s32 rsDelta; s32 rsFirst; s32 emState; s16 emPan; s16 emVolume; s16 emCvolL; s16 emCvolR; s16 emDryamt; s16 emWetamt; u16 emLratl; s16 emLratm; s16 emLtgt; u16 emRratl; s16 emRratm; s16 emRtgt; s32 emDelta; s32 emSegEnd; s32 emFirst; s32 emCtrlList; s32 emCtrlTail; s32 emMotion; } PVoiceInit_;
@@ -35,9 +36,7 @@ extern s32 D_800FB038[];
 extern s16 D_800FB060[];
 s16 func_800D341C(f64, f64, s32, u16 *);
 AcmdE_ *func_800D3CD0(void *, s16 *, AcmdE_ *);
-u32 osVirtualToPhysical(void *);
 extern DrvG_ *D_800FB174;
-s32 alHeapDBAlloc(s32, s32, void *, s32, s32);
 
 
 

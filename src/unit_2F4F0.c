@@ -1,4 +1,5 @@
 #include "common.h"
+#include "ultra64.h"
 #include "include_asm.h"
 #include "car.h"
 typedef struct { s32 a; s32 b; s32 c; } V12_;
@@ -37,7 +38,6 @@ typedef Vec3f Vec3f_;
 typedef struct { u8 p0[0x44]; s32 mode; u8 pt; u8 car; u8 p4A[2]; u8 b4C; u8 p4D[3]; s32 timer; } Cam90_;
 typedef struct { u8 p0[4]; Vec3f_ pos; Vec3f_ vel; f32 m[3][3]; f32 fov; s32 mode; u8 pt; u8 car; u8 b4A; u8 b4B; u8 b4C; u8 p4D[7]; u32 shake; f32 f58; u8 b5C; u8 p5D[3]; u32 b60; } CamE_;
 typedef struct { s32 mode; Vec3f_ ofs; f32 dist; } CamT_;
-f32 sinf(f32);
 extern u8 D_80118550;
 extern u8 D_80138D43;
 s32 func_8008D3AC(void);
@@ -54,7 +54,6 @@ extern u8 D_80118621;
 extern s32 *D_80118624;
 s32 func_80096100(void);
 Car *func_800960D8(u8);
-f32 sqrtf(f32);
 extern u8 D_80118558[];
 s32 func_800A5894(void);
 extern u8 D_801185AC;

@@ -1,4 +1,5 @@
 #include "common.h"
+#include "ultra64.h"
 
 #define FRAMEBUFFER ((s32 *)0x80300000)
 #define FRAMEBUFFER_WORDS 0x25800
@@ -18,11 +19,6 @@ extern ViMode D_800FB920[];
 extern s32 D_801380B0;
 extern s32 D_800F2190;
 
-void *osViGetCurrentFramebuffer(void);
-void osViSwapBuffer(void *framebuffer);
-u32 osViGetCurrentMode(void);
-void osViSetMode(ViMode *mode);
-void osViBlack(u8 active);
 s32 FileTable_Init(void);
 void Memory_InitMain(void);
 void func_80060C30(void);

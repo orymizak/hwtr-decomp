@@ -1,4 +1,5 @@
 #include "common.h"
+#include "ultra64.h"
 #include "include_asm.h"
 typedef struct ALParamK_ { struct ALParamK_ *next; s32 delta; s16 type; s32 data; s32 moredata; } ALParamK_;
 typedef struct VoiceK_ { u8 node[8]; struct PVoiceK_ *pvoice; void *table; void *clientPrivate; s16 state; s16 priority; s16 fxBus; s16 unityPitch; } VoiceK_;
@@ -10,8 +11,6 @@ typedef struct { u8 p0[0x16]; s16 priority; } VVoiceJ_;
 typedef struct { LinkJ_ node; VVoiceJ_ *vvoice; u8 pC[0x7C]; s32 offset; } PVoiceJ_;
 typedef struct { void *head; LinkJ_ pFreeList; LinkJ_ pAllocList; LinkJ_ pLameList; s32 paramSamples; } SynthJ_;
 extern SynthJ_ *D_800FB174;
-void alUnlink(LinkJ_ *ln);
-void alLink(LinkJ_ *ln, LinkJ_ *to);
 
 
 

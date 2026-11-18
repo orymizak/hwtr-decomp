@@ -1,4 +1,5 @@
 #include "common.h"
+#include "ultra64.h"
 
 typedef struct {
     void *first;
@@ -15,7 +16,6 @@ void Heap_Clear(Heap *heap);
 void *Heap_Alloc(Heap *heap, u32 size);
 s32 Heap_Free(Heap *heap, void *ptr);
 void Heap_AddRegion(Heap *heap, void *start, u32 size);
-u32 osGetMemSize(void);
 
 void Memory_InitMain(void) {
     Heap_Clear(&D_80138D2C);

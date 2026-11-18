@@ -1,9 +1,9 @@
 #include "common.h"
+#include "ultra64.h"
 #include "include_asm.h"
 typedef struct { u32 w0; u32 w1; } AcmdR_;
 typedef struct { u8 p0[0x40]; void *state; f32 ratio; s32 upitch; f32 delta; s32 first; } ResR_;
 AcmdR_ *func_800D35B0(void *, s16 *, s32, AcmdR_ *);
-u32 osVirtualToPhysical(void *);
 
 s32 func_800D39F8();
 

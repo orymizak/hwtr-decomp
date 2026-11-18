@@ -1,4 +1,5 @@
 #include "common.h"
+#include "ultra64.h"
 #include "math.h"
 #include "include_asm.h"
 /* TODO(match-debt): empty loop needed to match (scheduling barrier). Assumed to be a debug hook
@@ -154,8 +155,6 @@ extern Nm5010_ D_800F61F0[];
 void func_800B337C(u8, f32, f32, f32, f32, f32, f32, f32);
 void func_800B318C(f32 (*m)[4]);
 extern void (*D_80141034)(f32 (*)[4]);
-f32 cosf(f32);
-f32 sinf(f32);
 extern u8 D_800F648F;
 extern u8 D_800F648E;
 void func_800C4890(void);
@@ -508,7 +507,6 @@ extern s8 D_80124CFE;
 extern s8 D_80124CFF;
 extern s8 D_80124D00;
 extern s8 D_80124D01;
-s32 sprintf(s32 *, s32 *, s32);
 extern s32 D_80101020;
 extern s32 D_80124D04;
 extern s8 D_80124D08;
