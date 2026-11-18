@@ -1,4 +1,5 @@
 #include "common.h"
+#include "gfx.h"
 #include "ultra64.h"
 #include "math.h"
 #include "include_asm.h"
@@ -10,8 +11,7 @@ extern s32 D_8014C1A8;
 typedef struct { s32 f0; s32 f4; u8 p8[0x548]; } S_D_801455C0;
 void func_80075600(s32 arg0, s8 arg1, s8 arg2, s8 arg3);
 void func_80075640(s32 arg0, f32 arg1, f32 arg2, f32 arg3, f32 arg4);
-typedef struct { s16 x; s16 y; s16 z; u8 pad[10]; } Vtx6D_;
-typedef struct { Vtx6D_ v[32]; u8 p200[0x30]; f32 r; f32 a; u8 p238; u8 mode; } Ring6D_;
+typedef struct { Vtx v[32]; u8 p200[0x30]; f32 r; f32 a; u8 p238; u8 mode; } Ring6D_;
     /* TODO (Clean version):
     Definición duplicada idéntica a S_D_801455C0 empleada para forzar el casteo en func_8006DC28. En C limpio debe eliminarse y reutilizar S_D_801455C0; se mantiene para preservar el matching binario.
     */
@@ -106,16 +106,16 @@ void func_8006D6EC(Ring6D_ *s, u32 t) {
     if (s->mode == 0) {
         for (i = 0; i < 32; i++) {
             ang = (f32) i * 3.14159265 / 16.0 + s->a;
-            s->v[i].x = func_800E6E80(ang) * (s->r + (i & 1) * 65.0);
-            s->v[i].y = func_800E6F60(ang) * (s->r + (i & 1) * 65.0);
-            s->v[i].z = -((i & 1) * 65.0 / 3.0);
+            s->v[i].v.ob[0] = func_800E6E80(ang) * (s->r + (i & 1) * 65.0);
+            s->v[i].v.ob[1] = func_800E6F60(ang) * (s->r + (i & 1) * 65.0);
+            s->v[i].v.ob[2] = -((i & 1) * 65.0 / 3.0);
         }
     } else if (s->mode != 2) {
         for (i = 0; i < 32; i++) {
             ang = (f32) i * 3.14159265 / 16.0 + s->a;
-            s->v[i].x = func_800E6E80(ang) * (s->r + (i & 1) * 65.0);
-            s->v[i].y = func_800E6F60(ang) * (s->r + (i & 1) * 65.0);
-            s->v[i].z = 0;
+            s->v[i].v.ob[0] = func_800E6E80(ang) * (s->r + (i & 1) * 65.0);
+            s->v[i].v.ob[1] = func_800E6F60(ang) * (s->r + (i & 1) * 65.0);
+            s->v[i].v.ob[2] = 0;
         }
     } else {
         return;

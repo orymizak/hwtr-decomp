@@ -15,7 +15,7 @@ from pathlib import Path
 TC = "tools/gcc_2.7.2/"
 FLAGS = ["-G0", "-mips3", "-mgp32", "-mfp32", "-Iinclude", "-Itools/ultralib/include", "-Itools/ultralib/include/PR",
          "-Itools/ultralib/include/compiler/gcc", "-Itools/ultralib/src",
-         "-D_LANGUAGE_C", "-D_MIPS_SZLONG=32", "-DBUILD_VERSION=VERSION_K", "-D_FINALROM", "-DNDEBUG", "-DF3DEX_GBI_2"]
+         "-D_LANGUAGE_C", "-D_MIPS_SZLONG=32", "-DBUILD_VERSION=VERSION_K", "-DNDEBUG", "-DF3DEX_GBI_2"]
 REFS = Path("rodata_refs.txt")
 ROM_PATH = Path("baserom.z64")
 R = lambda v: v - 0x80060400 + 0x1000

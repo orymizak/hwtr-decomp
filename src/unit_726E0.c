@@ -12,10 +12,9 @@ Seg_ *func_800D1D9C();
 u32 func_800D1D30(u32 addr);
 
 typedef struct DmaC_ { struct DmaC_ *prev; struct DmaC_ *next; s32 frame; u32 addr; s32 ptr; } DmaC_;
-typedef struct { u8 p0[2]; u8 pri; u8 p3; void *retQueue; s32 dramAddr; u32 devAddr; s32 size; s32 piHandle; } IoMesgD_;
 extern void *D_801279C8;
 extern s32 D_801279A4;
-extern IoMesgD_ *D_8012799C;
+extern OSIoMesg *D_8012799C;
 extern DmaC_ *D_80127998;
 extern void *D_801279A0;
 void *func_800D23FC(s32);
@@ -112,7 +111,7 @@ Seg_ *func_800D1D9C(u32 addr, s32 len) {
     DmaC_ *fp;
     DmaC_ *n;
     u32 end;
-    IoMesgD_ *m;
+    OSIoMesg *m;
 
     if ((addr & 0xFF000000) == 0xFF000000) {
         h = D_80138144;
@@ -160,12 +159,12 @@ Seg_ *func_800D1D9C(u32 addr, s32 len) {
     fp->addr = addr & ~1;
     fp->frame = 2;
     m = &D_8012799C[D_801279A8++];
-    m->pri = 0;
-    m->retQueue = &D_801279B0;
-    m->dramAddr = fp->ptr;
+    m->hdr.pri = OS_MESG_PRI_NORMAL;
+    m->hdr.retQueue = &D_801279B0;
+    m->dramAddr = (void *)fp->ptr;
     m->devAddr = fp->addr;
     m->size = D_801279A4;
-    osEPiStartDma(h, m, 0);
+    osEPiStartDma(h, m, OS_READ);
     return (Seg_ *)fp;
 }
 

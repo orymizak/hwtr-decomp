@@ -64,13 +64,12 @@ void func_8007C2C8(PPool_ *pool) {
     /* TODO (Clean version):
     Estructuras locales y duplicadas creadas para func_8007C434. En C limpio deben sustituirse por los tipos estándar de libultra (Gfx, Vtx) y definiciones unificadas de partículas (Particle, ParticlePool, Vec3f, Vec4f), evitando tipos artificiales como Vtx4C4_ y Vtx3C4_ usados para copiar memoria. Se mantienen para el match.
     */
-typedef struct { s16 x; s16 y; s16 z; u16 flag; s16 s; s16 t; u8 c[4]; } VtxC4_;
 typedef struct { s32 w[16]; } Vtx4C4_;
 typedef struct { s32 w[12]; } Vtx3C4_;
 typedef struct { u8 kind; u8 frames; u8 p2[2]; f32 scale; } PDefC4_;
 typedef struct { Quat q; Vec3f axis; f32 angle; f32 f20; u8 pad24[0x1C]; Vec3f pos; f32 vx; f32 vy; f32 vz; f32 f58; f32 f5C; PDefC4_ *def; u16 life; u8 flags; u8 r; u8 g; u8 b; u8 kind; u8 frames; u16 h6C; s16 h6E; } PrtC4_;
 typedef struct { u32 cap; s32 tail; s32 head; PrtC4_ *buf; } PoolPC4_;
-extern VtxC4_ *D_8014445C;
+extern Vtx *D_8014445C;
 extern PDefC4_ *D_801380C8[];
 extern Vtx3C4_ D_800F23C0;
 extern u8 D_800F23A8[];
@@ -306,23 +305,23 @@ void func_8007C434(PoolPC4_ *pool, f32 (*m)[4]) {
             } else if (p->flags & 0x20) {
                 GfxPools_ReserveVtx(3);
                 *(Vtx3C4_ *) D_8014445C = D_800F23C0;
-                D_8014445C[1].x = 1;
-                D_8014445C[0].x = 0;
-                D_8014445C[0].y = 0;
-                D_8014445C[0].z = 0;
-                D_8014445C[1].y = 1;
-                D_8014445C[1].z = 1;
-                D_8014445C[2].x = p->vx * p->q.x;
-                D_8014445C[2].y = p->vy * p->q.x;
-                D_8014445C[2].z = p->vz * p->q.x;
-                D_8014445C[1].c[0] = D_8014445C[0].c[0] = p->r;
-                D_8014445C[1].c[1] = D_8014445C[0].c[1] = p->g;
-                D_8014445C[1].c[2] = D_8014445C[0].c[2] = p->b;
-                D_8014445C[1].c[3] = D_8014445C[0].c[3] = p->h6C >> 8;
-                D_8014445C[2].c[0] = p->r;
-                D_8014445C[2].c[1] = 0;
-                D_8014445C[2].c[2] = 0;
-                D_8014445C[2].c[3] = p->h6C >> 8;
+                D_8014445C[1].v.ob[0] = 1;
+                D_8014445C[0].v.ob[0] = 0;
+                D_8014445C[0].v.ob[1] = 0;
+                D_8014445C[0].v.ob[2] = 0;
+                D_8014445C[1].v.ob[1] = 1;
+                D_8014445C[1].v.ob[2] = 1;
+                D_8014445C[2].v.ob[0] = p->vx * p->q.x;
+                D_8014445C[2].v.ob[1] = p->vy * p->q.x;
+                D_8014445C[2].v.ob[2] = p->vz * p->q.x;
+                D_8014445C[1].v.cn[0] = D_8014445C[0].v.cn[0] = p->r;
+                D_8014445C[1].v.cn[1] = D_8014445C[0].v.cn[1] = p->g;
+                D_8014445C[1].v.cn[2] = D_8014445C[0].v.cn[2] = p->b;
+                D_8014445C[1].v.cn[3] = D_8014445C[0].v.cn[3] = p->h6C >> 8;
+                D_8014445C[2].v.cn[0] = p->r;
+                D_8014445C[2].v.cn[1] = 0;
+                D_8014445C[2].v.cn[2] = 0;
+                D_8014445C[2].v.cn[3] = p->h6C >> 8;
                 { Gfx *_g = (Gfx *) (D_8014EC78++); _g->words.w0 = (0x01003006); _g->words.w1 = (u32) ( (u32) D_8014445C - 0x80000000); };
                 D_8014445C += 3;
             }

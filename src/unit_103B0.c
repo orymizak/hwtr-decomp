@@ -1,5 +1,6 @@
 #include "common.h"
 #include "ultra64.h"
+#include "nusys.h"
 #include "gfx.h"
 #include "include_asm.h"
 typedef struct { s8 a; s8 b; s8 c; u8 pad[0xD]; } Ent6F_;
@@ -10,7 +11,6 @@ void func_800704DC(void);
 typedef struct { s32 f0; s32 f4; s32 f8; s32 fC; u8 p10[0x78]; s32 f88; s32 f8C; } S_D_8014EB58;
 extern S_D_8014EB58 D_8014EB58[];
 extern s32 D_8014108C;
-typedef struct Task6F_ { struct Task6F_ *next; s32 w4; s32 w8; s32 wC; s32 w10; s32 w14; s32 w18; s32 w1C; s32 w20; s32 w24; s32 w28; s32 w2C; s32 w30; s32 w34; s32 w38; s32 w3C; Gfx *dl; s32 dlsize; s32 w48; s32 w4C; s32 w50; void *msg; } Task6F_;
 typedef struct { u8 r; u8 g; u8 b; u8 pad3; u8 r2; u8 g2; u8 b2; u8 pad[9]; } L16_;
 typedef struct { u8 p[0x54]; s16 *type; } Msg6F_;
 typedef struct { f32 r; f32 g; f32 b; } ColF_;
@@ -36,7 +36,7 @@ void func_8006DFBC(void);
 void func_80066C9C(s32, s32);
 void func_800D61F0(void);
 s32 GfxPools_Shutdown();
-extern Task6F_ D_8014C1D0[];
+extern NUScTask D_8014C1D0[];
 extern s16 D_8010A226;
 extern u8 D_8010A228[];
 extern u8 D_8010C3E0[];
@@ -51,7 +51,7 @@ void func_800D61C0(void);
 void func_8006F8C4(void);
 extern L16_ D_800F1DE8[];
 void MtxPool_Grow(void *, u32);
-extern Task6F_ *D_8010A220;
+extern NUScTask *D_8010A220;
 extern s32 *D_80141690;
 extern u16 D_800F1CBC;
 extern s32 D_8014C648;
@@ -125,20 +125,20 @@ void func_8006F8C4(void) {
     osStartThread(D_8010A228);
     for (i = 0; i < 10; i++) {
         D_8014C1D0[i].next = &D_8014C1D0[i + 1];
-        D_8014C1D0[i].w50 = (s32) D_8014EC80;
-        D_8014C1D0[i].w10 = 1;
-        D_8014C1D0[i].w14 = 0;
-        D_8014C1D0[i].w18 = (s32) D_800E7AA0;
-        D_8014C1D0[i].w1C = D_800E7B70 - D_800E7AA0;
-        D_8014C1D0[i].w24 = 0x1000;
-        D_8014C1D0[i].w2C = 0x800;
-        D_8014C1D0[i].w30 = (s32) D_8014CD80;
-        D_8014C1D0[i].w34 = 0x400;
-        D_8014C1D0[i].w38 = (s32) D_80138E40;
-        D_8014C1D0[i].w3C = (s32) D_80140E40;
-        D_8014C1D0[i].w48 = (s32) D_80143850;
-        D_8014C1D0[i].w4C = 0xC00;
-        D_8014C1D0[i].w50 = (s32) D_8014EC80;
+        D_8014C1D0[i].msgQ = (OSMesgQueue *)D_8014EC80;
+        D_8014C1D0[i].list.t.type = M_GFXTASK;
+        D_8014C1D0[i].list.t.flags = 0;
+        D_8014C1D0[i].list.t.ucode_boot = (u64 *)D_800E7AA0;
+        D_8014C1D0[i].list.t.ucode_boot_size = D_800E7B70 - D_800E7AA0;
+        D_8014C1D0[i].list.t.ucode_size = SP_UCODE_SIZE;
+        D_8014C1D0[i].list.t.ucode_data_size = SP_UCODE_DATA_SIZE;
+        D_8014C1D0[i].list.t.dram_stack = (u64 *)D_8014CD80;
+        D_8014C1D0[i].list.t.dram_stack_size = SP_DRAM_STACK_SIZE8;
+        D_8014C1D0[i].list.t.output_buff = (u64 *)D_80138E40;
+        D_8014C1D0[i].list.t.output_buff_size = (u64 *)D_80140E40; /* end of the buffer */
+        D_8014C1D0[i].list.t.yield_data_ptr = (u64 *)D_80143850;
+        D_8014C1D0[i].list.t.yield_data_size = OS_YIELD_DATA_SIZE;
+        D_8014C1D0[i].msgQ = (OSMesgQueue *)D_8014EC80;
     }
     D_8014C1D0[9].next = &D_8014C1D0[0];
     D_8010A220 = &D_8014C1D0[0];
@@ -150,23 +150,23 @@ extern s32 *D_8014C6C8;
 
 /* Queues an RSP graphics task for dl (ucode pair ucode); flag bit 0 also flips to the next frame buffer. */
 void func_8006FA7C(Gfx *dl, s32 size, s32 ucode, u32 flags) {
-    Task6F_ *t;
+    NUScTask *t;
     u16 f;
     u32 mask;
     u32 next;
 
     t = D_8010A220;
-    t->dl = dl;
-    t->dlsize = size;
-    t->w14 = flags >> 16;
-    t->w20 = D_80141690[ucode * 2];
-    t->w28 = D_80141690[ucode * 2 + 1];
-    t->w8 = flags & 0xFFFF;
-    t->wC = D_8014C648;
+    t->list.t.data_ptr = (u64 *)dl;
+    t->list.t.data_size = size;
+    t->list.t.flags = flags >> 16;
+    t->list.t.ucode = (u64 *)D_80141690[ucode * 2];
+    t->list.t.ucode_data = (u64 *)D_80141690[ucode * 2 + 1];
+    t->flags = flags & 0xFFFF;
+    t->framebuffer = (void *)D_8014C648;
     f = D_800F1CBC;
     if (f & 4) {
         D_800F1CBC = f ^ 4;
-        t->w14 |= 2;
+        t->list.t.flags |= OS_TASK_DP_WAIT;
     }
     D_800F1CBC = flags;
     if (flags & 1) {
@@ -187,7 +187,7 @@ void func_8006FA7C(Gfx *dl, s32 size, s32 ucode, u32 flags) {
 
 s32 func_8006FBF0(void) {
     Gfx dl[0x101];
-    Task6F_ *t;
+    NUScTask *t;
     u16 f;
     u32 mask;
 
@@ -208,16 +208,16 @@ s32 func_8006FBF0(void) {
     gSPDisplayList(&dl[0], &D_F1CF8);
     gDPFullSync(&dl[1]);
     gSPEndDisplayList(&dl[2]);
-    t->dl = dl;
-    t->dlsize = 0x18;
-    t->w14 = 0;
-    t->w20 = D_80141690[0];
-    t->w28 = D_80141690[1];
-    t->w8 = 0;
-    t->wC = D_8014C648;
+    t->list.t.data_ptr = (u64 *)dl;
+    t->list.t.data_size = 0x18;
+    t->list.t.flags = 0;
+    t->list.t.ucode = D_80141690[0];
+    t->list.t.ucode_data = D_80141690[1];
+    t->flags = 0;
+    t->framebuffer = (void *)D_8014C648;
     if (f & 4) {
         D_800F1CBC = f ^ 4;
-        t->w14 |= 2;
+        t->list.t.flags |= OS_TASK_DP_WAIT;
     }
     D_800F1CBC = 0;
     D_8010A220->msg = &D_8010A224;

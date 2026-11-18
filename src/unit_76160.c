@@ -1,5 +1,6 @@
 #include "common.h"
 #include "ultra64.h"
+#include "nusys.h"
 #include "include_asm.h"
 typedef struct { u8 p0[8]; s16 count; } RetraceCfg_;
 typedef struct { u8 b[0x10]; } ClientW_;
@@ -14,9 +15,7 @@ extern s32 D_8014D33C;
 extern s8 D_8014D97D;
 extern u8 D_8014D97C;
 typedef struct ClientS_ { struct ClientS_ *next; void *mq; s16 mask; } ClientS_;
-typedef struct { u8 p0[0x10]; u8 list[0x40]; void *msgQ; void *msg; } ScTaskS_;
-typedef struct { s16 retraceMsg; s16 prenmiMsg; OSMesgQueue audioRequestMQ; void *audioBuf[8]; OSMesgQueue gfxMQ; void *gfxBuf[8]; OSMesgQueue retraceMQ; void *retraceBuf[8]; OSMesgQueue rspMQ; void *rspBuf[8]; OSMesgQueue rdpMQ; void *rdpBuf[8]; OSMesgQueue waitMQ; void *waitBuf[8]; u8 p154[4]; u8 schedulerThread[0x1B0]; u8 audioThread[0x1B0]; u8 graphicsThread[0x1B0]; ClientS_ *clientList; ScTaskS_ *curGraphicsTask; ScTaskS_ *curAudioTask; ScTaskS_ *graphicsTaskSuspended; u32 frameRate; u8 retraceCount; u8 frameBufferNum; } SchedS_;
-typedef struct { u8 p0[8]; u32 flags; u8 pC[4]; u8 list[0x40]; void *msgQ; } ScTaskG_;
+typedef struct { s16 retraceMsg; s16 prenmiMsg; OSMesgQueue audioRequestMQ; void *audioBuf[8]; OSMesgQueue gfxMQ; void *gfxBuf[8]; OSMesgQueue retraceMQ; void *retraceBuf[8]; OSMesgQueue rspMQ; void *rspBuf[8]; OSMesgQueue rdpMQ; void *rdpBuf[8]; OSMesgQueue waitMQ; void *waitBuf[8]; u8 p154[4]; u8 schedulerThread[0x1B0]; u8 audioThread[0x1B0]; u8 graphicsThread[0x1B0]; ClientS_ *clientList; NUScTask *curGraphicsTask; NUScTask *curAudioTask; NUScTask *graphicsTaskSuspended; u32 frameRate; u8 retraceCount; u8 frameBufferNum; } SchedS_;
 extern SchedS_ D_8014D300;
 extern s32 osTvType;
 extern OSViMode osViModeTable[];
@@ -167,8 +166,8 @@ void func_800D5A5C(s16 *msg) {
 }
 
 void func_800D5ABC(void) {
-    ScTaskS_ *gfxTask;
-    ScTaskS_ *audioTask;
+    NUScTask *gfxTask;
+    NUScTask *audioTask;
     void *msg;
     u32 yieldFlag;
 
@@ -181,23 +180,23 @@ void func_800D5ABC(void) {
             if (gfxTask) {
                 osSpTaskYield();
                 osRecvMesg(&D_8014D300.rspMQ, (void **)&msg, 1);
-                if (osSpTaskYielded(gfxTask->list)) {
+                if (osSpTaskYielded(&gfxTask->list)) {
                     yieldFlag = 1;
                 } else {
                     yieldFlag = 2;
                 }
             }
             D_8014D300.curAudioTask = audioTask;
-            osSpTaskLoad(audioTask->list);
-            osSpTaskStartGo(audioTask->list);
+            osSpTaskLoad(&audioTask->list);
+            osSpTaskStartGo(&audioTask->list);
             osRecvMesg(&D_8014D300.rspMQ, (void **)&msg, 1);
             D_8014D300.curAudioTask = 0;
             if (D_8014D300.graphicsTaskSuspended) {
                 osSendMesg(&D_8014D300.waitMQ, &msg, 1);
             }
             if (yieldFlag == 1) {
-                osSpTaskLoad(gfxTask->list);
-                osSpTaskStartGo(gfxTask->list);
+                osSpTaskLoad(&gfxTask->list);
+                osSpTaskStartGo(&gfxTask->list);
             } else if (yieldFlag == 2) {
                 osSendMesg(&D_8014D300.rspMQ, &msg, 1);
             }
@@ -208,7 +207,7 @@ void func_800D5ABC(void) {
 
 void func_800D5C18(void) {
     s32 mask;
-    ScTaskG_ *gfxTask;
+    NUScTask *gfxTask;
     void *msg;
 
     while (1) {
@@ -217,7 +216,7 @@ void func_800D5C18(void) {
             func_800D5D5C((FrameR_ *)gfxTask);
             mask = osSetIntMask(1);
             if (D_8014D300.curAudioTask) {
-                D_8014D300.graphicsTaskSuspended = (ScTaskS_ *)gfxTask;
+                D_8014D300.graphicsTaskSuspended = gfxTask;
                 osSetIntMask(mask);
                 osRecvMesg(&D_8014D300.waitMQ, (void **)&msg, 1);
                 mask = osSetIntMask(1);
@@ -225,10 +224,10 @@ void func_800D5C18(void) {
             }
             osSetIntMask(mask);
             mask = osSetIntMask(1);
-            D_8014D300.curGraphicsTask = (ScTaskS_ *)gfxTask;
+            D_8014D300.curGraphicsTask = gfxTask;
             osSetIntMask(mask);
-            osSpTaskLoad(gfxTask->list);
-            osSpTaskStartGo(gfxTask->list);
+            osSpTaskLoad(&gfxTask->list);
+            osSpTaskStartGo(&gfxTask->list);
             osRecvMesg(&D_8014D300.rspMQ, (void **)&msg, 1);
             mask = osSetIntMask(1);
             D_8014D300.curGraphicsTask = 0;

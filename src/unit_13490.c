@@ -34,10 +34,9 @@ extern s32 D_800F2028;
 extern s32 D_800F1EA4;
 void func_8007A004(s32 *, s32, u8);
 extern u8 D_800F2060;
-typedef struct { s16 x; s16 y; s16 z; u16 flag; s16 s; s16 t; u8 r; u8 g; u8 b; u8 a; } VtxIn75_;
 typedef struct { f32 x; f32 y; f32 z; u8 r; u8 g; u8 b; u8 on; } VtxOut75_;
 typedef struct { u8 p0[6]; u16 nVtx; } MeshHdr75_;
-typedef struct { f32 m[3][4]; s32 flags; u8 p34[8]; MeshHdr75_ *hdr; VtxIn75_ *in; VtxOut75_ *out; } MeshXf75_;
+typedef struct { f32 m[3][4]; s32 flags; u8 p34[8]; MeshHdr75_ *hdr; Vtx *in; VtxOut75_ *out; } MeshXf75_;
 extern u8 D_8014D184;
 extern u8 D_8014D188;
 extern u8 D_8014D18C;
@@ -514,7 +513,7 @@ void func_80075858(void) {
 
 /* Transforms the mesh vertices by m; vertices whose alpha bit 0 is clear are marked off. */
 void func_80075888(MeshXf75_ *o) {
-    VtxIn75_ *in;
+    Vtx *in;
     VtxOut75_ *out;
     s32 i;
     f32 x;
@@ -527,16 +526,16 @@ void func_80075888(MeshXf75_ *o) {
     out = o->out;
     in = o->in;
     for (i = 0; i < o->hdr->nVtx; out++, in++, i++) {
-        if (in->a & 1) {
-            x = in->x;
-            y = in->y;
-            z = in->z;
+        if (in->v.cn[3] & 1) {
+            x = in->v.ob[0];
+            y = in->v.ob[1];
+            z = in->v.ob[2];
             out->x = o->m[0][0] * x + o->m[0][1] * y + o->m[0][2] * z + o->m[0][3];
             out->y = o->m[1][0] * x + o->m[1][1] * y + o->m[1][2] * z + o->m[1][3];
             out->z = o->m[2][0] * x + o->m[2][1] * y + o->m[2][2] * z + o->m[2][3];
-            out->r = in->r;
-            out->g = in->g;
-            out->b = in->b;
+            out->r = in->v.cn[0];
+            out->g = in->v.cn[1];
+            out->b = in->v.cn[2];
             out->on = 1;
         } else {
             out->on = 0;
@@ -556,16 +555,16 @@ void func_800759F0(Node72_ *n) {
 void func_80075A38(MeshXf75_ *o) {
     s32 i;
     VtxOut75_ *out;
-    VtxIn75_ *in;
+    Vtx *in;
     s32 n = o->hdr->nVtx;
 
     in = o->in;
     out = o->out;
     for (i = 0; i < n; i++) {
         if (o->out[i].on & 1) {
-            in->r = out->r;
-            in->g = out->g;
-            in->b = out->b;
+            in->v.cn[0] = out->r;
+            in->v.cn[1] = out->g;
+            in->v.cn[2] = out->b;
         }
         out++;
         in++;

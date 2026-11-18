@@ -20,16 +20,15 @@ void func_800D6200(void) {
     D_80148040 = osCartRomInit();
 }
 
-typedef struct { u16 type; u8 pri; u8 status; OSMesgQueue *retQueue; void *dramAddr; u32 devAddr; u32 size; void *piHandle; } IoMesgP_;
 void func_800D6240(u32 rom, void *buf, u32 size) {
-    IoMesgP_ io;
+    OSIoMesg io;
     OSMesgQueue mq;
     void *msg;
     u32 n;
 
     osCreateMesgQueue(&mq, &msg, 1);
-    io.pri = 0;
-    io.retQueue = &mq;
+    io.hdr.pri = OS_MESG_PRI_NORMAL;
+    io.hdr.retQueue = &mq;
     osInvalDCache(buf, size);
     while (size) {
         if (size > 0x4000) {
@@ -40,11 +39,11 @@ void func_800D6240(u32 rom, void *buf, u32 size) {
         io.dramAddr = buf;
         io.devAddr = rom;
         io.size = n;
-        osEPiStartDma(D_80148040, &io, 0);
+        osEPiStartDma(D_80148040, &io, OS_READ);
         rom += n;
         buf = (u8 *)buf + n;
         size -= n;
-        osRecvMesg(&mq, &msg, 1);
+        osRecvMesg(&mq, &msg, OS_MESG_BLOCK);
     }
 }
 
