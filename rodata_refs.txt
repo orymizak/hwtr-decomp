@@ -56,7 +56,7 @@ Car_Simulate D_80100968
 Car_DirectionalBoost D_80100970 D_80100978
 Cars_CollideObstacles D_80100980
 Coll_ResolveBoxPair jtbl_801009B0
-func_8009DBF8 D_801009F0
+Coll_ProbeWheels D_801009F0
 Debris_SpawnFromCar D_80100A10
 Car_CheckCrashPair D_80100A18
 Car_AverageGroundContacts D_80100A20 D_80100A28 D_80100A30 D_80100A38 D_80100A40 D_80100A48

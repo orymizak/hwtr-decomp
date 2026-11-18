@@ -13,8 +13,8 @@ u8 Coll_LoadLevel(u8 *);
 void TrackSfx_Init(s32 n, s32 b);
 extern s32 gCollMovers;
 extern s32 gCollCars;
-extern s32 D_8011B348;
-extern s32 D_8011B34C;
+extern s32 gCollBodies;
+extern s32 gCollPathCars;
 void TrackSfx_Shutdown(void);
 typedef struct { s32 a; s32 b; s32 c; } V12_;
 typedef struct { s32 a; s32 b; s32 c; s32 d; } V16_;
@@ -29,7 +29,7 @@ typedef struct { u8 pad[8]; s32 w8; } Obj70_;
 typedef struct { u8 pad[0x60]; Obj60_ *p60; u8 pad2[0xC]; Obj70_ *p70; } ObjA2_;
 typedef struct LnkA2_ { ObjA2_ *obj; s32 x; struct LnkA2_ *next; } LnkA2_;
 extern LnkA2_ *gCollRacers;
-void func_800A25EC(ObjA2_ *);
+void Coll_BoxVsWorldEdges(ObjA2_ *);
 typedef struct { u8 pad[0x40]; void *a; void *b; void *c; } Res40_;
 void Memory_Free(void *);
 typedef struct Nd3_ { s32 a; struct Nd3_ *prev; struct Nd3_ *next; } Nd3_;
@@ -127,8 +127,8 @@ s32 Coll_Shutdown(void) {
     CollList_Clear((Nd3_ **)&gCollMovers);
     CollList_Clear((Nd3_ **)&(*(s32 *)&gCollRacers));
     CollList_Clear((Nd3_ **)&gCollCars);
-    CollList_Clear((Nd3_ **)&D_8011B348);
-    CollList_Clear((Nd3_ **)&D_8011B34C);
+    CollList_Clear((Nd3_ **)&gCollBodies);
+    CollList_Clear((Nd3_ **)&gCollPathCars);
     Memory_Free(gCollLevel);
     gCollLevel = NULL;
     return 1;
@@ -373,10 +373,10 @@ void Coll_Register(RObj_ *o) {
         CollList_Add((Nd4_ **)&gCollCars, (s32)o);
     }
     if (((o->type == 1) | (o->type == 3)) || o->type == 6) {
-        CollList_Add((Nd4_ **)&D_8011B348, (s32)o);
+        CollList_Add((Nd4_ **)&gCollBodies, (s32)o);
     }
     if (o->type == 4) {
-        CollList_Add((Nd4_ **)&D_8011B34C, (s32)o);
+        CollList_Add((Nd4_ **)&gCollPathCars, (s32)o);
     }
     if ((o->type == 0) | (o->type == 5)) {
         lo = 0x20;
@@ -473,10 +473,10 @@ typedef struct { u8 p0[4]; u32 flags; } CrD57_;
 typedef struct { u8 p0[4]; u32 flags; u8 p8[0x4C]; u16 *p54; u8 p58[0xC]; CrD57_ *car; } ObD57_;
 typedef struct LnD57_ { ObD57_ *obj; s32 x; struct LnD57_ *next; } LnD57_;
 void Car_StartCrash(Car *p, u8 id, u8 flip);
-void func_8009DBF8(void);
-void func_8009EC8C(void);
-void func_8009F7D4(void);
-void func_800A0C44(void);
+void Coll_ProbeWheels(void);
+void Coll_FindGroundPlanes(void);
+void Coll_PointsVsWorld(void);
+void Coll_BoxCornersVsWorld(void);
 void Coll_Solve(void);
 extern NdCD8_ gCollNodePool[];
 void CollList_InitPool(void);
@@ -944,18 +944,18 @@ void Coll_ResolveBoxPair(ObjC7_ *a, ObjC7_ *b) {
 
 
 void Coll_UpdateRooms(void);
-void func_800A258C(void);
+void Coll_RacersVsWorldEdges(void);
 void Coll_Solve(void) {
     LnD57_ *it;
     ObD57_ *o;
     CrD57_ *c;
 
     Coll_UpdateRooms();
-    func_8009DBF8();
-    func_8009EC8C();
-    func_8009F7D4();
-    func_800A0C44();
-    func_800A258C();
+    Coll_ProbeWheels();
+    Coll_FindGroundPlanes();
+    Coll_PointsVsWorld();
+    Coll_BoxCornersVsWorld();
+    Coll_RacersVsWorldEdges();
     for (it = *(LnD57_ **)&gCollCars; it != NULL; it = it->next) {
         o = it->obj;
         if (o->flags & 0x10) {
@@ -1079,30 +1079,30 @@ void Coll_UpdateRooms(void) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_8009DBF8);
+INCLUDE_ASM("asm/nonmatchings/unit_39C90", Coll_ProbeWheels);
 
-INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_8009EC8C);
+INCLUDE_ASM("asm/nonmatchings/unit_39C90", Coll_FindGroundPlanes);
 
-INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_8009F7D4);
+INCLUDE_ASM("asm/nonmatchings/unit_39C90", Coll_PointsVsWorld);
 
-INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_800A0C44);
+INCLUDE_ASM("asm/nonmatchings/unit_39C90", Coll_BoxCornersVsWorld);
 
-void func_800A258C(void) {
+void Coll_RacersVsWorldEdges(void) {
     LnkA2_ *n;
 
     for (n = gCollRacers; n != NULL; n = n->next) {
         ObjA2_ *o = n->obj;
 
         if (o->p60->b110 == 0 && o->p70->w8 != 0) {
-            func_800A25EC(o);
+            Coll_BoxVsWorldEdges(o);
         }
     }
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_800A25EC);
+INCLUDE_ASM("asm/nonmatchings/unit_39C90", Coll_BoxVsWorldEdges);
 
-INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_800A34B4);
+INCLUDE_ASM("asm/nonmatchings/unit_39C90", CollBox_EdgeSeparatingAxis);
 
 void Coll_ApplyRoomFlags(RObj_ *o, u16 idx, s32 arg2) {
     Room_ *r;
@@ -1292,7 +1292,7 @@ void Coll_GetStartPos(u8 i, V12_ *v, V16_ *q) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_39C90", Coll_ClipCamera);
 
-INCLUDE_ASM("asm/nonmatchings/unit_39C90", func_800A4EE8);
+INCLUDE_ASM("asm/nonmatchings/unit_39C90", Coll_GetRoomAxis);
 
 s32 Coll_GetSpawnCount(void) {
     return gCollLevel->nSpawns;

@@ -44,7 +44,7 @@ s32 Race_GetPhase(void);
 void RaceCam_UpdateIntro(CamE_ *);
 void RaceCam_SmoothTo(Vec3f_, Vec3f_, Vec3f_, Vec3f_ *, f32, f32, f32, f32);
 void Coll_ClipCamera(u8, Vec3f_ *);
-u8 func_800A4EE8(u8, Vec3f_ *, Vec3f_ *);
+u8 Coll_GetRoomAxis(u8, Vec3f_ *, Vec3f_ *);
 Vec3f_ Vec3_Lerp(f32 t, Vec3f_ a, Vec3f_ b);
 s32 Coll_GetSpawn(s32 arg0);
 extern u8 (*svcTrackGetCameraCount)(void);
@@ -172,7 +172,7 @@ void RaceCam_Update(u32 dt) {
             break;
         case 1:
             if (flags & 0x10) {
-                if (!func_800A4EE8((*cam).car, &t, &u)) {
+                if (!Coll_GetRoomAxis((*cam).car, &t, &u)) {
                     flags &= ~0x10;
                 }
             }
