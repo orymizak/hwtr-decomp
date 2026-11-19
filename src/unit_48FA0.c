@@ -128,7 +128,30 @@ Quat Quat_FromDir(Vec3f *dir) {
     return q;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_48FA0", Quat_ToMtx3);
+void Quat_ToMtx3(Quat q, Mtx3f *out) {
+    f32 xs = q.x + q.x;
+    f32 ys = q.y + q.y;
+    f32 zs = q.z + q.z;
+    f32 wx = xs * q.w;
+    f32 wy = ys * q.w;
+    f32 wz = zs * q.w;
+    f32 xx = xs * q.x;
+    f32 xy = ys * q.x;
+    f32 xz = zs * q.x;
+    f32 yy = ys * q.y;
+    f32 yz = zs * q.y;
+    f32 zz = zs * q.z;
+
+    out->m[0][0] = 1.0f - (yy + zz);
+    out->m[0][1] = xy - wz;
+    out->m[0][2] = xz + wy;
+    out->m[1][0] = xy + wz;
+    out->m[1][1] = 1.0f - (xx + zz);
+    out->m[1][2] = yz - wx;
+    out->m[2][0] = xz - wy;
+    out->m[2][1] = yz + wx;
+    out->m[2][2] = 1.0f - (xx + yy);
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_48FA0", Quat_Mul);
 

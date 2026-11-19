@@ -39,7 +39,7 @@ extern s32 (*sysTimeGetMillis)(void);
 void MenuText_Animate(u8 *, f32);
 void MenuSprite_Animate(u8 *, f32);
 void MenuButton_Animate(u8 *, f32);
-void MenuModel_Animate(s32, f32);
+void MenuModel_Animate(void *, f32);
 s32 MenuModels_StartEnter(s32 arg0);
 void MenuText_Layout(u8 *t);
 s32 MenuFont_Kerning(s32, u8, u8);
@@ -308,7 +308,26 @@ void Save_NewId(void) {
     } while (sysRandRange(0x17D78400) == 0);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_50510", Unlocks_GetMask);
+void Unlocks_GetMask(Bits5_ *b, u32 *mask) {
+    u8 i;
+    s32 bit;
+
+    i = 0;
+    *mask = 0;
+    for (; i < 24; i++) {
+        bit = gUnlockBitMap[i];
+        if (bit == -1) {
+            return;
+        }
+        if (bit >= 32) {
+            if ((b->hi >> (bit - 32)) & 1) {
+                *mask |= 1 << i;
+            }
+        } else if ((b->lo >> bit) & 1) {
+            *mask |= 1 << i;
+        }
+    }
+}
 
 void Unlocks_SetMask(Bits5_ *b, u32 mask) {
     u8 i;
@@ -812,7 +831,37 @@ void MenuButton_Animate(u8 *t, f32 s) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_50510", MenuModel_Animate);
+typedef struct { f32 x, y, z; } V3mm_;
+typedef struct { V3mm_ pos; V3mm_ targetPos; V3mm_ rot; V3mm_ targetRot; s16 target; s16 value; } MenuModel_;
+
+void MenuModel_Animate(void *p, f32 k) {
+    MenuModel_ *m = p;
+    V3mm_ d;
+    V3mm_ r;
+    s32 diff;
+
+    d.x = m->targetPos.x - m->pos.x;
+    d.y = m->targetPos.y - m->pos.y;
+    d.z = m->targetPos.z - m->pos.z;
+    d.x *= k;
+    d.y *= k;
+    d.z *= k;
+    m->pos.x += d.x;
+    m->pos.y += d.y;
+    m->pos.z += d.z;
+    r.x = m->targetRot.x - m->rot.x;
+    r.y = m->targetRot.y - m->rot.y;
+    r.z = m->targetRot.z - m->rot.z;
+    r.x *= k;
+    r.y *= k;
+    r.z *= k;
+    m->rot.x += r.x;
+    m->rot.y += r.y;
+    m->rot.z += r.z;
+    diff = m->target - m->value;
+    diff = diff * k;
+    m->value += diff;
+}
 
 void Menu_Animate(u8 *t, u8 i) {
     f32 dt;

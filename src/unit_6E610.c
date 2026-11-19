@@ -7,9 +7,9 @@
 #define SND_MUSIC_VOICES 4 /* voices 0-3 are reserved for music */
 
 /* Sound bank (sfx) loaded with Snd_LoadSfxBank. */
-typedef struct { u8 p0[0x10]; s32 unk10; s32 unk14; struct { s32 a; s32 b; } entries[1]; } SndBank;
+typedef struct { u8 p0[8]; s32 unk8; u8 pC[4]; s32 unk10; s32 unk14; struct { s32 a; s32 b; } entries[1]; } SndBank;
 /* Sequence (song) played by a music voice. */
-typedef struct { u8 p0[0x1C]; u8 *unk1C; s32 unk20; } SndSeq;
+typedef struct { u8 p0[8]; s32 unk8; u8 pC[0xC]; u8 *unk18; u8 *unk1C; s32 unk20; } SndSeq;
 /* Driver voice (0x13C): voices 0-3 play music sequences (unk74), the rest sound effects
    from a bank (unk78). unk44 is the handle returned to the game. */
 typedef struct {
@@ -23,16 +23,16 @@ typedef struct {
     /* 0x1C */ s32 unk1C;
     /* 0x20 */ f32 unk20;
     /* 0x24 */ f32 unk24;
-    /* 0x28 */ u8 p28[0x4];
+    /* 0x28 */ f32 unk28;
     /* 0x2C */ f32 unk2C;
     /* 0x30 */ f32 unk30;
-    /* 0x34 */ s32 unk34;
+    /* 0x34 */ u8* unk34;  /* pitch curve stream */
     /* 0x38 */ u8* unk38;  /* also seen as s32 */
     /* 0x3C */ u32 unk3C;  /* also seen as s32 */
     /* 0x40 */ u32 unk40;  /* also seen as s32 */
     /* 0x44 */ s32 unk44;
     /* 0x48 */ s32 unk48;
-    /* 0x4C */ u8 p4C[0x4];
+    /* 0x4C */ f32 unk4C;
     /* 0x50 */ f32 unk50;
     /* 0x54 */ u32 unk54;  /* also seen as s32 */
     /* 0x58 */ f32 unk58;
@@ -47,14 +47,15 @@ typedef struct {
     /* 0x7C */ s32 unk7C;
     /* 0x80 */ s32 unk80;
     /* 0x84 */ u8* unk84;  /* also seen as s32 */
-    /* 0x88 */ u8 p88[0x8];
+    /* 0x88 */ u8* unk88;  /* pitch curve base */
+    /* 0x8C */ u8* unk8C;  /* volume curve base */
     /* 0x90 */ f32 unk90;
     /* 0x94 */ s32 unk94;
     /* 0x98 */ s16 unk98;
     /* 0x9A */ u16 unk9A;
     /* 0x9C */ u16 unk9C;  /* also seen as s16 */
     /* 0x9E */ s16 unk9E;
-    /* 0xA0 */ u8 pA0[0x2];
+    /* 0xA0 */ u16 unkA0;
     /* 0xA2 */ u16 unkA2;
     /* 0xA4 */ u16 unkA4;
     /* 0xA6 */ s16 unkA6;
@@ -70,7 +71,7 @@ typedef struct {
     /* 0xB8 */ u8 unkB8;
     /* 0xB9 */ u8 unkB9;
     /* 0xBA */ u8 unkBA;
-    /* 0xBB */ u8 pBB[0x1];
+    /* 0xBB */ u8 unkBB;
     /* 0xBC */ u8 unkBC;
     /* 0xBD */ u8 unkBD;
     /* 0xBE */ u8 unkBE;
@@ -199,6 +200,7 @@ INCLUDE_ASM("asm/nonmatchings/unit_6E610", SndCmd_SetEnvelopePreset);
 
 typedef struct { s32 unk0; s32 unk4; s32 unk8; s32 unkC; s32 unk10; s32 unk14; s32 unk18; s32 unk1C; s32 unk20; s32 unk24; u8 p28[0x18]; s32 unk40; } AudCfgB_;
 typedef struct { u16 a; u16 b; u8 c; } AudMsgB_;
+typedef struct { s32 unk0; u8 p4[0x40]; s32 unk44; } Seq12_;
 extern s32 osTvType;
 extern s32 D_80138144;
 extern s32 D_80145564;
@@ -314,7 +316,43 @@ s32 Snd_PlaySfxDefault(s32 id) {
     return h;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", Snd_StartSound);
+s32 SndVoice_Setup(SndVoice *v, SndBank *b, s32 idx, s32 a3, s32 a4, s32 a5);
+
+s32 Snd_StartSound(s32 id, s32 a1, s32 a2, s32 retrig, s32 prio) {
+    s32 bank;
+    s32 i;
+    SndVoice *v;
+    s32 h;
+
+    if (gSndSfxBankOnce != 0) {
+        bank = gSndSfxBankOnce;
+        gSndSfxBankOnce = 0;
+    } else {
+        bank = gSndSfxBank;
+        if (bank == 0) {
+            gSndCurWaveBank = 0;
+            return 0;
+        }
+    }
+    if (gSndCurWaveBank == 0) {
+        gSndCurWaveBank = (void *)((SndBank *)bank)->unk10;
+    }
+    if (retrig != 0) {
+        for (i = 4, v = gSndSfxVoices; i < gSndNumVoices; i++, v++) {
+            if ((u16)v->unkA6 == id && v->unk78 == (SndBank *)bank) {
+                if (prio == -1) {
+                    prio = ((SndBank *)bank)->entries[id].b;
+                }
+                h = SndVoice_Setup(v, (SndBank *)bank, id, a1, a2, prio);
+                gSndCurWaveBank = 0;
+                return h;
+            }
+        }
+    }
+    h = SndVoice_PlaySfx((SndBank *)bank, id, a1, a2, prio);
+    gSndCurWaveBank = 0;
+    return h;
+}
 
 /* Fades out (or releases) every voice of the groups in flags (SND_GROUP_*). */
 void Snd_FadeOutAll(s32 flags, s32 val) {
@@ -656,7 +694,24 @@ void Snd_SetTaskHooks(s32 arg0) {
     gSndTaskHooks = arg0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", func_800CE968);
+s32 func_800CE968(s32 id) {
+    s32 i;
+    SndVoice *v;
+
+    if (id == 0) {
+        return 0;
+    }
+    v = (*(SndVoice **)&gSndVoices);
+    for (i = 0; i < gSndNumVoices; i++, v++) {
+        if (v->unk44 == id) {
+            if (v->unk74 != 0) {
+                return v->unk74->unk8;
+            }
+            return v->unk78->unk8;
+        }
+    }
+    return 0;
+}
 
 s32 func_800CE9CC(s32 id) {
     s32 i;
@@ -818,9 +873,56 @@ void SndVoice_KeyOn(SndVoice *c, s32 i) {
     c->unk8 = 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", SndVoice_UpdateVolPan);
+void n_alSynSetVol(s32, s16, s32);
+void n_alSynSetPan(s32, u8);
+void SndVoice_UpdateVolPan(void *vp, s32 i) {
+    SndVoice *v = vp;
+    u32 vol;
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", SndVoice_UpdatePitch);
+    vol = (u32)(v->unkBC * v->unkC4 * v->unkBB * v->unk9E) >> 13;
+    if (vol > 0x7FFF) {
+        vol = 0x7FFF;
+    }
+    vol *= (u16)(v->unk78 != NULL ? D_8012794C : D_8012794E);
+    vol >>= 15;
+    if (v->unk10 != -1) {
+        vol = vol * v->unk10 / (u32)v->unk1C;
+    }
+    if (vol != v->unkA0) {
+        v->unkA0 = vol;
+        n_alSynSetVol(gSndPVoices + i * 0x1C, vol, gSndTickUsec);
+    }
+    vol = (v->unkBD * v->unkB0 >> 7) & 0x7F;
+    if (vol != v->unkBE) {
+        v->unkBE = vol;
+        n_alSynSetPan(gSndPVoices + i * 0x1C, vol);
+    }
+}
+
+f32 Snd_Exp2(f32 x);
+void n_alSynSetPitch(s32, f32);
+void SndVoice_UpdatePitch(void *vp, s32 i, f32 bend) {
+    SndVoice *v = vp;
+    f32 pitch = v->unk2C;
+    u8 n = v->unkB8;
+
+    if (n != 0) {
+        if (n >= v->unkAA) {
+            pitch = v->unk4C + (pitch - v->unk4C) / n * v->unkAA;
+        }
+        v->unk50 = pitch;
+    }
+    pitch += bend + v->unk24;
+    if (pitch != v->unk28) {
+        v->unk28 = pitch;
+        pitch = Snd_Exp2(pitch * (1.0 / 12.0));
+        if (pitch > 2.0) {
+            pitch = 2.0f;
+            v->unkBB = 0;
+        }
+        n_alSynSetPitch((gSndPVoices + i * 0x1C), pitch);
+    }
+}
 
 void SndEnv_Start(SndVoice *s) {
     if (s->unk9A != 0x7FFF) {
@@ -971,7 +1073,38 @@ void SndVolCurve_Update(SndVoice *s) {
     } while (s->unk14 - s->unkC < 0);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", SndPitchCurve_Update);
+void SndPitchCurve_Update(void *arg) {
+    SndVoice *s = arg;
+    u8 b;
+    u16 v;
+    f32 f;
+
+    do {
+        s->unk18 += 0x100;
+        if (--s->unkA4 == 0) {
+            b = *s->unk34++;
+            if (b >= 0x80) {
+                f = (f32)(b & 0x7F) - 64.0;
+                s->unk70 = f;
+                s->unk24 = f * s->unk6C;
+                b = *s->unk34++;
+                if (b >= 0x80) {
+                    v = (b & 0x7F) << 8;
+                    s->unkA4 = v;
+                    v += 2;
+                    s->unkA4 = *s->unk34++ + v;
+                } else {
+                    s->unkA4 = b + 2;
+                }
+            } else {
+                f = (f32)b - 64.0;
+                s->unkA4 = 1;
+                s->unk70 = f;
+                s->unk24 = f * s->unk6C;
+            }
+        }
+    } while (s->unk18 - s->unkC < 0);
+}
 
     /* TODO (Clean version): [evaluated 2026-11-18: kept as documentation; the code is the
     original algorithm]
@@ -1401,7 +1534,23 @@ s32 SndCmd_Skip1(s32 arg0, s32 arg1) {
     return arg1 + 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", SndCmd_SetCurves);
+/* Sets the event, volume-curve and pitch-curve offsets (16-bit big-endian each). */
+u8 *SndCmd_SetCurves(SndVoice *s, u8 *p) {
+    s32 off;
+    s32 v;
+
+    off = *p++ << 8;
+    off += *p++;
+    v = *p++ << 8;
+    v += *p++;
+    s->unkA2 = 1;
+    s->unk38 = s->unk8C + v;
+    v = *p++ << 8;
+    v += *p++;
+    s->unkA4 = 1;
+    s->unk34 = s->unk88 + v;
+    return (u8 *)(s->unk80 + off);
+}
 
 u8 *SndCmd_SetFxMix(SndVoice *c, u8 *ptr) {
     c->unkCA = *ptr;
@@ -1480,7 +1629,23 @@ u8 *SndCmd_SelectFx(s32 arg0, u8 *ptr) {
     return ptr;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", SndCmd_Marker);
+u8 *SndCmd_Marker(Seq12_ *s, u8 *p) {
+    u8 a;
+    s32 len; /* variable-length field, decoded but unused */
+
+    a = *p++;
+    len = *p++;
+    if (len & 0x80) {
+        len = ((len & 0x7F) << 8) | *p++;
+    }
+    if ((s->unk0 & 3) == 2) {
+        if (gSndMarkerCallback != 0) {
+            ((void (*)(s32, u8))gSndMarkerCallback)(s->unk44, a);
+        }
+    }
+    return p;
+}
+
 
 s32 SndCmd_OpAC(SndVoice *c, s32 ptr) {
     c->unkAC = 0;

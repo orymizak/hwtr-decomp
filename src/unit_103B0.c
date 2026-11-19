@@ -248,7 +248,34 @@ void Light_SetCount(s32 a) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_103B0", Light_SetAmbient);
+typedef struct { u8 r; u8 g; u8 b; u8 pad3; u8 r2; u8 g2; u8 b2; u8 pad7; } AmbientCol_;
+extern AmbientCol_ D_800F1DE0;
+void Light_SetAmbient(u8 r, u8 g, u8 b) {
+    if (D_800F1DE0.r != r) {
+        D_800F1DE0.r = r;
+        gLightsDirty = 1;
+    }
+    if (D_800F1DE0.g != g) {
+        D_800F1DE0.g = g;
+        gLightsDirty = 1;
+    }
+    if (D_800F1DE0.b != b) {
+        D_800F1DE0.b = b;
+        gLightsDirty = 1;
+    }
+    if (D_800F1DE0.r2 != r) {
+        D_800F1DE0.r2 = r;
+        gLightsDirty = 1;
+    }
+    if (D_800F1DE0.g2 != g) {
+        D_800F1DE0.g2 = g;
+        gLightsDirty = 1;
+    }
+    if (D_800F1DE0.b2 != b) {
+        D_800F1DE0.b2 = b;
+        gLightsDirty = 1;
+    }
+}
 
 void Light_SetDir(s32 i, u8 a, u8 b, u8 c) {
     if (gLightDirs[i].a != a) {

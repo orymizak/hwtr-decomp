@@ -3,6 +3,7 @@
 #include "math.h"
 #include "include_asm.h"
 #include "car.h"
+#include "race.h"
 typedef struct { s32 a; s32 b; s32 c; } V12_;
 typedef Vec3f Vec3f_;
 /* Race camera (gRaceCams, gRaceCamCount entries of 0x64). */
@@ -48,7 +49,38 @@ s32 Coll_GetSpawnCount(void);
 
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_2F4F0", RaceCam_Init);
+extern u8 D_800F3878;
+extern s32 D_800F37B0[];
+extern s32 D_800F3814[];
+
+/* One camera per human player (at least one); a race with no humans follows the cars freely. */
+u8 RaceCam_Init(RaceSetup *cfg) {
+    u32 i;
+    u32 humans;
+
+    gRaceCamCount = 1;
+    D_80118621 = D_800F3878 - 1;
+    humans = 0;
+    for (i = 0; i < cfg->count; i++) {
+        humans += cfg->p[i].kind == 1;
+    }
+    gRaceCamCount = MAX(gRaceCamCount, humans);
+    D_80118624 = (gRaceCamCount == 2) ? D_800F3814 : D_800F37B0;
+    D_80118550 = humans == 0;
+    memset(gRaceCams, 0, 200);
+    for (i = 0; i < gRaceCamCount; i++) {
+        gRaceCams[i].unk0 = i;
+        if (D_80118550 == 0) {
+            gRaceCams[i].car = i;
+        }
+        gRaceCams[i].mode = *D_80118624;
+        gRaceCams[i].reset = 1;
+        gRaceCams[i].intro = 0;
+        gRaceCams[i].fov = 1.570795f;
+        gRaceCams[i].b60 = 0;
+    }
+    return 1;
+}
 
 s32 RaceCam_Shutdown(void) {
     return 1;

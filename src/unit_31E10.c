@@ -28,7 +28,7 @@ void Car_Simulate(u8 *);
 void Car_AirControl(u8 *);
 u32 RaceClock_Get(void);
 void Replay_Record(void);
-void Car_UpdateWheelSpin(u8 *);
+void Car_UpdateWheelSpin(Car *);
 void Car_UpdateAirTricks(Car *, f32);
 void Car_Unstick(u8 *);
 void Car_Respawn(void);
@@ -381,7 +381,54 @@ void func_80093990(void) {
 
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_31E10", Cars_Update);
+extern void (*svcModelFlashOff)(u8);
+void Ai_Update(s32);
+void Ai_SyncCars(void);
+void Cars_UpdatePositions(u32);
+
+void Cars_Update(u32 dt) {
+    f32 sec = dt / 1000.0f;
+    u8 i;
+    Car *c;
+
+    for (c = gCars, i = 0; i < (u32)gCarCount; c++, i++) {
+        if (c->b4B8 != 0) {
+            c->unk4BC += dt;
+            if (c->unk4BC >= 500 && c->unk4B9 != 0) {
+                RaceAudio_QueueAnnouncer(0);
+                c->unk4B9 = 0;
+            }
+            if (c->unk4BC >= 3000) {
+                c->unk6C1 = 1;
+            }
+        }
+        if (c->unk774 != 0) {
+            if (dt < c->unk774) {
+                c->unk774 -= dt;
+            } else {
+                c->unk774 = 0;
+                c->roomObj->flags &= ~1;
+            }
+        }
+        if (c->b4C0 != 0 && c->fBC + 528.0f < c->f4C4) {
+            svcModelFlashOff(c->id);
+            c->b4C0 = 0;
+        }
+        switch ((u32)c->state) {
+            case 2:
+                Car_UpdatePhysics(c, sec);
+                break;
+            case 1:
+                Car_UpdateOnPath(c, sec);
+                break;
+            case 0:
+                break;
+        }
+    }
+    Ai_Update(10);
+    Ai_SyncCars();
+    Cars_UpdatePositions(dt);
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_31E10", Cars_UpdatePositions);
 
@@ -490,7 +537,46 @@ INCLUDE_ASM("asm/nonmatchings/unit_31E10", Car_ApplyAero);
 
 INCLUDE_ASM("asm/nonmatchings/unit_31E10", Car_Simulate);
 
-INCLUDE_ASM("asm/nonmatchings/unit_31E10", Car_UpdateWheelSpin);
+/* Sets each wheel's spin rate: from the ground speed when it touches the ground, else from the
+ * engine rpm (driven wheels) or zero. */
+void Car_UpdateWheelSpin(Car *c) {
+    Vec3f vel = c->vel;
+    f32 speed = c->fBC;
+    u8 i;
+    CarPoint *w;
+    f32 a;
+    f32 b;
+    f32 r;
+
+    for (i = 0, w = c->points; i < c->nPoints; w++, i++) {
+        if (w->contact != 0 && w->b60 == 0) {
+            r = speed / w->h * 2.0f;
+            w->rate = r;
+            if (vel.x * w->dir.x + vel.y * w->dir.y + vel.z * w->dir.z < 0.0f) {
+                w->rate = -r;
+            }
+        } else if (i >= 2 && c->unk024 != 0) {
+            w->rate = 0.0f;
+        } else {
+            if (c->r3EC.b8 != 0) {
+                a = c->unk018;
+                b = c->unk014;
+            } else {
+                a = c->unk014;
+                b = c->unk018;
+            }
+            if (w->flags & 4) {
+                if (!(a < b)) {
+                    w->rate = c->r3EC.rpm * 6.28318f / 60.0f;
+                    continue;
+                }
+            } else if (!(0.5f < b)) {
+                continue;
+            }
+            w->rate = 0.0f;
+        }
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_31E10", Car_ComputeMass);
 
@@ -995,4 +1081,56 @@ void Car_ReportImpact(HitEnt98_ *e) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_31E10", Car_ReportPairImpact);
+typedef struct { u8 pad0[0x84]; Vec3f vel; } PairBody98_;
+typedef struct { u8 pad0[4]; s32 flags; u8 pad8[0x58]; PairBody98_ *body; Car *car; } PairObj98_;
+extern u8 D_80138D68;
+extern u8 D_80138D69;
+f32 sqrtf(f32);
+/* Rumble for a car-vs-object contact: fixed strengths against flagged objects (2/4), otherwise
+   scaled by the relative speed, at most once every 20 frames. */
+void Car_ReportPairImpact(PairObj98_ **pair, u8 side) {
+    PairObj98_ *a;
+    PairObj98_ *b;
+    Car *car;
+    Vec3f d;
+    f32 dist;
+    f32 f;
+    s32 v;
+
+    a = side == 0 ? pair[0] : pair[1];
+    b = side == 0 ? pair[1] : pair[0];
+    car = a->car;
+    if (b->flags & 6) {
+        if (b->flags & 2) {
+            v = D_80138D68;
+        } else {
+            v = D_80138D69;
+        }
+        sysInputRumble(car->id, v);
+        return;
+    }
+    if (((s32 *)gImpactCooldown)[car->id] == 0) {
+        if (b->body != NULL) {
+            d.x = car->vel.x - b->body->vel.x;
+            d.y = car->vel.y - b->body->vel.y;
+            d.z = car->vel.z - b->body->vel.z;
+        } else {
+            d = car->vel;
+        }
+        dist = sqrtf(d.x * d.x + d.y * d.y + d.z * d.z);
+        if (dist > 352.0f) {
+            f = dist / 2304.0f;
+            f = (f < 1.0f) ? f : 1.0f;
+            f *= 255.0f;
+            v = f;
+            if (v < 0) {
+                v = 0;
+            }
+            if (v > 255) {
+                v = 255;
+            }
+            sysInputRumble(car->id, v);
+            ((s32 *)gImpactCooldown)[car->id] = 20;
+        }
+    }
+}

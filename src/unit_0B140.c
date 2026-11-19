@@ -474,7 +474,29 @@ s32 Input_HasRumble(u8 i) {
     return gRumbleState[i].state == 2;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_0B140", Input_Rumble);
+extern u16 D_80140F6A[];
+void nuContRmbStart(s32, s32, s32);
+/* Old-style definition: callers use the unprototyped sysInputRumble hook. Small strengths
+   (< 0x40) are dropped; a new rumble only overrides a weaker one still running. */
+s32 Input_Rumble(ch, v)
+    u8 ch;
+    u8 v;
+{
+    u16 t;
+
+    if (gRumbleState[ch].state != 2) {
+        return 0;
+    }
+    if (v < 0x40) {
+        v = 0;
+    }
+    t = D_80140F6A[ch * 5];
+    if (t == 0xFFFF || t == 0 || v >= D_800F0548[ch]) {
+        D_800F0548[ch] = v;
+        nuContRmbStart(ch, v, 20);
+    }
+    return 1;
+}
 
 s32 Input_Stub(void) {
     return 0;

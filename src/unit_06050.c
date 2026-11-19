@@ -2,6 +2,7 @@
 #include "ultra64.h"
 #include "math.h"
 #include "include_asm.h"
+#include "gfx.h"
 typedef struct { s32 a; s32 b; s32 c; } V12_;
 typedef struct { s32 a; s32 b; s32 c; s32 d; } V16_;
 typedef struct { V16_ q; V12_ v; } E1C_;
@@ -19,12 +20,13 @@ s32 File_Load(char *, s32);
 extern void *D_80101E84;
 void Memory_Free(void *);
 typedef struct { s32 a; s32 b; s32 c; s32 d; } Vec4L_;
-u8 Model_Load(u8 a, s32 b, s32 c);
+u8 Model_Load(u8 id, char *name, s32 unused);
 typedef struct { u16 unk0; s16 x; s16 y; s16 z; s32 unk8; s32 unkC; s32 unk10; s32 unk14; } Node_;
 typedef struct { Vec3i p; f32 m[9]; s32 d; f32 e; } Cam_;
 typedef struct { f32 m[21]; } Node54_;
 typedef struct {
-    /* 0x00 */ u8 p0[6];
+    /* 0x00 */ u8 p0[4];
+    /* 0x04 */ u16 n4;
     /* 0x06 */ u16 n6;
     /* 0x08 */ u8 p8[3];
     /* 0x0B */ u8 bB;
@@ -35,7 +37,8 @@ typedef struct {
     /* 0x14 */ Vec3f v14;
     /* 0x20 */ Vec3f v20;
     /* 0x2C */ Node54_ *nodes;
-    /* 0x30 */ u8 p30[8];
+    /* 0x30 */ u8 p30[4];
+    /* 0x34 */ void *verts;
     /* 0x38 */ Node_ *links;
     /* 0x3C */ u8 p3C[4];
     /* 0x40 */ Cam_ *cams;
@@ -76,7 +79,19 @@ typedef struct { f32 f0; s32 i4; f32 f8; f32 fC; u8 p10[0x30]; Vec3f pos; Vec3f 
 typedef struct { u8 p0[0xC]; f32 x; u8 p10[0xC]; f32 y; u8 p20[0xC]; f32 z; u8 p30[8]; f32 r; } O_9A4;
 void Particle_SpawnJitteredVel(Vec3f, Vec3f);
 void Particle_SpawnWithVel(Vec3f, Vec3f);
-extern u8 D_80138A6C[];
+/* One block from D_80138190: per-slot part flags, wreck flag, palette and fade state that splat split into
+ * D_80138A6C, D_80138A72 and D_80138A78. */
+typedef struct {
+    u8 partA[6][6];
+    u8 partB[6][6];
+    u8 partC[6][6];
+    u8 pad6C[0x8DC - 0x6C];
+    u8 wrecked[6];
+    u8 palette[6];
+    s32 fadeCur[6];
+    s32 fadeTgt[6];
+} ModelSlotState_;
+extern ModelSlotState_ D_80138190;
 extern s32 D_80138A90[];
 extern u8 gColorShift;
 void ParticlePool_Push(void *, Pt94_ *);
@@ -116,10 +131,17 @@ extern World_ *gTrackWorld;
 extern s32 D_8013818C;
 s32 GfxPools_Shutdown();
 s32 ModelData_FreeCaches(s32);
+s32 ModelData_Free(s32);
 extern Model_ *gModels[6];
-s32 Model_Draw(s32);
-s32 Gfx_SetLookAt(s32 *);
-extern s32 D_800F2138;
+s32 Model_Draw(u8);
+/* Camera block from screen.c: view matrix followed by draw state; 0x4C is passed to ModelData_Draw. */
+typedef struct {
+    Mtx34f view;
+    u8 pad30[0x1C];
+    s32 f4C;
+} CameraState_;
+extern CameraState_ D_800F2138;
+s32 Gfx_SetLookAt(CameraState_ *);
 
 extern u8 D_80138AAD;
 extern u8 D_80138AAE;
@@ -177,6 +199,9 @@ s32 Model_FreeBuffers(void) {
 }
 
 typedef struct { u8 p0[4]; char name[0x13]; u8 variant; } TrackName_;
+typedef struct { s32 a; s32 b; s32 c; s32 d; } Vec4LX_;
+typedef struct { u8 p0[0x2C]; void *inst; u8 p30[0xCC]; u8 nParts; u8 pFD; s8 id; u8 pFF; u8 cur; u8 tgt; u8 r; u8 g; u8 b; } ModelX_;
+void Model_SetHeadlights(u8 idx, u8 on, u8 fade);
 extern char D_800FE944[];
 extern char *gTrackColorNames[8];
 extern u8 gTrackColors[8][3];
@@ -225,7 +250,42 @@ s32 Track_Load(TrackName_ *t) {
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", Track_LoadSky);
+extern char D_800FE950[];
+void Screen_SetClearColor(u8, u8, u8);
+
+void Track_LoadSky(char *name, u8 variant) {
+    char buf[64];
+    u16 *pal = NULL;
+    World_ **wp;
+    s32 c;
+    World_ *sky;
+    s8 r;
+    s8 g;
+    s8 b;
+
+    sprintf(buf, D_800FE950, name, variant);
+    sky = WorldData_Relocate(File_LoadAlloc(buf));
+    wp = (World_ **)&gTrackSky;
+    *wp = sky;
+    if (D_80138AB0 == 1) {
+        WorldData_SetMirrored(*wp);
+    }
+    if (((World_ *)gTrackSky)->n4 != 0) {
+        pal = ((u16 **)((World_ *)gTrackSky)->verts)[3];
+    }
+    c = *pal;
+    /* TODO(match-debt): the f64 round-trip and the masked u32 copy reproduce an inlined
+     * RGBA5551 -> RGB888 unpack helper; a plain shift does not match. */
+    {
+        u32 cc = c & 0xFFFF;
+
+        r = (f64)(s32)((cc >> 8) & 0xF8);
+        g = (f64)(s32)((cc >> 3) & 0xF8);
+        b = (f64)((c << 2) & 0xF8);
+    }
+    Screen_SetClearColor(r >> gColorShift, g >> gColorShift, b >> gColorShift);
+    EnvMap_Apply(*wp);
+}
 
 s32 Track_Unload(void) {
     void **p = (void **)&gTrackWorld;
@@ -336,7 +396,7 @@ void World_SetCollLevel(s32 arg0) {
     D_8013818C = arg0;
 }
 
-void Models_FreeCaches(void) {
+inline void Models_FreeCaches(void) {
     u32 i;
 
     GfxPools_Shutdown();
@@ -347,9 +407,33 @@ void Models_FreeCaches(void) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", Model_ResetSlot);
+inline void Model_ResetSlot(u8 i) {
+    s32 j;
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", Color_PackRGBA5551);
+    D_80138190.wrecked[i] = 0;
+    D_80138190.fadeCur[i] = 100;
+    D_80138190.fadeTgt[i] = 100;
+    D_80138190.palette[i] = 1;
+    for (j = 0; j < 6; j++) {
+        D_80138190.partA[i][j] = 0;
+        D_80138190.partC[i][j] = 0;
+        D_80138190.partB[i][j] = 0;
+    }
+}
+
+s32 Color_PackRGBA5551(u32 r, u32 g, u32 b, s32 a) {
+    /* TODO(match-debt): the mixed u32/s32 temporaries only fix the instruction order */
+    u32 hi;
+    s32 mid;
+
+    a &= 0xFF;
+    r <<= 8;
+    g <<= 3;
+    b >>= 2;
+    hi = r & 0xF800;
+    mid = g & 0x7C0;
+    return a | ((b & 0x3E) | (hi | mid));
+}
 
 void Color_Unpack5551(u32 color, void *r, void *g, void *b) {
     u32 c = color & 0xFFFF;
@@ -448,7 +532,25 @@ s32 Model_PollLoad(u8 i) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", Model_Load);
+s32 Model_Unload(u8 id);
+s32 File_LoadAllocCopy(char *);
+
+u8 Model_Load(u8 id, char *name, s32 unused) {
+    char path[64];
+    s32 j;
+
+    strcpy(path, name);
+    strcat(path, D_800FE95C);
+    if (gModels[id] != NULL) {
+        Model_Unload(id);
+    }
+    gModels[id] = (Model_ *)ModelData_Load(File_LoadAllocCopy(path));
+    for (j = 0; j < gModels[id]->nParts; j++) {
+        Model_SetPartRotation(id, j, 0.0f, 0.0f, 0.0f);
+    }
+    Model_ResetSlot(id);
+    return 1;
+}
 
 s32 Model_Free(u8 i) {
     ModelData_FreeCaches((s32)gModels[i]);
@@ -456,7 +558,15 @@ s32 Model_Free(u8 i) {
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", Model_Unload);
+s32 Model_Unload(u8 id) {
+    Models_FreeCaches();
+    if (gModels[id] != NULL) {
+        ModelData_Free((s32)gModels[id]);
+        gModels[id] = NULL;
+        return 1;
+    }
+    return 0;
+}
 
 void Model_DrawWithLookAt(s32 arg0) {
     Gfx_SetLookAt(&D_800F2138);
@@ -492,7 +602,20 @@ void World_SetupLod(s32 a, s32 b) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", Model_Draw);
+void Light_Reset(void);
+void Gfx_UpdateLights(void);
+void ModelData_Draw(Model_ *, CameraState_ *, s32, u8, u8, s32, s32);
+
+s32 Model_Draw(u8 idx) {
+    if (gModels[idx] != NULL) {
+        Light_Reset();
+        Gfx_UpdateLights();
+        GFX_RESERVE(1);
+        gDPSetTexturePersp(gDisplayListHead++, G_TP_PERSP);
+        ModelData_Draw(gModels[idx], &D_800F2138, D_800F2138.f4C, D_80138150[idx], D_80138156[idx], 0, 0);
+    }
+    return 0;
+}
 
 void Model_GetColor(u8 i, u8 *r, u8 *g, u8 *b) {
     Model_ *m = gModels[i];
@@ -543,7 +666,6 @@ inline void Model_SetLightIntensity(u8 i, f32 v, u8 flag) {
     }
 }
 
-void Model_SetHeadlights(u8, u8, u8);
 void Model_SwapPalette(u8, u8);
 void Model_ApplyFlags(u8 id, u32 flags) {
     Model_SetHeadlights(id, (flags >> 1) & 1, ((flags >> 3) ^ 1) & 1);
@@ -551,7 +673,32 @@ void Model_ApplyFlags(u8 id, u32 flags) {
     Model_SwapPalette(id, (flags >> 2) & 1);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", Model_SetHeadlights);
+void Model_SetHeadlights(u8 idx, u8 on, u8 fade) {
+    ModelX_ *o = ((ModelX_ * *)&gModels)[idx];
+    f32 c;
+
+    c = 0.0f;
+    /* TODO(match-debt): the do/while(0) block and the duplicated Disable branch below only
+       change register allocation (`on` must not stay in a1); no natural form found yet. */
+    do {
+        if (on == 1) {
+            c = 0.5f;
+        }
+    } while (0);
+
+    o->tgt = c * 255.0f;
+    if (fade == 0) {
+        o->cur = o->tgt;
+        if (c != 0.0f) {
+            PointLight_SetColor(o->id, c * o->r, c * o->g, c * o->b);
+            PointLight_Enable(o->id);
+        } else if (on || fade) {
+            PointLight_Disable(o->id);
+        } else {
+            PointLight_Disable(o->id);
+        }
+    }
+}
 
 s32 CarInfo_Load(s32 arg0, s32 arg1, s32 arg2) {
     return CarInfo_LoadEx(0, arg0, arg1, arg2) & 0xFF;
@@ -579,7 +726,7 @@ void Explosion_Spawn(s32 a, f32 b, u8 c);
 void Model_Wreck(u8 slot, u8 mode, Pair68_ unused) {
     f32 m[3][4];
 
-    D_80138A6C[slot] = 1;
+    D_80138190.wrecked[slot] = 1;
     gModels[slot]->inst->flags84 &= ~0x40;
     if (mode != 2) {
         m[0][0] = gModels[slot]->m160[0][0];
@@ -602,7 +749,15 @@ void Model_Wreck(u8 slot, u8 mode, Pair68_ unused) {
     gModels[slot]->b105 = 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", Model_Repair);
+void Model_Repair(u8 slot) {
+    u32 i;
+
+    D_80138190.wrecked[slot] = 0;
+    for (i = 0; i < gModels[slot]->nParts; i++) {
+        Model_SetPartRotation(slot, i, 0.0f, 0.0f, 0.0f);
+    }
+    gModels[slot]->inst->flags84 |= 0x40;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", Model_SetPartTransform);
 
@@ -743,7 +898,26 @@ void Fx_ShatterMesh(u8 *o, Vec3f vel, u8 *verts) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", Track_SmashObject);
+/* Scene node as seen by the smash effects: flag bits 12-13 and the radius at 0x38. */
+typedef struct { u8 p0[0x30]; u32 flags; u8 p34[4]; f32 radius; } SmashNode_;
+void SceneNode_Hide(s32);
+
+/* Hides a breakable track object and plays its effects at pos (link flag 0x20: burst instead of
+ * explosion and shatter). */
+void Track_SmashObject(s32 i, Vec3f pos) {
+    SmashNode_ *node = (SmashNode_ *)&gTrackWorld->nodes[gTrackWorld->links[i].unk0];
+
+    SceneNode_Hide((s32)node);
+    if (((node->flags >> 13) & 1) & !(((u32)gTrackWorld->links[i].unk8 >> 5) & 1)) {
+        Explosion_Spawn((s32)node, node->radius / 900.0f, 0);
+    }
+    if (gTrackWorld->links[i].unk8 & 0x20) {
+        Fx_BurstAt((O_9A4 *)node, pos);
+    }
+    if ((node->flags & 0x3000) != 0 & !(((u32)gTrackWorld->links[i].unk8 >> 5) & 1)) {
+        Fx_ShatterMesh((u8 *)node, pos, gTrackWorld->verts);
+    }
+}
 
 void Fx_SpawnSpark(Vec3f pos, Vec3f vel) {
     Pt94_ pt;
@@ -808,7 +982,7 @@ void Fx_SpawnPaintChips(u8 **car, f32 speed, Vec3f pos, Vec3f vel) {
     pt.c[2] = (u8)((0.8 - r) * o->c[2]) >> gColorShift;
     pt.c[1] = (u8)((0.8 - r) * o->c[1]) >> gColorShift;
     pt.c[0] = (u8)((0.8 - r) * o->c[0]) >> gColorShift;
-    if (D_80138A6C[**(u8 **)(*car + 0x64)] == 1) {
+    if (D_80138190.wrecked[**(u8 **)(*car + 0x64)] == 1) {
         pt.c[0] >>= 4;
         pt.c[2] >>= 4;
         pt.c[1] >>= 4;

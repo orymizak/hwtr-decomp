@@ -727,7 +727,44 @@ u8 RaceAudio_Init(RaceSetup *t) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", RaceAudio_Load);
 
-INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", RaceAudio_Unload);
+extern u8 (*audCarSndShutdown)(void);
+void Memory_Free(void *);
+
+u8 RaceAudio_Unload(RaceResult *unused) {
+    u8 i;
+    void (**fp)(s32);
+    void (**cfp)(u8);
+
+    RaceSfx_Shutdown();
+    if (D_800F3700 != 0) {
+        i = 0;
+        if (i < D_800F3700) {
+            fp = &audSndSrcStop;
+            do {
+                fp[0](D_800F3704[i].b0);
+                fp[-2](D_800F3704[i].b0); /* audSndSrcDestroy */
+                i++;
+            } while (i < D_800F3700);
+        }
+        Memory_Free(D_800F3704);
+        D_800F3704 = NULL;
+        D_800F3700 = 0;
+    }
+    i = 0;
+    if (D_801184C1 != 0) {
+        cfp = audCarSndStopEngine;
+        do {
+            cfp[0](i);
+            cfp[14](i);
+            cfp[4](i);
+            cfp[7](i);
+            cfp[12](i);
+            cfp[10](i);
+            i++;
+        } while (i < D_801184C1);
+    }
+    return audCarSndShutdown();
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", RaceAudio_Update);
 
@@ -854,7 +891,33 @@ void RaceAudio_QueueAnnouncer(s32 arg0) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", RaceAudio_Silence);
+void RaceAudio_Silence(void) {
+    u8 i;
+    void (**fp)(u8);
+
+    for (i = 0; i < 2; i++) {
+        audSndSrcStop(gRaceSfx[i].id);
+    }
+    if (D_800F3700 != 0) {
+        for (i = 0; i < D_800F3700; i++) {
+            audSndSrcStop(D_800F3704[i].b0);
+        }
+    }
+    i = 0;
+    if (D_801184C1 != 0) {
+        fp = audCarSndStopEngine;
+        do {
+            fp[0](i);
+            fp[14](i);
+            fp[4](i);
+            fp[7](i);
+            fp[12](i);
+            fp[10](i);
+            i++;
+        } while (i < D_801184C1);
+    }
+    D_80118528 = 1;
+}
 
 void RaceAudio_Pause(void) {
     u8 i;

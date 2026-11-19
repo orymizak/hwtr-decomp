@@ -38,7 +38,9 @@ typedef struct CarRoomNode {
     /* 0xC */ u16 cnt;
 } CarRoomNode;
 typedef struct {
-    /* 0x00 */ u8 pad0[0x54];
+    /* 0x00 */ u8 pad0[4];
+    /* 0x04 */ s32 flags; /* bit 0 cleared when the car's timer at 0x774 runs out */
+    /* 0x08 */ u8 pad8[0x4C];
     /* 0x54 */ u16 *rooms;
     /* 0x58 */ u8 pad58[0x18];
     /* 0x70 */ CarRoomNode *list;
@@ -47,7 +49,7 @@ typedef struct {
 /* Value with limits (0x1C). */
 typedef struct {
     /* 0x00 */ f32 cur;
-    /* 0x04 */ u8 pad4[4];
+    /* 0x04 */ f32 rpm; /* revolutions per minute (wheel spin uses rpm * 2pi / 60) */
     /* 0x08 */ u8 b8;
     /* 0x09 */ u8 pad9[0xB];
     /* 0x14 */ f32 hi;

@@ -19,7 +19,47 @@ void Heap_Clear(Heap *heap) {
     heap->first = NULL;
 }
 
-INCLUDE_ASM("asm/nonmatchings/heap", Heap_Alloc);
+void *Heap_Alloc(Heap *heap, u32 size) {
+    HeapBlock *b;
+    HeapBlock *prev;
+    void *p;
+    u32 total;
+
+    if (heap->first == NULL) {
+        return NULL;
+    }
+    size = (size + 31) & ~31;
+    /* first fit: skip used blocks and free blocks that are too small, stopping at an exact fit */
+    b = heap->first;
+    while ((HEAP_SIZE(b->size) - HEAP_HDR_SIZE < size) | (b->size & HEAP_USED)) {
+        if ((b->size == size) | (b->size == 0)) {
+            break;
+        }
+        b = (HeapBlock *)((u8 *)b + HEAP_SIZE(b->size) + HEAP_HDR_SIZE);
+    }
+    if (b->size == 0) {
+        return NULL;
+    }
+    p = b + 1;
+    if (b->size == size) {
+        b->size |= HEAP_USED;
+        return p;
+    } else {
+        /* split: the rest of the block becomes a new free block */
+        u32 need = size + HEAP_HDR_SIZE;
+
+        prev = b;
+        total = b->size;
+        b->size = size | HEAP_USED;
+        b = (HeapBlock *)((u8 *)p + size);
+        b->size = total - need;
+        if (b->size == 0) {
+            /* an empty remainder would read as the end marker: give its header to the allocation */
+            prev->size += HEAP_HDR_SIZE;
+        }
+    }
+    return p;
+}
 
 s32 Heap_Free(Heap *heap, void *ptr) {
     HeapBlock *cur;

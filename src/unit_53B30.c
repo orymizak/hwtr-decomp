@@ -248,7 +248,7 @@ extern Bars4_ D_801240E4;
 extern u8 D_80100F0C;
 extern u8 D_80100F14;
 extern u8 D_80100F1C;
-void Menu_SetText(s32, s32, s32 *, s32, s32, s32, s32, s32, s32, s32, s32, s32);
+void Menu_SetText(void *m, u8 idx, void *str, s32 x, s32 y, s32 z, u8 align, u8 style, u8 sheet, u8 r, u8 g, u8 b);
 extern Bars4_ D_801240E0;
 extern u8 D_80100FA4;
 extern ObjG1_ D_800F63B8;
@@ -302,11 +302,15 @@ s32 MenuCar_Draw(s32, s32, s32, s32);
 void MenuGlobe_Draw(s8);
 /* A menu text: a run of positioned glyphs drawn from one font sheet. */
 typedef struct {
-    /* 0x00 */ u8 p0[0x18];
+    /* 0x00 */ char str[0x18];
     /* 0x18 */ u8 nChars;
     /* 0x19 */ u8 p19[3];
     /* 0x1C */ E0A4_ *chars;
-    /* 0x20 */ u8 p20[8];
+    /* 0x20 */ s16 x;
+    /* 0x22 */ s16 y;
+    /* 0x24 */ s16 z;
+    /* 0x26 */ u8 align;
+    /* 0x27 */ u8 style;
     /* 0x28 */ u8 sheet;
     /* 0x29 */ u8 r, g, b;
 } MnText_; /* size = 0x2C */
@@ -1275,7 +1279,20 @@ void PakUnsupported_Enter(void) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", PakRepair_Draw);
+void PakRepair_Draw(void) {
+    s32 none;
+
+    Menu_SetupCamera();
+    Menu_UpdateFade();
+    none = -1;
+    Menu_Draw((Menu_ *)gMenuObjs[4], gPakDialogSel, -1, -1, none, none, none, 0);
+    if ((u8)gPakDialogSel == 4) {
+        Menu_Draw((Menu_ *)gMenuObjs[5], 0, -1, -1, none, none, none, 0);
+    } else {
+        Menu_Draw((Menu_ *)gMenuObjs[5], -1, -1, -1, none, none, none, 0);
+    }
+    Menu_EndFrame();
+}
 
 void PakRepair_Input(void) {
     void (**fp)(s32);
@@ -1926,7 +1943,31 @@ void Music_StopMenuTrack(void) {
     audMusicStop();
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", Music_UpdateVolumeFade);
+extern u8 gMusicFadeVolume;
+extern void (*sysAudioSetMusicVolume)(s32);
+/* Steps the music volume by 8 per call: mode 0 fades out, 1 fades in, 2 moves toward half volume. */
+void Music_UpdateVolumeFade(void) {
+    switch ((u8)gMusicFadeMode) {
+        case 0:
+            if (gMusicFadeVolume > 8) {
+                sysAudioSetMusicVolume((u8)(gMusicFadeVolume -= 8));
+            }
+            break;
+        case 1:
+            if (gMusicFadeVolume < 0xF7) {
+                sysAudioSetMusicVolume((u8)(gMusicFadeVolume += 8));
+            }
+            break;
+        case 2:
+        default:
+            if (gMusicFadeVolume >= 0x88) {
+                sysAudioSetMusicVolume((u8)(gMusicFadeVolume -= 8));
+            } else if (gMusicFadeVolume < 0x77) {
+                sysAudioSetMusicVolume((u8)(gMusicFadeVolume += 8));
+            }
+            break;
+    }
+}
 
 void Music_FadeOut(void) {
     gMusicFadeMode = 0;
@@ -4344,7 +4385,30 @@ void Credits_Animate(void) {
     Menu_Animate((*(void * *)&D_800F5F60), 0x16U);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", Credits_Draw);
+void Scroller_Draw(void *, u8);
+void Credits_Draw(void) {
+    u8 fast;
+
+    Menu_SetupCamera();
+    Menu_UpdateFade();
+    Menu_Draw((Menu_ *)gMenuObjs[22], -1, D_800F61D6, -1, -1, -1, -1, gMenuHideText);
+    fast = 0;
+    if ((u8)Menu_IsKeyHeld(0, 0x12) || (u8)Menu_IsKeyHeld(1, 0x12)) {
+        fast = 1;
+    }
+    if (gMenuHideText == 0) {
+        switch ((u8)D_800F61D6) {
+        case 0:
+            Scroller_Draw(&D_800F2FA0, fast);
+            break;
+        case 1:
+            Scroller_Draw(&D_800F2FC0, fast);
+            break;
+        }
+        Menu_DrawTicker((Scroll4E_ *)&D_800F63E8);
+    }
+    Menu_EndFrame();
+}
 
 void Credits_ShowPage1(void) {
     if ((u8)D_800F61D6 == 1) {
@@ -5517,7 +5581,49 @@ void HighScores_PageRight(void) {
     HighScores_UpdateArrows();
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", HighScores_PrevCategory);
+extern s32 gTrackNames[][3];
+extern u8 gHighScoresPage;
+extern u8 gHighScoresCategory;
+extern u8 D_80124101;
+extern u8 D_80124102;
+u8 Track_IsUnlocked(u8 i);
+u8 Cup_IsUnlocked(u8 i);
+void HighScores_PrevCategory(void) {
+    s32 m;
+
+    switch (gHighScoresPage) {
+        case 0:
+            if (gHighScoresCategory != 0) {
+                gHighScoresCategory--;
+            } else {
+                gHighScoresCategory = 2;
+            }
+            break;
+        case 1:
+            /* TODO(match-debt): the redundant m >= 0 test on a u8 is needed for the bltz/slti pair. */
+            m = gHighScoresCategory;
+            if (m >= 0) {
+                if (m < 2) {
+                    do {
+                        if (D_80124101 != 0) {
+                            D_80124101--;
+                        } else {
+                            D_80124101 = 11;
+                        }
+                    } while (!Track_IsUnlocked(D_80124101) || gTrackNames[(u8)(D_80124101 / 3)][(u8)(D_80124101 % 3)] == 0);
+                    return;
+                }
+            }
+            do {
+                if (D_80124102 != 0) {
+                    D_80124102--;
+                } else {
+                    D_80124102 = 2;
+                }
+            } while (!Cup_IsUnlocked(D_80124102));
+            break;
+    }
+}
 
 /* Moves the cursor of menu page gHighScoresPage to the next selectable entry, wrapping around. */
 void HighScores_NextCategory(void) {

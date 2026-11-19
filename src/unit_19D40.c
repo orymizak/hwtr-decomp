@@ -1,6 +1,7 @@
 #include "common.h"
 #include "ultra64.h"
 #include "math.h"
+#include "gfx.h"
 #include "include_asm.h"
 typedef struct { u16 magic; u8 pad[0xA]; s32 c; s32 w10; u32 p14; u32 p18; u32 p1C; u32 p20; u32 p24; u32 p28; u32 p2C; s32 w30; } Hdr79_;
 extern s32 D_80138E38;
@@ -179,7 +180,53 @@ f32 Math_Acos(f32 x) {
     return 3.1415927f;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_19D40", Math_Atan2);
+f32 Math_Atan2(f32 y, f32 x) {
+    f32 t;
+    f32 a;
+    f32 s;
+    f32 r;
+    s32 i;
+
+    if ((x == 0.0f) & (y == 0.0f)) {
+        return 0.0f;
+    }
+    if (x == 0.0f) {
+        if (y > 0.0f) {
+            return 1.5707964f;
+        }
+        return -1.5707964f;
+    }
+    /* TODO(match-debt): both arms are identical (x is already known non-zero); the redundant
+       test only changes FP register allocation. */
+    if (x) {
+        t = y / x;
+        a = t;
+    } else {
+        t = y / x;
+        a = t;
+    }
+    if (!(fabsf(t) <= 1.0f)) {
+        a = 1.0f / t;
+    }
+    s = 0.0f;
+    for (i = 14; i > 0; i--) {
+        s = (f32) (i * i) * a * a / ((f32) (i * 2 + 1) + s);
+    }
+    r = a / (s + 1.0f);
+    if (t > 1.0f) {
+        r = 1.5707963267948966 - r;
+    }
+    if (t < -1.0f) {
+        r = -1.5707963267948966 - r;
+    }
+    if (x > 0.0f) {
+        return r;
+    }
+    if (y > 0.0f) {
+        return r + 3.141592653589793;
+    }
+    return r - 3.141592653589793;
+}
 
 f32 Math_Abs(f32 x) {
     if (0.0f <= x) {
@@ -233,7 +280,26 @@ s32 World_InitSlots(void) {
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_19D40", World_Load);
+extern char D_800FF9D0[];
+char *strcpy(char *, const char *);
+char *strcat(char *, const char *);
+s32 File_LoadAlloc(char *);
+s32 WorldData_Relocate(s32);
+
+s32 World_Load(u8 i, char *name) {
+    char buf[64];
+    s32 *slots;
+    s32 *p;
+
+    if (i < 32) {
+        slots = &gWorldSlots;
+        p = &slots[i];
+        strcpy(buf, name);
+        strcat(buf, D_800FF9D0);
+        *p = WorldData_Relocate(File_LoadAlloc(buf));
+    }
+    return 1;
+}
 
 s32 World_Free(u8 i) {
     s32 *p;
@@ -250,4 +316,39 @@ s32 World_Free(u8 i) {
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_19D40", World_DrawSlot);
+typedef struct { u8 p0[0x2C]; u8 *root; u8 p30[4]; s32 f34; } WorldD_;
+extern u8 D_800F2138;
+extern s32 D_800F216C[];
+void Gfx_SetLookAt(void *);
+void Light_Reset(void);
+void Gfx_UpdateLights(void);
+void SceneNode_DrawMesh(u8 *, void *, s32, s32, s32);
+
+s32 World_DrawSlot(u8 i) {
+    WorldD_ **slots;
+    WorldD_ **p;
+    WorldD_ *world;
+    u8 *root;
+    void *cam;
+    Gfx *gfx;
+
+    if (i < 32) {
+        slots = (WorldD_ **)&gWorldSlots;
+        p = &slots[i];
+        if (*p == NULL) {
+            return 1;
+        }
+        root = (*p)->root;
+        cam = &D_800F2138;
+        Gfx_SetLookAt(cam);
+        Light_Reset();
+        Gfx_UpdateLights();
+        GFX_RESERVE(1);
+        gfx = gDisplayListHead;
+        gDPSetTexturePersp(gfx, G_TP_PERSP);
+        world = *p;
+        gDisplayListHead = gfx + 1;
+        SceneNode_DrawMesh(root, cam, D_800F216C[0], 0, world->f34);
+    }
+    return 1;
+}

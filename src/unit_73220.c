@@ -316,7 +316,36 @@ Acmd *_n_pullSubFrame(void *filter, s16 *inp, s16 *outp, s32 outCount, Acmd *p) 
     return ptr;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_73220", _n_getRate);
+s16 _n_getRate(f64 vol, f64 tgt, s32 count, u16 *ratel) {
+    s16 s;
+    f64 invn, a, f;
+
+    if (count == 0) {
+        if (tgt >= vol) {
+            *ratel = 0xFFFF;
+            return 0x7FFF;
+        } else {
+            *ratel = 0;
+            return -0x8000;
+        }
+    }
+    invn = 1.0 / count;
+    if (tgt < 1.0) {
+        tgt = 1.0;
+    }
+    if (vol <= 0) {
+        vol = 1;
+    }
+    a = (tgt - vol) * invn * 8.0;
+    s = (s16)a;
+    f = a - (f64)s;
+    s -= 1;
+    f += 1.0;
+    s += (s16)f;
+    f -= (s16)f;
+    *ratel = (u16)(0xFFFF * f);
+    return s;
+}
 
 s32 _n_getVol(s32 ivol, s32 samples, s16 ratem, s32 ratel) {
     s32 n;

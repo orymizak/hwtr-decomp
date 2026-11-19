@@ -497,10 +497,10 @@ s32 CarSnd_StartEngine();
 s32 CarSnd_StopEngine(u8 i);
 s32 CarSnd_SetRpm(s32 arg0, s32 arg1);
 s32 CarSnd_SetThrottle(u8 car, f32 v);
-s32 CarSnd_StartLoopA();
+s32 CarSnd_StartLoopA(u8 i, s32 k);
 s32 CarSnd_StopLoopA(u8 car);
 s32 CarSnd_SetLoopAVolume(s32 arg0, s32 arg1);
-s32 CarSnd_StartLoopB();
+s32 CarSnd_StartLoopB(u8 i, s32 k);
 s32 CarSnd_StopLoopB(u8 car);
 s32 CarSnd_SetLoopBVolume(s32 arg0, s32 arg1);
 s32 CarSnd_PlayOneShot(u8 i, s32 k, f32 lvl);
@@ -509,7 +509,7 @@ s32 CarSnd_PlayLoopC(u8 i, s32 k);
 s32 CarSnd_StopLoopC(u8 car);
 s32 CarSnd_SetLoopCVolume(s32 arg0, s32 arg1);
 u8 SndSrc_Create(void);
-s32 SndSrc_Destroy();
+s32 SndSrc_Destroy(u8 id);
 s32 SndSrc_Play();
 s32 SndSrc_Stop(u8 id);
 s32 SndSrc_SetVolume(u8 id, f32 v);
@@ -1030,7 +1030,39 @@ s32 CarSnd_SetThrottle(u8 car, f32 v) {
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", CarSnd_StartLoopA);
+f32 Snd3D_GetVolume(void *a);
+extern u8 D_800EFF7E;
+s32 CarSnd_StartLoopA(u8 i, s32 k) {
+    s32 snd = gSfxTable[k];
+    s32 off;
+    u8 *pos;
+    f32 vol;
+    s32 pan;
+    f32 pitch;
+    s32 busy;
+    s32 v;
+
+    if (snd == 0 || i >= 2) {
+        return 0;
+    }
+    off = i * 0x4C;
+    pos = (u8 *)gSfxTable + 0x2D0 + off;
+    *(&D_800EFF7E + off) = snd;
+    vol = Snd3D_GetVolume(pos) * gSfxVolume;
+    pan = Snd3D_GetPan(pos);
+    pitch = Snd3D_GetDoppler(pos, (u8 *)gSfxTable + 0x2DC + off);
+    busy = Snd_IsPlaying(*(s32 *)(&D_800EFF40 + off));
+    v = *(f32 *)(&D_800EFF58 + off) * 128.0f * vol;
+    if (v == 0) {
+        v = 1;
+    }
+    if (busy == 0) {
+        *(s32 *)(&D_800EFF40 + off) = Snd_Play(snd, v, pan, 0, 0x40);
+        Snd_SetPitch(*(s32 *)(&D_800EFF40 + off), pitch);
+        return 1;
+    }
+    return 0;
+}
 
 s32 CarSnd_StopLoopA(u8 car) {
     if (Snd_IsPlaying(gCarSnd[car].h[2]) != 0) {
@@ -1045,7 +1077,38 @@ s32 CarSnd_SetLoopAVolume(s32 arg0, s32 arg1) {
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", CarSnd_StartLoopB);
+extern u8 D_800EFF7F;
+s32 CarSnd_StartLoopB(u8 i, s32 k) {
+    s32 snd = gSfxTable[k];
+    s32 off;
+    u8 *pos;
+    f32 vol;
+    s32 pan;
+    f32 pitch;
+    s32 busy;
+    s32 v;
+
+    if (snd == 0 || i >= 2) {
+        return 0;
+    }
+    off = i * 0x4C;
+    pos = (u8 *)gSfxTable + 0x2D0 + off;
+    *(&D_800EFF7F + off) = snd;
+    vol = Snd3D_GetVolume(pos) * gSfxVolume;
+    pan = Snd3D_GetPan(pos);
+    pitch = Snd3D_GetDoppler(pos, (u8 *)gSfxTable + 0x2DC + off);
+    busy = Snd_IsPlaying(*(s32 *)(&D_800EFF44 + off));
+    v = *(f32 *)(&D_800EFF5C + off) * 128.0f * vol;
+    if (v == 0) {
+        v = 1;
+    }
+    if (busy == 0) {
+        *(s32 *)(&D_800EFF44 + off) = Snd_Play(snd, v, pan, 0, 0x40);
+        Snd_SetPitch(*(s32 *)(&D_800EFF44 + off), pitch);
+        return 1;
+    }
+    return 0;
+}
 
 s32 CarSnd_StopLoopB(u8 car) {
     if (Snd_IsPlaying(gCarSnd[car].h[3]) != 0) {
@@ -1193,7 +1256,37 @@ s32 SndSrc_SetPosition(u8 id, Vec3f v) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", SndSrc_Destroy);
+s32 SndSrc_Destroy(u8 id) {
+    Node64_ **head = &gSndSrcList;
+    Node64_ *p = *head;
+    Node64_ *dead;
+    s32 *cnt;
+
+    if (p == NULL) {
+        return 0;
+    }
+    if (gSndSrcCount == 1) {
+        if (p->id == id) {
+            *head = NULL;
+            dead = p;
+        } else {
+            return 0;
+        }
+    } else {
+        while (p->next->id != id) {
+            p = p->next;
+            if (p->next == NULL) {
+                return 0;
+            }
+        }
+        dead = p->next;
+        p->next = dead->next;
+    }
+    Memory_Free(dead);
+    cnt = &gSndSrcCount;
+    (*cnt)--;
+    return 1;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_01050", SndSrc_Play);
 

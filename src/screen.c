@@ -150,7 +150,45 @@ s32 Screen_FreeBg(void) {
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/screen", Screen_LoadBg);
+extern void *gBgBuffer;
+extern u8 D_800F2102;
+extern void *gBgImage;
+extern char D_800FF7F8[];
+char *strcpy(char *dst, const char *src);
+char *strcat(char *dst, const char *src);
+s32 File_Load(char *name, void *dst);
+void Bg_SetPalette(void *arg0);
+s32 Screen_LoadBg(char *name) {
+    char buf[0x20];
+    void **p;
+
+    if (gBgBuffer == NULL) {
+        return 0;
+    }
+    if (name != NULL) {
+        strcpy(buf, name);
+        strcat(buf, D_800FF7F8);
+        name = buf;
+        p = &gBgImage;
+        if (*p == NULL) {
+            *p = gBgBuffer;
+        }
+        if (File_Load(name, *p) == 0) {
+            *p = NULL;
+            Bg_SetPalette(NULL);
+            D_800F2102 = 0xFF;
+            return 0;
+        }
+    } else {
+        void **q = &gBgImage;
+        if (*q != NULL) {
+            *q = NULL;
+        }
+    }
+    Bg_SetPalette(gBgImage);
+    D_800F2102 = 0xFF;
+    return 1;
+}
 
 s32 Screen_BeginFrameDefault(void) {
     return Screen_BeginFrame(0);

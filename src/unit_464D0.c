@@ -62,7 +62,19 @@ void Debris_Update(void) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_464D0", Debris_Draw);
+extern void (*svcModelSetPartTransform)(u8, u8, Vec3f, Mtx3f *);
+typedef struct { s32 active; u8 model; u8 part; u8 p6[0xF6]; Vec3f pos; u8 p108[0x1C]; Mtx3f rot; u8 p148[0x7C]; } DebrisD_;
+void Debris_Draw(void) {
+    DebrisD_ *e = (DebrisD_ *)&gDebris;
+    u32 i;
+    s32 one;
+
+    for (i = 0, one = 1; i < 8; e++, i++) {
+        if (e->active == one) {
+            svcModelSetPartTransform(e->model, e->part, e->pos, &e->rot);
+        }
+    }
+}
 
 void Debris_SpawnFromCar(Car *c) {
     V3a5_ d;
