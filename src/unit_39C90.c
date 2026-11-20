@@ -23,7 +23,7 @@ typedef struct Nd4_ { s32 a; struct Nd4_ *prev; struct Nd4_ *next; u16 cnt; } Nd
 typedef struct { u8 pad[0x4C]; void *a; void *b; void *c; u8 pad2[0xC]; s32 id; } Obj95_;
 typedef struct Lnk95_ { Obj95_ *obj; s32 x; struct Lnk95_ *next; } Lnk95_;
 extern Lnk95_ *gCollAll;
-s32 Coll_Unregister(s32 *);
+void Coll_Unregister(s32 *);
 typedef struct { u8 pad[0x110]; u8 b110; } Obj60_;
 typedef struct { u8 pad[8]; s32 w8; } Obj70_;
 typedef struct { u8 pad[0x60]; Obj60_ *p60; u8 pad2[0xC]; Obj70_ *p70; } ObjA2_;
@@ -394,7 +394,46 @@ void Coll_Register(RObj_ *o) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_39C90", Coll_Unregister);
+void Coll_Unregister(s32 *obj) {
+    RObj_ *o = (RObj_ *)obj;
+    u32 i;
+    u16 k;
+    Room_ *r;
+    Portal_ *pt;
+
+    gCollIdUsed[o->id] = 0;
+    CollList_Remove((Nd4_ **)&gCollAll, (s32)o);
+    if ((o->type != 0) & (o->type != 5)) {
+        CollList_Remove((Nd4_ **)&gCollMovers, (s32)o);
+    }
+    if (o->type == 3) {
+        CollList_Remove((Nd4_ **)&gCollRacers, (s32)o);
+    }
+    if (o->type == 3 || o->type == 4) {
+        CollList_Remove((Nd4_ **)&gCollCars, (s32)o);
+    }
+    if (((o->type == 1) | (o->type == 3)) || o->type == 6) {
+        CollList_Remove((Nd4_ **)&gCollBodies, (s32)o);
+    }
+    if (o->type == 4) {
+        CollList_Remove((Nd4_ **)&gCollPathCars, (s32)o);
+    }
+    for (i = 0; i < o->nRooms; i++) {
+        k = o->rooms[i];
+        CollList_Remove(&gCollLevel->rooms[k].list, (s32)o);
+        CollList_Remove(&o->list, k);
+    }
+    if (o->type == 4) {
+        r = &gCollLevel->rooms[o->rooms[0]];
+        pt = &gCollLevel->portals[r->firstPortal];
+        for (i = 0; i < r->nPortals; i++, pt++) {
+            if (pt->flag == 0) {
+                CollList_Remove(&gCollLevel->rooms[pt->to].list, (s32)o);
+            }
+        }
+    }
+    CollList_Clear((Nd3_ **)&o->list);
+}
 
 u16 Coll_FindRoom(Vec3f pos) {
     Vec3f p;

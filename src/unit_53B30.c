@@ -6181,7 +6181,44 @@ void Race_StartCup(void) {
     Music_StartRaceTrack();
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", Race_ReturnCup);
+typedef struct { s32 lap[9]; s32 f24; u8 p28[2]; u8 f2A; u8 p2B; } CupRec_;
+extern CupRec_ D_80123F60[];
+
+void Race_ReturnCup(void) {
+    u8 *lap;
+    s32 ofs;
+    CupRec_ *recs;
+    u8 i;
+    s32 *res;
+
+    for (i = 0, lap = &D_80123EC1, recs = D_80123F60; i < 6; i++) {
+        /* TODO(match-debt): recs[i].lap[*lap] adds the terms in another order; the row offset has to be
+           computed first and added to &recs->lap[*lap] as bytes. */
+        ofs = i * sizeof(CupRec_);
+        D_80123F60[i].f24 = 0;
+        *(s32 *)((s32)&recs->lap[*lap] + ofs) = 0;
+        D_80123F60[i].f2A = 0;
+    }
+    res = (s32 *)&gRaceResult;
+    sysGameEndRace(res);
+    switch ((u32)*res) {
+    case 1:
+        Fsm_Trigger(&gMenuFsm, 0x83);
+        break;
+    case 2:
+        Fsm_Trigger(&gMenuFsm, 0x84);
+        break;
+    case 3:
+        Fsm_Trigger(&gMenuFsm, 0x85);
+        break;
+    default:
+        Fsm_Trigger(&gMenuFsm, 0x82);
+        break;
+    }
+    Music_StopTrack();
+    gProfileP1->cheats = 0;
+    gProfileP2->cheats = 0;
+}
 
 void Cup_RunRace(void) {
     if (sysGameUpdate() != 0) {

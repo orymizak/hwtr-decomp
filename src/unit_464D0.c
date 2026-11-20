@@ -14,7 +14,7 @@ void Coll_Register(void *);
 void RigidBody_Integrate(void *, f32);
 void Mtx3_Orthonormalize(void *);
 
-s32 Coll_Unregister(s32 *);
+void Coll_Unregister(s32 *);
 extern s32 gDebris;
 
 s32 Debris_Init(void) {

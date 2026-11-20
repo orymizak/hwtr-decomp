@@ -204,17 +204,167 @@ void Car_RemovePickup(P_8010 *p, Car *c) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_28C10", Str_EqualNoCase);
+extern u8 D_800FCA20[];
+s32 strcmp(const char *, const char *);
+inline s32 Str_EqualNoCase(u8 *a, u8 *b) {
+    char bufA[128];
+    char bufB[128];
+    s32 i;
 
-INCLUDE_ASM("asm/nonmatchings/unit_28C10", PickupModel_Load);
+    for (i = 0; *a != 0; a++) {
+        if (D_800FCA20[*a] & 4) {
+            bufA[i++] = *a - 0x20;
+        } else {
+            bufA[i++] = *a;
+        }
+    }
+    bufA[i] = 0;
+    for (i = 0; *b != 0; b++) {
+        if (D_800FCA20[*b] & 4) {
+            bufB[i++] = *b - 0x20;
+        } else {
+            bufB[i++] = *b;
+        }
+    }
+    bufB[i] = 0;
+    return strcmp(bufA, bufB) == 0;
+}
 
-INCLUDE_ASM("asm/nonmatchings/unit_28C10", Pickup_TypeFromName);
+extern u8 D_80100720[];
+extern Lnk89_ **D_80118488;
+extern u8 (*svcTrackLoadDup)(u8 *, void *);
+s32 PickupModel_Load(u8 *s) {
+    Lnk89_ *n;
+    u8 found;
+    void *obj;
+
+    if (Str_EqualNoCase(s, D_80100720)) {
+        return 0;
+    }
+    found = 0;
+    n = *D_80118488;
+    while (n != NULL && !found) {
+        if (Str_EqualNoCase(s, (u8 *)n->obj)) {
+            found = 1;
+        }
+        n = n->next;
+    }
+    if (found) {
+        return 0;
+    }
+    obj = Memory_Alloc(0xB0);
+    RefList_Add(D_80118488, obj);
+    if (svcTrackLoadDup(s, obj)) {
+        return 1;
+    }
+    RefList_Release(D_80118488, obj);
+    Memory_Free(obj);
+    return 0;
+}
+
+extern u8 D_80100720[];
+extern u8 D_80100728[];
+extern u8 D_80100730[];
+extern u8 D_80100738[];
+extern u8 D_80100744[];
+extern u8 D_8010074C[];
+extern u8 D_80100754[];
+extern u8 D_8010075C[];
+extern u8 D_80100764[];
+extern u8 D_8010076C[];
+extern u8 D_80100774[];
+extern u8 D_8010077C[];
+
+s32 Pickup_TypeFromName(u8 *name) {
+    if (Str_EqualNoCase(name, D_80100728)) { /* "turbo" */
+        return 1;
+    }
+    if (Str_EqualNoCase(name, D_80100730)) { /* "brakes" */
+        return 2;
+    }
+    if (Str_EqualNoCase(name, D_80100738)) { /* "handling" */
+        return 3;
+    }
+    if (Str_EqualNoCase(name, D_80100744)) { /* "gyro" */
+        return 4;
+    }
+    if (Str_EqualNoCase(name, D_8010074C)) { /* "sticky" */
+        return 5;
+    }
+    if (Str_EqualNoCase(name, D_80100720)) { /* "random" */
+        return 6;
+    }
+    if (Str_EqualNoCase(name, D_80100754)) { /* "stealth" */
+        return 7;
+    }
+    if (Str_EqualNoCase(name, D_8010075C)) { /* "boing" */
+        return 8;
+    }
+    if (Str_EqualNoCase(name, D_80100764)) { /* "steel" */
+        return 9;
+    }
+    if (Str_EqualNoCase(name, D_8010076C)) { /* "rubber" */
+        return 10;
+    }
+    if (Str_EqualNoCase(name, D_80100774)) { /* "points" */
+        return 12;
+    }
+    if (Str_EqualNoCase(name, D_8010077C)) { /* "4x4" */
+        return 11;
+    }
+    return 0;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_28C10", Pickup_Init);
 
 INCLUDE_ASM("asm/nonmatchings/unit_28C10", Pickup_Shutdown);
 
-INCLUDE_ASM("asm/nonmatchings/unit_28C10", Pickup_PickDef);
+extern u8 D_80100780[];
+extern u8 D_80100788[];
+char *strcpy(char *, const char *);
+
+static inline void Pickup_PickRandomName(u8 *dst) {
+    Lnk89_ *m;
+    s32 cnt;
+    s32 k;
+    s32 r;
+
+    cnt = 0;
+    for (m = *D_80118488; m != NULL; m = m->next) {
+        cnt++;
+    }
+    r = ((s32 (*)(s32))svcRandRange)(cnt);
+    for (k = 0, m = *D_80118488; m != NULL; m = m->next, k++) {
+        u8 *name = (u8 *)m->obj;
+
+        if (k == r) {
+            strcpy((char *)dst, (char *)name);
+            break;
+        }
+    }
+}
+
+u8 *Pickup_PickDef(u8 *pickup) {
+    u8 **req = (u8 **)pickup;
+    u8 name[0x50];
+    Lnk89_ *n;
+
+    if (Str_EqualNoCase(*req, D_80100720)) {
+        do {
+            Pickup_PickRandomName(name);
+        } while (Str_EqualNoCase(name, D_80100780) || Str_EqualNoCase(name, D_80100788));
+    } else {
+        strcpy((char *)name, (char *)*req);
+    }
+    for (n = *D_80118488; n != NULL; n = n->next) {
+        u8 *def = (u8 *)n->obj;
+
+        if (Str_EqualNoCase(name, def)) {
+            return def;
+        }
+    }
+    return NULL;
+}
 
 void Pickup_ClearCar(u8 *o) {
     Lnk89_ *n = *gCarPickups[*o];
@@ -230,7 +380,46 @@ void Pickup_ClearCar(u8 *o) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_28C10", Pickup_GetHudIcon);
+s32 Pickup_GetHudIcon(u8 *name) {
+    /* "turbo" is tested twice; the second string was probably meant to be another name. */
+    if (Str_EqualNoCase(name, D_80100728) || Str_EqualNoCase(name, D_80100728)) { /* "turbo" */
+        return 1;
+    }
+    if (Str_EqualNoCase(name, D_80100730)) { /* "brakes" */
+        return 2;
+    }
+    if (Str_EqualNoCase(name, D_80100738)) { /* "handling" */
+        return 3;
+    }
+    if (Str_EqualNoCase(name, D_80100744)) { /* "gyro" */
+        return 4;
+    }
+    if (Str_EqualNoCase(name, D_8010074C)) { /* "sticky" */
+        return 5;
+    }
+    if (Str_EqualNoCase(name, D_80100720)) { /* "random" */
+        return 6;
+    }
+    if (Str_EqualNoCase(name, D_80100754)) { /* "stealth" */
+        return 7;
+    }
+    if (Str_EqualNoCase(name, D_8010075C)) { /* "boing" */
+        return 8;
+    }
+    if (Str_EqualNoCase(name, D_80100764)) { /* "steel" */
+        return 9;
+    }
+    if (Str_EqualNoCase(name, D_8010076C)) { /* "rubber" */
+        return 10;
+    }
+    if (Str_EqualNoCase(name, D_80100774)) { /* "points" */
+        return 12;
+    }
+    if (Str_EqualNoCase(name, D_8010077C)) { /* "4x4" */
+        return 11;
+    }
+    return 0;
+}
 
 s32 Pickup_Collect(u8 *o, u8 *q) {
     u8 *d;

@@ -307,6 +307,43 @@ void PauseUi_EndFrame(void) {
     svcScreenEndFrame();
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_6AE90", PauseUi_DrawMenu);
+typedef struct { u8 pad0[2]; u8 n; u8 pad3; TextGlyphPos *glyphs; u8 pad8[0x10]; } PauseMenuLine;
+typedef struct { u8 pad[8]; u8 nTitle; u8 p9[3]; PauseMenuLine *title; u8 nItems; u8 p11[3]; PauseMenuLine *items; } PauseMenu;
+extern s32 (*svcFontDrawChar)(s32, u8, u16, u16, s32);
+extern void (*svcDraw2DSetColor)(s32, s32, s32);
+
+static inline void PauseUi_DrawLine(PauseMenuLine *l, u8 selected) {
+    u8 j;
+
+    if (selected) {
+        svcDraw2DSetColor(0xFF, 0, 0);
+    }
+    for (j = 0; j < l->n; j++) {
+        svcFontDrawChar(0, l->glyphs[j].a, l->glyphs[j].x, l->glyphs[j].y, 0);
+    }
+    if (selected) {
+        svcDraw2DSetColor(0xFF, 0xFF, 0xFF);
+    }
+}
+
+void PauseUi_DrawMenu(PauseMenu *m, u8 sel) {
+    u8 i;
+    u8 j;
+
+    svcDraw2DSetColor(0xFF, 0xFF, 0xFF);
+    for (i = 0; i < m->nTitle; i++) {
+        /* TODO(match-debt): &m->title[i] adds base + offset in the other order. */
+        PauseMenuLine *l = (PauseMenuLine *)(i * sizeof(PauseMenuLine) + (s32)m->title);
+
+        svcDraw2DSetColor(0, 0, 0xFF);
+        for (j = 0; j < l->n; j++) {
+            svcFontDrawChar(0, l->glyphs[j].a, l->glyphs[j].x, l->glyphs[j].y, 0);
+        }
+        svcDraw2DSetColor(0xFF, 0xFF, 0xFF);
+    }
+    for (i = 0; i < m->nItems; i++) {
+        PauseUi_DrawLine(&m->items[i], sel == i);
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_6AE90", PauseUi_DrawText);

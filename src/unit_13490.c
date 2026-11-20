@@ -329,7 +329,54 @@ void WorldData_TrimNodeCache(ItemListB_ *l, u32 t) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_13490", ModelData_Update);
+typedef struct { u16 pal; u8 first; u8 last; s16 speed; u16 time; } PalAnim38_;
+typedef struct { u8 p0[8]; u16 col[1]; } PalData38_;
+typedef struct { u8 p0[4]; PalData38_ *data; } PalRef38_;
+typedef struct { u8 p0[0x12]; u16 nAnims; u8 p14[0x20]; PalRef38_ *pals; u8 p38[0x18]; PalAnim38_ *anims; } PalObj38_;
+void *memcpy(void *, const void *, u32);
+static inline void PalAnim_Rotate(PalAnim38_ *a, u16 *col, u16 old) {
+    u16 tmp[256];
+    u32 j;
+    u32 n;
+    s32 steps;
+    s16 d;
+
+    d = a->time - old;
+    n = a->last - a->first + 1;
+    memcpy(tmp, col, n * 2);
+    steps = (s32)((f32)d * (f32)a->speed) >> 10;
+    a->time = steps << 10;
+    steps = (n < 2) ? 0 : steps % n;
+    for (j = 0; j < n; j++) {
+        col[j] = tmp[steps];
+        steps++;
+        if (steps == n) {
+            steps = 0;
+        }
+    }
+}
+
+void ModelData_Update(PalObj38_ *o, s32 dt) {
+    PalAnim38_ *a;
+    u32 i;
+    u16 old;
+    PalRef38_ *ref;
+    s32 ofs;
+
+    if (o == NULL) {
+        return;
+    }
+    for (i = 0; i < o->nAnims; i++) {
+        a = &o->anims[i];
+        old = a->time;
+        a->time += dt;
+        ref = &o->pals[a->pal];
+        /* TODO(match-debt): &ref->data->col[a->first] adds the base after the index; the byte offset
+           has to be its own value. */
+        ofs = a->first * 2;
+        PalAnim_Rotate(a, (u16 *)((u8 *)ref->data + ofs) + 4, old);
+    }
+}
 
 s32 File_LoadAllocFixed(s32 name) {
     s32 buf;

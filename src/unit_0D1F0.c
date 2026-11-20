@@ -27,7 +27,7 @@ void ExplosionRing_Update(Ring6D_ *s, u32 t);
 void Explosion_Update(Explosion *p, s32 dt);
 void Explosion_Start(Explosion *, s32, f32, u8);
 BufD_ *Texture_Create(s32, s32);
-s32 EnvMap_BuildIndex(s32 *,s32,s32);
+void EnvMap_BuildIndex(s32 *, s32, s32);
 extern s32 gEnvMapIndex;
 
 s32 PointLight_Free(s32);
@@ -217,7 +217,26 @@ void EnvMap_Apply(ObjA2_ *o) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_0D1F0", EnvMap_BuildIndex);
+void EnvMap_BuildIndex(s32 *out, s32 w, s32 h) {
+    s32 i;
+    s32 j;
+    s32 x0;
+    s32 y0;
+    s32 dx;
+    s32 dy;
+    f32 f;
+
+    x0 = w / 4;
+    y0 = h / 4;
+    dx = w / 64;
+    dy = h / 64;
+    for (i = 0; i < 32; i++) {
+        f = (f32) i / 32.0f;
+        for (j = 0; j < 32; j++) {
+            *out++ = x0 + i * dx + (y0 + (s32) (j * dy * ((1.0 - sin(f * 3.14159265)) * 0.7 + 0.3))) * w;
+        }
+    }
+}
 
 void EnvMap_FromPalette(u16 *pal, s32 *idx) {
     s32 i;

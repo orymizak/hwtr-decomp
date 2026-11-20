@@ -203,7 +203,37 @@ u8 Screen_BeginFrame(s32 arg0) {
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/screen", Screen_EndFrame);
+/* gScreenWidth and gScreenHeight are adjacent; read as one struct here so the loads keep their
+   place after the display list writes (struct accesses may alias). */
+typedef struct { u16 w; u16 h; } ScreenSize;
+void SortQueue_Flush(void);
+void SortQueue_Swap(void);
+void GfxPools_Swap(s32);
+extern s32 D_8014C648;
+void EnvMap_Capture(s32, u16, u16);
+void Gfx_FlipFrameParity(void);
+
+s32 Screen_EndFrame(void) {
+    SortQueue_Flush();
+    SortQueue_Swap();
+
+    GFX_RESERVE(2);
+    gDPFullSync(gDisplayListHead++);
+    gSPEndDisplayList(gDisplayListHead++);
+    /* TODO(match-debt): plain gScreenWidth/gScreenHeight reads get scheduled before the stores. */
+    EnvMap_Capture(D_8014C648, ((ScreenSize *)&gScreenWidth)->w, ((ScreenSize *)&gScreenWidth)->h);
+    GfxPools_Swap(1);
+    gLightsEnabled = 0;
+    D_800F2168 = 0;
+    D_800F216C[0] = 0;
+    D_800F2170 = 0;
+    gLightsDirty = 1;
+    D_800F217C = 0;
+    D_800F2180 = 0;
+    D_800F2184++;
+    Gfx_FlipFrameParity();
+    return 1;
+}
 
 void SortQueue_Flush(void);
 void SortQueue_Swap(void);
