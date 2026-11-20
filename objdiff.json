@@ -142,7 +142,7 @@
           "game"
         ],
         "source_path": "src/screen.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/screen.o"
     },
@@ -166,7 +166,7 @@
           "game"
         ],
         "source_path": "src/heap.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/heap.o"
     },
@@ -766,7 +766,7 @@
           "audio"
         ],
         "source_path": "src/unit_73220.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_73220.o"
     },
@@ -1294,7 +1294,7 @@
           "system"
         ],
         "source_path": "src/unit_787F0.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_787F0.o"
     },
