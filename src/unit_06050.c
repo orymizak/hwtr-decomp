@@ -72,7 +72,7 @@ typedef struct {
     /* 0x14C */ u8 b14C;
     /* 0x14D */ u8 c[3];
     /* 0x150 */ u8 p150[0x10];
-    /* 0x160 */ f32 m160[3][4];
+    /* 0x160 */ f32 mtx[7][3][4]; /* 0: model, then one per part */
 } Model_;
 typedef struct { s32 cur[6]; s32 tgt[6]; s32 dt; } Fade65_;
 typedef struct { f32 f0; s32 i4; f32 f8; f32 fC; u8 p10[0x30]; Vec3f pos; Vec3f vel; f32 f58; f32 f5C; u8 p60[4]; s16 h64; u8 b66; u8 c[3]; u8 b6A; u8 p6B; u16 s6C; s16 s6E; } Pt94_;
@@ -82,14 +82,20 @@ void Particle_SpawnWithVel(Vec3f, Vec3f);
 /* One block from D_80138190: per-slot part flags, wreck flag, palette and fade state that splat split into
  * D_80138A6C, D_80138A72 and D_80138A78. */
 typedef struct {
-    u8 partA[6][6];
-    u8 partB[6][6];
-    u8 partC[6][6];
-    u8 pad6C[0x8DC - 0x6C];
+    s8 partA[6][6];    /* wheel contact: 0 none, 1 first frame, 2 held */
+    s8 partB[6][6];    /* frames in contact, 0-80 */
+    u8 partC[6][6];    /* surface under the wheel */
+    struct { Vec3f pos; Vec3f n; Vec3f lastPos; Vec3f lastN; } contact[6][6];
+    Vec3f touchPos[6][6]; /* where the current contact started */
     u8 wrecked[6];
     u8 palette[6];
     s32 fadeCur[6];
     s32 fadeTgt[6];
+    s32 contactOn;     /* D_80138AA8: wheel contacts are tracked */
+    u8 b91C[5];        /* D_80138AAC..AB0 */
+    u8 partScaleOn;    /* D_80138AB1: scale the part matrices by partScale */
+    u8 p922[2];
+    f32 partScale;     /* D_80138AB4 */
 } ModelSlotState_;
 extern ModelSlotState_ D_80138190;
 extern s32 D_80138A90[];
@@ -629,7 +635,35 @@ INCLUDE_ASM("asm/nonmatchings/unit_06050", Model_SetTransform);
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", Model_SetWheel);
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", Model_SetWheelContact);
+/* Wheel w of model slot touched (contact 1) or left the ground; keeps the contact points and counters
+ * used by the skid and dust effects. */
+void Model_SetWheelContact(u8 slot, u8 w, u8 contact, Vec3f *pos, Vec3f *n, u8 surface) {
+    if (D_80138190.contactOn == 0) {
+        contact = 0;
+    }
+    D_80138190.partC[slot][w] = surface;
+    if (contact != 1) {
+        D_80138190.partA[slot][w] = 0;
+        if (D_80138190.partB[slot][w] != 0) {
+            D_80138190.partB[slot][w]--;
+        }
+    } else {
+        if (D_80138190.partB[slot][w] != 80) {
+            D_80138190.partB[slot][w]++;
+        }
+        if (D_80138190.partA[slot][w] == 0) {
+            D_80138190.contact[slot][w].pos = *pos;
+            D_80138190.contact[slot][w].n = *n;
+            D_80138190.touchPos[slot][w] = *pos;
+            D_80138190.partA[slot][w] = 1;
+        } else {
+            D_80138190.contact[slot][w].lastPos = *pos;
+            D_80138190.contact[slot][w].lastN = *n;
+            D_80138190.partA[slot][w] = 2;
+        }
+        D_80138AAC = 1;
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", Model_UpdateWheelEffects);
 
@@ -729,18 +763,18 @@ void Model_Wreck(u8 slot, u8 mode, Pair68_ unused) {
     D_80138190.wrecked[slot] = 1;
     gModels[slot]->inst->flags84 &= ~0x40;
     if (mode != 2) {
-        m[0][0] = gModels[slot]->m160[0][0];
-        m[0][1] = gModels[slot]->m160[0][1];
-        m[0][2] = gModels[slot]->m160[0][2];
-        m[0][3] = gModels[slot]->m160[0][3];
-        m[1][0] = gModels[slot]->m160[1][0];
-        m[1][1] = gModels[slot]->m160[1][1];
-        m[1][2] = gModels[slot]->m160[1][2];
-        m[1][3] = gModels[slot]->m160[1][3];
-        m[2][0] = gModels[slot]->m160[2][0];
-        m[2][1] = gModels[slot]->m160[2][1];
-        m[2][2] = gModels[slot]->m160[2][2];
-        m[2][3] = gModels[slot]->m160[2][3];
+        m[0][0] = gModels[slot]->mtx[0][0][0];
+        m[0][1] = gModels[slot]->mtx[0][0][1];
+        m[0][2] = gModels[slot]->mtx[0][0][2];
+        m[0][3] = gModels[slot]->mtx[0][0][3];
+        m[1][0] = gModels[slot]->mtx[0][1][0];
+        m[1][1] = gModels[slot]->mtx[0][1][1];
+        m[1][2] = gModels[slot]->mtx[0][1][2];
+        m[1][3] = gModels[slot]->mtx[0][1][3];
+        m[2][0] = gModels[slot]->mtx[0][2][0];
+        m[2][1] = gModels[slot]->mtx[0][2][1];
+        m[2][2] = gModels[slot]->mtx[0][2][2];
+        m[2][3] = gModels[slot]->mtx[0][2][3];
         m[0][3] += m[0][0] * 0.0f + m[0][1] * 96.0f + m[0][2] * 0.0f;
         m[1][3] += m[1][0] * 0.0f + m[1][1] * 96.0f + m[1][2] * 0.0f;
         m[2][3] += m[2][0] * 0.0f + m[2][1] * 96.0f + m[2][2] * 0.0f;
@@ -759,7 +793,54 @@ void Model_Repair(u8 slot) {
     gModels[slot]->inst->flags84 |= 0x40;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", Model_SetPartTransform);
+/* Sets part's matrix from rotation rot and position pos; scaled by partScale when partScaleOn is
+ * set. Only for a wrecked model, whose parts are then drawn separately (flag 0x40). */
+void Model_SetPartTransform(u8 slot, u8 part, Vec3f pos, f32 (*rot)[3]) {
+    f32 m[3][4];
+    Model_ *mdl;
+
+    if (D_80138190.wrecked[slot]) {
+        mdl = gModels[slot];
+        mdl->inst->flags84 |= 0x40;
+        if (mdl != NULL && part < mdl->nParts) {
+            m[0][0] = rot[0][0];
+            m[0][1] = rot[0][1];
+            m[0][2] = rot[0][2];
+            m[0][3] = pos.x;
+            m[1][0] = rot[1][0];
+            m[1][1] = rot[1][1];
+            m[1][2] = rot[1][2];
+            m[1][3] = pos.y;
+            m[2][0] = rot[2][0];
+            m[2][1] = rot[2][1];
+            m[2][2] = rot[2][2];
+            m[2][3] = pos.z;
+            mdl->mtx[part + 1][0][0] = m[0][0];
+            mdl->mtx[part + 1][0][1] = m[0][1];
+            mdl->mtx[part + 1][0][2] = m[0][2];
+            mdl->mtx[part + 1][0][3] = m[0][3];
+            mdl->mtx[part + 1][1][0] = m[1][0];
+            mdl->mtx[part + 1][1][1] = m[1][1];
+            mdl->mtx[part + 1][1][2] = m[1][2];
+            mdl->mtx[part + 1][1][3] = m[1][3];
+            mdl->mtx[part + 1][2][0] = m[2][0];
+            mdl->mtx[part + 1][2][1] = m[2][1];
+            mdl->mtx[part + 1][2][2] = m[2][2];
+            mdl->mtx[part + 1][2][3] = m[2][3];
+            if (D_80138190.partScaleOn == 1) {
+                mdl->mtx[part + 1][0][0] *= D_80138190.partScale;
+                mdl->mtx[part + 1][0][1] *= D_80138190.partScale;
+                mdl->mtx[part + 1][0][2] *= D_80138190.partScale;
+                mdl->mtx[part + 1][1][0] *= D_80138190.partScale;
+                mdl->mtx[part + 1][1][1] *= D_80138190.partScale;
+                mdl->mtx[part + 1][1][2] *= D_80138190.partScale;
+                mdl->mtx[part + 1][2][0] *= D_80138190.partScale;
+                mdl->mtx[part + 1][2][1] *= D_80138190.partScale;
+                mdl->mtx[part + 1][2][2] *= D_80138190.partScale;
+            }
+        }
+    }
+}
 
 u16 Track_GetLinkCount(void) {
     return gTrackWorld->n6;

@@ -510,7 +510,37 @@ void MenuSprite_Layout(u8 *t) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_50510", MenuButton_Layout);
+/* Lays out a button label: centred between x0 and x1, or left-aligned at x0 when t[0x13] is 1. */
+void MenuButton_Layout(u8 *t) {
+    s32 i;
+    s32 w;
+    s32 x;
+    s32 y;
+    s32 mid;
+
+    mid = (*(s16 *)(t + 8) + *(s16 *)(t + 0xA)) / 2;
+    y = *(s16 *)(t + 0xC);
+    if (t[0x13] != 1) {
+        w = 0;
+        for (i = 0; i < t[2] - 1; i++) {
+            w += MenuFont_Kerning(0, (*(E0A5_ **)(t + 4))[i].a, (*(E0A5_ **)(t + 4))[i + 1].a);
+        }
+        w += MenuFont_CharWidth(0, (*(E0A5_ **)(t + 4))[i].a);
+        w /= 2;
+        x = mid - w;
+    } else {
+        x = *(s16 *)(t + 8);
+    }
+    (*(E0A5_ **)(t + 4))[0].x2 = x;
+    (*(E0A5_ **)(t + 4))[0].y2 = y;
+    *(P16b_ *)&(*(E0A5_ **)(t + 4))[0].x = *(P16b_ *)&(*(E0A5_ **)(t + 4))[0].x2;
+    for (i = 1; i < t[2]; i++) {
+        x += MenuFont_Kerning(0, (*(E0A5_ **)(t + 4))[i - 1].a, (*(E0A5_ **)(t + 4))[i].a);
+        (*(E0A5_ **)(t + 4))[i].x2 = x;
+        (*(E0A5_ **)(t + 4))[i].y2 = y;
+        *(P16b_ *)&(*(E0A5_ **)(t + 4))[i].x = *(P16b_ *)&(*(E0A5_ **)(t + 4))[i].x2;
+    }
+}
 
 void Menu_LayoutAll(void) {
     u32 k;

@@ -418,7 +418,7 @@
           "game"
         ],
         "source_path": "src/unit_47B70.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_47B70.o"
     },
@@ -1222,7 +1222,7 @@
           "system"
         ],
         "source_path": "src/unit_775E0.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_775E0.o"
     },
@@ -1234,7 +1234,7 @@
           "system"
         ],
         "source_path": "src/unit_77BA0.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_77BA0.o"
     },
@@ -1258,7 +1258,7 @@
           "system"
         ],
         "source_path": "src/unit_78170.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_78170.o"
     },

@@ -2,7 +2,7 @@
 #include "ultra64.h"
 #include "include_asm.h"
 typedef struct { u16 a; u16 b; u16 id; u8 state; u8 flags; u8 x; u8 y; } PakSlotQ_;
-typedef struct { u16 a; u16 b; u8 p4[2]; u8 state; } PakInfoQ_;
+typedef struct { u16 a; u16 b; u8 p4[2]; u8 state; u8 pad[9]; } PakInfoQ_;
 typedef struct { u8 ch; u8 p1[7]; PakInfoQ_ *info; } ArgsQ_;
 typedef struct { u8 p0[0xC]; ArgsQ_ *args; } ReqQ_;
 typedef struct { u16 id; u8 state; u8 flags; u8 pad[6]; } PakSlotJ_;
@@ -166,4 +166,17 @@ s32 contRmbStopMesg(ReqA_ *r) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_775E0", nuContRmbStart);
+s32 nuSiSendMesg(u16 cmd, void *args);
+void nuContRmbStart(u32 contNo, u16 freq, u16 frame) {
+    PakInfoQ_ info;
+    ArgsQ_ args;
+
+    if (!((&D_80140F6F)[contNo * 10] & 0x80)) {
+        info.state = 3;
+        info.a = freq;
+        info.b = frame;
+        args.ch = contNo;
+        args.info = &info;
+        nuSiSendMesg(0x302, &args);
+    }
+}

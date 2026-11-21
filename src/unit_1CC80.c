@@ -38,7 +38,50 @@ extern s32 D_801345B4;
 extern s32 D_80138B10;
 extern s32 D_8014C6FC;
 
-INCLUDE_ASM("asm/nonmatchings/unit_1CC80", Particles_Init);
+/* Particle texture: width, height, format (0 16-bit, 1 8-bit, 3 32-bit) and pixel data. */
+typedef struct { u8 w; u8 h; u8 fmt; u8 pad3; u8 *data; } ParticleTex;
+extern char D_800FF9E0[];
+extern ParticleDef *D_801380C8[];
+extern ParticlePool gParticles;
+extern ParticlePool gParticlesAlt;
+extern ParticlePool D_80145488;
+s32 File_GetSize(char *name);
+s32 File_Load(char *name, void *dst);
+void *Memory_Alloc(s32 size);
+void Texture_Relocate(void *tex);
+void ParticlePool_Init(ParticlePool *pool, Particle *buf, u32 cap);
+
+/* Loads the particle textures (30, packed and 8-byte aligned) and allocates the three particle pools. */
+void Particles_Init(void) {
+    ParticleTex *t;
+    u32 i;
+
+    t = Memory_Alloc(File_GetSize(D_800FF9E0));
+    D_800F2630 = (s32)t;
+    File_Load(D_800FF9E0, t);
+    D_801380C8[0] = NULL;
+    for (i = 1; i < 31; i++) {
+        Texture_Relocate(t);
+        D_801380C8[i] = (ParticleDef *)t;
+        if (t->fmt == 3) {
+            t = (ParticleTex *)(t->data + t->w * t->h * 4);
+        } else if (t->fmt == 0) {
+            t = (ParticleTex *)(t->data + t->w * t->h * 2);
+        } else if (t->fmt == 1) {
+            t = (ParticleTex *)(t->data + t->w * t->h);
+        }
+        t = (ParticleTex *)(((u32)t + 7) & ~7);
+    }
+    /* TODO(match-debt): the loop counter is reused for the first pool buffer; with a separate variable
+       the counter and the texture slot pointer swap registers. */
+    i = (u32)Memory_Alloc(0x2A00);
+    D_8014C6FC = i;
+    D_80138B10 = (s32)Memory_Alloc(0x5400);
+    D_801345B4 = (s32)Memory_Alloc(0x1500);
+    ParticlePool_Init(&gParticles, (Particle *)D_8014C6FC, 0x60);
+    ParticlePool_Init(&gParticlesAlt, (Particle *)D_80138B10, 0xC0);
+    ParticlePool_Init(&D_80145488, (Particle *)D_801345B4, 0x30);
+}
 
 void Particles_FreeAll(void) {
     if (D_8014C6FC != 0) {

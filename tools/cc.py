@@ -138,7 +138,7 @@ def rewrite_function(lines, name, refs, db, blocks=None, used=None):
 
 
 def data_blocks(lines):
-    """{.LCn: bytes} de los bloques de .word que gcc emite para inicializar arrays locales."""
+    """{.LCn: bytes} de los bloques de .word/.byte que gcc emite para inicializar arrays locales."""
     blocks, current = {}, None
     for line in lines:
         m = re.match(r"(\.LC\d+):\s*$", line)
@@ -148,6 +148,10 @@ def data_blocks(lines):
         w = re.match(r"\s*\.word\s+(0x[0-9a-fA-F]+|-?\d+)\b", line)
         if current is not None and w:
             current += struct.pack(">I", int(w.group(1), 0) & 0xFFFFFFFF)
+            continue
+        b = re.match(r"\s*\.byte\s+(0x[0-9a-fA-F]+|-?\d+)\s*$", line)
+        if current is not None and b:
+            current.append(int(b.group(1), 0) & 0xFF)
             continue
         current = None
     return {k: bytes(v) for k, v in blocks.items() if v}
@@ -175,7 +179,7 @@ def rewrite(text, db):
                 skip = m.group(1) in used
                 if skip:
                     continue
-            elif skip and re.match(r"\s*\.word\s", line):
+            elif skip and re.match(r"\s*\.(word|byte)\s", line):
                 continue
             else:
                 skip = False

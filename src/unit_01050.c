@@ -510,7 +510,7 @@ s32 CarSnd_StopLoopC(u8 car);
 s32 CarSnd_SetLoopCVolume(s32 arg0, s32 arg1);
 u8 SndSrc_Create(void);
 s32 SndSrc_Destroy(u8 id);
-s32 SndSrc_Play();
+s32 SndSrc_Play(u8 id, u32 kind, s32 unused, u8 loop);
 s32 SndSrc_Stop(u8 id);
 s32 SndSrc_SetVolume(u8 id, f32 v);
 s32 SndSrc_SetPosition(u8 id, Vec3f v);
@@ -667,7 +667,45 @@ void CarSnd_Init(s32 unused, u8 count, u8 *info) {
     gMusicTrack = 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", CarSnd_Shutdown);
+/* Stops the sound on handle h, if any, and clears it. */
+#define SND_STOP_HANDLE(h)          \
+    if (Snd_IsPlaying(h) != 0) {    \
+        Snd_Stop(h, 0);             \
+        h = 0;                      \
+    }
+
+/* gCarSnd is followed by gSndSrcList in memory: the code addresses both from one base. */
+typedef struct { Snd29_ car[6]; Nd29_ *list; } CarSndState_;
+
+/* Stops every car sound and frees the positional sound sources. */
+s32 CarSnd_Shutdown(void) {
+    Nd29_ *n;
+    Nd29_ *dead;
+    s32 i;
+    Nd29_ **head;
+    s32 *cnt;
+
+    head = &((CarSndState_ *)gCarSnd)->list;
+    n = *head;
+    for (i = 0; i < 6; i++) {
+        SND_STOP_HANDLE(gCarSnd[i].h[0]);
+        SND_STOP_HANDLE(gCarSnd[i].h[1]);
+        SND_STOP_HANDLE(gCarSnd[i].h[2]);
+        SND_STOP_HANDLE(gCarSnd[i].h[3]);
+        SND_STOP_HANDLE(gCarSnd[i].h[4]);
+        SND_STOP_HANDLE(gCarSnd[i].h[5]);
+    }
+    while (n != NULL) {
+        dead = n;
+        SND_STOP_HANDLE(n->h);
+        n = n->next;
+        Memory_Free(dead);
+        cnt = &gSndSrcCount;
+        (*cnt)--;
+    }
+    *(Nd29_ **)&gSndSrcList = NULL;
+    return 1;
+}
 
 s32 Sfx_Play(u32 id, s32 mode, f32 vol, f32 pitch) {
     s32 snd;

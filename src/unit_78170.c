@@ -74,7 +74,16 @@ s32 contReadData(void *data, s32 mask) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_78170", contQuery);
+s32 contQuery(void) {
+    s32 ret = osContStartQuery(D_8014EB40);
+
+    if (ret != 0) {
+        return ret;
+    }
+    ((s32 (*)(void *mq, void **msg, s32 flag))osRecvMesg)(D_8014EB40, 0, 1);
+    osContGetQuery(D_801380B8);
+    return 0;
+}
 
 s32 contRetrace(s16 *arg0) {
     if (nuContDataLockKey == 0) {

@@ -2,23 +2,29 @@
 #include "ultra64.h"
 #include "include_asm.h"
 #include "car.h"
+#include "race.h"
 extern u8 D_800F3B3C[];
 extern u16 gHudFlags[];
 extern u16 D_800F3B38[];
 typedef struct { u8 a[32]; } E32_;
 typedef struct { E32_ e[7]; u8 pad[16]; } E240_;
-typedef struct { s32 t; u8 a; u8 b; u8 c; u8 d; s32 pad; } E0Cb_;
+typedef struct { s32 t; u8 a; u8 b; s8 c; u8 d; s32 pad; } E0Cb_;
 typedef struct { u8 p0[8]; s16 h8; u8 pA[2]; u8 bC; u8 bD; u8 pE[2]; } El10_;
 typedef struct { u8 on; u8 p1[0x27]; } Blk28_;
 typedef struct { s32 t; s32 w4; s32 w8; u8 pC[4]; El10_ el[6]; Blk28_ blk[3]; u8 pE8; u8 flag; u8 bEA; u8 bEB; u8 pEC[4]; } HudF0_;
 extern u8 gHudRacerCount;
 extern char D_80100A94[];
 extern HudF0_ D_800F3934[];
+/* Wrong-way indicator per player (same 0xF0 stride as D_800F3934). */
+typedef struct { s32 t; u8 pad[0xEC]; } HudWrongWayT_;
+typedef struct { u8 on; u8 pad[0xEF]; } HudWrongWayOn_;
+extern HudWrongWayT_ D_800F3930[];
+extern HudWrongWayOn_ D_800F3A1C[];
 void Hud_DrawSlideFromLeft(Blk28_ *, El10_ *, s32, s32);
 void Hud_DrawSlideFromRight(Blk28_ *, El10_ *, s32, s32);
 extern s32 gHudTimeLimit;
 extern char D_80100A9C[];
-extern void (*svcFontDrawChar)(s32, s32, u16, u16, s32);
+extern s32 (*svcFontDrawChar)(s32, s32, u16, u16, s32);
 extern void (*svcDraw2DSetColor)(s32, s32, s32);
 extern E0Cb_ D_800F3B18[];
 extern u8 gHudPlayerCount;
@@ -30,13 +36,84 @@ extern u8 D_800F3938;
 extern u8 D_800F393C;
 extern u8 D_800F3A1E;
 extern u8 D_800F3A1F;
-extern u8 D_8011F68F;
+extern s8 D_8011F68F;
 extern u8 D_800F3B10;
 extern u8 gHudRacer;
 
 extern s8 D_800F3B45;
+s8 Font_GetKerning(u8 font, u8 a, u8 b);
 
-INCLUDE_ASM("asm/nonmatchings/unit_49CF0", Hud_Init);
+extern u8 gHudLapCount;
+extern u8 gHudCountdown;
+extern u8 D_800F3B3E;
+extern u8 (*svcFontLoad)(s32, char *);
+extern char D_80100A70[];
+extern char D_80100A78[];
+extern char D_80100A84[];
+
+/* Sets up the HUD for a race: player count, visible elements and fonts. Returns 0 if a font failed to load. */
+u8 Hud_Init(RaceSetup *cfg) {
+    u8 (**load)(s32, char *);
+    u16 flags;
+    u8 i;
+    u8 ok;
+
+    flags = 0;
+    if (cfg->count == 2 && cfg->p[0].kind == 1 && cfg->p[1].kind == 1) {
+        gHudPlayerCount = 2;
+        flags = 0xD91;
+    } else if (cfg->p[0].kind == 1) {
+        gHudPlayerCount = 1;
+        flags |= 0xD11;
+    } else {
+        gHudPlayerCount = 0;
+    }
+    gHudRacerCount = cfg->count;
+    if (cfg->flags & 2) {
+        D_800F3B3E = 1;
+        flags |= 0x220;
+    } else {
+        D_800F3B3E = 0;
+        flags |= 0x62;
+        if (!(cfg->flags & 8)) {
+            flags |= 0xC;
+            gHudLapCount = cfg->f19;
+        }
+    }
+    if (cfg->flags & 4) {
+        gHudCountdown = 1;
+        gHudTimeLimit = cfg->timeLimit;
+    } else {
+        gHudCountdown = 0;
+    }
+    memset(D_800F3B18, 0, 0x18);
+    for (i = 0; i < 2; i++) {
+        D_800F3B18[i].c = -1;
+        ((s32 *)&D_800F3B10)[i] = 0;
+        gHudFlags[i] = flags;
+        D_800F3B38[i] = flags;
+        D_800F3B3C[i] = 0;
+    }
+    for (i = 0; i < 6; i++) {
+        (&D_8011F68F + 1)[i] = -1;
+        (&D_8011F68F + 7)[i] = cfg->p[i].car;
+    }
+    D_800F3B45 = -1;
+    load = &svcFontLoad;
+    ok = (*load)(0, D_80100A70);
+    if (ok) {
+        if (gHudPlayerCount == 1) {
+            ok = (*load)(1, D_80100A78);
+        } else {
+            ok = (*load)(1, D_80100A84);
+        }
+    }
+    if (ok) {
+        memset(D_800F3930, 0, 0x1E0);
+        return 1;
+    }
+    return 0;
+}
 
 s32 Hud_Shutdown(void) {
     s32 (**fp)(s32) = &svcFontFree;
@@ -185,7 +262,64 @@ void Hud_DrawLapTimer(u8 idx, u8 flag) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_49CF0", Hud_DrawLapTimePopup);
+/* Shows the time of the lap just completed for 5 s (blinking every 500 ms; yellow for a best lap). */
+u8 Hud_DrawLapTimePopup(u8 idx, u8 flag) {
+    u8 buf[80];
+    u8 *c;
+    s32 x;
+    s32 color;
+    u8 show;
+    u32 t;
+
+    if (D_800F3934[idx].bEA == 0) {
+        return 0;
+    }
+    if ((u32)(((s32 (*)(void))RaceClock_Get)() - D_800F3934[idx].w8) > 5000) {
+        D_800F3934[idx].bEA = 0;
+        return 0;
+    }
+    show = ((u32)(((s32 (*)(void))RaceClock_Get)() - D_800F3934[idx].w8) / 500 & 1) ^ 1;
+    svcDraw2DSetColor(0xFF, 0xFF, 0xFF);
+    if (flag == 0) {
+        x = 0xCB;
+        color = 0x23;
+    } else {
+        x = 0xCB;
+        color = 0x8D;
+        if (idx == 0) {
+            color = 0x23;
+        }
+    }
+    svcFontDrawChar(1, 1, x, color, 2);
+    if (show) {
+        if (D_800F3934[idx].bEB) {
+            svcDraw2DSetColor(0xFF, 0xFF, 0);
+        } else {
+            svcDraw2DSetColor(0xFF, 0, 0);
+        }
+        t = D_800F3934[idx].w4;
+        sprintf(buf, D_80100A9C, t / 60000, (t % 60000) / 1000, ((t % 60000) % 1000) / 100, (((t % 60000) % 1000) % 100) / 10);
+        if (flag == 0) {
+            x = 0xCF;
+            color = 0x20;
+        } else {
+            x = 0xCF;
+            color = 0x8A;
+            if (idx == 0) {
+                color = 0x20;
+            }
+        }
+        for (c = buf; *c != 0; c++) {
+            svcFontDrawChar(1, *c, x, color, 1);
+            if (*c < '0' || *c > '9') {
+                x += 7;
+            } else {
+                x += 13;
+            }
+        }
+    }
+    return 1;
+}
 
 extern char D_80100A90[];
 u32 strlen(const char *);
@@ -233,11 +367,62 @@ void Hud_DrawScore(u8 idx, u8 flag) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_49CF0", Hud_DrawLaps);
+/* Draws the lap counter as "lap/laps" with its two label glyphs. */
+void Hud_DrawLaps(u8 idx, u8 flag) {
+    u8 buf[80];
+    Car *p;
+    u8 *c;
+    u16 x;
+    u16 y;
+
+    p = Car_Get((&gHudRacer)[idx]);
+    svcDraw2DSetColor(0xFF, 0xFF, 0xFF);
+    if (flag == 0) {
+        x = 0xDC;
+        y = 0x23;
+    } else {
+        x = 0xDC;
+        y = 0x8D;
+        if (idx == 0) {
+            y = 0x23;
+        }
+    }
+    svcFontDrawChar(1, 3, x, y, 2);
+    svcDraw2DSetColor(0xFF, 0, 0);
+    if (flag == 0) {
+        x = 0xE4;
+        y = 0x20;
+    } else {
+        x = 0xE4;
+        y = 0x8A;
+        if (idx == 0) {
+            y = 0x20;
+        }
+    }
+    svcFontDrawChar(1, 4, x, y, 1);
+    sprintf(buf, D_80100A94, (u8)(p->lap + 1), gHudLapCount);
+    if (flag == 0) {
+        x = 0x108;
+        y = 0x20;
+    } else {
+        x = 0x108;
+        y = 0x8A;
+        if (idx == 0) {
+            y = 0x20;
+        }
+    }
+    for (c = buf; *c != 0; c++) {
+        svcFontDrawChar(1, *c, x, y, 1);
+        if (*c < '0' || *c > '9') {
+            x += 9;
+        } else {
+            x += 13;
+        }
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_49CF0", Hud_DrawTurbos);
 
-extern u8 gHudCountdown;
 /* Draws the HUD elements enabled in gHudFlags[idx] for player idx. */
 s32 Hud_DrawPlayer(u8 idx) {
     u8 two;
@@ -299,9 +484,143 @@ INCLUDE_ASM("asm/nonmatchings/unit_49CF0", Hud_DrawSlideFromRight);
 
 INCLUDE_ASM("asm/nonmatchings/unit_49CF0", Hud_DrawResults);
 
-INCLUDE_ASM("asm/nonmatchings/unit_49CF0", Hud_DrawScoreboard);
+extern char D_80100ABC[];
+extern char D_80100AC0[];
+extern char *D_8014156C;
+extern char D_80138D20[];
+extern char D_801345B8[];
 
-INCLUDE_ASM("asm/nonmatchings/unit_49CF0", Hud_DrawWrongWay);
+static inline void Hud_DrawKernedText(u8 *c, u16 x, u16 y) {
+    s32 one;
+
+    if (*c != 0) {
+        one = 1;
+        do {
+            x += svcFontDrawChar(0, *c, x, y, one);
+            x += Font_GetKerning(0, *c++, *c);
+        } while (*c != 0);
+    }
+}
+
+/* Airtime results: the best time and each player's name and score, leader first. */
+void Hud_DrawScoreboard(void) {
+    Car *cars[2];
+    u8 buf[80];
+    u8 *c;
+    u16 x;
+    u16 y;
+    u16 one;
+    u8 swap;
+    u8 i;
+    u32 t;
+
+    cars[0] = Car_Get(0);
+    swap = 0;
+    if (gHudPlayerCount == 2) {
+        cars[1] = Car_Get(1);
+        swap = (u32)cars[1]->score > (u32)cars[0]->score;
+    } else {
+        cars[1] = NULL;
+    }
+    t = ((s32 (*)(void))RaceClock_Get)() - cars[0]->unk440;
+    if (t < gHudTimeLimit) {
+        gHudTimeLimit = t;
+    }
+    svcDraw2DSetColor(0, 0xFF, 0xFF);
+    y = 0x3C;
+    sprintf(buf, D_80100ABC);
+    x = 0x1E;
+    Hud_DrawKernedText(buf, x, y);
+    sprintf(buf, D_80100AC0, D_8014156C);
+    x = 0xC8;
+    Hud_DrawKernedText(buf, x, y);
+    svcDraw2DSetColor(0xFF, 0xFF, 0xFF);
+    y = 0x50;
+    for (i = 0; i < gHudPlayerCount; i++) {
+        one = 1;
+        if (i == 0 && swap) {
+            y += 0x14;
+        }
+        if (cars[i]->id == 0) {
+            sprintf(buf, D_80100AC0, D_80138D20);
+        } else {
+            sprintf(buf, D_80100AC0, D_801345B8);
+        }
+        x = 0x1E;
+        c = buf;
+        if (*c != 0) {
+            do {
+                x += svcFontDrawChar(0, *c, x, y, one);
+                x += Font_GetKerning(0, *c++, *c);
+            } while (*c != 0);
+        }
+        sprintf(buf, D_80100A90, cars[i]->score);
+        c = buf;
+        x = 0xC8;
+        if (*c != 0) {
+            do {
+                x += svcFontDrawChar(0, *c, x, y, one);
+                x += Font_GetKerning(0, *c++, *c);
+            } while (*c != 0);
+        }
+        if (swap == 0) {
+            y += 0x14;
+        } else {
+            y -= 0x14;
+        }
+    }
+}
+
+extern char *D_80141440;
+
+/* Blinks the "wrong way" text (500 ms phases) until 200 ms after the car stops driving the wrong way. */
+void Hud_DrawWrongWay(u8 idx) {
+    u8 buf[24];
+    u8 *c;
+    u16 x;
+    u16 y;
+    s32 one;
+    u8 split;
+    s32 phase;
+
+    if (Car_Get((&gHudRacer)[idx])->wrongWay) {
+        D_800F3A1C[idx].on = 1;
+        D_800F3930[idx].t = ((s32 (*)(void))RaceClock_Get)();
+    }
+    if (D_800F3A1C[idx].on == 0) {
+        return;
+    }
+    if ((u32)(((s32 (*)(void))RaceClock_Get)() - D_800F3930[idx].t) > 200) {
+        D_800F3A1C[idx].on = 0;
+        return;
+    }
+    phase = (u32)((s32 (*)(void))RaceClock_Get)() / 500 & 1;
+    if (phase == 1) {
+        return;
+    }
+    split = gHudPlayerCount == 2;
+    sprintf(buf, D_80141440);
+    if (split == 0) {
+        x = 0x4A;
+        y = 0x12;
+    } else {
+        x = 0x4A;
+        y = 0x7C;
+        if (idx == 0) {
+            y = 0x12;
+        }
+    }
+    svcDraw2DSetColor(0xFF, 0, 0);
+    c = buf;
+    if (*c != 0) {
+        one = 1;
+        do {
+            x += svcFontDrawChar(0, *c, x, y, one);
+            /* TODO(match-debt): unsequenced *c++ / *c; gcc 2.7 reads them left to right as the original did. */
+            x += Font_GetKerning(0, *c++, *c);
+        } while (*c != 0);
+    }
+}
 
 void Hud_DrawTrickPopup(u8 p) {
     El10_ *e0;
@@ -374,7 +693,64 @@ void Hud_SetPlayer(u8 i, s32 v, s8 id) {
     (&gHudRacer)[i] = id;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_49CF0", Hud_Draw);
+extern s32 gGameState;
+extern char *D_80141438;
+void Hud_DrawResults(void);
+void Hud_DrawScoreboard(void);
+
+/* Draws every player's HUD, the results once all of them finished, and the blinking banner in demo mode. */
+void Hud_Draw(void) {
+    u8 i;
+    u8 finished;
+    u8 *c;
+    u16 x;
+    s32 one;
+    u8 ch;
+
+    svcDraw2DSetColor(0xFF, 0xFF, 0xFF);
+    finished = 0;
+    if (gGameState != 1) {
+        for (i = 0; i < gHudPlayerCount; i++) {
+            switch (((s32 *)&D_800F3B10)[i]) {
+            case 1:
+                Hud_DrawPlayer(i);
+                if (gHudFlags[i] & 0x400) {
+                    Hud_DrawTrickPopup(i);
+                }
+                Hud_DrawWrongWay(i);
+                break;
+            case 3:
+                finished++;
+                break;
+            }
+        }
+    }
+    if (finished == gHudPlayerCount) {
+        if (gHudPlayerCount != 0) {
+            if (D_800F3B3E) {
+                Hud_DrawScoreboard();
+            } else {
+                Hud_DrawResults();
+            }
+        }
+    }
+    if (gHudPlayerCount == 0) {
+        if (((u32)((s32 (*)(void))RaceClock_Get)() / 750 & 1) != 0) {
+            return;
+        }
+        svcDraw2DSetColor(0xFF, 0, 0);
+        c = D_80141438;
+        x = 0x5E;
+        if ((ch = *c) != 0) {
+            one = 1;
+            do {
+                x += svcFontDrawChar(0, ch, x, 0x12, one);
+                /* TODO(match-debt): unsequenced *c++ / *c (see Hud_DrawWrongWay). */
+                x += Font_GetKerning(0, *c++, *c);
+            } while ((ch = *c) != 0);
+        }
+    }
+}
 
 void Hud_SetResultRacer(s8 arg0, s32 arg1) {
     *(u8 *)(&D_8011F68F + (arg1 & 0xFF)) = arg0;

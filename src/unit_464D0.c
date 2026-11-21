@@ -15,7 +15,7 @@ void RigidBody_Integrate(void *, f32);
 void Mtx3_Orthonormalize(void *);
 
 void Coll_Unregister(s32 *);
-extern s32 gDebris;
+extern Prta5_ gDebris[];
 
 s32 Debris_Init(void) {
     u8 *e = (u8 *)&gDebris;
@@ -357,4 +357,38 @@ u32 Debris_SaveReplay(PrtRec_ *out, u32 size) {
     return n;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_464D0", Debris_LoadReplay);
+/* Restores the parts from Debris_SaveReplay records; the third rotation row is rebuilt as the cross
+ * product of the first two. A 4-byte block means no parts. */
+void Debris_LoadReplay(PrtRec_ *in, u32 size) {
+    Prta5_ *e;
+    u32 i;
+
+    if (size == 4) {
+        for (i = 0; i < 8; i++) {
+            gDebris[i].active = 0;
+        }
+    } else {
+        for (e = gDebris, i = 0; i < 8; e++, i++) {
+            if (i * sizeof(PrtRec_) < size) {
+                e->active = in->kind;
+                e->m124.m[0][0] = in->rot[0] / 127.0f;
+                e->m124.m[0][1] = in->rot[1] / 127.0f;
+                e->m124.m[0][2] = in->rot[2] / 127.0f;
+                e->m124.m[1][0] = in->rot[3] / 127.0f;
+                e->m124.m[1][1] = in->rot[4] / 127.0f;
+                e->m124.m[1][2] = in->rot[5] / 127.0f;
+                VEC3_CROSS(*(Vec3f *)e->m124.m[2], *(Vec3f *)e->m124.m[0], *(Vec3f *)e->m124.m[1]);
+                e->vFC.x = in->pos[0];
+                e->vFC.y = in->pos[1];
+                e->vFC.z = in->pos[2];
+                if (e->active == 1) {
+                    e->id = in->id;
+                    e->idx = in->idx;
+                }
+                in++;
+            } else {
+                e->active = 0;
+            }
+        }
+    }
+}

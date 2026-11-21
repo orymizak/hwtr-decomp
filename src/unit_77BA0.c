@@ -25,4 +25,27 @@ s32 nuContRmbCheck(s32 ch) {
     return r;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_77BA0", nuContRmbModeSet);
+void nuContRmbModeSet(u32 contNo, u8 mode) {
+    s32 mask = osSetIntMask(1);
+    u8 flags = D_80140F68[contNo].flags & 0x80;
+
+    switch (mode) {
+    case 0:
+        D_80140F68[contNo].flags = mode | flags;
+        break;
+    case 1:
+        if (D_80140F68[contNo].y == 2) {
+            D_80140F68[contNo].flags = mode | flags;
+        }
+        break;
+    case 2:
+        D_80140F68[contNo].flags = mode | flags;
+        if (D_80140F68[contNo].y == mode) {
+            D_80140F68[contNo].x = 1;
+        } else {
+            D_80140F68[contNo].x = 0;
+        }
+        break;
+    }
+    osSetIntMask(mask);
+}

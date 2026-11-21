@@ -173,7 +173,7 @@ typedef struct { u8 p0[4]; s32 maxPVoices; s32 maxUpdates; u8 pC[4]; s32 dmaproc
 void SndSyn_New(SndSynConfig *c);
 extern s32 D_8014C6D0;
 extern s32 gSndSeqFxControl;
-s32 SndWave_Relocate();
+void SndWave_Relocate();
 extern s32 gSndDefWaveBank;
 
 extern s16 D_8012794C;
@@ -1142,7 +1142,52 @@ f32 Snd_Exp2(f32 x) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", SndWave_Relocate);
+void Snd_RelocatePtrs(void *arg0, s32 arg1, s32 arg2);
+void osWritebackDCacheAll(void);
+typedef struct { u32 base; u8 pad4[4]; u8 b8; u8 b9; u8 padA[2]; s32 pC; s32 p10; } SndWave_;
+typedef struct { u8 pad0[0x10]; u32 flags; u8 pad14[0xC]; s32 count; u8 *tune; f32 *pitch; SndWave_ **waves; } SndWaveBank_;
+#define SND_S8(x) (((x) & 0x80) ? ((x) & 0xFF) - 0x100 : ((x) & 0xFF))
+
+/* Relocates a wave bank once: pitch and tune tables to floats, wave pointers to the ROM table and the bank. */
+void SndWave_Relocate(u8 *base, s32 table) {
+    SndWaveBank_ *b = (SndWaveBank_ *)base;
+    s32 i;
+    u8 *p;
+    s32 v;
+    u8 t;
+    f32 f;
+    u32 a;
+
+    if (!(b->flags & 0x80000000)) {
+        b->flags |= 0x80000000;
+        Snd_RelocatePtrs(&b->tune, (s32)b, 3);
+        Snd_RelocatePtrs(b->waves, (s32)b, b->count);
+        for (i = 0; i < b->count; i++) {
+            p = (u8 *)&b->pitch[i];
+            v = SND_S8(*p);
+            f = v;
+            *(f32 *)p = f / 100.0;
+            t = b->tune[i] - 0x30;
+            f = SND_S8(t);
+            *(f32 *)p += f;
+            if (b->waves[i]->b9 == 0) {
+                a = b->waves[i]->base;
+                if ((a & 0xFF000000) != 0xFF000000) {
+                    a += table;
+                    b->waves[i]->base = a;
+                }
+                b->waves[i]->b9 = 1;
+                if (b->waves[i]->pC != 0) {
+                    b->waves[i]->pC += (s32)base;
+                }
+                if (b->waves[i]->b8 == 0) {
+                    b->waves[i]->p10 += (s32)base;
+                }
+            }
+        }
+        osWritebackDCacheAll();
+    }
+}
 
     /* TODO (Clean version): [evaluated 2026-11-18: kept as documentation; the code is the
     original algorithm]
@@ -1181,7 +1226,49 @@ s32 Snd_Random(s32 range) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_6E610", SndVoice_Reset);
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", SndVoice_Alloc);
+/* Picks a voice for a sound of sequence seq (slot idx; idx < 0 may use the music voices): a free voice,
+ * else the idle one with the lowest priority, else one not playing seq, else one already playing this
+ * slot; as a last resort voice 4 + idx % (sfx voices). */
+s32 SndVoice_Alloc(SndSeq *seq, s32 idx) {
+    SndVoice *v;
+    s32 i;
+    s32 best;
+    s32 pick;
+
+    if (idx < 0) {
+        for (i = 0, v = (SndVoice *)gSndVoices; i < SND_MUSIC_VOICES; i++, v++) {
+            if (v->unk4 == 0) {
+                return i;
+            }
+        }
+    }
+    for (i = SND_MUSIC_VOICES, v = gSndSfxVoices; i < gSndNumVoices; i++, v++) {
+        if (v->unk4 == 0) {
+            return i;
+        }
+    }
+    for (i = SND_MUSIC_VOICES, v = gSndSfxVoices, best = 0x7FFFFFFF, pick = SND_MUSIC_VOICES - 1; i < gSndNumVoices; i++, v++) {
+        if (v->unk78 != 0 && v->unk48 <= best) {
+            best = v->unk48;
+            pick = i;
+        }
+    }
+    if (pick >= SND_MUSIC_VOICES) {
+        return pick;
+    }
+    /* Bug: v is never advanced, so this tests the first sfx voice gSndNumVoices - 4 times. */
+    for (i = SND_MUSIC_VOICES, v = gSndSfxVoices; i < gSndNumVoices; i++) {
+        if (v->unk78 == 0 && v->unk74 != seq) {
+            return i;
+        }
+    }
+    for (i = SND_MUSIC_VOICES, v = gSndSfxVoices; i < gSndNumVoices; i++, v++) {
+        if (v->unk74 == seq && (*(s32 **)seq->pC)[idx] == v->unk80) {
+            return i;
+        }
+    }
+    return idx % (gSndNumVoices - SND_MUSIC_VOICES) + SND_MUSIC_VOICES;
+}
 
 void Snd_RelocatePtrs(void *arg0, s32 arg1, s32 arg2) {
     s32 *p = arg0;
@@ -1750,7 +1837,71 @@ void SndFx_Alloc(s32 *rp, u8 *c, void *hp) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", SndFx_SetParams);
+typedef struct { s16 fc; s16 fgain; s32 pad4; s16 fccoef[16]; void *fstate; s32 first; } LPF_;
+typedef struct { u8 filter[0x14]; void *state; f32 ratio; s32 upitch; f32 delta; s32 first; void *ctrlList; void *ctrlTail; s32 motion; } RSF_;
+typedef struct { u32 input; u32 output; s16 ffcoef; s16 fbcoef; s16 gain; f32 rsinc; f32 rsval; s32 rsdelta; f32 rsgain; LPF_ *lp; RSF_ *rs; } DLF_;
+typedef struct { u8 filter[0x14]; s16 *base; s16 *input; u32 length; DLF_ *delay; u8 section_count; s32 pad28; } FXF_;
+typedef struct { s32 maxVVoices; s32 maxPVoices; s32 maxUpdates; s32 maxFXbusses; void *dmaproc; void *heap; s32 outputRate; u8 fxType; s32 *params; } SCF_;
+void _init_lpfilter(void *);
+
+extern s32 D_8014C6D0;
+typedef struct { s32 delay; s32 base; s32 pool[4]; } FxPool_;
+
+void SndFx_SetParams(s32 *param) {
+    u16 i, j, k;
+    DLF_ *d;
+    FXF_ *r;
+    s32 *pool;
+    s32 *pool2;
+
+    r = *(FXF_ **)(*(u8 **)(D_8014C6D0 + 0x34) + 0x24);
+    j = 0;
+    r->section_count = param[j++];
+    r->length = param[j++];
+    r->delay = (DLF_ *)((FxPool_ *)&D_8014C6E0)->delay;
+    r->base = (s16 *)((FxPool_ *)&D_8014C6E0)->base;
+    r->input = r->base;
+    for (i = 0; i < r->length; i++) {
+        r->base[i] = 0;
+    }
+    i = 0;
+    if (r->section_count != 0) {
+        pool = ((FxPool_ *)&D_8014C6E0)->pool;
+        pool2 = pool + 2;
+        do {
+            d = &r->delay[i];
+            d->input = param[j++];
+            d->output = param[j++];
+            d->fbcoef = param[j++];
+            d->ffcoef = param[j++];
+            d->gain = param[j++];
+            if (param[j]) {
+                d->rsinc = ((((f32)param[j++]) / 1000) * 2.0) / *(s32 *)(D_8014C6D0 + 0x40);
+                d->rsgain = (((f32)param[j++]) / 173123.404906676) * (d->output - d->input);
+                d->rsval = 1.0;
+                d->rsdelta = 0.0;
+                d->rs = (RSF_ *)pool[0];
+                d->rs->state = (void *)pool[1];
+                d->rs->delta = 0.0;
+                d->rs->first = 1;
+            } else {
+                d->rs = 0;
+                j++;
+                j++;
+            }
+            if (param[j]) {
+                d->lp = (LPF_ *)pool2[0];
+                d->lp->fstate = (void *)pool2[1];
+                d->lp->fc = param[j++];
+                _init_lpfilter(d->lp);
+            } else {
+                d->lp = 0;
+                j++;
+            }
+            i++;
+        } while (i < r->section_count);
+    }
+}
 
 void SndFx_UseCustomConfig(SndSynConfig *c) {
     c->fxType = 6; /* AL_FX_CUSTOM */

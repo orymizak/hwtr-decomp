@@ -70,7 +70,45 @@ u8 Car_AddTurbos(Car *c, s32 add) {
     return added;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_31E10", Cars_Shutdown);
+/* Per-car result block filled by Cars_Shutdown (0x2C bytes from RaceResult + 0x1C). */
+typedef struct { s32 lap[8]; s32 best; u8 laps; u8 p25; u8 points; u8 p27; s32 score; } CarResult_;
+/* Race result as written by Cars_Shutdown: the per-car blocks start at 0x1C. */
+typedef struct { u8 pad0[0x1C]; CarResult_ car[1]; } CarsResult_;
+extern u8 D_8011B31C;
+extern u8 D_8011B31D;
+extern u8 (*svcModelUnload)(u8);
+
+/* Copies each car's lap times (or only its best lap) and score into the race result, then removes the
+ * cars from the collision lists and unloads their models; returns 0 if a model fails to unload. */
+u8 Cars_Shutdown(CarsResult_ *res) {
+    u8 i;
+    u8 j;
+
+    for (i = 0; i < (u32)gCarCount; i++) {
+        if (D_8011B31D == 1) {
+            res->car[i].lap[0] = gCars[i].bestLap;
+            if (gCars[i].lapStart[0] != 0) {
+                res->car[i].laps = 1;
+            } else {
+                res->car[i].laps = 0;
+            }
+        } else {
+            for (j = 0; j < 8; j++) {
+                res->car[i].lap[j] = gCars[i].lapStart[j] - gCars[i].unk440;
+            }
+            res->car[i].laps = gCars[i].lap;
+        }
+        res->car[i].best = gCars[i].bestLap;
+        if (D_8011B31C == 1) {
+            res->car[i].score = gCars[i].score;
+        }
+        Coll_RemoveById(&gCars[i]);
+        if (!svcModelUnload(i)) {
+            return 0;
+        }
+    }
+    return 1;
+}
 
 void Car_NoteGroundContact(Car *car) {
     s32 now;
@@ -430,7 +468,41 @@ void Cars_Update(u32 dt) {
     Cars_UpdatePositions(dt);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_31E10", Cars_UpdatePositions);
+extern u8 gCarOrder[];
+void Car_CheckWrongWay(Car *c, u32 dt);
+
+/* Race positions: sorts gCarOrder by lap (more first) then distance key, stores each car's position
+ * and checks wrong-way driving. */
+void Cars_UpdatePositions(u32 dt) {
+    u32 key[6];
+    u32 i;
+    u32 j;
+    Car *c;
+    u8 a;
+    u8 b;
+
+    for (c = gCars, i = 0; i < (u32)gCarCount; c++, i++) {
+        key[i] = c->unk474 + ((0x7F - c->lap) << 24);
+    }
+    for (i = 0; i < (u32)gCarCount - 1; i++) {
+        for (j = i + 1; j < (u32)gCarCount; j++) {
+            a = gCarOrder[i];
+            b = gCarOrder[j];
+            if (key[a] > key[b]) {
+                gCarOrder[i] = b;
+                gCarOrder[j] = a;
+            }
+        }
+    }
+    for (i = 0; i < (u32)gCarCount; i++) {
+        gCars[gCarOrder[i]].position = i;
+    }
+    for (c = gCars, i = 0; i < (u32)gCarCount; c++, i++) {
+        if (c->flags & 1) {
+            Car_CheckWrongWay(c, dt);
+        }
+    }
+}
 
 void Car_UpdatePoints(Car *car) {
     Vec3f col1;
@@ -851,7 +923,42 @@ void Car_SelfRight(Car *c) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_31E10", Car_DirectionalBoost);
 
-INCLUDE_ASM("asm/nonmatchings/unit_31E10", Car_UseTurbo);
+extern void (*svcModelFlashOn)(u8);
+/* Fires a turbo: needs two wheels on the ground and some speed; sets the impulse to 2288 along the velocity. */
+u8 Car_UseTurbo(u8 *arg) {
+    Car *c = (Car *)arg;
+    Vec3f v;
+
+    if (c->cnt3E7 < 2) {
+        return 0;
+    }
+    if (c->b4B8 != 0) {
+        return 0;
+    }
+    if (c->fBC < 35.2f) {
+        return 0;
+    }
+    if (c->unk774 != 0 && c->fBC < 176.0f) {
+        return 0;
+    }
+    v = c->vel;
+    if ((v.x > 0.0f || v.x < 0.0f) && (v.y > 0.0f || v.y < 0.0f) && (v.z > 0.0f || v.z < 0.0f)) {
+        VEC3_NORMALIZE(v);
+        VEC3_SCALE(v, v, 2288.0f);
+        c->impulse.x = v.x * c->scale;
+        c->impulse.y = v.y * c->scale;
+        c->impulse.z = v.z * c->scale;
+        if (c->flags & 1) {
+            audSfxPlay(1, 1, 1.0f, 1.0f);
+        }
+        svcModelFlashOn(c->id);
+        c->b4C0 = 1;
+        c->f4C4 = 2288.0f;
+        c->fBC = 2288.0f;
+        return 1;
+    }
+    return 0;
+}
 
 extern void (*svcModelFlashOn)(u8);
 /* Scales the impulse so that the speed becomes 2288 and marks the car (once) as boosted. */
@@ -999,9 +1106,137 @@ void Cars_CollideObstacles(u32 dt) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_31E10", Cars_SaveReplay);
+/* Replay record of a car: flags, ground state and contact plane (normal x4096 and distance), first two
+ * rotation rows (s8, x127) and position. */
+typedef struct { u16 flags; u8 b4B8; u8 onPlane; s16 n[3]; s16 d; s8 rot[6]; s16 pos[3]; } CarRec_;
 
-INCLUDE_ASM("asm/nonmatchings/unit_31E10", Cars_LoadReplay);
+/* Packs the cars into 24-byte records; returns the bytes written, 0 if out (size bytes) is too small. */
+u32 Cars_SaveReplay(u8 *buf, u32 size) {
+    CarRec_ *out;
+    u32 n;
+    u32 i;
+    Car *c;
+    s32 v;
+    f32 d;
+
+    n = gCarCount * sizeof(CarRec_);
+    if (size < n) {
+        return 0;
+    }
+    out = (CarRec_ *)buf;
+    for (c = gCars, i = 0; i < (u32)gCarCount; out++, c++, i++) {
+        out->flags = c->flags2;
+        out->b4B8 = c->b4B8;
+        if ((out->onPlane = c->unk710) != 0) {
+            d = c->unk72C - (c->planeN.x * c->planePt.x + c->planeN.y * c->planePt.y + c->planeN.z * c->planePt.z);
+            out->n[0] = c->planeN.x * 4096.0f;
+            out->n[1] = c->planeN.y * 4096.0f;
+            out->n[2] = c->planeN.z * 4096.0f;
+            out->d = d;
+        }
+        v = c->rot.m[0][0] * 127.0f;
+        if (v < -127) {
+            v = -127;
+        }
+        if (v > 127) {
+            v = 127;
+        }
+        out->rot[0] = v;
+        v = c->rot.m[0][1] * 127.0f;
+        if (v < -127) {
+            v = -127;
+        }
+        if (v > 127) {
+            v = 127;
+        }
+        out->rot[1] = v;
+        v = c->rot.m[0][2] * 127.0f;
+        if (v < -127) {
+            v = -127;
+        }
+        if (v > 127) {
+            v = 127;
+        }
+        out->rot[2] = v;
+        v = c->rot.m[1][0] * 127.0f;
+        if (v < -127) {
+            v = -127;
+        }
+        if (v > 127) {
+            v = 127;
+        }
+        out->rot[3] = v;
+        v = c->rot.m[1][1] * 127.0f;
+        if (v < -127) {
+            v = -127;
+        }
+        if (v > 127) {
+            v = 127;
+        }
+        out->rot[4] = v;
+        v = c->rot.m[1][2] * 127.0f;
+        if (v < -127) {
+            v = -127;
+        }
+        if (v > 127) {
+            v = 127;
+        }
+        out->rot[5] = v;
+        out->pos[0] = c->pos.x;
+        out->pos[1] = c->pos.y;
+        out->pos[2] = c->pos.z;
+    }
+    return n;
+}
+
+extern void (*svcModelRepair)(u8);
+
+/* Restores the cars from Cars_SaveReplay records: flags, wreck state, contact plane, rotation (third
+ * row rebuilt as a cross product) and position; clears the motion state. */
+void Cars_LoadReplay(u8 *buf) {
+    V3_1B0 zero = { 0.0f, 0.0f, 0.0f };
+    CarRec_ *in;
+    Car *c;
+    u32 i;
+    u32 j;
+
+    in = (CarRec_ *)buf;
+    for (c = gCars, i = 0; i < (u32)gCarCount; in++, c++, i++) {
+        c->flags2 = in->flags | 8;
+        c->unk774 = 0;
+        if (in->b4B8 != 0) {
+            svcModelWreck(i, 2, zero);
+        } else {
+            svcModelRepair(i);
+        }
+        if ((c->unk710 = in->onPlane) != 0) {
+            c->planeN.x = in->n[0] / 4096.0f;
+            c->planeN.y = in->n[1] / 4096.0f;
+            c->planeN.z = in->n[2] / 4096.0f;
+            c->unk72C = in->d;
+            c->planePt.x = 0.0f;
+            c->planePt.y = 0.0f;
+            c->planePt.z = 0.0f;
+        }
+        c->rot.m[0][0] = in->rot[0] / 127.0f;
+        c->rot.m[0][1] = in->rot[1] / 127.0f;
+        c->rot.m[0][2] = in->rot[2] / 127.0f;
+        c->rot.m[1][0] = in->rot[3] / 127.0f;
+        c->rot.m[1][1] = in->rot[4] / 127.0f;
+        c->rot.m[1][2] = in->rot[5] / 127.0f;
+        VEC3_CROSS(*(Vec3f *)c->rot.m[2], *(Vec3f *)c->rot.m[0], *(Vec3f *)c->rot.m[1]);
+        c->pos.x = in->pos[0];
+        c->pos.y = in->pos[1];
+        c->pos.z = in->pos[2];
+        c->yaw = 0.0f;
+        c->b13C = 0;
+        for (j = 0; j < c->nPoints; j++) {
+            c->points[j].rate = 0.0f;
+            c->points[j].h64 = 0.0f;
+        }
+        svcModelFlashOff(i);
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_31E10", Car_Unstick);
 

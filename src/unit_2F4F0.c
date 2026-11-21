@@ -547,9 +547,100 @@ void RaceCam_EndIntro(void) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_2F4F0", RaceCam_UpdateIntro);
 
-INCLUDE_ASM("asm/nonmatchings/unit_2F4F0", RaceCam_SaveReplay);
+/* Replay record of a race camera: mode, followed car, first two rotation rows (s8, x127) and position. */
+typedef struct { u16 mode; u16 car; s8 rot[6]; s16 pos[3]; } CamRec_;
 
-INCLUDE_ASM("asm/nonmatchings/unit_2F4F0", RaceCam_LoadReplay);
+/* Packs the race cameras into 16-byte records; returns the bytes written, 0 if out (size bytes) is too small. */
+u32 RaceCam_SaveReplay(CamRec_ *out, u32 size) {
+    u32 n;
+    u32 i;
+    s32 v;
+
+    n = gRaceCamCount * sizeof(CamRec_);
+    if (size < n) {
+        return 0;
+    }
+    for (i = 0; i < gRaceCamCount; out++, i++) {
+        v = gRaceCams[i].m[0][0] * 127.0f;
+        if (v < -127) {
+            v = -127;
+        }
+        if (v > 127) {
+            v = 127;
+        }
+        out->rot[0] = v;
+        v = gRaceCams[i].m[0][1] * 127.0f;
+        if (v < -127) {
+            v = -127;
+        }
+        if (v > 127) {
+            v = 127;
+        }
+        out->rot[1] = v;
+        v = gRaceCams[i].m[0][2] * 127.0f;
+        if (v < -127) {
+            v = -127;
+        }
+        if (v > 127) {
+            v = 127;
+        }
+        out->rot[2] = v;
+        v = gRaceCams[i].m[1][0] * 127.0f;
+        if (v < -127) {
+            v = -127;
+        }
+        if (v > 127) {
+            v = 127;
+        }
+        out->rot[3] = v;
+        v = gRaceCams[i].m[1][1] * 127.0f;
+        if (v < -127) {
+            v = -127;
+        }
+        if (v > 127) {
+            v = 127;
+        }
+        out->rot[4] = v;
+        v = gRaceCams[i].m[1][2] * 127.0f;
+        if (v < -127) {
+            v = -127;
+        }
+        if (v > 127) {
+            v = 127;
+        }
+        out->rot[5] = v;
+        out->pos[0] = gRaceCams[i].pos.x;
+        out->pos[1] = gRaceCams[i].pos.y;
+        out->pos[2] = gRaceCams[i].pos.z;
+        out->mode = gRaceCams[i].mode;
+        out->car = gRaceCams[i].car;
+    }
+    return n;
+}
+
+/* Restores the race cameras from RaceCam_SaveReplay records; the third rotation row is the cross
+ * product of the first two. */
+void RaceCam_LoadReplay(CamRec_ *in) {
+    u32 i;
+
+    for (i = 0; i < gRaceCamCount; in++, i++) {
+        gRaceCams[i].m[0][0] = in->rot[0] / 127.0f;
+        gRaceCams[i].m[0][1] = in->rot[1] / 127.0f;
+        gRaceCams[i].m[0][2] = in->rot[2] / 127.0f;
+        gRaceCams[i].m[1][0] = in->rot[3] / 127.0f;
+        gRaceCams[i].m[1][1] = in->rot[4] / 127.0f;
+        gRaceCams[i].m[1][2] = in->rot[5] / 127.0f;
+        gRaceCams[i].m[2][0] = gRaceCams[i].m[0][1] * gRaceCams[i].m[1][2] - gRaceCams[i].m[1][1] * gRaceCams[i].m[0][2];
+        gRaceCams[i].m[2][1] = gRaceCams[i].m[1][0] * gRaceCams[i].m[0][2] - gRaceCams[i].m[0][0] * gRaceCams[i].m[1][2];
+        gRaceCams[i].m[2][2] = gRaceCams[i].m[0][0] * gRaceCams[i].m[1][1] - gRaceCams[i].m[1][0] * gRaceCams[i].m[0][1];
+        gRaceCams[i].pos.x = in->pos[0];
+        gRaceCams[i].pos.y = in->pos[1];
+        gRaceCams[i].pos.z = in->pos[2];
+        gRaceCams[i].mode = in->mode;
+        gRaceCams[i].car = in->car;
+        gRaceCams[i].shake = 0;
+    }
+}
 
 void RaceCam_Reset(s32 arg0) {
     gRaceCams[arg0 & 0xFF].reset = 1;

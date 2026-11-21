@@ -6,8 +6,8 @@ typedef struct { u16 id; u8 len; u8 p3; u8 *buf; u8 pad[0x10]; } E18c_;
 typedef struct { u8 pad[8]; u8 n1; u8 p1[3]; E18c_ *a1; u8 n2; u8 p2[3]; E18c_ *a2; } TCB_;
 /* Pause menu text: one positioned glyph per character (current and home position). */
 typedef struct { u8 a; u8 pad; u16 x; u16 y; u16 x2; u16 y2; } TextGlyphPos;
-typedef struct { u16 x; u16 y; } Point2u16;
-typedef struct { u8 a; u8 pad; Point2u16 p; Point2u16 p2; } TextAnimItem;
+typedef struct { s16 x; s16 y; } Point2s16;
+typedef struct { u8 a; u8 pad; Point2s16 p; Point2s16 p2; } TextAnimItem;
 /* mode: 0 = at home, 1 = slide in from the right, 2 = scattered. */
 typedef struct { u8 p0[2]; u8 n; u8 p3; TextAnimItem *items; u8 p8[0xB]; u8 mode; } TextAnim;
 void PauseUi_PlaceItem2(TextAnim *t);
@@ -155,14 +155,70 @@ void PauseUi_Open(TCB_ *t) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_6AE90", PauseUi_StepItem);
+void PauseUi_StepItem(TextAnim *t, f32 step) {
+    u8 i;
+    Point2s16 p[2], p_dummy;
+    f32 fx;
+    f32 fy;
+    s32 dx;
+    s32 dy;
+    s32 near;
 
-INCLUDE_ASM("asm/nonmatchings/unit_6AE90", PauseUi_StepItem2);
+    for (i = 0; i < t->n; i++) {
+        if (t) {
+        }
+        dx = t->items[i].p2.x - t->items[i].p.x;
+        dy = t->items[i].p2.y - t->items[i].p.y;
+        fx = ((f32)dx) * step;
+        p[0] = t->items[i].p;
+        fy = ((f32)dy) * step;
+        p[1] = t->items[i].p2;
+        dx = (s32)fx;
+        dy = (s32)fy;
+        near = 10;
+        near = (((p[0].x < (p[1].x + 10)) && (p[1].x < (p[0].x + 10))) && (p[0].y < (p[1].y + near))) && (p[1].y < (p[0].y + 10));
+        if (near) {
+            t->items[i].p = t->items[i].p2;
+        } else {
+            t->items[i].p.x += dx;
+            t->items[i].p.y += dy;
+        }
+    }
+}
+
+void PauseUi_StepItem2(TextAnim *t, f32 step) {
+    u8 i;
+    Point2s16 p[2], p_dummy;
+    f32 fx;
+    f32 fy;
+    s32 dx;
+    s32 dy;
+    s32 near;
+
+    for (i = 0; i < t->n; i++) {
+        if (t) {
+        }
+        dx = t->items[i].p2.x - t->items[i].p.x;
+        dy = t->items[i].p2.y - t->items[i].p.y;
+        fx = ((f32)dx) * step;
+        p[0] = t->items[i].p;
+        fy = ((f32)dy) * step;
+        p[1] = t->items[i].p2;
+        dx = (s32)fx;
+        dy = (s32)fy;
+        near = 10;
+        near = (((p[0].x < (p[1].x + 10)) && (p[1].x < (p[0].x + 10))) && (p[0].y < (p[1].y + near))) && (p[1].y < (p[0].y + 10));
+        if (near) {
+            t->items[i].p = t->items[i].p2;
+        } else {
+            t->items[i].p.x += dx;
+            t->items[i].p.y += dy;
+        }
+    }
+}
 
 extern u32 gPauseUiTime;
 extern u32 (*svcTimeGetMillis)(void);
-void PauseUi_StepItem(E18c_ *, f32);
-void PauseUi_StepItem2(E18c_ *, f32);
 
 /* Steps both element lists by elapsed ticks / 100 (0.15 on the first call, 0.1 after a gap of more than 100 ticks). */
 void PauseUi_Animate(TCB_ *t) {

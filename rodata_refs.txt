@@ -33,6 +33,7 @@ Camera_SetPerspective D_800FF800
 Camera_SetPerspectiveRace D_800FF808 D_800FF810
 Mesh_BuildDisplayList jtbl_800FF820 jtbl_800FF858 jtbl_800FF870
 Mesh_BuildMaterialDL jtbl_800FF888
+Mesh_GetMaterialList jtbl_800FF8A0
 Math_Acos D_800FF8E0
 Math_Atan2 D_800FF8E8 D_800FF8F0 D_800FF8F8 D_800FF900
 ParticlePool_Update D_800FF9F0
@@ -55,6 +56,7 @@ Cars_Update D_80100960
 Car_Simulate D_80100968
 Car_DirectionalBoost D_80100970 D_80100978
 Cars_CollideObstacles D_80100980
+Cars_LoadReplay D_80100988
 Coll_ResolveBoxPair jtbl_801009B0
 Coll_ProbeWheels D_801009F0
 Debris_SpawnFromCar D_80100A10
@@ -73,6 +75,7 @@ MainMenu_Input jtbl_80100E30
 MainMenu_DispatchMode jtbl_80100E48
 MainMenu_Dispatch jtbl_80100E60
 Championship_Input jtbl_80100E80
+Cup_SetupRace D_80100E98 D_80100EA0
 Championship_Confirm jtbl_80100EC0
 Race_StartForMode jtbl_80101030
 PauseUi_Animate D_801015B0

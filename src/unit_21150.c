@@ -1,5 +1,6 @@
 #include "common.h"
 #include "math.h"
+#include "race.h"
 #include "include_asm.h"
 typedef struct { s32 a; s32 b; s32 c; } V12_;
 typedef struct { u8 busy; u8 pad[3]; V12_ v; u8 pad2[0x28]; } Q817_;
@@ -11,8 +12,59 @@ u8 Bld_ReadNode(Q817_ *, u16);
 s32 Memory_Free(s32);
 extern s32 D_80114800;
 extern s32 gBldLapLength;
+typedef struct { u16 n0; u16 n; u16 ids[6]; u8 *p20; u8 *recs; } WpTbl81_;
+s32 Bld_Free(void);
 
-INCLUDE_ASM("asm/nonmatchings/unit_21150", Bld_Load);
+/* .BLD header: magic 0xDF00, lap length, then the waypoint table (D_80114810), all little-endian. */
+typedef struct { u16 magic; u8 pad2[2]; s32 lapLength; WpTbl81_ t; } BldHdr_;
+extern u16 D_80114808;
+#define gBldHdr (*(BldHdr_ *)&D_80114808)
+extern char D_800FFA20[];
+extern char D_800FFA28[];
+extern s32 (*svcFileGetSize)(char *);
+extern s32 (*svcFileLoad)(char *, void *);
+void *Memory_Alloc(s32);
+s32 sprintf(char *, const char *, ...);
+
+/* Loads the track's .BLD file (named after the subtitle, or the track name and number); returns 0 if
+ * the file is short. */
+s32 Bld_Load(RaceSetup *setup) {
+    char name[0x100];
+    u8 *d;
+    s32 size;
+    s32 i;
+    u16 *ids;
+
+    D_80114800 = 0;
+    if (setup->flags & 0x100) {
+        sprintf(name, D_800FFA20, setup->sub);
+    } else {
+        sprintf(name, D_800FFA28, setup->name, setup->track);
+    }
+    size = svcFileGetSize(name);
+    if (size == 0) {
+        return 1;
+    }
+    D_80114800 = (s32)Memory_Alloc(size);
+    if (svcFileLoad(name, (void *)D_80114800) != size) {
+        return 0;
+    }
+    d = (u8 *)D_80114800;
+    gBldHdr.magic = d[0] | (d[1] << 8);
+    gBldHdr.lapLength = d[2] | (d[3] << 8) | (d[4] << 16) | (d[5] << 24);
+    gBldHdr.t.n0 = d[6] | (d[7] << 8);
+    gBldHdr.t.n = d[8] | (d[9] << 8);
+    for (i = 0, ids = gBldHdr.t.ids; i < 6; i++) {
+        ids[i] = d[0xA + i * 2] | (d[0xB + i * 2] << 8);
+    }
+    if (gBldHdr.magic != 0xDF00) {
+        Bld_Free();
+        return 1;
+    }
+    gBldHdr.t.p20 = (u8 *)D_80114800 + 0x16;
+    gBldHdr.t.recs = gBldHdr.t.p20 + gBldHdr.t.n0;
+    return 1;
+}
 
 s32 Bld_Free(void) {
     if (D_80114800 != 0) {
@@ -59,7 +111,6 @@ s32 Bld_InitRacer(TrAD_ *t, u8 i) {
 INCLUDE_ASM("asm/nonmatchings/unit_21150", Bld_StepRacer);
 
 typedef struct { u16 a; u16 key; f32 x; f32 y; f32 z; f32 rx; f32 ry; f32 rz; } Wp81_;
-typedef struct { u16 n0; u16 n; u16 ids[6]; u8 *p20; u8 *recs; } WpTbl81_;
 extern WpTbl81_ D_80114810;
 #define ABS(x) ((x) < 0.0f ? -(x) : (x))
 #define MAX(a, b) ((a) > (b) ? (a) : (b))

@@ -768,7 +768,55 @@ u8 RaceAudio_Unload(RaceResult *unused) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", RaceAudio_Update);
 
-INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", RaceAudio_OnContact);
+/* Per-car surface sound state (D_801184C8): current surface loop and its hold time. */
+typedef struct { u8 b0; u8 pad1[7]; u8 loop; u8 pad9[3]; s32 hold; } CarSurfSnd_;
+typedef struct { u8 pad0[0x64]; Car *car; } ContactOwner_;
+typedef struct { ContactOwner_ *owner; u8 pad4[0x18]; u8 surface; } Contact_;
+extern u8 D_800F3724[][2];
+extern void (*audCarSndStopLoopC)(u8);
+extern void (*audCarSndStartLoopB)(u8, u8);
+extern void (*audCarSndPlayOneShot2)(u8, u8, f32);
+extern void (*audCarSndSetLoopBVolume)(u8, f32);
+
+/* Ground contact: plays the surface hit sound and keeps its rolling loop, scaled by speed. */
+void RaceAudio_OnContact(Contact_ *c) {
+    Car *car;
+    CarSurfSnd_ *st;
+    f32 vol;
+    u8 hit;
+    u8 loop;
+
+    if (D_80118528 != 1) {
+        car = c->owner->car;
+        if (car != NULL) {
+            vol = car->fBC * 0.056818184f;
+            st = &((CarSurfSnd_ *)D_801184C8)[car->id];
+            hit = D_800F3724[c->surface][0];
+            loop = D_800F3724[c->surface][1];
+            vol = MIN(MAX(vol, 20.0f), 100.0f);
+            vol /= 100.0f;
+            if (st->hold != 0) {
+                if (loop != st->loop) {
+                    audCarSndStopLoopC(car->id);
+                    if (loop != 0) {
+                        audCarSndStartLoopB(car->id, loop);
+                    }
+                    st->loop = loop;
+                }
+            } else {
+                if (hit != 0) {
+                    audCarSndPlayOneShot2(car->id, hit, vol);
+                }
+                if (loop != 0) {
+                    audCarSndStartLoopB(car->id, loop);
+                }
+                st->loop = loop;
+            }
+            audCarSndSetLoopBVolume(car->id, vol);
+            st->hold = 200;
+        }
+    }
+}
 
 void RaceAudio_OnCollision(Collider **pair) {
     u8 *s;

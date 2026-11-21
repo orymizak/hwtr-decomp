@@ -87,7 +87,21 @@ typedef struct { f32 x; f32 y; f32 z; f32 x2; f32 y2; u8 pad[0x1C]; u16 h30; u16
 typedef struct { u8 pad[0x20]; u8 n; u8 p[3]; N10_ *names; E34b_ *objs; } TBL_;
 typedef struct { u16 idx; u8 pad[2]; s32 lo; s32 hi; s32 y; s32 reset; f32 x; } Scroll4E_;
 typedef struct { u8 a; u8 b; u8 c; s8 lv; } Bars4_;
-typedef struct { u8 b0; u8 p1[0x17]; u8 b18; u8 p19[0x13]; } It2C_;
+typedef struct {
+    char text[0x18];
+    u8 b18;
+    u8 p19[7];
+    s16 x;
+    s16 y;
+    s16 z;
+    u8 align;
+    u8 style;
+    u8 sheet;
+    u8 r;
+    u8 g;
+    u8 b;
+} It2C_;
+#define b0 text[0]
 typedef struct { u8 n; u8 p1[3]; It2C_ *it; } Ls2C_;
 typedef struct { s32 a; s32 b; s32 c; } V12c_;
 typedef struct { u8 *s; s16 n; s16 x6; s16 x8; s16 y; u8 pC[2]; u8 e; u8 f; u8 g; u8 p11[3]; } ItAA4_;
@@ -248,7 +262,7 @@ extern Bars4_ D_801240E4;
 extern u8 D_80100F0C;
 extern u8 D_80100F14;
 extern u8 D_80100F1C;
-void Menu_SetText(void *m, u8 idx, void *str, s32 x, s32 y, s32 z, u8 align, u8 style, u8 sheet, u8 r, u8 g, u8 b);
+void Menu_SetText(Ls2C_ *m, u8 idx, void *str, s32 x, s32 y, s32 z, s32 align, s32 style, u8 sheet, u8 r, u8 g, u8 b);
 extern Bars4_ D_801240E0;
 extern u8 D_80100FA4;
 extern ObjG1_ D_800F63B8;
@@ -421,8 +435,8 @@ s32 Menu_StartEnter(s32);
 extern s32 gMenuObjs[];
 s32 Menu_HandlePad1(s32);
 extern s32 D_80100DD0;
-extern s8 gMenuFadeMode;
-extern s8 gMenuFadeLevel;
+extern u8 gMenuFadeMode;
+extern u8 gMenuFadeLevel;
 extern u8 gMenuHideText;
 extern s32 D_800F5F20;
 extern s32 D_80100DDC;
@@ -1024,7 +1038,40 @@ void Menu_Draw(Menu_ *m, s8 selText, s8 selButton, s32 arg3, s8 selItem, s32 arg
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", Menu_SetText);
+void Menu_SetText(Ls2C_ *m, u8 idx, void *str, s32 x, s32 y, s32 z, s32 align, s32 style, u8 sheet, u8 r, u8 g, u8 b) {
+    It2C_ *item;
+    char *dst;
+    char *src;
+    char *end;
+
+    if (idx > (s32)(m->n - 1)) {
+        return;
+    }
+
+    item = &m->it[idx];
+    if (str == NULL) {
+        item->text[0] = D_80100BD8;
+    } else if (strlen(str) >= 25) {
+        dst = item->text;
+        src = str;
+        end = item->text + 24;
+        do {
+            *dst++ = *src++;
+        } while (dst < end);
+    } else {
+        strcpy(item->text, str);
+    }
+
+    item->x = x;
+    item->y = y;
+    item->z = z;
+    item->r = r;
+    item->g = g;
+    item->b = b;
+    item->align = align;
+    item->style = style;
+    item->sheet = sheet;
+}
 
 void MenuList_Reset(s32 arg0) {
     Ls2C_ *l = (Ls2C_ *)arg0;
@@ -1134,6 +1181,13 @@ void Profile_InitDefault(void *arg0, s32 arg1) {
     *(s32 *)(o + 0x3C) = 0;
 }
 
+
+typedef struct { char name[12]; u32 value; } SaveRecord;
+typedef struct { SaveRecord e[5]; } SaveRecTable;
+/* Save data (gActiveSave): record tables, two per track (12) and one per cup (3). */
+typedef struct { u8 p0[4]; SaveRecTable highA[12]; SaveRecTable times[12]; SaveRecTable highB[3]; } SaveData;
+#define SAVE_DATA ((SaveData *)gActiveSave)
+extern char *D_80141230;
 
 INCLUDE_ASM("asm/nonmatchings/unit_53B30", Save_InitDefault);
 
@@ -3203,6 +3257,9 @@ void Championship_Nop(void) {
 
 }
 
+typedef struct { s32 lap[9]; s32 f24; u8 p28[2]; u8 f2A; u8 p2B; } CupRec_;
+extern CupRec_ D_80123F60[];
+
 INCLUDE_ASM("asm/nonmatchings/unit_53B30", Cup_SetupRace);
 
 INCLUDE_ASM("asm/nonmatchings/unit_53B30", Championship_SetupTexts);
@@ -4617,7 +4674,42 @@ void Controls_ResetTexts(void) {
     Menu_ResetTexts(D_800F5F58);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", Controls_HasConflict);
+extern char *(*sysInputGetKeyName)(s32 player, u8 action);
+extern s8 D_800F61E0[];
+
+/* Two control actions bound to the same key (for player 1, and player 2 in two-player mode), unless
+ * D_800F61E0 pairs them: copies both action names to D_80124CA0/D_80124CC0 and returns 1. */
+u8 Controls_HasConflict(void) {
+    char a[0x20];
+    char b[0x20];
+    u8 i;
+    u8 j;
+    char *(**getName)(s32, u8);
+
+    i = 0;
+    getName = &sysInputGetKeyName;
+    for (; i < 13; i++) {
+        for (j = i + 1; j < 13; j++) {
+            strcpy((s32 *)a, (s32)(*getName)(0, i));
+            strcpy((s32 *)b, (s32)(*getName)(0, j));
+            if (strcmp(a, b) == 0 && D_800F61E0[i] != j) {
+                strcpy((s32 *)&D_80124CA0, D_80124110[i]);
+                strcpy((s32 *)&D_80124CC0, D_80124110[j]);
+                return 1;
+            }
+            if (gNumPlayers == 2) {
+                strcpy((s32 *)a, (s32)(*getName)(1, i));
+                strcpy((s32 *)b, (s32)(*getName)(1, j));
+                if (strcmp(a, b) == 0 && D_800F61E0[i] != j) {
+                    strcpy((s32 *)&D_80124CA0, D_80124110[i]);
+                    strcpy((s32 *)&D_80124CC0, D_80124110[j]);
+                    return 1;
+                }
+            }
+        }
+    }
+    return 0;
+}
 
 void Controls_CheckExit(void) {
     if (Controls_HasConflict() != 0) {
@@ -5686,7 +5778,43 @@ void HighScores_LeaveFrame(void) {
     Menu_Nop(D_800F5F80);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", Cup_AwardWin);
+/* Adds car and track unlock bits to profile p. */
+static inline void Profile_AddUnlocks(Profile *p, u32 car0, u32 car1, u32 track) {
+    p->trackUnlocks |= track;
+    p->carUnlocks[0] |= car0;
+    p->carUnlocks[1] |= car1;
+}
+
+/* After winning a cup: records the score and unlocks the next cup's cars and tracks, noting the new
+ * ones in D_80124CE4/CEC/CF4 (and the next cup in D_80124CFC). */
+void Cup_AwardWin(void) {
+    if (gCupWon) {
+        gCupWon = 0;
+        Records_InsertHighB(gProfileP1->name, gProfileP1->cup, gProfileP1->cupPoints[0]);
+        switch (gProfileP1->cup) {
+            case 0:
+                if (!Cup_IsUnlocked(1)) {
+                    D_80124CFC = 1;
+                }
+                D_80124CF4 |= ~gProfileP1->trackUnlocks & 0x180;
+                D_80124CE4 |= ~gProfileP1->carUnlocks[0] & 0x200081;
+                Profile_AddUnlocks(gProfileP1, 0x200081, 0, 0x180);
+                break;
+            case 1:
+                if (!Cup_IsUnlocked(2)) {
+                    D_80124CFC = 2;
+                }
+                D_80124CEC |= ~gProfileP1->carUnlocks[1] & 0xC0;
+                Profile_AddUnlocks(gProfileP1, 0, 0xC0, 0);
+                break;
+            case 2:
+                D_80124CE4 |= ~gProfileP1->carUnlocks[0];
+                D_80124CEC |= ~gProfileP1->carUnlocks[1] & 0x1FF;
+                Profile_AddUnlocks(gProfileP1, 0xFFFFFFFF, 0x1FF, 0);
+                break;
+        }
+    }
+}
 
 void Unlocks_CheckNew(void) {
     if (D_80124CE4 != 0 || D_80124CE8 != 0 || D_80124CEC != 0 || D_80124CF0 != 0 || D_80124CF4 != 0 ||
@@ -5800,12 +5928,6 @@ void Unlocks_LeaveNop(void) {
 
 }
 
-typedef struct { char name[12]; u32 value; } SaveRecord;
-typedef struct { SaveRecord e[5]; } SaveRecTable;
-/* Save data (gActiveSave): per-track record tables, 12 tracks. */
-typedef struct { u8 p0[4]; SaveRecTable highA[12]; SaveRecTable times[12]; SaveRecTable highB[12]; } SaveData;
-#define SAVE_DATA ((SaveData *)gActiveSave)
-extern char *D_80141230;
 /* Inserts (name, value) into track's high-value record table (highA); an entry with the placeholder name is overwritten. */
 void Records_InsertHighA(char *name, u32 value, u8 track) {
     SaveRecTable tmp;
@@ -6181,8 +6303,6 @@ void Race_StartCup(void) {
     Music_StartRaceTrack();
 }
 
-typedef struct { s32 lap[9]; s32 f24; u8 p28[2]; u8 f2A; u8 p2B; } CupRec_;
-extern CupRec_ D_80123F60[];
 
 void Race_ReturnCup(void) {
     u8 *lap;
