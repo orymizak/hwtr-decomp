@@ -279,7 +279,26 @@ s32 SaveSlot_GetCount(u32 i) {
     return r;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_50510", SaveSlot_Add);
+s32 SaveSlot_Add(u32 i, E140_ *src) {
+    s32 *pCount;
+    s32 row;
+    s32 id;
+
+    if (i < 4) {
+        if ((u32)gSaveSlotCount[i] < 4) {
+            goto ok;
+        }
+    }
+    return 0;
+ok:
+    *(Blk140_ *)&gSaveSlots[i][gSaveSlotCount[i]] = *(Blk140_ *)src;
+    row = i * (s32)sizeof(gSaveSlots[0]);
+    id = ((s32 (*)(void))Save_NewId)();
+    pCount = &gSaveSlotCount[i];
+    *(s32 *)((u8 *)D_80122904 + row + *pCount * (s32)sizeof(E140_)) = id;
+    (*pCount)++;
+    return 1;
+}
 
 s32 SaveSlot_Delete(u32 i, u32 j) {
     u32 k;

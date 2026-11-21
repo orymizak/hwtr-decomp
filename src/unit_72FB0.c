@@ -51,7 +51,23 @@ void Snd_MemMove(u8 *dst, u8 *src, s32 n) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_72FB0", Snd_InitFrameSize);
+s32 Snd_InitFrameSize(s32 a0, s32 a1, u32 a2, s32 a3) {
+    u32 samples;
+    u32 extra;
+    s32 step;
+    s32 frame;
+
+    asm("nop");
+    samples = ((u32)(((a0 * a1) + a2) - 1)) / a2;
+    frame = ((samples / 184) + 1) * 184;
+    extra = ((u32)(frame * a3)) / 100;
+    D_80127BB0 = frame;
+    step = 184;
+    D_80127BB4 = frame - 184;
+    D_80127BB8 = frame + step;
+    D_80127BBC = extra;
+    return frame + (extra + step);
+}
 
 s32 Snd_GetFrameSamples(u32 arg0) {
     if ((u32) (D_80127BBC + 0xB8) < arg0) {

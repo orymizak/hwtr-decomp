@@ -82,7 +82,7 @@
           "game"
         ],
         "source_path": "src/file_table.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/file_table.o"
     },
@@ -742,7 +742,7 @@
           "audio"
         ],
         "source_path": "src/unit_72CF0.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_72CF0.o"
     },
@@ -754,7 +754,7 @@
           "audio"
         ],
         "source_path": "src/unit_72FB0.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_72FB0.o"
     },

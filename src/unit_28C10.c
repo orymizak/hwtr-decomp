@@ -317,7 +317,74 @@ s32 Pickup_TypeFromName(u8 *name) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_28C10", Pickup_Init);
 
-INCLUDE_ASM("asm/nonmatchings/unit_28C10", Pickup_Shutdown);
+#include "race.h"
+extern u8 D_800F3028;
+void Coll_Unregister(void *);
+void CollShape_Free(void *);
+void RefList_Free(Lnk89_ **);
+
+static inline void SetBit64(u32 *words, s16 bit) {
+    if (bit >= 0) {
+        if (bit < 32) {
+            words[0] |= 1 << bit;
+        } else if (bit < 64) {
+            words[1] |= 1 << (bit - 32);
+        }
+    }
+}
+
+u8 Pickup_Shutdown(RaceResult *res) {
+    u32 i;
+    Lnk89_ ***pp;
+    Lnk89_ *n;
+    void *x;
+
+    if (D_800F3028 != 0) {
+        D_800F3028 = 0;
+        SetBit64((u32 *)((u8 *)res + 4), (s16)D_800F302E);
+        SetBit64((u32 *)((u8 *)res + 4), (s16)D_800F3032);
+        SetBit64((u32 *)((u8 *)res + 0xC), (s16)D_800F3030);
+        SetBit64((u32 *)((u8 *)res + 0xC), (s16)D_800F3034);
+
+        if (gPickupSpawns != NULL) {
+            for (i = 0; i < gPickupSpawnCount; i++) {
+                Coll_Unregister(*(void **)((u8 *)&gPickupSpawns[i] + 0x14));
+                CollShape_Free((u8 *)*(void **)((u8 *)&gPickupSpawns[i] + 0x14) + 0xC);
+                if (gPickupSpawns[i].pad0 != 0) {
+                    Memory_Free((void *)gPickupSpawns[i].pad0);
+                    Memory_Free(*(void **)((u8 *)&gPickupSpawns[i] + 0x14));
+                    gPickupSpawns[i].pad0 = 0;
+                    *(void **)((u8 *)&gPickupSpawns[i] + 0x14) = NULL;
+                }
+            }
+            Memory_Free(gPickupSpawns);
+            gPickupSpawns = NULL;
+        }
+
+        pp = gCarPickups;
+        do {
+            register Lnk89_ **p asm("$4") = *pp;
+            if (p != NULL) {
+                for (n = *p; n != NULL; ) {
+                    x = n->obj;
+                    n = n->next;
+                    Memory_Free(x);
+                }
+                RefList_Free(*pp);
+                *pp = NULL;
+            }
+            pp++;
+        } while (pp < gCarPickups + 6);
+
+        for (n = *D_80118488; n != NULL; ) {
+            x = n->obj;
+            n = n->next;
+            Memory_Free(x);
+        }
+        RefList_Free(D_80118488);
+    }
+    return 1;
+}
 
 extern u8 D_80100780[];
 extern u8 D_80100788[];

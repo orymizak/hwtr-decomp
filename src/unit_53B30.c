@@ -337,7 +337,6 @@ typedef struct {
     u8 hiR; u8 hiG; u8 hiB;
 } Menu_;
 void Menu_Draw(Menu_ *m, s8 selText, s8 selButton, s32 arg3, s8 selItem, s32 arg5, s32 arg6, u8 noText);
-s32 Menu_UpdateFade();
 extern s32 D_801240E8;
 extern s32 D_801240EC;
 extern s32 D_801240F0;
@@ -1186,10 +1185,60 @@ typedef struct { char name[12]; u32 value; } SaveRecord;
 typedef struct { SaveRecord e[5]; } SaveRecTable;
 /* Save data (gActiveSave): record tables, two per track (12) and one per cup (3). */
 typedef struct { u8 p0[4]; SaveRecTable highA[12]; SaveRecTable times[12]; SaveRecTable highB[3]; } SaveData;
+void Menu_UpdateFade(void);
 #define SAVE_DATA ((SaveData *)gActiveSave)
 extern char *D_80141230;
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", Save_InitDefault);
+/* TODO(match-debt): register asm for opt and ff preserves GCC 2.7.2 register allocation */
+extern u8 D_80138D58;
+
+void Save_InitDefault(void *save) {
+    GameSave *g = save;
+    SaveRecord a;
+    SaveRecord b;
+    SaveRecord c;
+    u8 i;
+    u8 j;
+    SaveRecTable *t;
+    register u8 opt asm("$4");
+    register u8 ff asm("$3");
+
+    for (i = 0; i < 12; i++) {
+        j = 0;
+        t = (SaveRecTable *)(i * 80 + (s32)g + 4);
+        for (; j < 5; j++) {
+            strcpy((s32 *)a.name, (s32)D_80141230);
+            a.value = 0;
+            t->e[j] = a;
+        }
+        j = 0;
+        t = (SaveRecTable *)(i * 80 + (s32)g + 0x3C4);
+        for (; j < 5; j++) {
+            strcpy((s32 *)b.name, (s32)D_80141230);
+            b.value = 0;
+            t->e[j] = b;
+        }
+    }
+    for (i = 0; i < 3; i++) {
+        j = 0;
+        t = (SaveRecTable *)(i * 80 + (s32)g + 0x784);
+        for (; j < 5; j++) {
+            strcpy((s32 *)c.name, (s32)D_80141230);
+            c.value = 0;
+            t->e[j] = c;
+        }
+    }
+    opt = D_80138D58;
+    ff = 0xFF;
+    g->musicVolume = ff;
+    g->voiceVolume = ff;
+    g->sfxVolume = 200;
+    g->pad87F = 1;
+    g->records[0x874] = 0;
+    g->gameMode = 2;
+    g->option0 = opt;
+}
+
 
 void Boot_CheckSaveFound(void) {
     if (Save_Probe() != 0) {
@@ -2259,7 +2308,57 @@ void Menu_StartDim(void) {
     gMenuHideText = 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", Menu_UpdateFade);
+void Menu_UpdateFade(void) {
+    switch (gMenuFadeMode) {
+        case 1:
+            if (gMenuFadeLevel < 0xE6) {
+                gMenuFadeLevel += 0x19;
+            } else {
+                gMenuFadeLevel = 0xFF;
+                gMenuFadeMode = 0;
+                Menu_Advance();
+            }
+            sysScreenSetBgAlpha(gMenuFadeLevel);
+            sysAudioSetAmbientVolume(gMenuFadeLevel);
+            if (gMenuFadeLevel <= gActiveSave->musicVolume) {
+                sysAudioSetMusicVolume(gMenuFadeLevel);
+            } else {
+                sysAudioSetMusicVolume(gActiveSave->musicVolume);
+            }
+            break;
+
+        case 2:
+            if (gMenuFadeLevel >= 0x1A) {
+                gMenuFadeLevel -= 0x19;
+            } else {
+                gMenuFadeLevel = 0;
+                gMenuFadeMode = 0;
+                Menu_Advance();
+            }
+            sysScreenSetBgAlpha(gMenuFadeLevel);
+            sysAudioSetAmbientVolume(gMenuFadeLevel);
+            if (gMenuFadeLevel <= gActiveSave->musicVolume) {
+                sysAudioSetMusicVolume(gMenuFadeLevel);
+            } else {
+                sysAudioSetMusicVolume(gActiveSave->musicVolume);
+            }
+            break;
+
+        case 3:
+            if (gMenuFadeLevel < 0x66) {
+                gMenuFadeLevel += 0x19;
+            } else if (gMenuFadeLevel >= 0x99) {
+                gMenuFadeLevel -= 0x19;
+            } else {
+                gMenuFadeLevel = 0x7F;
+                gMenuFadeMode = 0;
+                Menu_Advance();
+            }
+            sysAudioSetAmbientVolume(0xFF);
+            sysScreenSetBgAlpha(gMenuFadeLevel);
+            break;
+    }
+}
 
 void Legal_EnterAgain(void) {
     Menu_StartFadeIn();

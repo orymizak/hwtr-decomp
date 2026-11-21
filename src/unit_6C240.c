@@ -271,11 +271,156 @@ void Pause_RepeatLeftRight(void) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_6C240", PauseAudio_DrawSfx);
+extern char D_801015C0[];
+s32 sprintf(char *, const char *, ...);
 
-INCLUDE_ASM("asm/nonmatchings/unit_6C240", PauseAudio_DrawVoice);
+inline static void PauseAudio_FormatVolume(char *buf, u32 pct) {
+    sprintf(buf, D_801015C0, pct);
+}
 
-INCLUDE_ASM("asm/nonmatchings/unit_6C240", PauseAudio_DrawMusic);
+void PauseAudio_DrawSfx(void) {
+    char *p;
+    char buf[3][8];
+    u32 music;
+    GameSave *opt = Save_GetActiveProfile();
+    u32 sfx;
+    u32 voice;
+
+    /* TODO(match-debt): if (buf) branch duplication forces GCC 2.7.2 DAG scheduling */
+    if (buf) {
+        sfx = (((u32)opt->sfxVolume) * 100) / 255;
+        voice = (((u32)opt->voiceVolume) * 100) / 255;
+        music = (((u32)opt->musicVolume) * 100) / 255;
+        sfx = (sfx / 10) * 10;
+        voice = (voice / 10) * 10;
+        music = (music / 10) * 10;
+        PauseAudio_FormatVolume(buf[0], sfx);
+        PauseAudio_FormatVolume(buf[1], voice);
+        PauseAudio_FormatVolume(buf[2], music);
+        PauseUi_BeginFrame();
+        PauseUi_DrawMenu(gPauseAudioMenu, 0);
+        p = buf[1];
+        PauseUi_DrawText((s32)buf[0], 200, 105, 255, 0, 0);
+        PauseUi_DrawText((s32)p, 200, 130, 255, 255, 255);
+        music = (s32)buf[2];
+        PauseUi_DrawText(music, 200, 155, 255, 255, 255);
+        PauseUi_EndFrame();
+    } else {
+        sfx = (((u32)opt->sfxVolume) * 100) / 255;
+        voice = (((u32)opt->voiceVolume) * 100) / 255;
+        music = (((u32)opt->musicVolume) * 100) / 255;
+        sfx = (sfx / 10) * 10;
+        voice = (voice / 10) * 10;
+        music = (music / 10) * 10;
+        PauseAudio_FormatVolume(buf[0], sfx);
+        PauseAudio_FormatVolume(buf[1], voice);
+        PauseAudio_FormatVolume(buf[2], music);
+        PauseUi_BeginFrame();
+        PauseUi_DrawMenu(gPauseAudioMenu, 0);
+        p = buf[1];
+        PauseUi_DrawText((s32)buf[0], 200, 105, 255, 0, 0);
+        PauseUi_DrawText((s32)p, 200, 130, 255, 255, 255);
+        music = (s32)buf[2];
+        PauseUi_DrawText(music, 200, 155, 255, 255, 255);
+        PauseUi_EndFrame();
+    }
+}
+
+void PauseAudio_DrawVoice(void) {
+    char *p;
+    char buf[3][8];
+    u32 music;
+    GameSave *opt = Save_GetActiveProfile();
+    u32 sfx;
+    u32 voice;
+
+    /* TODO(match-debt): if (buf) branch duplication forces GCC 2.7.2 DAG scheduling */
+    if (buf) {
+        sfx = (((u32)opt->sfxVolume) * 100) / 255;
+        voice = (((u32)opt->voiceVolume) * 100) / 255;
+        music = (((u32)opt->musicVolume) * 100) / 255;
+        sfx = (sfx / 10) * 10;
+        voice = (voice / 10) * 10;
+        music = (music / 10) * 10;
+        PauseAudio_FormatVolume(buf[0], sfx);
+        PauseAudio_FormatVolume(buf[1], voice);
+        PauseAudio_FormatVolume(buf[2], music);
+        PauseUi_BeginFrame();
+        PauseUi_DrawMenu(gPauseAudioMenu, 1);
+        p = buf[1];
+        PauseUi_DrawText((s32)buf[0], 200, 105, 255, 255, 255);
+        PauseUi_DrawText((s32)p, 200, 130, 255, 0, 0);
+        music = (s32)buf[2];
+        PauseUi_DrawText(music, 200, 155, 255, 255, 255);
+        PauseUi_EndFrame();
+    } else {
+        sfx = (((u32)opt->sfxVolume) * 100) / 255;
+        voice = (((u32)opt->voiceVolume) * 100) / 255;
+        music = (((u32)opt->musicVolume) * 100) / 255;
+        sfx = (sfx / 10) * 10;
+        voice = (voice / 10) * 10;
+        music = (music / 10) * 10;
+        PauseAudio_FormatVolume(buf[0], sfx);
+        PauseAudio_FormatVolume(buf[1], voice);
+        PauseAudio_FormatVolume(buf[2], music);
+        PauseUi_BeginFrame();
+        PauseUi_DrawMenu(gPauseAudioMenu, 1);
+        p = buf[1];
+        PauseUi_DrawText((s32)buf[0], 200, 105, 255, 255, 255);
+        PauseUi_DrawText((s32)p, 200, 130, 255, 0, 0);
+        music = (s32)buf[2];
+        PauseUi_DrawText(music, 200, 155, 255, 255, 255);
+        PauseUi_EndFrame();
+    }
+}
+
+void PauseAudio_DrawMusic(void) {
+    char *p;
+    char buf[3][8];
+    u32 music;
+    GameSave *opt = Save_GetActiveProfile();
+    u32 sfx;
+    u32 voice;
+
+    /* TODO(match-debt): if (buf) branch duplication forces GCC 2.7.2 DAG scheduling */
+    if (buf) {
+        sfx = (((u32)opt->sfxVolume) * 100) / 255;
+        voice = (((u32)opt->voiceVolume) * 100) / 255;
+        music = (((u32)opt->musicVolume) * 100) / 255;
+        sfx = (sfx / 10) * 10;
+        voice = (voice / 10) * 10;
+        music = (music / 10) * 10;
+        PauseAudio_FormatVolume(buf[0], sfx);
+        PauseAudio_FormatVolume(buf[1], voice);
+        PauseAudio_FormatVolume(buf[2], music);
+        PauseUi_BeginFrame();
+        PauseUi_DrawMenu(gPauseAudioMenu, 2);
+        p = buf[1];
+        PauseUi_DrawText((s32)buf[0], 200, 105, 255, 255, 255);
+        PauseUi_DrawText((s32)p, 200, 130, 255, 255, 255);
+        music = (s32)buf[2];
+        PauseUi_DrawText(music, 200, 155, 255, 0, 0);
+        PauseUi_EndFrame();
+    } else {
+        sfx = (((u32)opt->sfxVolume) * 100) / 255;
+        voice = (((u32)opt->voiceVolume) * 100) / 255;
+        music = (((u32)opt->musicVolume) * 100) / 255;
+        sfx = (sfx / 10) * 10;
+        voice = (voice / 10) * 10;
+        music = (music / 10) * 10;
+        PauseAudio_FormatVolume(buf[0], sfx);
+        PauseAudio_FormatVolume(buf[1], voice);
+        PauseAudio_FormatVolume(buf[2], music);
+        PauseUi_BeginFrame();
+        PauseUi_DrawMenu(gPauseAudioMenu, 2);
+        p = buf[1];
+        PauseUi_DrawText((s32)buf[0], 200, 105, 255, 255, 255);
+        PauseUi_DrawText((s32)p, 200, 130, 255, 255, 255);
+        music = (s32)buf[2];
+        PauseUi_DrawText(music, 200, 155, 255, 0, 0);
+        PauseUi_EndFrame();
+    }
+}
 
 /* Raises a 0-255 level to the next 10% step; plays sound 0x31 on change. */
 u8 Volume_StepUp(u8 arg0) {

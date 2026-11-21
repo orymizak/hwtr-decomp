@@ -1224,7 +1224,57 @@ s32 Snd_Random(s32 range) {
     return (f32)range * ((f32)gSndRandSeed / 65536.0f / 65536.0f);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", SndVoice_Reset);
+void SndVoice_Reset(SndVoice *voice) {
+    register SndVoice *v asm("$6") = voice;
+    register u8 *p asm("$4") = (u8 *)voice;
+    register s32 i asm("$3") = 0;
+    register u8 c9 asm("$7") = v->unkC9;
+    register u8 ff asm("$5");
+    register s32 rate asm("$4");
+    register s32 v7f asm("$3");
+    register void *wb asm("$3");
+
+    v->unk4 = 0;
+    do {
+        *p++ = 0;
+    } while (++i < sizeof(SndVoice));
+
+    ff = 0xFF;
+    v->unkCC = ff;
+    v->unkBE = ff;
+    rate = 0x6000 / gSndFrameRate;
+    v7f = 0x7F;
+    v->unkD3 = v7f;
+    v->unkBC = v7f;
+    v->unkC1 = v7f;
+    v->unkC7 = ff;
+    v->unkC2 = v7f;
+    v->unkBD = 0x40;
+    v->unkBF = 1;
+    v->unkC6 = 1;
+    v->unkC8 = 0xF;
+    wb = gSndCurWaveBank;
+    v->unkA0 = -1;
+    v->unk9A = 1;
+    v->unkA2 = 1;
+    v->unkA4 = 1;
+    v->unk10 = -1;
+    v->unk9E = 0x80;
+    v->unkB0 = 0x80;
+    v->unk98 = 0x80;
+    v->unk28 = 99.9f;
+    v->unk6C = 0.03125f;
+    v->unk58 = 1.0f;
+    v->unk5C = 1.0f / 255.0f;
+    v->unk60 = 1.0f / 15.0f;
+    v->unkA8 = rate;
+    v->unk9C = rate;
+    if (wb == NULL) {
+        wb = (void *)gSndDefWaveBank;
+    }
+    v->unk7C = (s32)wb;
+    v->unkC9 = c9;
+}
 
 /* Picks a voice for a sound of sequence seq (slot idx; idx < 0 may use the music voices): a free voice,
  * else the idle one with the lowest priority, else one not playing seq, else one already playing this

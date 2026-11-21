@@ -428,7 +428,38 @@ s32 File_LoadAsync(char *name, void *dst) {
     return slot;
 }
 
-INCLUDE_ASM("asm/nonmatchings/file_table", File_PollAsync);
+s32 File_PollAsync(s32 slot) {
+    register s32 offset asm("$16");
+    register s32 temp asm("$2");
+    s32 ret = 0;
+    unsigned char new_var;
+
+    if (slot >= 2) {
+        return 1;
+    }
+    temp = (slot << 3) + slot;
+    offset = temp << 3;
+    if (*(u8 *)((u8 *)gAsyncReads + offset + 0x44)) {
+        goto active;
+    }
+    return 1;
+active:
+    if (Rom_PollAsync((AsyncRead *)((u8 *)gAsyncReads + offset))) {
+        s32 is_lz = *(u8 *)((u8 *)gAsyncReads + offset + 0x45) == 1;
+        new_var = is_lz;
+        if (new_var) {
+            if (is_lz) {
+                File_FinishLZAsync(slot);
+            } else {
+                File_FinishLZAsync(slot);
+            }
+        }
+        ret = 1;
+        gAsyncReads[slot].active = 0;
+    }
+
+    return ret;
+}
 
 s32 File_GetSize(char *name) {
     s32 high = gFileSystem.count;

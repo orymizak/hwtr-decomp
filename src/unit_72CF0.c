@@ -42,4 +42,58 @@ void Snd_CreateManager(AmCfg_ *c, s32 a1, u8 fx) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_72CF0", Snd_ManagerThread);
+typedef struct { void *data; u32 size; void *ucode; void *ucode_data; } AudInfoT_;
+typedef struct {
+    void (*init)(void);
+    void (*waitRetrace)(void);
+    void (*runTask)(AudInfoT_ *);
+} SndTaskHooks;
+extern SndTaskHooks *gSndTaskHooks;
+extern u8 D_800E7B70[];
+extern u8 D_800FCD20[];
+extern AmBuf_ *D_800FAEB0;
+void AudDma_Update(void);
+s32 Snd_GetFrameSamples(u32);
+
+void Snd_ManagerThread(void *arg) {
+    AudInfoT_ task;
+    s32 cmdCount;
+    u32 bufIdx;
+    s32 len;
+    u32 status;
+    AmBuf_ *buf;
+    Acmd *cmdListEnd;
+
+    task.data = (void *)D_80127B98;
+    task.ucode = D_800E7B70;
+    task.ucode_data = D_800FCD20;
+
+    bufIdx = 0;
+    gSndTaskHooks->init();
+
+    while (1) {
+        do {
+            gSndTaskHooks->waitRetrace();
+            status = osAiGetStatus();
+            len = osAiGetLength() >> 2;
+        } while (status & 0x80000000);
+
+        AudDma_Update();
+
+        if (D_800FAEB0 != NULL && cmdCount != 0) {
+            osAiSetNextBuffer((void *)D_800FAEB0->a, D_800FAEB0->b << 2);
+        }
+
+        buf = &D_80127B94[bufIdx];
+        buf->b = Snd_GetFrameSamples(len);
+        cmdListEnd = n_alAudioFrame((Acmd *)D_80127B98, &cmdCount, (s16 *)osVirtualToPhysical((void *)buf->a), buf->b);
+
+        if (cmdCount != 0) {
+            task.size = (cmdListEnd - (Acmd *)D_80127B98) * sizeof(Acmd);
+            gSndTaskHooks->runTask(&task);
+            D_800FAEB0 = buf;
+        }
+
+        bufIdx = (bufIdx + 1) % 3;
+    }
+}
