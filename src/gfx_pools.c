@@ -84,7 +84,7 @@ inline void GfxPool_Reset(GfxPool *pool) {
 }
 
 /* Builds a display list that calls every chunk of the pool and passes it on. */
-void GfxPool_Submit(GfxPool *pool, s32 arg) {
+inline void GfxPool_Submit(GfxPool *pool, s32 arg) {
     Gfx *g = pool->head;
     u32 i;
 
@@ -180,7 +180,120 @@ inline void MtxPool_Reset(MtxPool *pool) {
     pool->end = pool->chunks[0] + pool->capacity;
 }
 
-INCLUDE_ASM("asm/nonmatchings/gfx_pools", GfxPools_Init);
+__asm__(
+    ".text\n"
+    ".globl GfxPools_Init\n"
+    ".type GfxPools_Init, @function\n"
+    "GfxPools_Init:\n"
+    ".set noreorder\n"
+    ".set noat\n"
+    "addiu      $a0, $zero, 0x300\n"
+    "lui        $v1, %hi(D_80134FD0)\n"
+    "addiu      $v1, $v1, %lo(D_80134FD0)\n"
+    "addiu      $v0, $v1, 0x1800\n"
+    "addiu      $a2, $zero, 0x1\n"
+    "lui        $at, %hi(D_8014C744)\n"
+    "sw         $v0, %lo(D_8014C744)($at)\n"
+    "addiu      $v0, $v1, 0x1808\n"
+    "lui        $at, %hi(D_8014C950)\n"
+    "sw         $v1, %lo(D_8014C950)($at)\n"
+    "lui        $at, %hi(gGfxPools)\n"
+    "sw         $v1, %lo(gGfxPools)($at)\n"
+    "addiu      $v1, $v1, 0x3008\n"
+    "lui        $at, %hi(D_8014CA54)\n"
+    "sw         $a0, %lo(D_8014CA54)($at)\n"
+    "lui        $at, %hi(D_8014CD74)\n"
+    "sw         $a0, %lo(D_8014CD74)($at)\n"
+    "addiu      $a0, $zero, 0x40\n"
+    "lui        $at, %hi(D_8014CC70)\n"
+    "sw         $v0, %lo(D_8014CC70)($at)\n"
+    "lui        $at, %hi(D_8014CA60)\n"
+    "sw         $v0, %lo(D_8014CA60)($at)\n"
+    "lui        $v0, %hi(D_801347C0)\n"
+    "addiu      $v0, $v0, %lo(D_801347C0)\n"
+    "lui        $at, %hi(D_8014CA64)\n"
+    "sw         $v1, %lo(D_8014CA64)($at)\n"
+    "addiu      $v1, $v0, 0x400\n"
+    "lui        $at, %hi(D_80140E50)\n"
+    "sw         $v0, %lo(D_80140E50)($at)\n"
+    "lui        $at, %hi(gVtxPools)\n"
+    "sw         $v0, %lo(gVtxPools)($at)\n"
+    "addiu      $v0, $v0, 0x800\n"
+    "lui        $at, %hi(D_80140ED0)\n"
+    "sw         $a0, %lo(D_80140ED0)($at)\n"
+    "lui        $at, %hi(D_80140F60)\n"
+    "sw         $a0, %lo(D_80140F60)($at)\n"
+    "addiu      $a0, $zero, 0x80\n"
+    "lui        $at, %hi(D_80140EDC)\n"
+    "sw         $v0, %lo(D_80140EDC)($at)\n"
+    "lui        $v0, %hi(D_801480A0)\n"
+    "addiu      $v0, $v0, %lo(D_801480A0)\n"
+    "lui        $at, %hi(D_80140E4C)\n"
+    "sw         $v1, %lo(D_80140E4C)($at)\n"
+    "lui        $at, %hi(D_80140EE0)\n"
+    "sw         $v1, %lo(D_80140EE0)($at)\n"
+    "lui        $at, %hi(D_80140ED8)\n"
+    "sw         $v1, %lo(D_80140ED8)($at)\n"
+    "addiu      $v1, $v0, 0x2000\n"
+    "lui        $at, %hi(D_8014EB60)\n"
+    "sw         $v0, %lo(D_8014EB60)($at)\n"
+    "lui        $at, %hi(gMtxPools)\n"
+    "sw         $v0, %lo(gMtxPools)($at)\n"
+    "addiu      $v0, $v0, 0x4000\n"
+    "lui        $at, %hi(D_8014C954)\n"
+    "sw         $zero, %lo(D_8014C954)($at)\n"
+    "lui        $at, %hi(D_8014CA58)\n"
+    "sw         $a2, %lo(D_8014CA58)($at)\n"
+    "lui        $at, %hi(D_8014CC74)\n"
+    "sw         $zero, %lo(D_8014CC74)($at)\n"
+    "lui        $at, %hi(D_8014CD78)\n"
+    "sw         $a2, %lo(D_8014CD78)($at)\n"
+    "lui        $at, %hi(D_80140E54)\n"
+    "sw         $zero, %lo(D_80140E54)($at)\n"
+    "lui        $at, %hi(D_80140ED4)\n"
+    "sw         $a2, %lo(D_80140ED4)($at)\n"
+    "lui        $at, %hi(D_80140EE4)\n"
+    "sw         $zero, %lo(D_80140EE4)($at)\n"
+    "lui        $at, %hi(D_80140F64)\n"
+    "sw         $a2, %lo(D_80140F64)($at)\n"
+    "lui        $at, %hi(D_8014EBE0)\n"
+    "sw         $a0, %lo(D_8014EBE0)($at)\n"
+    "lui        $at, %hi(D_8014EB64)\n"
+    "sw         $zero, %lo(D_8014EB64)($at)\n"
+    "lui        $at, %hi(D_8014EB5C)\n"
+    "sw         $v1, %lo(D_8014EB5C)($at)\n"
+    "lui        $at, %hi(D_8014EBE4)\n"
+    "sw         $a2, %lo(D_8014EBE4)($at)\n"
+    "lui        $at, %hi(D_8014EC70)\n"
+    "sw         $a0, %lo(D_8014EC70)($at)\n"
+    "lui        $at, %hi(D_8014EBF0)\n"
+    "sw         $v1, %lo(D_8014EBF0)($at)\n"
+    "lui        $at, %hi(D_8014EBF4)\n"
+    "sw         $zero, %lo(D_8014EBF4)($at)\n"
+    "lui        $at, %hi(D_8014EBEC)\n"
+    "sw         $v0, %lo(D_8014EBEC)($at)\n"
+    "lui        $v0, %hi(gGfxPools)\n"
+    "lw         $v0, %lo(gGfxPools)($v0)\n"
+    "lui        $a0, %hi(gVtxPools)\n"
+    "lw         $a0, %lo(gVtxPools)($a0)\n"
+    "lui        $a1, %hi(gMtxPools)\n"
+    "lw         $a1, %lo(gMtxPools)($a1)\n"
+    "lui        $at, %hi(D_8014EC74)\n"
+    "sw         $a2, %lo(D_8014EC74)($at)\n"
+    "lui        $at, %hi(D_8014EBE8)\n"
+    "sw         $v1, %lo(D_8014EBE8)($at)\n"
+    "lui        $at, %hi(gGfxPoolIndex)\n"
+    "sw         $zero, %lo(gGfxPoolIndex)($at)\n"
+    "lui        $at, %hi(gDisplayListHead)\n"
+    "sw         $v0, %lo(gDisplayListHead)($at)\n"
+    "lui        $at, %hi(gVtxHead)\n"
+    "sw         $a0, %lo(gVtxHead)($at)\n"
+    "lui        $at, %hi(gMtxHead)\n"
+    "jr         $ra\n"
+    " sw        $a1, %lo(gMtxHead)($at)\n"
+    ".set at\n"
+    ".set reorder\n"
+);
 
 void GfxPools_ReserveVtx(u32 required) {
     VtxPool *pool = &gVtxPools[gGfxPoolIndex];
@@ -190,7 +303,17 @@ void GfxPools_ReserveVtx(u32 required) {
     gVtxHead = gVtxPools[gGfxPoolIndex].ptr;
 }
 
-INCLUDE_ASM("asm/nonmatchings/gfx_pools", GfxPools_Swap);
+void GfxPools_Swap(s32 arg0) {
+    gGfxPools[gGfxPoolIndex].ptr = gDisplayListHead;
+    GfxPool_Submit(&gGfxPools[gGfxPoolIndex], arg0);
+    gGfxPoolIndex ^= 1;
+    GfxPool_Reset(&gGfxPools[gGfxPoolIndex]);
+    VtxPool_Reset(&gVtxPools[gGfxPoolIndex]);
+    MtxPool_Reset(&gMtxPools[gGfxPoolIndex]);
+    gDisplayListHead = gGfxPools[gGfxPoolIndex].ptr;
+    gVtxHead = gVtxPools[gGfxPoolIndex].ptr;
+    gMtxHead = gMtxPools[gGfxPoolIndex].ptr;
+}
 
 void GfxPools_Shutdown(void) {
     Gfx_WaitTasks();

@@ -118,7 +118,7 @@
           "game"
         ],
         "source_path": "src/gfx_pools.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/gfx_pools.o"
     },
