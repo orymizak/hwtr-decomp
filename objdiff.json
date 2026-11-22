@@ -1606,7 +1606,7 @@
           "libultra"
         ],
         "source_path": "src/unit_7D720.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_7D720.o"
     },
@@ -1750,7 +1750,7 @@
           "libultra"
         ],
         "source_path": "src/unit_7EFA0.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_7EFA0.o"
     },
@@ -2446,7 +2446,7 @@
           "libultra"
         ],
         "source_path": "src/unit_858D0.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_858D0.o"
     },
@@ -2458,7 +2458,7 @@
           "libultra"
         ],
         "source_path": "src/unit_858E0.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_858E0.o"
     },
@@ -2470,7 +2470,7 @@
           "libultra"
         ],
         "source_path": "src/unit_858F0.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_858F0.o"
     },
@@ -2482,7 +2482,7 @@
           "libultra"
         ],
         "source_path": "src/unit_85900.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_85900.o"
     },

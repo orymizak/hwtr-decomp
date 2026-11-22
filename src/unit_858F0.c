@@ -1,6 +1,6 @@
 #include "common.h"
-#include "include_asm.h"
 
-
-
-INCLUDE_ASM("asm/nonmatchings/unit_858F0", __osSetCompare);
+void __osSetCompare(u32 val) {
+    asm("mtc0 %0, $11" : : "r"(val));
+    asm("nop");
+}

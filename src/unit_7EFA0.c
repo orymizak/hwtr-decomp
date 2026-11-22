@@ -1,6 +1,8 @@
 #include "common.h"
-#include "include_asm.h"
 
-
-
-INCLUDE_ASM("asm/nonmatchings/unit_7EFA0", osGetCount);
+u32 osGetCount(void) {
+    register u32 count asm("$2");
+    asm("mfc0 %0, $9" : "=r"(count));
+    asm("nop");
+    return count;
+}

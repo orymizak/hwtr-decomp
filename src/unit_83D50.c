@@ -11,6 +11,16 @@ INCLUDE_ASM("asm/nonmatchings/unit_83D50", __osEnqueueAndYield);
 
 INCLUDE_ASM("asm/nonmatchings/unit_83D50", __osEnqueueThread);
 
-INCLUDE_ASM("asm/nonmatchings/unit_83D50", __osPopThread);
+#include "ultra64.h"
+
+OSThread *__osPopThread(OSThread **threadQueue) {
+    register OSThread *t asm("$2");
+    register OSThread *next asm("$25");
+
+    t = *threadQueue;
+    next = t->next;
+    *threadQueue = next;
+    return t;
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_83D50", __osDispatchThread);
