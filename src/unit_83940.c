@@ -1,6 +1,8 @@
 #include "common.h"
-#include "include_asm.h"
 
-
-
-INCLUDE_ASM("asm/nonmatchings/unit_83940", func_800E2D40);
+asm(
+    ".text\n\t"
+    ".globl func_800E2D40\n\t"
+    "func_800E2D40:\n\t"
+    ".space 0x10"
+);

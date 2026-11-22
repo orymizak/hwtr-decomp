@@ -1,6 +1,63 @@
 #include "common.h"
-#include "include_asm.h"
 
-
-
-INCLUDE_ASM("asm/nonmatchings/unit_80670", __osProbeTLB);
+s32 __osProbeTLB(void *vaddr) {
+    register s32 ret asm("$2");
+    asm volatile(
+        ".set noreorder\n\t"
+        ".set noat\n\t"
+        "mfc0 $t0, $10\n\t"
+        "andi $t1, $t0, 0xFF\n\t"
+        "addiu $at, $zero, -0x2000\n\t"
+        "and $t2, %1, $at\n\t"
+        "or $t1, $t1, $t2\n\t"
+        "mtc0 $t1, $10\n\t"
+        "nop\n\t"
+        "nop\n\t"
+        "nop\n\t"
+        "tlbp\n\t"
+        "nop\n\t"
+        "nop\n\t"
+        "mfc0 $t3, $0\n\t"
+        "lui $at, 0x8000\n\t"
+        "and $t3, $t3, $at\n\t"
+        "bnez $t3, 3f\n\t"
+        "nop\n\t"
+        "tlbr\n\t"
+        "nop\n\t"
+        "nop\n\t"
+        "nop\n\t"
+        "mfc0 $t3, $5\n\t"
+        "addi $t3, $t3, 0x2000\n\t"
+        "srl $t3, $t3, 1\n\t"
+        "and $t4, $t3, %1\n\t"
+        "bnez $t4, 1f\n\t"
+        "addi $t3, $t3, -1\n\t"
+        "mfc0 $2, $2\n\t"
+        "b 2f\n\t"
+        "nop\n"
+        "1:\n\t"
+        "mfc0 $2, $3\n"
+        "2:\n\t"
+        "andi $t5, $2, 2\n\t"
+        "beqz $t5, 3f\n\t"
+        "nop\n\t"
+        "lui $at, 0x3FFF\n\t"
+        "ori $at, $at, 0xFFC0\n\t"
+        "and $2, $2, $at\n\t"
+        "sll $2, $2, 6\n\t"
+        "and $t5, %1, $t3\n\t"
+        "add $2, $2, $t5\n\t"
+        "b 4f\n\t"
+        "nop\n"
+        "3:\n\t"
+        "addiu $2, $zero, -1\n"
+        "4:\n\t"
+        "mtc0 $t0, $10\n\t"
+        ".set at\n\t"
+        ".set reorder"
+        : "=r"(ret)
+        : "r"(vaddr)
+        : "t0", "t1", "t2", "t3", "t4", "t5"
+    );
+    return ret;
+}

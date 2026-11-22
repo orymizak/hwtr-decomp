@@ -1306,7 +1306,7 @@
           "libultra"
         ],
         "source_path": "src/unit_788B0.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_788B0.o"
     },
@@ -1558,7 +1558,7 @@
           "libultra"
         ],
         "source_path": "src/unit_7D050.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_7D050.o"
     },
@@ -1666,7 +1666,7 @@
           "libultra"
         ],
         "source_path": "src/unit_7E930.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_7E930.o"
     },
@@ -1930,7 +1930,7 @@
           "libultra"
         ],
         "source_path": "src/unit_80670.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_80670.o"
     },
@@ -2242,7 +2242,7 @@
           "libultra"
         ],
         "source_path": "src/unit_83940.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_83940.o"
     },
@@ -2254,7 +2254,7 @@
           "libultra"
         ],
         "source_path": "src/unit_83950.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_83950.o"
     },
@@ -2266,7 +2266,7 @@
           "libultra"
         ],
         "source_path": "src/unit_83960.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_83960.o"
     },
@@ -2278,7 +2278,7 @@
           "libultra"
         ],
         "source_path": "src/unit_83970.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_83970.o"
     },
@@ -2290,7 +2290,7 @@
           "libultra"
         ],
         "source_path": "src/unit_83980.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_83980.o"
     },
@@ -2302,7 +2302,7 @@
           "libultra"
         ],
         "source_path": "src/unit_83990.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_83990.o"
     },
@@ -2350,7 +2350,7 @@
           "libultra"
         ],
         "source_path": "src/unit_846C0.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_846C0.o"
     },
@@ -2410,7 +2410,7 @@
           "libultra"
         ],
         "source_path": "src/unit_84BD0.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_84BD0.o"
     },
@@ -2422,7 +2422,7 @@
           "libultra"
         ],
         "source_path": "src/unit_84C50.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_84C50.o"
     },
@@ -2434,7 +2434,7 @@
           "libultra"
         ],
         "source_path": "src/unit_84CD0.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_84CD0.o"
     },
@@ -2554,7 +2554,7 @@
           "libultra"
         ],
         "source_path": "src/unit_85CA0.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_85CA0.o"
     },
@@ -2566,7 +2566,7 @@
           "libultra"
         ],
         "source_path": "src/unit_85D00.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_85D00.o"
     },

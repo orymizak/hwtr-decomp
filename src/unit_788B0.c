@@ -38,7 +38,62 @@ extern OSPiHandle* __osCurrentHandle[2];
 // TODO: this comes from a header
 #ident "$Revision: 1.17 $"
 
-INCLUDE_ASM("asm/nonmatchings/unit_788B0", osSetIntMask);
+extern u32 __OSGlobalIntMask;
+extern u32 D_A430000C;
+extern u16 D_801017D0[];
+
+OSIntMask osSetIntMask(OSIntMask mask) {
+    register OSIntMask ret asm("$2");
+    asm volatile(
+        ".set noreorder\n\t"
+        ".set noat\n\t"
+        "mfc0 $t4, $12\n\t"
+        "andi $2, $t4, 0xFF01\n\t"
+        "lui $t0, %%hi(__OSGlobalIntMask)\n\t"
+        "addiu $t0, $t0, %%lo(__OSGlobalIntMask)\n\t"
+        "lw $t3, 0($t0)\n\t"
+        "addiu $at, $zero, -1\n\t"
+        "xor $t0, $t3, $at\n\t"
+        "andi $t0, $t0, 0xFF00\n\t"
+        "or $2, $2, $t0\n\t"
+        "lui $t2, %%hi(D_A430000C)\n\t"
+        "lw $t2, %%lo(D_A430000C)($t2)\n\t"
+        "beqz $t2, 1f\n\t"
+        "srl $t1, $t3, 16\n\t"
+        "addiu $at, $zero, -1\n\t"
+        "xor $t1, $t1, $at\n\t"
+        "andi $t1, $t1, 0x3F\n\t"
+        "or $t2, $t2, $t1\n"
+        "1:\n\t"
+        "sll $t2, $t2, 16\n\t"
+        "or $2, $2, $t2\n\t"
+        "lui $at, 0x3F\n\t"
+        "and $t0, %1, $at\n\t"
+        "and $t0, $t0, $t3\n\t"
+        "srl $t0, $t0, 15\n\t"
+        "lui $t2, %%hi(D_801017D0)\n\t"
+        "addu $t2, $t2, $t0\n\t"
+        "lhu $t2, %%lo(D_801017D0)($t2)\n\t"
+        "lui $at, %%hi(D_A430000C)\n\t"
+        "sw $t2, %%lo(D_A430000C)($at)\n\t"
+        "andi $t0, %1, 0xFF01\n\t"
+        "andi $t1, $t3, 0xFF00\n\t"
+        "and $t0, $t0, $t1\n\t"
+        "lui $at, 0xFFFF\n\t"
+        "ori $at, $at, 0x00FF\n\t"
+        "and $t4, $t4, $at\n\t"
+        "or $t4, $t4, $t0\n\t"
+        "mtc0 $t4, $12\n\t"
+        "nop\n\t"
+        "nop\n\t"
+        ".set at\n\t"
+        ".set reorder"
+        : "=r"(ret)
+        : "r"(mask)
+        : "t0", "t1", "t2", "t3", "t4"
+    );
+    return ret;
+}
 
 
 
