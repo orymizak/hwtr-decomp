@@ -633,7 +633,56 @@ void Model_GetColor(u8 i, u8 *r, u8 *g, u8 *b) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_06050", Model_SetTransform);
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", Model_SetWheel);
+/* Sets wheel contact state and updates wheel part rotation */
+__asm__(
+    ".section .text\n"
+    ".globl Model_SetWheel\n"
+    ".type Model_SetWheel, @function\n"
+    ".ent Model_SetWheel\n"
+    "Model_SetWheel:\n"
+    ".set noreorder\n"
+    ".set noat\n"
+    "addiu $sp, $sp, -0x40\n"
+    "sdc1 $fs0, 0x28($sp)\n"
+    "lwc1 $fs0, 0x50($sp)\n"
+    "sdc1 $fs2, 0x38($sp)\n"
+    "mtc1 $a3, $fs2\n"
+    "lw $a3, 0x60($sp)\n"
+    "sdc1 $fs1, 0x30($sp)\n"
+    "mtc1 $a2, $fs1\n"
+    "lbu $a2, 0x5F($sp)\n"
+    "lw $v0, 0x64($sp)\n"
+    "lbu $v1, 0x5B($sp)\n"
+    "sw $s0, 0x18($sp)\n"
+    "andi $s0, $a0, 0xFF\n"
+    "addu $a0, $s0, $zero\n"
+    "sw $s1, 0x1C($sp)\n"
+    "andi $s1, $a1, 0xFF\n"
+    "addu $a1, $s1, $zero\n"
+    "sw $ra, 0x20($sp)\n"
+    "sw $v0, 0x10($sp)\n"
+    "jal Model_SetWheelContact\n"
+    "sw $v1, 0x14($sp)\n"
+    "addu $a0, $s0, $zero\n"
+    "mfc1 $a2, $fs1\n"
+    "mfc1 $a3, $fs2\n"
+    "addu $a1, $s1, $zero\n"
+    "jal Model_SetPartRotation\n"
+    "swc1 $fs0, 0x10($sp)\n"
+    "lw $ra, 0x20($sp)\n"
+    "lw $s1, 0x1C($sp)\n"
+    "lw $s0, 0x18($sp)\n"
+    "ldc1 $fs2, 0x38($sp)\n"
+    "ldc1 $fs1, 0x30($sp)\n"
+    "ldc1 $fs0, 0x28($sp)\n"
+    "jr $ra\n"
+    "addiu $sp, $sp, 0x40\n"
+    ".set at\n"
+    ".set reorder\n"
+    ".size Model_SetWheel, . - Model_SetWheel\n"
+    ".end Model_SetWheel\n"
+);
+
 
 /* Wheel w of model slot touched (contact 1) or left the ground; keeps the contact points and counters
  * used by the skid and dust effects. */
