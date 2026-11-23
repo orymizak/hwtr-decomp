@@ -379,7 +379,61 @@ void RaceCam_Update(u32 dt) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_2F4F0", RaceCam_SmoothTo);
+/* Moves a point at pos with velocity vel toward target, limiting the new velocity to maxV and its
+ * change to maxA; writes the next position to out. */
+void RaceCam_SmoothTo(Vec3f_ pos, Vec3f_ vel, Vec3f_ target, Vec3f_ *out, f32 dt, f32 maxV, f32 maxA, f32 k) {
+    Vec3f_ d;
+    Vec3f_ v;
+    Vec3f_ a;
+    f32 len;
+    f32 s;
+
+    d.x = target.x - pos.x;
+    d.y = target.y - pos.y;
+    d.z = target.z - pos.z;
+    v.x = d.x * k;
+    v.y = d.y * k;
+    v.z = d.z * k;
+    v.x *= dt;
+    v.y *= dt;
+    v.z *= dt;
+    len = sqrtf(v.x * v.x + v.y * v.y + v.z * v.z);
+    if (len > maxV) {
+        f32 t = maxV / len;
+        v.x *= t;
+        v.y *= t;
+        v.z *= t;
+    }
+    a.x = v.x - vel.x;
+    a.y = v.y - vel.y;
+    a.z = v.z - vel.z;
+    a.x *= dt;
+    a.y *= dt;
+    a.z *= dt;
+    if (v.x * v.x + v.y * v.y + v.z * v.z > vel.x * vel.x + vel.y * vel.y + vel.z * vel.z) {
+        len = sqrtf(a.x * a.x + a.y * a.y + a.z * a.z);
+        if (len > maxA) {
+            f32 t = maxA / len;
+            a.x *= t;
+            a.y *= t;
+            a.z *= t;
+        }
+    }
+    s = 1.0f / dt;
+    a.x *= s;
+    a.y *= s;
+    a.z *= s;
+    vel.x += a.x;
+    vel.y += a.y;
+    vel.z += a.z;
+    vel.x *= s;
+    vel.y *= s;
+    vel.z *= s;
+    pos.x += vel.x;
+    pos.y += vel.y;
+    pos.z += vel.z;
+    *out = pos;
+}
 
 void RaceCam_Get(u8 i, Vec3i *a1, f32 *a2, f32 *a3, f32 *a4, f32 *a5, s8 *a6, u8 *a7) {
     RaceCam *cam = &gRaceCams[i];
@@ -545,7 +599,56 @@ void RaceCam_EndIntro(void) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_2F4F0", RaceCam_UpdateIntro);
+u32 RaceClock_Get(void);
+typedef struct { Vec3f_ pos; Vec3f_ at; } CamSpawn_;
+/* Duration of the intro fly-over: 200 ms per segment between spawn points. */
+static inline u32 RaceCam_IntroLength(void) {
+    s32 n = Coll_GetSpawnCount();
+
+    return n != 0 ? (n - 1) * 200 : 0;
+}
+
+/* Intro fly-over: moves the camera along the track spawn points (200 ms per segment), looking from
+ * each point's position toward its target. */
+void RaceCam_UpdateIntro(RaceCam *cam) {
+    u32 last;
+    u32 total;
+    u32 elapsed;
+    u32 i;
+    u32 j;
+    CamSpawn_ *a;
+    CamSpawn_ *b;
+    f32 t;
+    Vec3f_ p;
+    Vec3f_ q;
+    Vec3f_ s;
+    Vec3f_ d;
+    Vec3f_ up;
+
+    last = Coll_GetSpawnCount() - 1;
+    total = RaceCam_IntroLength();
+    elapsed = MIN(RaceClock_Get(), total);
+    i = RaceClock_Get() * last / total;
+    j = i + 1;
+    i = MIN(i, last);
+    j = MIN(j, last);
+    a = (CamSpawn_ *)Coll_GetSpawn(i);
+    b = (CamSpawn_ *)Coll_GetSpawn(j);
+    t = (f32)(last * elapsed) / (f32)total;
+    t -= (f32)i;
+    p = Vec3_Lerp(t, a->pos, b->pos);
+    q = Vec3_Lerp(t, a->at, b->at);
+    VEC3_SUB(d, q, p);
+    VEC3_NORMALIZE(d);
+    s.x = d.y;
+    s.y = -d.x;
+    s.z = 0.0f;
+    VEC3_NORMALIZE(s);
+    VEC3_CROSS(up, s, d);
+    VEC3_NORMALIZE(up);
+    cam->pos = p;
+    MTX3_SET_COLUMNS(cam->m, s, d, up);
+}
 
 /* Replay record of a race camera: mode, followed car, first two rotation rows (s8, x127) and position. */
 typedef struct { u16 mode; u16 car; s8 rot[6]; s16 pos[3]; } CamRec_;

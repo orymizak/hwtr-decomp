@@ -976,7 +976,66 @@ void Car_SelfRight(Car *c) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_31E10", Car_DirectionalBoost);
+extern void (*svcModelFlashOn)(u8);
+/* Boost pad: launches the car toward compass direction dir (0-255) at speed mph (0 = 130 mph),
+ * turning it to face that way when it is grounded and roughly facing it already. */
+void Car_DirectionalBoost(Car *c, u32 mph, u32 dir) {
+    f32 m[3][4];
+    Vec3f fwd;
+    f32 speed;
+    f32 a;
+    f32 s;
+    f32 co;
+
+    if (mph != 0) {
+        speed = mph * 17.6f;
+    } else {
+        speed = 2288.0f;
+    }
+    if (c->fBC < 35.2f) {
+        return;
+    }
+    dir = dir * 360 / 256; /* to degrees */
+    a = dir * 3.14159f / 180.0f;
+    s = sinf(a);
+    co = cosf(a);
+    m[0][0] = s;
+    m[0][1] = -co;
+    m[0][2] = 0.0f;
+    m[1][0] = co;
+    m[1][1] = s;
+    m[1][2] = 0.0f;
+    m[2][0] = 0.0f;
+    m[2][1] = 0.0f;
+    m[2][2] = 1.0f;
+    if (c->vel.x * m[1][0] + c->vel.y * m[1][1] + c->vel.z * m[1][2] < 0.0f) {
+        return;
+    }
+    fwd.x = c->rot.m[0][1];
+    fwd.y = c->rot.m[1][1];
+    fwd.z = c->rot.m[2][1];
+    if (c->cnt3E7 == c->nPoints && fwd.x * m[1][0] + fwd.y * m[1][1] + fwd.z * m[1][2] > 0.0f) {
+        c->rot.m[0][0] = m[0][0];
+        c->rot.m[1][0] = m[0][1];
+        c->rot.m[2][0] = m[0][2];
+        c->rot.m[0][1] = m[1][0];
+        c->rot.m[1][1] = m[1][1];
+        c->rot.m[2][1] = m[1][2];
+        c->rot.m[0][2] = m[2][0];
+        c->rot.m[1][2] = m[2][1];
+        c->rot.m[2][2] = m[2][2];
+    }
+    c->impulse.x = m[1][0] * (speed * c->scale);
+    c->impulse.y = m[1][1] * (speed * c->scale);
+    c->impulse.z = m[1][2] * (speed * c->scale);
+    if (c->flags & 1) {
+        audSfxPlay(0x2D, 1, 1.0f, 1.0f);
+    }
+    svcModelFlashOn(c->id);
+    c->b4C0 = 1;
+    c->f4C4 = speed;
+    c->fBC = speed;
+}
 
 extern void (*svcModelFlashOn)(u8);
 /* Fires a turbo: needs two wheels on the ground and some speed; sets the impulse to 2288 along the velocity. */
@@ -1293,7 +1352,31 @@ void Cars_LoadReplay(u8 *buf) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_31E10", Car_Unstick);
+/* Twists a stuck car around its vertical axis with a force couple. */
+void Car_Unstick(u8 *arg) {
+    Car *c = (Car *)arg;
+    Vec3f axis;
+    Vec3f pos;
+    Vec3f pt;
+    Vec3f fl;
+    Vec3f F;
+    Vec3f tmp;
+    Vec3f tq;
+    f32 f;
+
+    pos.x = c->pos.x + c->v8C.x;
+    pos.y = c->pos.y + c->v8C.y;
+    pos.z = c->pos.z + c->v8C.z;
+    axis.x = c->rot.m[0][1];
+    axis.y = c->rot.m[1][1];
+    axis.z = c->rot.m[2][1];
+    f = (c->unk5E8 * c->unk5E8 + c->unk5EC * c->unk5EC) * c->yaw;
+    fl.x = f;
+    fl.y = 0.0f;
+    fl.z = 0.0f;
+    tmp.x = c->rot.m[0][0] * fl.x + c->rot.m[0][1] * fl.y + c->rot.m[0][2] * fl.z; tmp.y = c->rot.m[1][0] * fl.x + c->rot.m[1][1] * fl.y + c->rot.m[1][2] * fl.z; tmp.z = c->rot.m[2][0] * fl.x + c->rot.m[2][1] * fl.y + c->rot.m[2][2] * fl.z; F = tmp;
+    axis.x *= c->scale; axis.y *= c->scale; axis.z *= c->scale; pt.x = pos.x + axis.x; pt.y = pos.y + axis.y; pt.z = pos.z + axis.z; tmp.x = pt.x - c->pos.x; tmp.y = pt.y - c->pos.y; tmp.z = pt.z - c->pos.z; tq.x = tmp.y * F.z - F.y * tmp.z; tq.y = F.x * tmp.z - tmp.x * F.z; tq.z = tmp.x * F.y - F.x * tmp.y; c->torque.x = tq.x + c->torque.x; c->torque.y = tq.y + c->torque.y; c->torque.z = tq.z + c->torque.z; c->force.x = c->force.x + F.x; c->force.y = c->force.y + F.y; c->force.z = c->force.z + F.z; axis.x = -axis.x; axis.y = -axis.y; axis.z = -axis.z; pt.x = pos.x + axis.x; pt.y = pos.y + axis.y; pt.z = pos.z + axis.z; F.x = -F.x; F.y = -F.y; F.z = -F.z; push_954(c, &pt, &F, &tmp);
+}
 
 s32 Rumble_Init(void) {
     memset(gImpactCooldown, 0, 8);

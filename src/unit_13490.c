@@ -36,7 +36,7 @@ void Mesh_BuildMaterialDL(s32 *, s32, u8);
 extern u8 D_800F2060;
 typedef struct { f32 x; f32 y; f32 z; u8 r; u8 g; u8 b; u8 on; } VtxOut75_;
 typedef struct { u8 p0[6]; u16 nVtx; } MeshHdr75_;
-typedef struct { f32 m[3][4]; s32 flags; u8 p34[8]; MeshHdr75_ *hdr; Vtx *in; VtxOut75_ *out; } MeshXf75_;
+typedef struct { f32 m[3][4]; s32 flags; s32 id; f32 rad; MeshHdr75_ *hdr; Vtx *in; VtxOut75_ *out; } MeshXf75_;
 extern u8 D_8014D184;
 extern u8 D_8014D188;
 extern u8 D_8014D18C;
@@ -438,7 +438,101 @@ s32 ModelData_FreeCaches(ItemListB_ *l) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_13490", ModelData_Draw);
 
-INCLUDE_ASM("asm/nonmatchings/unit_13490", ModelData_DrawShadow);
+typedef struct { f32 x, y, z; } V3_75;
+typedef struct { f32 a, b, c, d; } Pl_75;
+typedef struct { s16 ob[3]; u16 flag; s16 tc[2]; u8 cn[4]; } Vx_75;
+typedef struct { u8 pad[8]; u8 a; } C3C_75;
+typedef struct { u8 pad[0x3C]; C3C_75 *p; } C2C_75;
+typedef struct {
+    u8 pad0[0x14]; f32 f14, f18, f1C, f20, f24; u8 pad28[4]; C2C_75 *p2C;
+    u8 pad30[0xE8]; Vx_75 *vtx; u8 pad11C[0x18]; s32 h134; u8 p138[4]; Pl_75 pl; u8 on; u8 pad14D[0x13]; f32 m[3][4];
+} O_75;
+extern V3_75 D_800FF7C0;
+extern V3_75 D_800F1F64[4];
+void SortQueue_Add(s32, s32, s32);
+/* Projects the shadow quad of model o onto its ground plane and queues it (view matrix arg1). */
+void ModelData_DrawShadow(O_75 *o, s32 arg1) {
+    V3_75 pts[4];
+    V3_75 out[4];
+    V3_75 tmp;
+    V3_75 dir;
+    Pl_75 pl;
+    f32 m[3][4];
+    f32 r[3][4];
+    u32 i;
+    u32 k;
+    f32 dot, t;
+    f32 zero;
+    Vx_75 *v;
+    u8 a;
+    s32 h;
+
+    dir = D_800FF7C0;
+    if (o == NULL || !o->on) {
+        return;
+    }
+    pl = o->pl;
+    D_800F1F64[0].x = o->f14;
+    D_800F1F64[0].y = o->f18;
+    D_800F1F64[1].x = o->f20;
+    D_800F1F64[1].y = o->f18;
+    D_800F1F64[2].x = o->f20;
+    D_800F1F64[2].y = o->f24;
+    D_800F1F64[3].x = o->f14;
+    D_800F1F64[3].y = o->f24;
+    for (i = 0; i < 4; i++) {
+        f32 x = D_800F1F64[i].x;
+        f32 y = D_800F1F64[i].y;
+        f32 z = D_800F1F64[i].z;
+        pts[i].x = o->m[0][0] * x + o->m[0][1] * y + o->m[0][2] * z + o->m[0][3];
+        pts[i].y = o->m[1][0] * x + o->m[1][1] * y + o->m[1][2] * z + o->m[1][3];
+        pts[i].z = o->m[2][0] * x + o->m[2][1] * y + o->m[2][2] * z + o->m[2][3];
+    }
+    dot = pl.a * dir.x + pl.b * dir.y + pl.c * dir.z;
+    if ((dot < 0.5f) & (-0.5f < dot)) {
+        return;
+    }
+    for (k = 0; k < 4; k++) {
+        t = (pts[k].x * pl.a + pts[k].y * pl.b + pts[k].z * pl.c + pl.d - 4.0f) / -dot;
+        tmp.x = dir.x * t;
+        tmp.y = dir.y * t;
+        tmp.z = dir.z * t;
+        out[k].x = pts[k].x + tmp.x;
+        out[k].y = pts[k].y + tmp.y;
+        out[k].z = pts[k].z + tmp.z;
+    }
+    for (k = 1; k < 4; k++) {
+        out[k].x -= out[0].x;
+        out[k].y -= out[0].y;
+        out[k].z -= out[0].z;
+    }
+    if ((fabsf(out[0].x) > 32767.0f) | (fabsf(out[0].y) > 32767.0f) | (fabsf(out[0].z) > 32767.0f)) {
+        return;
+    }
+    zero = 0.0f;
+    m[0][0] = m[0][1] = m[0][2] = m[0][3] = m[1][0] = m[1][1] = m[1][2] = m[1][3] = m[2][0] = m[2][1] = m[2][2] = m[2][3] = zero;
+    m[0][0] = m[1][1] = m[2][2] = 1.0f;
+    m[0][3] = out[0].x + out[0].y * zero + out[0].z * zero + zero;
+    m[1][3] = out[0].x * zero + out[0].y + out[0].z * zero + zero;
+    m[2][3] = out[0].x * zero + out[0].y * zero + out[0].z + zero;
+    Mtx34_Mul(arg1, m[0], r[0]);
+    out[0].x = zero;
+    out[0].y = zero;
+    out[0].z = zero;
+    h = Mtx_New(r[0]);
+    v = o->vtx;
+    a = o->p2C->p->a;
+    for (k = 0; k < 4; k++, v++) {
+        v->ob[0] = out[k].x;
+        v->ob[1] = out[k].y;
+        v->ob[2] = out[k].z;
+        v->cn[0] = 0;
+        v->cn[1] = 0;
+        v->cn[2] = 0;
+        v->cn[3] = a;
+    }
+    SortQueue_Add(o->h134, h, 0);
+}
 
 u8 Model_GetVariant(Model13_ *m) {
     u8 id;
@@ -619,7 +713,108 @@ void Mesh_StoreColors(MeshXf75_ *o) {
     o->flags &= ~0x100;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_13490", Mesh_ApplyPointLights);
+/* Adds the colored light of nearby point lights to the mesh vertices (alloca keeps the base colors). */
+void Mesh_ApplyPointLights(MeshXf75_ *o, s32 id) {
+    u8 *r;
+    u8 *g;
+    u8 *b;
+    Vtx *dst;
+    VtxOut75_ *src;
+    s32 lit;
+    u32 i, j;
+    s32 k, n;
+    f32 rad, rr, lx, ly, lz, dx, dy, dz, d;
+    u32 c;
+    f32 r2;
+    s32 prev;
+    Vtx *d0;
+    VtxOut75_ *s0;
+
+    r = __builtin_alloca(o->hdr->nVtx + 1);
+    g = __builtin_alloca(o->hdr->nVtx + 1);
+    b = __builtin_alloca(o->hdr->nVtx + 1);
+    /* TODO(match-debt): lit is cleared inside the condition; before the if it changes codegen. */
+    if (!(o->flags & 0x200) && (lit = 0, o->id != id)) {
+        src = o->out;
+        dst = o->in;
+        for (i = 0; i < (u32)gPointLightCount; i++) {
+            rad = gPointLights[i].f[0];
+            rr = rad + o->rad;
+            rad *= rad;
+            rr *= rr;
+            lx = gPointLights[i].f[1];
+            ly = gPointLights[i].f[2];
+            lz = gPointLights[i].f[3];
+            if (gPointLights[i].u.flags & 1) {
+                dx = o->m[0][3] - lx;
+                dy = o->m[1][3] - ly;
+                dz = o->m[2][3] - lz;
+                if (dx * dx + dy * dy + dz * dz <= rr) {
+                    if (src == NULL) {
+                        Mesh_TransformVerts(o);
+                        src = o->out;
+                    }
+                    prev = lit;
+                    o->flags |= 0x100;
+                    lit = 1;
+                    for (j = 0; j < o->hdr->nVtx; j++) {
+                        if (src[j].on & 1) {
+                            dx = src[j].x - lx;
+                            dy = src[j].y - ly;
+                            dz = src[j].z - lz;
+                            d = (dx * dx + dy * dy + dz * dz) / rad;
+                            if (!prev & (((u32)o->flags >> 8) & 1)) {
+                                r[j] = src[j].r;
+                                g[j] = src[j].g;
+                                b[j] = src[j].b;
+                            }
+                            if (d <= 1.0) {
+                                c = (f32)r[j] + (f32)gPointLights[i].r * (1.0 - d);
+                                if (c > 255) {
+                                    c = 255;
+                                }
+                                r[j] = c;
+                                c = (f32)g[j] + (f32)gPointLights[i].g * (1.0 - d);
+                                if (c > 255) {
+                                    c = 255;
+                                }
+                                g[j] = c;
+                                c = (f32)b[j] + (f32)gPointLights[i].b * (1.0 - d);
+                                if (c > 255) {
+                                    c = 255;
+                                }
+                                b[j] = c;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if (!lit & (((u32)o->flags >> 8) & 1)) {
+            n = o->hdr->nVtx;
+            d0 = o->in;
+            s0 = o->out;
+            for (k = 0; k < n; k++) {
+                if (o->out[k].on & 1) {
+                    d0->v.cn[0] = s0->r;
+                    d0->v.cn[1] = s0->g;
+                    d0->v.cn[2] = s0->b;
+                }
+                s0++;
+                d0++;
+            }
+            o->flags &= ~0x100;
+        } else if (lit) {
+            for (i = 0; i < o->hdr->nVtx; i++) {
+                if (src[i].on & 1) {
+                    dst[i].v.cn[0] = r[i];
+                    dst[i].v.cn[1] = g[i];
+                    dst[i].v.cn[2] = b[i];
+                }
+            }
+        }
+    }
+}
 
 void Gfx_SetupRDP(s32 w, s32 h) {
     GFX_RESERVE(6);
