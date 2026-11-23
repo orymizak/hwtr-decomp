@@ -74,7 +74,72 @@ s32 Bld_Free(void) {
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_21150", Bld_ReadNode);
+extern u8 *D_80114820;
+u8 Bld_ReadNode(Q817_ *q, u16 off) {
+    u8 *p;
+    u8 *o;
+    u8 i;
+    u8 j;
+    u8 *d;
+    s32 v;
+
+    o = (u8 *)q;
+    p = D_80114820 + off;
+    o[0] = *p++;
+    switch (o[0]) {
+    case 0:
+        v = p[0] | (p[1] << 8) | (p[2] << 16) | (p[3] << 24);
+        *(f32 *)(o + 4) = v / 4096.0f;
+        p += 4;
+        v = p[0] | (p[1] << 8) | (p[2] << 16) | (p[3] << 24);
+        *(f32 *)(o + 8) = v / 4096.0f;
+        p += 4;
+        v = p[0] | (p[1] << 8) | (p[2] << 16) | (p[3] << 24);
+        *(f32 *)(o + 0xC) = v / 4096.0f;
+        p += 4;
+        *(f32 *)(o + 0x10) = *p++;
+        *(f32 *)(o + 0x14) = *p++;
+        *(u16 *)(o + 0x18) = p[0] | (p[1] << 8);
+        p += 2;
+        *(u16 *)(o + 0x1A) = p[0] | (p[1] << 8);
+        return 19;
+    case 1:
+        *(f32 *)(o + 4) = (s16)(p[0] | (p[1] << 8)) / 32.0f;
+        p += 2;
+        *(f32 *)(o + 8) = (s16)(p[0] | (p[1] << 8)) / 32.0f;
+        p += 2;
+        *(f32 *)(o + 0xC) = (s16)(p[0] | (p[1] << 8)) / 32.0f;
+        p += 2;
+        *(f32 *)(o + 0x10) = p[0];
+        *(f32 *)(o + 0x14) = p[1];
+        return 9;
+    case 2:
+        *(u16 *)(o + 4) = p[0] | (p[1] << 8);
+        return 3;
+    case 3:
+        o[4] = *p++;
+        for (i = 0; i < o[4]; i++) {
+            ((s32 *)(o + 8))[i] = p[0] | (p[1] << 8) | (p[2] << 16) | (p[3] << 24);
+            p += 4;
+        }
+        for (i = 0; i < o[4]; i++) {
+            ((u16 *)(o + 0x10))[i] = p[0] | (p[1] << 8);
+            p += 2;
+        }
+        for (i = 0; i < o[4]; i++) {
+            for (j = 0; j < 16; j++) {
+                /* TODO(match-debt): integer address math keeps GCC's operand order (i * 16 + o). */
+                d = (u8 *)(i * 16 + (s32)o) + 0x14;
+                d[j] = *p++;
+            }
+        }
+        return o[4] * 4 + 2 + o[4] * 2 + o[4] * 16;
+    case 4:
+        o[4] = *p;
+        return 2;
+    }
+    return 0;
+}
 
 s32 Bld_InitRacer(TrAD_ *t, u8 i) {
     QAD_ q;

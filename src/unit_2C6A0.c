@@ -8,7 +8,7 @@ extern void (*svcGamePauseBegin)(void);
 extern void (*audSfxPlay)(s32, s32, f32, f32);
 extern u8 (*audSndSrcCreate)(void);
 typedef struct { u8 id; u8 b; u8 pad[2]; s32 c; } Ent8_;
-typedef struct { u8 b0; u8 pad[0xB]; s32 wC; } E10_;
+typedef struct { u8 b0; u8 pad1[3]; s32 flags; s32 obj; s32 wC; } E10_; /* track sound marker source */
 typedef struct { u8 b0; u8 pad[0xF]; } E10b_;
 extern E10b_ D_801184C8[];
 extern u8 D_801184C2;
@@ -725,7 +725,48 @@ u8 RaceAudio_Init(RaceSetup *t) {
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", RaceAudio_Load);
+extern s8 D_801184C0;
+extern u8 (*svcTrackGetMarkerCount)(void);
+extern void (*svcTrackGetMarker)(u8, s32 *, s32 *, s32 *, u32 *);
+s32 AnimTrack_FindById(u8);
+void RaceSfx_Init(void);
+void *Memory_Alloc(u32 size);
+/* Starts the car engine sounds and creates one positioned sound source per track sound marker. */
+u8 RaceAudio_Load(void) {
+    s32 pos[3];
+    u32 vol;
+    u8 i;
+    void (**fp)();
+
+    D_801184C0 = D_801184C2 < 2;
+    for (i = 0; i < D_801184C1; i++) {
+        D_801184C8[i].b0 = i;
+    }
+    for (i = 0; i < D_801184C1; i++) {
+        audCarSndStartEngine(i, 0);
+    }
+    D_800F3700 = svcTrackGetMarkerCount();
+    if (D_800F3700 != 0) {
+        D_800F3704 = Memory_Alloc(D_800F3700 * 0x10);
+        i = 0;
+        if (i < D_800F3700) {
+            fp = (void (**)())&audSndSrcCreate;
+            do {
+                D_800F3704[i].b0 = ((u8 (*)(void))fp[0])();
+                svcTrackGetMarker(i, pos, &D_800F3704[i].flags, &D_800F3704[i].wC, &vol);
+                if (D_800F3704[i].flags & 1) {
+                    D_800F3704[i].obj = AnimTrack_FindById(i);
+                }
+                ((void (*)(u8, f32))fp[5])(D_800F3704[i].b0, vol / 255.0f);
+                ((void (*)(u8, s32, s32, s32))fp[1])(D_800F3704[i].b0, pos[0], pos[1], pos[2]);
+                ((void (*)(u8, s32, s32, s32))fp[3])(D_800F3704[i].b0, D_800F3704[i].wC, 0, 1);
+                i++;
+            } while (i < D_800F3700);
+        }
+    }
+    RaceSfx_Init();
+    return 1;
+}
 
 extern u8 (*audCarSndShutdown)(void);
 void Memory_Free(void *);

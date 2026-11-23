@@ -3,7 +3,7 @@
 
 /* Player profile (0x140 bytes; gProfileP1/gProfileP2 point at one). */
 typedef struct {
-    /* 0x00 */ u8 pad0[4];
+    /* 0x00 */ s32 saveId;         /* id of the save on the Controller Pak (gSaveIds) */
     /* 0x04 */ s32 id;             /* copied to GameSave.player1Id/player2Id */
     /* 0x08 */ char name[12];      /* default "Player %d" */
     /* 0x14 */ u32 carUnlocks[2];  /* one bit per car (gCarModelNames); default 0xB48EE52E, 0x10B */

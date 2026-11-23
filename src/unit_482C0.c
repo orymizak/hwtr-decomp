@@ -5,12 +5,12 @@ typedef struct { s32 flags; u8 p4[0x13]; u8 b17; u8 p18; u8 b19; u8 b1A; } TrkCf
 typedef struct { u8 p0[0x440]; s32 w440; u8 b444[0xC]; s32 w450[8]; s32 w470; u8 p474[4]; u8 b478; u8 b479; } CrA76_;
 extern void (*svcHudCountdown)(s32);
 s32 Bld_GetLapLength(void);
-extern s32 gLapLength;
+extern u32 gLapLength;
 s32 Car_IsPlayer(s32);
 extern void (*audSfxPlay)(s32, s32, f32, f32);
 void Hud_ShowLapTime(u8, u32, u8);
 extern s32 D_800F3908;
-extern s32 gLapCount;
+extern u32 gLapCount;
 extern s32 gCheckpointCount;
 extern u8 D_800F3918;
 extern u8 D_800F3919;

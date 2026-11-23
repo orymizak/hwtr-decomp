@@ -18,7 +18,15 @@
 
 /* Per-player race result block (0x2C) inside the race state. */
 typedef struct { s32 lapTime; u8 lap; u8 p5[3]; s32 raceTime; u8 pC[0x20]; } RaceRes_;
-typedef struct { u8 p0[0x3C]; RaceRes_ res[2]; } RaceSt_;
+typedef struct {
+    /* 0x00 */ s32 outcome;
+    /* 0x04 */ u32 carUnlocksP1[2]; /* cars unlocked by this race, per player */
+    /* 0x0C */ u32 carUnlocksP2[2];
+    /* 0x14 */ u32 trackUnlocksP1;  /* tracks unlocked by this race, per player */
+    /* 0x18 */ u32 trackUnlocksP2;
+    /* 0x1C */ u8 p1C[0x20];
+    /* 0x3C */ RaceRes_ res[2];
+} RaceSt_;
 typedef struct { s32 a; s32 b; s32 c; } V12_;
 extern void (*sysModelLoadAsync)(s32, char *, s32);
 extern void (*sysCarInfoLoad)(char *, void *, void *);
@@ -2727,9 +2735,84 @@ void MainMenu_LayoutTexts(void) {
     Menu_LayoutTexts(D_800F5F28);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", MainMenu_SetupTexts);
+extern s32 *D_800FA180[];
+extern s32 *D_800F9FE0[][3];
+extern u16 gProfileChoiceText[];
+extern s32 *D_80141298;
+extern s32 *D_8014129C;
+extern s32 *D_80141260;
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", MainMenu_Draw);
+void MainMenu_SetupTexts(void) {
+    s32 *p;
+    u8 c;
+
+    p = &D_800F5F28;
+    Menu_SetText(*p, 0, (s32 *)gProfileP1->name, 286, 122, 0, 0, 1, 0, 255, 255, 255);
+    Menu_SetText(*p, 2, D_800FA180[gProfileP1->car], 289, 238, 0, 0, 1, 1, 255, 255, 255);
+    c = gProfileP1->track;
+    Menu_SetText(*p, 4, D_800F9FE0[(u8)(c / 3)][(u8)(c % 3)], 384, 270, 0, 0, 1, 0, 255, 255, 255);
+    Menu_SetText(*p, 5, ((s32 **)&gGameModeNames)[gActiveSave->gameMode], 76, 407, 0, 1, 0, 1, 127, 127, 127);
+    Menu_SetText(*p, 6, (s32 *)gLangText[gProfileChoiceText[gProfileChoice]], 76, 305, 0, 1, 0, 1, 127, 127, 127);
+    if (gActiveSave->gameMode == 4) {
+        Menu_SetText(*p, 7, D_8014129C, 76, 170, 0, 1, 0, 1, 127, 127, 127);
+    } else {
+        Menu_SetText(*p, 7, D_80141298, 76, 170, 0, 1, 0, 1, 127, 127, 127);
+    }
+    if (gNumPlayers == 2) {
+        Menu_SetText(gMenuObjs[8], 1, (s32 *)gProfileP2->name, 492, 122, 0, 0, 1, 0, 255, 255, 255);
+        Menu_SetText(gMenuObjs[8], 3, D_800FA180[gProfileP2->car], 490, 238, 0, 0, 1, 1, 255, 255, 255);
+    } else {
+        Menu_SetText(gMenuObjs[8], 1, D_80141260, 500, 185, 0, 0, 1, 1, 255, 255, 255);
+        Menu_SetText(gMenuObjs[8], 3, (s32 *)&D_80100CC8, 490, 238, 0, 0, 1, 1, 255, 255, 255);
+    }
+}
+
+extern s32 D_801240F8;
+extern s32 D_801240FC;
+void MainMenu_Draw(void) {
+    Menu_SetupCamera();
+    Menu_UpdateFade();
+    if (D_80124C94 == 0) {
+        D_80124C94 = sysModelPollLoad(0);
+    }
+    if (D_80124C95 == 0) {
+        D_80124C95 = sysModelPollLoad(1);
+    }
+    switch (gMainMenuSel) {
+        case 0:
+            Menu_Draw(gMenuObjs[8], 7, -1, -1, -1, -1, -1, (u8) gMenuHideText);
+            break;
+        case 1:
+            Menu_Draw(gMenuObjs[8], -1, 0, -1, -1, -1, -1, (u8) gMenuHideText);
+            break;
+        case 2:
+            Menu_Draw(gMenuObjs[8], -1, 1, -1, -1, -1, -1, (u8) gMenuHideText);
+            break;
+        case 3:
+            Menu_Draw(gMenuObjs[8], 6, -1, -1, -1, -1, -1, (u8) gMenuHideText);
+            break;
+        case 4:
+            Menu_Draw(gMenuObjs[8], -1, 2, -1, -1, -1, -1, (u8) gMenuHideText);
+            break;
+        case 5:
+            Menu_Draw(gMenuObjs[8], 5, -1, -1, -1, -1, -1, (u8) gMenuHideText);
+            break;
+        default:
+            Menu_Draw(gMenuObjs[8], -1, -1, -1, -1, -1, -1, (u8) gMenuHideText);
+            break;
+    }
+    if (D_80124C94 != 0) {
+        MenuCar_Draw(0, D_801240E8, D_801240EC, D_801240F0);
+    }
+    if (gNumPlayers == 2 && D_80124C95 != 0) {
+        MenuCar_Draw(1, D_801240F4, D_801240F8, D_801240FC);
+    }
+    ((s32 (*)(void)) MenuGlobe_Draw)();
+    if (gMenuHideText == 0) {
+        Menu_DrawTicker(&D_800F6358);
+    }
+    Menu_EndFrame();
+}
 
 /* Checks the entered cheat code, then handles player 1's buttons 0x10/0x11 on this menu. */
 void MainMenu_InputP1(s32 id) {
@@ -3361,7 +3444,52 @@ extern CupRec_ D_80123F60[];
 
 INCLUDE_ASM("asm/nonmatchings/unit_53B30", Cup_SetupRace);
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", Championship_SetupTexts);
+extern u8 D_80100EA8;
+extern s32 D_801414E8;
+extern s32 D_801414EC;
+extern s32 D_801414F0;
+extern s32 D_801414F4;
+extern s32 D_801414F8;
+extern s32 D_801414FC;
+extern s32 D_800FA01C[][3];
+extern s32 D_800FA04C[][3];
+void Championship_SetupTexts(void) {
+    s32 buf[8];
+    s32 *p;
+    s32 *q;
+    s16 t;
+    u8 i;
+    u8 race;
+    u8 pos;
+
+    p = &D_800F5F2C;
+    t = D_800F60D4[gProfileP1->cup][gProfileP1->cupRace];
+    Menu_SetText(*p, 0, (s32 *)gProfileP1->name, 286, 122, 0, 0, 1, 0, 255, 255, 255);
+    Menu_SetText(*p, 2, D_800FA180[gProfileP1->car], 282, 238, 0, 0, 1, 1, 255, 255, 255);
+    Menu_SetText(*p, 4, D_800F9FE0[t / 3][t % 3], 384, 270, 0, 0, 1, 0, 255, 255, 255);
+    Menu_SetText(*p, 5, ((s32 **)&D_8012406C)[gProfileP1->cup], 76, 407, 0, 1, 0, 1, 127, 127, 127);
+    Menu_SetText(*p, 6, (s32 *)gLangText[gProfileChoiceText[gChampProfileChoice]], 76, 305, 0, 1, 0, 1, 127, 127, 127);
+    race = gProfileP1->cupRace + 1;
+    for (i = 0; i < 6; i++) {
+        if (D_800F60D4[gProfileP1->cup][i] == -1) {
+            break;
+        }
+    }
+    sprintf((char *)buf, (char *)&D_80100EA8, D_801414E8, race, D_801414EC, i);
+    Menu_SetText(gMenuObjs[9], 1, buf, 423, 135, 0, 0, 0, 1, 255, 255, 255);
+    if (gProfileP1->cupRace == 0) {
+        sprintf((char *)buf, (char *)D_801414F0);
+    } else {
+        pos = Cup_GetPosition(0) + 1;
+        sprintf((char *)buf, (char *)&D_80100CA4, D_801414F4, pos);
+    }
+    q = &D_800F5F2C;
+    Menu_SetText(*q, 3, buf, 420, 165, 0, 0, 0, 1, 255, 255, 255);
+    sprintf((char *)buf, (char *)&D_80100EB4, D_801414F8, D_800FA01C[t / 3][t % 3]);
+    Menu_SetText(*q, 7, buf, 417, 195, 0, 0, 0, 1, 255, 255, 255);
+    sprintf((char *)buf, (char *)&D_80100EB4, D_801414FC, D_800FA04C[t / 3][t % 3]);
+    Menu_SetText(*q, 8, buf, 414, 225, 0, 0, 0, 1, 255, 255, 255);
+}
 
 void Championship_ResetTexts(void) {
     Menu_ResetTexts(D_800F5F2C);
@@ -4954,9 +5082,114 @@ void Keyboard_ClearText(void) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", LoadGame_Enter);
+extern s32 D_80100FD4;
+extern s32 gSaveIds[];
+/* First Controller Pak that is ready, or 0xFF. */
+static inline s32 LoadGame_FirstReadyPak(void) {
+    s32 i;
+    s32 sel = 0xFF;
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", LoadGame_SetupTexts);
+    for (i = 0; (u8)i < 4; i++) {
+        if (Pak_GetStatus(i) == 0) {
+            sel = i;
+            break;
+        }
+    }
+    return sel;
+}
+
+void LoadGame_Enter(void) {
+    s32 i;
+    s32 sel;
+
+    Menu_LoadBg((s32 *)&D_80100FD4);
+    Menu_StartFadeIn();
+    Menu_StartEnter(D_800F5F64);
+    Menu_StartEnter(D_800F5F68);
+    Menu_StartEnter(D_800F5F6C);
+    Menu_StartEnter(D_800F5F70);
+    Menu_StartEnter(D_800F5F74);
+    D_801240B2 = 0;
+    D_801240B3 = 0;
+    D_801240B4 = 0;
+    D_801240B5 = 0;
+    D_801240B6 = 0;
+    gDeleteConfirmSel = 0;
+    gRenamePending = 0;
+    gLoadPakP1 = 0xFF;
+    gLoadPakP2 = 0xFF;
+    gLoadSlotP1 = 0;
+    gLoadSlotP2 = 0;
+    if (Save_ReadAll() == 0 || (u8)(sel = LoadGame_FirstReadyPak()) == 0xFF) {
+        Fsm_Trigger(&gMenuFsm, 0x68);
+        return;
+    }
+        gLoadPakP1 = sel;
+        gLoadPakP2 = sel;
+        if (gProfileP1->saveId != 0) {
+            for (i = 0; (u8) i < 4; i++) {
+                if (gSaveIds[(u8) i] == gProfileP1->saveId && Pak_GetStatus(i) == 0) {
+                    gLoadPakP1 = i;
+                    break;
+                }
+            }
+        }
+        if (gProfileP2->saveId != 0) {
+            for (i = 0; (u8) i < 4; i++) {
+                if (gSaveIds[(u8) i] == gProfileP2->saveId && Pak_GetStatus(i) == 0) {
+                    gLoadPakP2 = i;
+                    break;
+                }
+            }
+        }
+        gLoadPlayer = 0;
+        Menu_ResetTicker(&D_800F63D0);
+}
+
+extern s32 *D_80124090[];
+extern s32 *D_801240A0[];
+void LoadGame_SetupTexts(void) {
+    s32 buf[6];
+    u8 i;
+    u8 n;
+
+    if (Pak_GetStatus(gLoadPakP1) == 0) {
+        n = SaveSlot_GetCount(gLoadPakP1);
+        ((s32 (*)(s32 *, s32 *, s32 *, s32))sprintf)(buf, (s32 *)&D_80100CA4, ((s32 **)&D_80141230)[16], gLoadPakP1 + 1);
+        Menu_SetText(gMenuObjs[23], 0, buf, 0xC0, 0xC4, 0, 0, 1, 1, 0x7F, 0x7F, 0x7F);
+        for (i = 0; i < 4; i++) {
+            if (i < n) {
+                s32 *s = (s32 *)((u8 *)SaveSlot_Get(gLoadPakP1, i) + 8);
+                Menu_SetText(gMenuObjs[23], i + 1, s, 0xC0, i * 46 + 0xEE, 0, 0, 1, 1, 0x7F, 0x7F, 0x7F);
+                D_80124090[i] = s;
+            } else {
+                Menu_SetText(gMenuObjs[23], i + 1, ((s32 **)&D_80141230)[0], 0xC0, i * 46 + 0xEE, 0, 0, 1, 1, 0x7F, 0x7F, 0x7F);
+                D_80124090[i] = ((s32 **)&D_80141230)[0];
+            }
+        }
+    }
+    if (gNumPlayers != 2) {
+        for (i = 0; i < 6; i++) {
+            Menu_SetText(gMenuObjs[24], i, (s32 *)&D_80100CC8, 0x1CC, i * 42 + 0xC4, 0, 0, 1, 1, 0x7F, 0x7F, 0x7F);
+        }
+        return;
+    }
+    if (Pak_GetStatus(gLoadPakP2) == 0) {
+        n = SaveSlot_GetCount(gLoadPakP2);
+        ((s32 (*)(s32 *, s32 *, s32 *, s32))sprintf)(buf, (s32 *)&D_80100CA4, ((s32 **)&D_80141230)[16], gLoadPakP2 + 1);
+        Menu_SetText(gMenuObjs[24], 0, buf, 0x1CC, 0xC4, 0, 0, 1, 1, 0x7F, 0x7F, 0x7F);
+        for (i = 0; i < 4; i++) {
+            if (i < n) {
+                s32 *s = (s32 *)((u8 *)SaveSlot_Get(gLoadPakP2, i) + 8);
+                Menu_SetText(gMenuObjs[24], i + 1, s, 0x1CC, i * 46 + 0xEE, 0, 0, 1, 1, 0x7F, 0x7F, 0x7F);
+                D_801240A0[i] = s;
+            } else {
+                Menu_SetText(gMenuObjs[24], i + 1, ((s32 **)&D_80141230)[0], 0x1CC, i * 46 + 0xEE, 0, 0, 1, 1, 0x7F, 0x7F, 0x7F);
+                D_801240A0[i] = ((s32 **)&D_80141230)[0];
+            }
+        }
+    }
+}
 
 void LoadGame_PrevPakP1(void) {
     if (gLoadSlotP1 == 0) {
@@ -5426,7 +5659,46 @@ void Register_LayoutTexts(void) {
     Menu_LayoutTexts(D_800F5F7C);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", Register_Enter);
+typedef struct { u8 p[4]; } ObjG1d_;
+extern s32 D_80100FF8;
+extern s32 *D_80141274;
+extern s32 *D_80141498;
+/* Opens the name entry screen: clears the name buffer after its terminator and draws the prompt. */
+void Register_Enter(void) {
+    u8 i;
+    u8 end;
+
+    end = 0;
+    for (i = 0; i < 20; i++) {
+        if ((&gKeyboardText)[i] == 0) {
+            end = 1;
+        }
+        if (end) {
+            (&gKeyboardText)[i] = 0;
+        }
+    }
+    Menu_LoadBg((s32 *)&D_80100FF8);
+    Menu_StartFadeIn();
+    Menu_StartEnter(gMenuObjs[29]);
+    D_801240D5 = 0;
+    gRegisterKey = 0;
+    Register_PlaceCursor(D_800F610C[0], D_800F6170[0]);
+    if (D_801240D8 != 3) {
+        if (gLoadPlayer == 0) {
+            Menu_SetText(gMenuObjs[29], 0, ((s32 **)&D_80141230)[18], 80, 190, 0, 0, 0, 1, 255, 255, 255);
+        } else {
+            Menu_SetText(gMenuObjs[29], 0, ((s32 **)&D_80141230)[19], 80, 190, 0, 0, 0, 1, 255, 255, 255);
+        }
+        Menu_SetText(gMenuObjs[29], 1, (s32 *)&gKeyboardText, 180, 400, 0, 0, 0, 1, 255, 255, 255);
+        Menu_SetText(gMenuObjs[29], 2, (s32 *)&D_80100CC8, 180, 400, 0, 0, 0, 1, 255, 255, 255);
+    } else {
+        Menu_SetText(gMenuObjs[29], 0, D_80141498, 73, 190, 0, 0, 0, 1, 255, 255, 255);
+        Menu_SetText(gMenuObjs[29], 1, (s32 *)&gKeyboardText, 180, 400, 0, 0, 0, 1, 255, 255, 255);
+        Menu_SetText(gMenuObjs[29], 2, (s32 *)&D_80100CC8, 180, 400, 0, 0, 0, 1, 255, 255, 255);
+    }
+    Menu_SetText(gMenuObjs[29], 3, ((s32 **)&D_80141230)[17], D_800F616C, D_800F61D0, 0, 0, 1, 1, 255, 255, 255);
+    Menu_ResetTicker(&D_800F6400);
+}
 
 void Register_ApplyChoice(void) {
     Profile l;
@@ -5589,7 +5861,75 @@ void Register_MoveDown(void) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", Register_PressKey);
+extern char *D_80141278;
+extern char *D_8014127C;
+void Register_PressKey(void) {
+    u8 buf[0x10];
+    u8 i;
+    s32 *p;
+
+    if (gRegisterKey == D_801240DC) {
+        if (D_801240D5 == 0) {
+            D_801240D5 = strlen((char *)&gKeyboardText);
+        }
+        if (D_801240D5 != 0) {
+            D_801240D5--;
+            (&gKeyboardText)[D_801240D5] = 0;
+        }
+    } else if (gRegisterKey == *(u8 *)&D_801240DD) {
+        if (strcmp((char *)&gKeyboardText, D_80141278) == 0 || strcmp((char *)&gKeyboardText, D_8014127C) == 0) {
+            if (D_801240D5 == 0) {
+                memset(&gKeyboardText, 0, 10);
+            }
+        } else {
+            D_801240D5 = strlen((char *)&gKeyboardText);
+        }
+        if (D_801240D5 < *(u8 *)&D_801240D7) {
+            (&gKeyboardText)[D_801240D5] = ' ';
+            D_801240D5++;
+        }
+    } else if (gRegisterKey == *(u8 *)&D_801240DE) {
+        Fsm_Trigger(&gMenuFsm, 0x78);
+        return;
+    } else {
+        if (strcmp((char *)&gKeyboardText, D_80141278) == 0 || strcmp((char *)&gKeyboardText, D_8014127C) == 0) {
+            if (D_801240D5 == 0) {
+                memset(&gKeyboardText, 0, 10);
+            }
+        } else {
+            D_801240D5 = strlen((char *)&gKeyboardText);
+        }
+        if (D_801240D5 < *(u8 *)&D_801240D7) {
+            (&gKeyboardText)[D_801240D5] = D_801410A8[gRegisterKey];
+            D_801240D5++;
+        }
+    }
+    if (*(u8 *)&D_801240D7 >= 11) {
+        for (i = 0; i < 10; i++) {
+            if (i < D_801240D5) {
+                buf[i] = (&gKeyboardText)[i];
+            } else {
+                buf[i] = 0;
+            }
+        }
+        buf[10] = 0;
+        Menu_SetText(gMenuObjs[29], 1, (s32 *)buf, 180, 390, 0, 0, 0, 1, 255, 255, 255);
+        for (i = 10; i < 20; i++) {
+            if (i < D_801240D5) {
+                buf[i - 10] = (&gKeyboardText)[i];
+            } else {
+                buf[i - 10] = 0;
+            }
+        }
+        buf[10] = 0;
+        Menu_SetText(gMenuObjs[29], 2, (s32 *)buf, 180, 410, 0, 0, 0, 1, 255, 255, 255);
+    } else {
+        p = &D_800F5F7C;
+        Menu_SetText(*p, 1, (s32 *)&gKeyboardText, 180, 400, 0, 0, 0, 1, 255, 255, 255);
+        Menu_SetText(*p, 2, (s32 *)&D_80100CC8, 180, 400, 0, 0, 0, 1, 255, 255, 255);
+    }
+    Fsm_Trigger(&gMenuFsm, 0x79);
+}
 
 void Register_Leave(void) {
     Menu_StartFadeOut();
@@ -5982,7 +6322,60 @@ void Unlocks_ShowTrack(u8 i) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", Unlocks_ShowNext);
+extern s32 D_8014149C;
+void Unlocks_ShowNext(void) {
+
+    D_80124CFD = -1;
+    D_80124CFF = -1;
+    D_80124CFE = -1;
+    D_80124D00 = -1;
+    D_80124D01 = -1;
+    if (D_80124CE4 != 0 || D_80124CEC != 0) {
+        if (D_80124CE4 != 0) {
+            D_80124CFD = Bits_PopLowest((u32 *)&D_80124CE4);
+        } else {
+            D_80124CFD = Bits_PopLowest((u32 *)&D_80124CEC) + 0x20;
+        }
+        Unlocks_ShowCar(D_80124CFD);
+        Menu_SetText(gMenuObjs[32], 0, (s32 *)gProfileP1->name, 0x140, 0x12C, 0, 2, 1, 1, 0xFF, 0xFF, 0xFF);
+        Menu_SetText(gMenuObjs[32], 1, (s32 *)D_8014149C, 0x140, 0x154, 0, 2, 1, 1, 0xFF, 0xFF, 0xFF);
+        Menu_SetText(gMenuObjs[32], 2, (s32 *)D_800FA180[D_80124CFD], 0x140, 0x17C, 0, 2, 1, 1, 0xFF, 0xFF, 0xFF);
+        Fsm_Trigger(&gMenuFsm, 0x86);
+    } else if (D_80124CF4 != 0) {
+        D_80124CFE = Bits_PopLowest((u32 *)&D_80124CF4);
+        Unlocks_ShowTrack(D_80124CFE);
+        Menu_SetText(gMenuObjs[32], 0, (s32 *)gProfileP1->name, 0x140, 0x12C, 0, 2, 1, 1, 0xFF, 0xFF, 0xFF);
+        Menu_SetText(gMenuObjs[32], 1, (s32 *)D_8014149C, 0x140, 0x154, 0, 2, 1, 1, 0xFF, 0xFF, 0xFF);
+        Menu_SetText(gMenuObjs[32], 2, (s32 *)D_800F9FE0[D_80124CFE / 3][D_80124CFE % 3], 0x140, 0x17C, 0, 2, 1, 1, 0xFF, 0xFF, 0xFF);
+        Fsm_Trigger(&gMenuFsm, 0x86);
+    } else if (D_80124CE8 != 0 || D_80124CF0 != 0) {
+        if (D_80124CE8 != 0) {
+            D_80124CFF = Bits_PopLowest((u32 *)&D_80124CE8);
+        } else {
+            D_80124CFF = Bits_PopLowest((u32 *)&D_80124CF0) + 0x20;
+        }
+        Unlocks_ShowCar(D_80124CFF);
+        Menu_SetText(gMenuObjs[32], 0, (s32 *)gProfileP2->name, 0x140, 0x12C, 0, 2, 1, 1, 0xFF, 0xFF, 0xFF);
+        Menu_SetText(gMenuObjs[32], 1, (s32 *)D_8014149C, 0x140, 0x154, 0, 2, 1, 1, 0xFF, 0xFF, 0xFF);
+        Menu_SetText(gMenuObjs[32], 2, (s32 *)D_800FA180[D_80124CFF], 0x140, 0x17C, 0, 2, 1, 1, 0xFF, 0xFF, 0xFF);
+        Fsm_Trigger(&gMenuFsm, 0x86);
+    } else if (D_80124CF8 != 0) {
+        D_80124D00 = Bits_PopLowest((u32 *)&D_80124CF8);
+        Unlocks_ShowTrack(D_80124D00);
+        Menu_SetText(gMenuObjs[32], 0, (s32 *)gProfileP2->name, 0x140, 0x12C, 0, 2, 1, 1, 0xFF, 0xFF, 0xFF);
+        Menu_SetText(gMenuObjs[32], 1, (s32 *)D_8014149C, 0x140, 0x154, 0, 2, 1, 1, 0xFF, 0xFF, 0xFF);
+        Menu_SetText(gMenuObjs[32], 2, (s32 *)D_800F9FE0[D_80124D00 / 3][D_80124D00 % 3], 0x140, 0x17C, 0, 2, 1, 1, 0xFF, 0xFF, 0xFF);
+        Fsm_Trigger(&gMenuFsm, 0x86);
+    } else if (D_80124CFC != 0) {
+        D_80124D01 = D_80124CFC;
+        D_80124CFC = 0;
+        Menu_SetText(gMenuObjs[32], 0, (s32 *)gProfileP1->name, 0x140, 0xD2, 0, 2, 1, 1, 0xFF, 0xFF, 0xFF);
+        Menu_SetText(gMenuObjs[32], 1, (s32 *)D_8014149C, 0x140, 0xF0, 0, 2, 1, 1, 0xFF, 0xFF, 0xFF);
+        Menu_SetText(gMenuObjs[32], 2, ((s32 **)&D_8012406C)[D_80124D01], 0x140, 0x10E, 0, 2, 1, 1, 0xFF, 0xFF, 0xFF);
+        Fsm_Trigger(&gMenuFsm, 0x86);
+    }
+    Fsm_Trigger(&gMenuFsm, 0x11);
+}
 
 void Unlocks_ResetTexts(void) {
     Menu_ResetTexts(D_800F5F88);
@@ -6112,7 +6505,37 @@ void Records_AddLapTimes(RaceSt_ *rs) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", Records_SaveRaceResult);
+/* Records the race times and stores which cars/tracks this race unlocked for each player
+ * (D_80124CE4..CF8, shown by Unlocks_ShowNext) before adding them to the profiles. */
+void Records_SaveRaceResult(void *arg) {
+    RaceSt_ *rs = arg;
+    Profile *p1;
+    Profile *p2;
+    u32 p1Cars1;
+
+    if (rs->outcome == 1) {
+        if (gRaceSetup.flags & 2) {
+            Records_AddRaceTimes(rs);
+        }
+        Records_AddLapTimes(rs);
+    }
+
+    p1 = gProfileP1;
+    p1Cars1 = p1->carUnlocks[1];
+    p2 = gProfileP2;
+    D_80124CE4 = rs->carUnlocksP1[0] & ~p1->carUnlocks[0];
+    D_80124CEC = rs->carUnlocksP1[1] & ~p1Cars1;
+    D_80124CF4 = rs->trackUnlocksP1 & ~p1->trackUnlocks;
+    D_80124CE8 = rs->carUnlocksP2[0] & ~p2->carUnlocks[0];
+    D_80124CF0 = rs->carUnlocksP2[1] & ~p2->carUnlocks[1];
+    D_80124CF8 = rs->trackUnlocksP2 & ~p2->trackUnlocks;
+    p1->carUnlocks[0] |= rs->carUnlocksP1[0];
+    p1->carUnlocks[1] |= rs->carUnlocksP1[1];
+    p1->trackUnlocks |= rs->trackUnlocksP1;
+    p2->carUnlocks[0] |= rs->carUnlocksP2[0];
+    p2->carUnlocks[1] |= rs->carUnlocksP2[1];
+    p2->trackUnlocks |= rs->trackUnlocksP2;
+}
 
 void Help_Enter(void) {
     s32 buf[8];
@@ -6182,7 +6605,46 @@ void Demo_Input(void) {
     Menu_HandlePad1(0x50);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", Race_StartDemo);
+void Race_StartDemo(void) {
+    u8 i;
+    u8 r;
+    s32 (**rnd)(s32);
+
+    Menu_FreeBg();
+    rnd = &sysRandRange;
+    do {
+        do {
+            gRaceSetup.cup = (*rnd)(4);
+            gRaceSetup.track = (*rnd)(3) + 1;
+        } while ((u8)Track_IsUnlocked(gRaceSetup.cup * 3 + (gRaceSetup.track - 1)) == 0);
+    } while (gTrackNames[gRaceSetup.cup][gRaceSetup.track - 1] == 0);
+    strcpy((s32 *)gRaceSetup.name, D_800F9FD0[gRaceSetup.cup]);
+    gRaceSetup.count = 6;
+    gRaceSetup.f19 = 1;
+    gRaceSetup.f9C = D_80138D58;
+    gRaceSetup.f1A = ((u8 *)D_800FA010)[gRaceSetup.track - 1];
+    memset(D_80124D10, 1, 0x29);
+    for (i = 0; i < gRaceSetup.count; i++) {
+        r = sysRandRange(0x29);
+        do {
+            r++;
+            if (r >= 0x29) {
+                r = 0;
+            }
+        } while ((u8)Car_IsUnlocked(r, gProfileP1) == 0 || D_80124D10[r] == 0);
+        D_80124D10[r] = 0;
+        gRaceSetup.p[i].grid = i;
+        strcpy((s32 *)gRaceSetup.p[i].name, (s32 *)gCarModelNames[r]);
+        gRaceSetup.p[i].kind = 0;
+        gRaceSetup.p[i].player = 0;
+    }
+    gRaceSetup.timeLimit = 60000;
+    gRaceSetup.flags = 5;
+    if ((u8)sysGameStartRace(&gRaceSetup) == 0) {
+        Fsm_Trigger(&gMenuFsm, 0x82);
+    }
+    Music_StartRaceTrack();
+}
 
 void Race_ReturnDemo(void) {
     if (sysGameEndRace(&gRaceResult) == 0) {
@@ -6212,7 +6674,55 @@ s32 Cheat_GetMirrorFlag(u32 arg0) {
     return (arg0 >> 2) & 0x40;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", Race_StartPractice);
+void Race_StartPractice(void) {
+    s32 one;
+    s32 f;
+    RaceSetup *g;
+
+    Menu_FreeBg();
+    Race_CopyPlayerNames();
+    one = 1;
+    gRaceSetup.count = gNumPlayers;
+    strcpy((s32 *)gRaceSetup.name, D_800F9FD0[gProfileP1->track / 3]);
+    gRaceSetup.cup = gProfileP1->track / 3;
+    gRaceSetup.track = gProfileP1->track % 3 + 1;
+    gRaceSetup.f19 = 2;
+    gRaceSetup.f1A = D_800FA010[(u8)(gProfileP1->track / 3)][(u8)gRaceSetup.track - 1];
+    strcpy((s32 *)gRaceSetup.p[0].name, (s32 *)gCarModelNames[gProfileP1->car]);
+    gRaceSetup.p[0].car = gProfileP1->car;
+    gRaceSetup.p[0].grid = 0;
+    gRaceSetup.p[0].kind = one;
+    gRaceSetup.p[0].player = 0;
+    if (gRaceSetup.count == 2) {
+        strcpy((s32 *)gRaceSetup.p[1].name, (s32 *)gCarModelNames[gProfileP2->car]);
+        gRaceSetup.p[1].car = gProfileP2->car;
+        gRaceSetup.p[1].grid = 1;
+        gRaceSetup.p[1].kind = one;
+        gRaceSetup.p[1].player = 1;
+    }
+    gRaceSetup.f9C = gActiveSave->option0;
+    if (gProfileP1->cheats != 0) {
+        gRaceSetup.cheats = gProfileP1->cheats;
+    } else if (gProfileP2->cheats != 0) {
+        gRaceSetup.cheats = gProfileP2->cheats;
+    } else {
+        gRaceSetup.cheats = 0;
+    }
+    gRaceSetup.timeLimit = 1800000;
+    if (gActiveSave->gameMode == 0) {
+        gRaceSetup.flags = 12;
+    } else {
+        gRaceSetup.flags = 6;
+    }
+    f = Cheat_GetColorShiftFlag(gProfileP1->cheats) | Cheat_GetColorShiftFlag(gProfileP2->cheats) |
+        Cheat_GetMirrorFlag(gProfileP1->cheats) | Cheat_GetMirrorFlag(gProfileP2->cheats);
+    g = &gRaceSetup;
+    g->flags |= f;
+    if ((u8)sysGameStartRace(g) == 0) {
+        Fsm_Trigger(&gMenuFsm, 0x82);
+    }
+    Music_StartRaceTrack();
+}
 
 void Race_ReturnPractice(void) {
     u32 *p = (u32 *)&gRaceResult;
@@ -6245,7 +6755,86 @@ void Practice_RunRace(void) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", Race_StartExhibition);
+extern u8 D_80124D0A[];
+void Race_StartExhibition(void) {
+    u8 i;
+    u8 r;
+    u8 k;
+    s32 a;
+    s32 b;
+    s32 c;
+    RaceSetup *g;
+
+    Menu_FreeBg();
+    Race_CopyPlayerNames();
+    strcpy((s32 *)gRaceSetup.name, D_800F9FD0[(u8)(gProfileP1->track / 3)]);
+    gRaceSetup.cup = gProfileP1->track / 3;
+    gRaceSetup.track = gProfileP1->track % 3 + 1;
+    gRaceSetup.f19 = 4;
+    gRaceSetup.f1A = D_800FA010[(u8)(gProfileP1->track / 3)][gRaceSetup.track - 1];
+    memset(D_80124D10, 1, 0x29);
+    memset(D_80124D0A, 1, 6);
+    strcpy((s32 *)gRaceSetup.p[0].name, (s32 *)gCarModelNames[gProfileP1->car]);
+    gRaceSetup.p[0].car = gProfileP1->car;
+    gRaceSetup.p[0].kind = 1;
+    gRaceSetup.p[0].player = 0;
+    D_80124D10[gProfileP1->car] = 0;
+    do {
+        k = sysRandRange(6);
+    } while (D_80124D0A[k] == 0);
+    gRaceSetup.p[0].grid = k;
+    D_80124D0A[k] = 0;
+    if (gNumPlayers == 2) {
+        strcpy((s32 *)gRaceSetup.p[1].name, (s32 *)gCarModelNames[gProfileP2->car]);
+        gRaceSetup.p[1].car = gProfileP2->car;
+        gRaceSetup.p[1].kind = 1;
+        gRaceSetup.p[1].player = 1;
+        D_80124D10[gProfileP2->car] = 0;
+        gRaceSetup.p[0].grid = 0;
+        gRaceSetup.p[1].grid = 1;
+        gRaceSetup.count = 2;
+    } else {
+        gRaceSetup.count = 6;
+    }
+    for (i = gNumPlayers; i < gRaceSetup.count; i++) {
+        r = sysRandRange(0x29);
+        do {
+            r++;
+            if (r >= 0x29) {
+                r = 0;
+            }
+        } while ((u8)Car_IsUnlocked(r, gProfileP1) == 0 || D_80124D10[r] == 0);
+        D_80124D10[r] = 0;
+        do {
+            k = sysRandRange(6);
+        } while (D_80124D0A[k] == 0);
+        gRaceSetup.p[i].grid = k;
+        D_80124D0A[k] = 0;
+        strcpy((s32 *)gRaceSetup.p[i].name, (s32 *)gCarModelNames[r]);
+        gRaceSetup.p[i].car = r;
+        gRaceSetup.p[i].kind = 0;
+        gRaceSetup.p[i].player = 0;
+    }
+    gRaceSetup.timeLimit = 0;
+    gRaceSetup.f9C = gActiveSave->option0;
+    if (gProfileP1->cheats != 0) {
+        gRaceSetup.cheats = gProfileP1->cheats;
+    } else if (gProfileP2->cheats != 0) {
+        gRaceSetup.cheats = gProfileP2->cheats;
+    } else {
+        gRaceSetup.cheats = 0;
+    }
+    g = &gRaceSetup;
+    g->flags = 0x20;
+    a = Cheat_GetColorShiftFlag(gProfileP1->cheats);
+    b = Cheat_GetColorShiftFlag(gProfileP2->cheats);
+    c = Cheat_GetMirrorFlag(gProfileP1->cheats);
+    g->flags |= a | b | c | Cheat_GetMirrorFlag(gProfileP2->cheats);
+    if ((u8)sysGameStartRace(&gRaceSetup) == 0) {
+        Fsm_Trigger(&gMenuFsm, 0x82);
+    }
+    Music_StartRaceTrack();
+}
 
 void Race_ReturnExhibition(void) {
     u32 *p = (u32 *)&gRaceResult;
@@ -6278,7 +6867,52 @@ void Exhibition_RunRace(void) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", Race_StartAirtime);
+void Race_StartAirtime(void) {
+    s32 a;
+    s32 b;
+    s32 c;
+    RaceSetup *g;
+
+    Menu_FreeBg();
+    Race_CopyPlayerNames();
+    strcpy((s32 *)gRaceSetup.name, D_800F9FD0[gProfileP1->track / 3]);
+    gRaceSetup.cup = gProfileP1->track / 3;
+    gRaceSetup.track = gProfileP1->track % 3 + 1;
+    gRaceSetup.f19 = 2;
+    gRaceSetup.f1A = D_800FA010[(u8)(gProfileP1->track / 3)][(u8)gRaceSetup.track - 1];
+    gRaceSetup.count = gNumPlayers;
+    strcpy((s32 *)gRaceSetup.p[0].name, (s32 *)gCarModelNames[gProfileP1->car]);
+    gRaceSetup.p[0].car = gProfileP1->car;
+    gRaceSetup.p[0].kind = 1;
+    gRaceSetup.p[0].player = 0;
+    gRaceSetup.p[0].grid = 0;
+    if (gRaceSetup.count == 2) {
+        strcpy((s32 *)gRaceSetup.p[1].name, (s32 *)gCarModelNames[gProfileP2->car]);
+        gRaceSetup.p[1].car = gProfileP2->car;
+        gRaceSetup.p[1].kind = 1;
+        gRaceSetup.p[1].player = 1;
+        gRaceSetup.p[1].grid = 1;
+    }
+    gRaceSetup.timeLimit = 180000;
+    gRaceSetup.f9C = gActiveSave->option0;
+    if (gProfileP1->cheats != 0) {
+        gRaceSetup.cheats = gProfileP1->cheats;
+    } else if (gProfileP2->cheats != 0) {
+        gRaceSetup.cheats = gProfileP2->cheats;
+    } else {
+        gRaceSetup.cheats = 0;
+    }
+    g = &gRaceSetup;
+    g->flags = 6;
+    a = Cheat_GetColorShiftFlag(gProfileP1->cheats);
+    b = Cheat_GetColorShiftFlag(gProfileP2->cheats);
+    c = Cheat_GetMirrorFlag(gProfileP1->cheats);
+    g->flags |= a | b | c | Cheat_GetMirrorFlag(gProfileP2->cheats);
+    if ((u8)sysGameStartRace(&gRaceSetup) == 0) {
+        Fsm_Trigger(&gMenuFsm, 0x82);
+    }
+    Music_StartRaceTrack();
+}
 
 void Race_ReturnAirtime(void) {
     u32 *p = (u32 *)&gRaceResult;

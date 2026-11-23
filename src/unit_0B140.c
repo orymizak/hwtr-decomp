@@ -2,7 +2,8 @@
 #include "input.h"
 #include "gfx.h"
 #include "include_asm.h"
-typedef struct { s32 state; u8 pad[0x50]; } SlotC_;
+/* Per-controller state (0x54). */
+typedef struct { s32 state; u32 time; u8 p8[0x3C]; u8 keys[14]; u8 p52[2]; } SlotC_;
 extern SlotC_ gRumbleState[];
 extern u8 D_800F0548[];
 void nuContRmbForceStopEnd(void);

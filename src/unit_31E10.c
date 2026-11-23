@@ -674,7 +674,62 @@ void Car_GetState(u8 id, Vec3f *pos, Mtx3f *rot, Vec3f *vel, u32 *flags, u8 *out
     *out = Race_GetPhase() ? c->b13C : 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_31E10", Car_GetAudioInfo);
+extern u8 D_800F3880[];
+/* Sound parameters of car id: contact point position and velocity, engine rpm and load, the
+ * loudest surface under its wheels, ground contact and skid ratios, and whether it boosts. */
+void Car_GetAudioInfo(u8 id, Vec3f *pos, Vec3f *vel, f32 *rpm, f32 *load, u8 *surface, f32 *contact,
+                      f32 *skid, f32 *boost) {
+    Car *c = &gCars[id];
+    u32 i;
+    CarPoint *p;
+    Vec3f r;
+    Vec3f w;
+
+    pos->x = c->pos.x + c->v8C.x;
+    pos->y = c->pos.y + c->v8C.y;
+    pos->z = c->pos.z + c->v8C.z;
+    r.x = pos->x - c->pos.x;
+    r.y = pos->y - c->pos.y;
+    r.z = pos->z - c->pos.z;
+    w.x = c->angVel.y * r.z - r.y * c->angVel.z;
+    w.y = r.x * c->angVel.z - c->angVel.x * r.z;
+    w.z = c->angVel.x * r.y - r.x * c->angVel.y;
+    vel->x = c->vel.x + w.x;
+    vel->y = c->vel.y + w.y;
+    vel->z = c->vel.z + w.z;
+    if (c->b4B8 != 0) {
+        *rpm = 0.0f;
+        *load = 0.0f;
+    } else {
+        *rpm = c->r3EC.cur;
+        if (c->r3EC.b8 != 0) {
+            *load = c->unk018;
+        } else {
+            *load = c->unk014;
+        }
+    }
+    *contact = 0.0f;
+    *skid = 0.0f;
+    *surface = 0;
+    if (c->b4B8 == 0) {
+        for (i = 0, p = c->points; i < c->nPoints; i++, p++) {
+            if (p->contact) {
+                *contact += 1.0f;
+                if (p->b60) {
+                    *skid += 1.0f;
+                }
+                if (D_800F3880[p->c31] > D_800F3880[*surface]) {
+                    *surface = p->c31;
+                }
+            }
+        }
+    }
+    *contact = *contact / c->nPoints;
+    *contact = *contact * (c->fBC / 1760.0f);
+    *contact = MIN(*contact, 1.0f);
+    *skid = *skid / c->nPoints;
+    *boost = (c->flags & 0x40) ? 1.0f : 0.0f;
+}
 
 extern u8 D_800F3890[];
 /* Returns the speed scaled to 0..255 and the average surface value of the wheels in contact. */

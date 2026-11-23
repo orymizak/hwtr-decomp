@@ -2,8 +2,8 @@
 #include "include_asm.h"
 typedef struct { u8 p0[8]; s32 n; u8 pC[4]; s32 a[600]; s32 b[600]; f32 c[600]; } Queue7F_;
 typedef struct { u8 pad[4]; s32 a; s32 b; void *c; } Buf20_;
-s32 SortQueue_Sort(s32);
-s32 SortQueue_Draw(s32);
+void SortQueue_Sort(void *);
+void SortQueue_Draw(void *);
 extern s32 gSortQueueIndex;
 
 typedef struct { u32 w0; s32 w4; s32 w8; void *wC; } Hp2C0_;
@@ -42,7 +42,92 @@ void SortQueue_AddTo(void *arg0, s32 a, s32 b, f32 c) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_20830", SortQueue_Sort);
 
-INCLUDE_ASM("asm/nonmatchings/unit_20830", SortQueue_Draw);
+typedef struct { s32 f0; s32 f4; u8 p8[0x208]; s32 f210; s32 f214; u8 p218[0xFC]; s32 f314; s32 f318; u8 p31C[0x4]; } S_D_8014C740;
+typedef struct { u32 w0; u32 w1; } G9_;
+typedef struct { s32 id; s32 a; s32 b; } Dl80_;
+typedef struct { u8 pad0[4]; u32 start; u32 end; G9_ *buf; Dl80_ *dl[600]; s32 mtx[1]; } Q80_;
+extern S_D_8014C740 gGfxPools[];
+extern s32 gGfxPoolIndex;
+extern s32 gDisplayListHead;
+void GfxPool_Grow(void *, u32);
+void SortQueue_Draw(void *arg) {
+    Q80_ *q = arg;
+    G9_ *g;
+    s32 mtx;
+    s32 dl;
+    u32 i;
+
+    dl = -1;
+    g = q->buf;
+    mtx = 0;
+    if ((u32) (gDisplayListHead + 8) >= (u32) gGfxPools[gGfxPoolIndex].f4) {
+        gGfxPools[gGfxPoolIndex].f0 = gDisplayListHead;
+        GfxPool_Grow(&gGfxPools[gGfxPoolIndex], 1U);
+        gDisplayListHead = gGfxPools[gGfxPoolIndex].f0;
+    }
+    ((G9_ *) gDisplayListHead)->w0 = 0xDE000000;
+    ((G9_ *) gDisplayListHead)->w1 = (u32) g - 0x80000000;
+    {
+        G9_ *_g = g++;
+        _g->w0 = 0xE7000000;
+        _g->w1 = 0;
+    }
+    {
+        G9_ *_g = g++;
+        _g->w0 = 0xE2001D00;
+        _g->w1 = 0;
+    }
+    {
+        G9_ *_g = g++;
+        _g->w0 = 0xE3000C00;
+        _g->w1 = 0x80000;
+    }
+    {
+        G9_ *_g = g++;
+        _g->w0 = 0xE3000A01;
+        _g->w1 = 0x100000;
+    }
+    {
+        G9_ *_g = g++;
+        _g->w0 = 0xD9000000;
+        _g->w1 = 0;
+    }
+    {
+        G9_ *_g = g++;
+        _g->w0 = 0xD9FFFFFF;
+        _g->w1 = 0x210005;
+    }
+    gDisplayListHead += 8;
+    for (i = q->start; i < q->end; i++) {
+        if (q->mtx[i] != mtx) {
+            mtx = q->mtx[i];
+            {
+                G9_ *_g = g++;
+                _g->w0 = 0xDA380003;
+                _g->w1 = mtx - 0x80000000;
+            }
+        }
+        if (q->dl[i]->id != dl) {
+            dl = q->dl[i]->id;
+            {
+                G9_ *_g = g++;
+                _g->w0 = 0xDE000000;
+                _g->w1 = q->dl[i]->a - 0x80000000;
+            }
+        } else {
+            G9_ *_g = g++;
+            _g->w0 = 0xDE000000;
+            _g->w1 = q->dl[i]->b - 0x80000000;
+        }
+    }
+    {
+        G9_ *_g = g++;
+        _g->w0 = 0xDF000000;
+        _g->w1 = 0;
+    }
+    q->buf = g;
+    q->start = q->end;
+}
 
 void SortQueue_Init(void) {
     gSortQueues.a = (Hp2C0_ *)D_8010C420;

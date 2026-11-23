@@ -272,7 +272,70 @@ void Car_CheckCrashContact(Contact_ *h) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_464D0", Car_CheckCrashPair);
+typedef struct { f32 x; f32 y; f32 z; } Vec3f_;
+void TrackObj_Smash(u8 *, f32, f32, f32);
+void Car_CheckCrashPair(u8 **pair, u8 which) {
+    u8 *a;
+    u8 *b;
+    u8 *car;
+    u8 *other;
+    f32 s;
+    f32 f;
+    f32 dist;
+    f32 th;
+    s32 fl;
+    Vec3f_ d;
+
+    a = which == 0 ? pair[0] : pair[1];
+    b = which == 0 ? pair[1] : pair[0];
+    car = *(u8 **)(a + 0x64);
+    other = *(u8 **)(b + 0x64);
+    f = *(f32 *)(car + 0x53C);
+    s = MIN(MAX(f, 0.25f), 4.0f);
+    if (*(s32 *)(b + 0x5C) == 6) {
+        return;
+    }
+    if (other != NULL && (other[0x6BE] != 0 || (other[0x6BF] != 0 && *(s32 *)(*(u8 **)(car + 0x758) + 0x5C) == 4))) {
+        Car_StartCrash(car, 0, 0);
+        return;
+    }
+    fl = *(s32 *)(b + 4);
+    if (fl & 8) {
+        Car_StartCrash(car, 0, 0);
+        return;
+    }
+    if (fl & 2) {
+        if (*(u32 *)(b + 0x84) < 10000 || car[0x6BD] != 0 || (*(s32 *)(car + 0x540) & 1)) {
+            TrackObj_Smash(b, *(f32 *)(*(u8 **)(a + 0x60) + 0x84), *(f32 *)(*(u8 **)(a + 0x60) + 0x88), *(f32 *)(*(u8 **)(a + 0x60) + 0x8C));
+            return;
+        }
+    } else if (fl & 4) {
+        if ((car[0x6BE] == 0) & (s < 3.9f)) {
+            *(f32 *)(car + 0xAC) += (f32) *(u32 *)(b + 0x84) * 264.0f / 100.0f * *(f32 *)(car + 0x74);
+        }
+        TrackObj_Smash(b, *(f32 *)(*(u8 **)(a + 0x60) + 0x84), *(f32 *)(*(u8 **)(a + 0x60) + 0x88), *(f32 *)(*(u8 **)(a + 0x60) + 0x8C));
+    }
+    if (*(u16 *)(car + 0x6BE) != 0) {
+        return;
+    }
+    if (*(u8 **)(b + 0x60) != NULL) {
+        d.x = *(f32 *)(car + 0xB0) - *(f32 *)(*(u8 **)(b + 0x60) + 0x84);
+        d.y = *(f32 *)(car + 0xB4) - *(f32 *)(*(u8 **)(b + 0x60) + 0x88);
+        d.z = *(f32 *)(car + 0xB8) - *(f32 *)(*(u8 **)(b + 0x60) + 0x8C);
+    } else {
+        d = *(Vec3f_ *)(car + 0xB0);
+    }
+    dist = sqrtf(d.x * d.x + d.y * d.y + d.z * d.z);
+    if (s < 1.0f) {
+        th = (s - 0.25f) * 938.6667f + -704.0f + 2112.0f;
+    } else {
+        th = (s - 1.0f) * 821.3333f + 0.0f + 2112.0f;
+    }
+    if (th < dist) {
+        Car_StartCrash(car, 0, 0);
+        return;
+    }
+}
 
 typedef struct { u16 kind; u8 id; u8 idx; s8 rot[6]; s16 pos[3]; } PrtRec_;
 /* Packs the active parts into 16-byte records (two rotation rows as s8, position as s16); returns the

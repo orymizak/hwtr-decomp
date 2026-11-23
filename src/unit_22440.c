@@ -1,6 +1,7 @@
 #include "common.h"
 #include "include_asm.h"
 #include "car.h"
+#include "race.h"
 typedef struct { u8 id; u8 p1[3]; u8 *car; u8 p8[0x1C]; f32 f24; u8 p28[0x1E4]; f32 f20C; u8 p210[8]; f32 f218; u8 p21C[0xC]; Vec3f v228; u8 p234[0xC]; Vec3f v240; u8 p24C[0x5C]; } Slot85_;
 typedef struct { Vec3f p; u8 pad[0x7C]; } BlkD_;
 typedef struct { u8 id; u8 p1[0xBF]; f32 m[3][3]; } CarD_;
@@ -85,7 +86,51 @@ f32 Ai_GetRaceDistance(u8 i) {
     return 0.0f;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_22440", Ai_Init);
+extern s32 (*svcRandRange)(s32);
+extern u8 D_80115850;
+extern f32 D_80115834;
+extern f32 D_80115838;
+extern f32 D_8011583C;
+extern f32 D_80115840;
+extern u8 D_80115844;
+extern char D_800FFA90[];
+extern u8 D_80138D38, D_80138D39, D_80138D3A, D_80138D3B, D_80138D3C, D_80138D3D, D_80138D44, D_80138D45, D_80138D66, D_80138D67, D_80138D6C;
+s32 strcmp(const char *, const char *);
+u32 Bld_GetLapLength(void);
+static inline f32 Lerp85(f32 t, f32 lo, f32 hi) {
+    return t * (hi - lo) + lo;
+}
+s32 Ai_Init(RaceSetup *cfg) {
+    u8 f;
+    s32 i;
+
+    D_80115854 = svcRandRange(0x40000000);
+    D_80115850 = (cfg->flags & 0x100) && strcmp(cfg->sub, D_800FFA90) == 0;
+    if (D_80115850) {
+        D_80115840 = 0.0f;
+        D_80115828 = 1.0f;
+        D_8011582C = 1.0f;
+        D_80115830 = 1.04f;
+        D_80115834 = 0.4f;
+        D_80115838 = 1.0f;
+        D_8011583C = 2.0f;
+    } else {
+        D_80115828 = Lerp85(cfg->f9C / 255.0f, D_80138D38, D_80138D39) / 100.0f;
+        D_8011582C = Lerp85(cfg->f9C / 255.0f, D_80138D3A, D_80138D3B) / 100.0f;
+        D_80115830 = Lerp85(cfg->f9C / 255.0f, D_80138D44, D_80138D45) / 100.0f;
+        D_80115834 = Lerp85(cfg->f9C / 255.0f, D_80138D3C, D_80138D3D) / 10.0f;
+        D_80115838 = cfg->f9C / 255.0f;
+        D_8011583C = Lerp85(cfg->f9C / 255.0f, D_80138D66, D_80138D67) / 10.0f;
+        D_80115840 = Lerp85(cfg->f9C / 255.0f, D_80138D6C, 0.0f) / 10.0f;
+    }
+    D_80115844 = cfg->f19;
+    for (i = 0; i < 6; i++) {
+        gAi[i].car = Car_Get(i);
+        gAi[i].id = gAi[i].car[0];
+    }
+    D_80115820 = Bld_GetLapLength() / 1000.0f;
+    return 1;
+}
 
 extern f32 D_80115838;
 extern s8 gAiPhysicsCarCount;

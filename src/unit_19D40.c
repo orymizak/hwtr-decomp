@@ -251,7 +251,59 @@ void Mtx34_Mul(f32 a[3][4], f32 b[3][4], f32 out[3][4]) {
     out[2][3] = a[2][0] * b[0][3] + a[2][1] * b[1][3] + a[2][2] * b[2][3] + a[2][3];
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_19D40", PakMenu_Draw);
+/* One Controller Pak note (0x20): size in bytes, extension letter and name. */
+typedef struct { u32 size; u8 p4[6]; s8 ext; u8 pB[3]; u8 name[16]; u8 p1E[2]; } PakNote_;
+extern PakNote_ D_80138B20[16];
+extern s32 D_80148048[16];
+extern u8 *D_800F21B0[];
+extern u16 D_800F21BC[];
+extern s16 D_800F21C4[];
+extern u8 D_800FF92C[];
+void Debug_DrawChar(s32 c, u16 color, u16 shadow);
+void Debug_DrawChars(u8 *s, s32 n, u16 color, u16 shadow);
+#define PAK_FB ((u16 *)0x80300000)
+
+static inline void PakMenu_SetCursor(s32 x, s32 y) {
+    D_80138E38 = (s32)(PAK_FB + (y * 640 + x));
+}
+
+/* Draws row item of the Controller Pak menu (640-wide debug framebuffer): number, note name,
+ * size in pages and the note type label; row 16 is the exit line. */
+void PakMenu_Draw(s32 type, s32 item, u16 color, u16 typeColor, u16 shadow) {
+    char buf[8];
+    s32 y = item * 20 + 84;
+
+    if (item < 16) {
+        if (D_80148048[item] == 0) {
+            PakMenu_SetCursor(126, y);
+            Debug_DrawChars(D_80138B20[item].name, 16, color, shadow);
+            if (D_80138B20[item].ext != 0) {
+                Debug_DrawChar(0x3C, color, shadow);
+                D_80138E38 = (s32)((u16 *)D_80138E38 - 8);
+                Debug_DrawChar(D_80138B20[item].ext, color, shadow);
+            }
+            PakMenu_SetCursor(406, y);
+            Debug_FormatNumber((D_80138B20[item].size + 255) >> 8, buf);
+            Debug_DrawString(buf, 3, color, shadow);
+            D_80138E38 = (s32)((u16 *)D_80138E38 + D_800F21C4[type]);
+            Debug_DrawString(D_800F21B0[type], D_800F21BC[type], typeColor, shadow);
+        }
+        if (item < 9) {
+            PakMenu_SetCursor(99, y);
+            Debug_DrawChar(item + 0x11, color, shadow);
+        } else {
+            PakMenu_SetCursor(92, y);
+            Debug_DrawChar(0x11, color, shadow);
+            PakMenu_SetCursor(100, y);
+            Debug_DrawChar(item + 7, color, shadow);
+        }
+        PakMenu_SetCursor(111, y);
+        Debug_DrawChar(0x3E, color, shadow);
+    } else {
+        PakMenu_SetCursor(94, (item * 20 + 88));
+        Debug_DrawString(D_800FF92C, 4, color, shadow);
+    }
+}
 
 void Debug_ShowNumber(u16 n) {
     char buf[8];

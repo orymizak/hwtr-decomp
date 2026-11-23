@@ -50,10 +50,13 @@ typedef struct { s32 d[0x114 / 4]; } Big114_;
 typedef struct { s32 d[0x40 / 4]; } Big40_;
 typedef struct { u8 p0[9]; u8 b9; } MdlMat_;
 typedef struct { u8 p0[0x30]; s32 flags; u8 p34[8]; MdlMat_ *mat; u8 p40[0x44]; s32 flags84; } MdlInst_;
+typedef struct { s32 w0; u16 *colors; } MdlPal_;
 typedef struct {
     /* 0x000 */ u8 p0[0x2C];
     /* 0x02C */ MdlInst_ *inst;
-    /* 0x030 */ u8 p30[0xCC];
+    /* 0x030 */ u8 p30[4];
+    /* 0x034 */ MdlPal_ *pals; /* palettes; palIdx selects the one Model_SwapPalette darkens */
+    /* 0x038 */ u8 p38[0xC4];
     /* 0x0FC */ u8 nParts;
     /* 0x0FD */ u8 pFD;
     /* 0x0FE */ s8 id;
@@ -67,11 +70,15 @@ typedef struct {
     /* 0x106 */ u8 p106[7];
     /* 0x10D */ u8 b10D;
     /* 0x10E */ u8 b10E;
-    /* 0x10F */ u8 p10F[0x2D];
+    /* 0x10F */ u8 p10F[0xD];
+    /* 0x11C */ Vec3f lightPos; /* point light position in model space (light on while cur != 0) */
+    /* 0x128 */ u8 p128[0x14];
     /* 0x13C */ Vec4L_ v;
     /* 0x14C */ u8 b14C;
     /* 0x14D */ u8 c[3];
-    /* 0x150 */ u8 p150[0x10];
+    /* 0x150 */ u8 palIdx;
+    /* 0x151 */ u8 p151;
+    /* 0x152 */ u16 savedPal[7]; /* original colors 4..10 of the palette */
     /* 0x160 */ f32 mtx[7][3][4]; /* 0: model, then one per part */
 } Model_;
 typedef struct { s32 cur[6]; s32 tgt[6]; s32 dt; } Fade65_;
@@ -441,7 +448,7 @@ s32 Color_PackRGBA5551(u32 r, u32 g, u32 b, s32 a) {
     return a | ((b & 0x3E) | (hi | mid));
 }
 
-void Color_Unpack5551(u32 color, void *r, void *g, void *b) {
+inline void Color_Unpack5551(u32 color, void *r, void *g, void *b) {
     u32 c = color & 0xFFFF;
     u8 cr = c >> 11;
     u8 cg = (c >> 6) & 0x1F;
@@ -631,7 +638,56 @@ void Model_GetColor(u8 i, u8 *r, u8 *g, u8 *b) {
     *b = m->c[2];
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", Model_SetTransform);
+void PointLight_SetPos(s32 arg0, f32 arg1, f32 arg2, f32 arg3, f32 arg4);
+/* Sets the model matrix from position p and rotation r (3x3), mirrored when the track is; moves
+ * the model's point light with it. */
+s32 Model_SetTransform(u8 idx, Vec3f *p, f32 *r) {
+    f32 m[3][4];
+    u8 *o;
+    Model_ *l;
+    f32 x;
+    f32 y;
+    f32 z;
+
+    /* TODO(match-debt): the matrix is written through byte offsets (o->mtx[0]); as struct
+     * members GCC moves the D_80138AB0 load above the last stores. */
+    o = (u8 *)gModels[idx];
+    if (o == NULL) {
+        return 1;
+    }
+    m[0][0] = m[0][1] = m[0][2] = m[0][3] = m[1][0] = m[1][1] = m[1][2] = m[1][3] = m[2][0] = m[2][1] = m[2][2] = m[2][3] = 0.0f;
+    m[0][0] = m[1][1] = m[2][2] = 1.0f;
+    m[0][3] = p->x * m[0][0] + p->y * m[0][1] + p->z * m[0][2] + m[0][3];
+    m[1][3] = p->x * m[1][0] + p->y * m[1][1] + p->z * m[1][2] + m[1][3];
+    m[2][3] = p->x * m[2][0] + p->y * m[2][1] + p->z * m[2][2] + m[2][3];
+    *(f32 *)(o + 0x160) = m[0][0] * r[0] + m[0][1] * r[3] + m[0][2] * r[6];
+    *(f32 *)(o + 0x164) = m[0][0] * r[1] + m[0][1] * r[4] + m[0][2] * r[7];
+    *(f32 *)(o + 0x168) = m[0][0] * r[2] + m[0][1] * r[5] + m[0][2] * r[8];
+    *(f32 *)(o + 0x16C) = m[0][3];
+    *(f32 *)(o + 0x170) = m[1][0] * r[0] + m[1][1] * r[3] + m[1][2] * r[6];
+    *(f32 *)(o + 0x174) = m[1][0] * r[1] + m[1][1] * r[4] + m[1][2] * r[7];
+    *(f32 *)(o + 0x178) = m[1][0] * r[2] + m[1][1] * r[5] + m[1][2] * r[8];
+    *(f32 *)(o + 0x17C) = m[1][3];
+    *(f32 *)(o + 0x180) = m[2][0] * r[0] + m[2][1] * r[3] + m[2][2] * r[6];
+    *(f32 *)(o + 0x184) = m[2][0] * r[1] + m[2][1] * r[4] + m[2][2] * r[7];
+    *(f32 *)(o + 0x188) = m[2][0] * r[2] + m[2][1] * r[5] + m[2][2] * r[8];
+    *(f32 *)(o + 0x18C) = m[2][3];
+    if (D_80138AB0 == 1) {
+        *(f32 *)(o + 0x160) = -*(f32 *)(o + 0x160);
+        *(f32 *)(o + 0x170) = -*(f32 *)(o + 0x170);
+        *(f32 *)(o + 0x180) = -*(f32 *)(o + 0x180);
+    }
+    l = gModels[idx];
+    if (l->cur != 0) {
+        x = l->lightPos.x;
+        y = l->lightPos.y;
+        z = l->lightPos.z;
+        PointLight_SetPos(l->id, 1600.0f,
+            *(f32 *)(o + 0x160) * x + *(f32 *)(o + 0x164) * y + *(f32 *)(o + 0x168) * z + *(f32 *)(o + 0x16C),
+            *(f32 *)(o + 0x170) * x + *(f32 *)(o + 0x174) * y + *(f32 *)(o + 0x178) * z + *(f32 *)(o + 0x17C),
+            *(f32 *)(o + 0x180) * x + *(f32 *)(o + 0x184) * y + *(f32 *)(o + 0x188) * z + *(f32 *)(o + 0x18C));
+    }
+}
 
 /* Sets wheel contact state and updates wheel part rotation */
 INCLUDE_ASM("asm/nonmatchings/unit_06050", Model_SetWheel);

@@ -2,6 +2,8 @@
 #include "ultra64.h"
 #include "include_asm.h"
 #include "car.h"
+#include "race.h"
+#include "physics.h"
 typedef struct { u8 b; u8 pad[3]; s32 w[6]; } E1C8_;
 extern E1C8_ D_800F316C[];
 extern u8 (*svcRandRange)(u8);
@@ -13,10 +15,10 @@ typedef struct { s32 pad0; u8 id; u8 pad5[3]; s32 on; s32 t; u8 fired; u8 pad11[
 typedef struct { u8 p0[0x34]; s32 flags; f32 f[0x18]; Vec3f v; f32 fA4; u8 col[4]; } P_8010;
 extern u16 D_800F302A;
 extern u16 D_800F302C;
-extern u16 D_800F302E;
-extern u16 D_800F3030;
-extern u16 D_800F3032;
-extern u16 D_800F3034;
+extern s16 D_800F302E;
+extern s16 D_800F3030;
+extern s16 D_800F3032;
+extern s16 D_800F3034;
 void Hud_ShowTurbosGained(u8, s32);
 void Stats_PickupCollectedNop(u8, s32);
 void Car_ApplyPickup(u8 *arg0, u8 *arg1);
@@ -315,9 +317,64 @@ s32 Pickup_TypeFromName(u8 *name) {
     return 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_28C10", Pickup_Init);
+extern u8 D_800F3028;
+extern s32 D_800FA07C[][3];
+extern s32 D_800FA0AC[][3];
+extern u32 (*svcTrackGetEntityCount)(void);
+extern void (*svcTrackGetEntity)(u32, Vec3f *, f32 *, char *);
+Lnk89_ **RefList_New(void);
+void CollShape_InitBox(Vec3i *, Vec3f, Vec3f, f32 *, s32);
+void Coll_Register(Collider *o);
+/* Creates the per-car pickup lists and one collision box per track pickup spawn. */
+u8 Pickup_Init(RaceSetup *cfg) {
+    Vec3f pos;
+    char name[80];
+    f32 m[9];
+    Vec3f dims;
+    f32 size;
+    Collider *c;
+    u32 i;
 
-#include "race.h"
+    for (i = 0; i < 6; i++) {
+        gCarPickups[i] = RefList_New();
+    }
+    D_800F302A = D_800FA07C[cfg->cup][cfg->track - 1];
+    D_800F302C = D_800FA0AC[cfg->cup][cfg->track - 1];
+    D_800F302E = -1;
+    D_800F3030 = -1;
+    D_800F3032 = -1;
+    D_800F3034 = -1;
+    D_80118488 = RefList_New();
+    gPickupSpawnCount = svcTrackGetEntityCount();
+    gPickupSpawns = Memory_Alloc(gPickupSpawnCount * sizeof(Evt18_));
+    for (i = 0; i < gPickupSpawnCount; i++) {
+        svcTrackGetEntity(i, &pos, &size, name);
+        c = Memory_Alloc(sizeof(Collider));
+        memset(c, 0, sizeof(Collider));
+        m[0] = m[1] = m[2] = m[3] = m[4] = m[5] = m[6] = m[7] = m[8] = 0.0f;
+        m[0] = m[4] = m[8] = 1.0f;
+        dims.x = size;
+        dims.y = size;
+        dims.z = size;
+        CollShape_InitBox(&c->pos, dims, pos, m, 0);
+        c->kind = 5;
+        *(Evt18_ **)((u8 *)c + 0x68) = &gPickupSpawns[i];
+        Coll_Register(c);
+        *(Collider **)((u8 *)&gPickupSpawns[i] + 0x14) = c;
+        gPickupSpawns[i].pad0 = (s32)Memory_Alloc(strlen(name) + 1);
+        strcpy((char *)gPickupSpawns[i].pad0, name);
+        gPickupSpawns[i].id = i;
+        gPickupSpawns[i].on = Pickup_TypeFromName((u8 *)gPickupSpawns[i].pad0);
+        gPickupSpawns[i].fired = 1;
+        PickupModel_Load((u8 *)name);
+    }
+    for (i = 0; i < 6; i++) {
+        Car_Get(i)->unk6DC = 0;
+    }
+    D_800F3028 = 1;
+    return 1;
+}
+
 extern u8 D_800F3028;
 void Coll_Unregister(void *);
 void CollShape_Free(void *);

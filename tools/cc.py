@@ -153,6 +153,14 @@ def data_blocks(lines):
         if current is not None and b:
             current.append(int(b.group(1), 0) & 0xFF)
             continue
+        h = re.match(r"\s*\.half\s+(0x[0-9a-fA-F]+|-?\d+)\s*$", line)
+        if current is not None and h:
+            current += struct.pack(">H", int(h.group(1), 0) & 0xFFFF)
+            continue
+        z = re.match(r"\s*\.space\s+(\d+)\s*$", line)
+        if current is not None and z:
+            current += bytes(int(z.group(1)))
+            continue
         current = None
     return {k: bytes(v) for k, v in blocks.items() if v}
 
