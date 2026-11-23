@@ -370,7 +370,7 @@
           "game"
         ],
         "source_path": "src/unit_2F4F0.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_2F4F0.o"
     },
@@ -406,7 +406,7 @@
           "game"
         ],
         "source_path": "src/unit_464D0.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_464D0.o"
     },
