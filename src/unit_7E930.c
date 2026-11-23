@@ -3,60 +3,7 @@
 
 
 
-void bzero(void *s, u32 n) {
-    asm volatile(
-        ".set noreorder\n\t"
-        ".set noat\n\t"
-        "negu $v1, $a0\n\t"
-        "slti $at, $a1, 12\n\t"
-        "bnez $at, 3f\n\t"
-        "nop\n\t"
-        "andi $v1, $v1, 3\n\t"
-        "beqz $v1, 1f\n\t"
-        "subu $a1, $a1, $v1\n\t"
-        "swl $zero, 0($a0)\n\t"
-        "addu $a0, $a0, $v1\n"
-        "1:\n\t"
-        "addiu $at, $zero, -32\n\t"
-        "and $a3, $a1, $at\n\t"
-        "beqz $a3, 2f\n\t"
-        "subu $a1, $a1, $a3\n\t"
-        "addu $a3, $a3, $a0\n"
-        "4:\n\t"
-        "sw $zero, 0($a0)\n\t"
-        "sw $zero, 4($a0)\n\t"
-        "sw $zero, 8($a0)\n\t"
-        "sw $zero, 12($a0)\n\t"
-        "addiu $a0, $a0, 32\n\t"
-        "sw $zero, -16($a0)\n\t"
-        "sw $zero, -12($a0)\n\t"
-        "sw $zero, -8($a0)\n\t"
-        "bne $a0, $a3, 4b\n\t"
-        "sw $zero, -4($a0)\n"
-        "2:\n\t"
-        "addiu $at, $zero, -4\n\t"
-        "and $a3, $a1, $at\n\t"
-        "beqz $a3, 3f\n\t"
-        "subu $a1, $a1, $a3\n\t"
-        "addu $a3, $a3, $a0\n"
-        "5:\n\t"
-        "addiu $a0, $a0, 4\n\t"
-        "bne $a0, $a3, 5b\n\t"
-        "sw $zero, -4($a0)\n"
-        "3:\n\t"
-        "blez $a1, 6f\n\t"
-        "nop\n\t"
-        "addu $a1, $a1, $a0\n"
-        "7:\n\t"
-        "addiu $a0, $a0, 1\n\t"
-        "bne $a0, $a1, 7b\n\t"
-        "sb $zero, -1($a0)\n"
-        "6:\n\t"
-        ".set at\n\t"
-        ".set reorder"
-        : : : "v1", "a3"
-    );
-}
+INCLUDE_ASM("asm/nonmatchings/unit_7E930", bzero);
 
 const char *strchr(const char *s, s32 c) {
     const char ch = c;

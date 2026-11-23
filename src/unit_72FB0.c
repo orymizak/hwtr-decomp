@@ -57,6 +57,8 @@ s32 Snd_InitFrameSize(s32 a0, s32 a1, u32 a2, s32 a3) {
     s32 step;
     s32 frame;
 
+    /* TODO(match-debt): the original starts with a nop that GCC does not emit here (likely a
+     * mult hazard nop scheduled across the function boundary); this injected nop is not real C. */
     asm("nop");
     samples = ((u32)(((a0 * a1) + a2) - 1)) / a2;
     frame = ((samples / 184) + 1) * 184;

@@ -1,8 +1,6 @@
 #include "common.h"
+#include "include_asm.h"
 
-u32 __osGetSR(void) {
-    register u32 sr asm("$2");
-    asm("mfc0 %0, $12" : "=r"(sr));
-    asm("nop");
-    return sr;
-}
+
+
+INCLUDE_ASM("asm/nonmatchings/unit_858E0", __osGetSR);

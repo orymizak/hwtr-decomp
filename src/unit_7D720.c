@@ -1,7 +1,6 @@
 #include "common.h"
+#include "include_asm.h"
 
-f32 sqrtf(f32 x) {
-    f32 res;
-    asm("sqrt.s %0, %1" : "=f"(res) : "f"(x));
-    return res;
-}
+
+
+INCLUDE_ASM("asm/nonmatchings/unit_7D720", sqrtf);

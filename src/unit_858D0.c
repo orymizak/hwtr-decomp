@@ -1,8 +1,6 @@
 #include "common.h"
+#include "include_asm.h"
 
-u32 __osGetCause(void) {
-    register u32 cause asm("$2");
-    asm("mfc0 %0, $13" : "=r"(cause));
-    asm("nop");
-    return cause;
-}
+
+
+INCLUDE_ASM("asm/nonmatchings/unit_858D0", __osGetCause);

@@ -1225,6 +1225,8 @@ s32 Snd_Random(s32 range) {
     return (f32)range * ((f32)gSndRandSeed / 65536.0f / 65536.0f);
 }
 
+/* TODO(match-debt): register pins reproduce GCC 2.7.2's allocation (a2 = voice, a0 reused for the
+ * byte cursor and the rate, v1 for 0x7F and the wave bank); unpinned versions differ by 33+ words. */
 void SndVoice_Reset(SndVoice *voice) {
     register SndVoice *v asm("$6") = voice;
     register u8 *p asm("$4") = (u8 *)voice;

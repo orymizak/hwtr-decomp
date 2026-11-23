@@ -1,25 +1,15 @@
 #include "common.h"
+#include "include_asm.h"
 #include "PR/os_internal.h"
 #include "PR/rcp.h"
 #include "PR/sptask.h"
 #include "PRinternal/osint.h"
 
-u32 __osSetFpcCsr(u32 val) {
-    register u32 prev asm("$2");
-    asm volatile("cfc1 %0, $31\n\tctc1 %1, $31" : "=&r"(prev) : "r"(val));
-    asm("nop");
-    return prev;
-}
+INCLUDE_ASM("asm/nonmatchings/unit_85900", __osSetFpcCsr);
 
-void __osSetSR(u32 val) {
-    asm("mtc0 %0, $12\n\tnop" : : "r"(val));
-    asm("nop");
-}
+INCLUDE_ASM("asm/nonmatchings/unit_85900", __osSetSR);
 
-void __osSetWatchLo(u32 val) {
-    asm("mtc0 %0, $18\n\tnop" : : "r"(val));
-    asm("nop");
-}
+INCLUDE_ASM("asm/nonmatchings/unit_85900", __osSetWatchLo);
 
 int __osSpDeviceBusy(void) {
     register u32 stat = IO_READ(SP_STATUS_REG);

@@ -363,6 +363,7 @@ u8 Pickup_Shutdown(RaceResult *res) {
 
         pp = gCarPickups;
         do {
+            /* TODO(match-debt): pinning p to a0 keeps the original allocation (49 words differ without it). */
             register Lnk89_ **p asm("$4") = *pp;
             if (p != NULL) {
                 for (n = *p; n != NULL; ) {

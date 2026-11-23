@@ -428,27 +428,28 @@ s32 File_LoadAsync(char *name, void *dst) {
     return slot;
 }
 
+/* TODO(match-debt): the register pins and the duplicated File_FinishLZAsync branch reproduce the
+ * original's dead `sltiu` and the slot*0x48 recomputed for the final store; no natural form found
+ * (plain `if (type == 1)` differs by 22 words). */
 s32 File_PollAsync(s32 slot) {
     register s32 offset asm("$16");
     register s32 temp asm("$2");
     s32 ret = 0;
-    unsigned char new_var;
+    u8 lz;
 
     if (slot >= 2) {
         return 1;
     }
     temp = (slot << 3) + slot;
     offset = temp << 3;
-    if (*(u8 *)((u8 *)gAsyncReads + offset + 0x44)) {
-        goto active;
+    if (!*(u8 *)((u8 *)gAsyncReads + offset + 0x44)) {
+        return 1;
     }
-    return 1;
-active:
     if (Rom_PollAsync((AsyncRead *)((u8 *)gAsyncReads + offset))) {
-        s32 is_lz = *(u8 *)((u8 *)gAsyncReads + offset + 0x45) == 1;
-        new_var = is_lz;
-        if (new_var) {
-            if (is_lz) {
+        s32 isLz = *(u8 *)((u8 *)gAsyncReads + offset + 0x45) == 1;
+        lz = isLz;
+        if (lz) {
+            if (isLz) {
                 File_FinishLZAsync(slot);
             } else {
                 File_FinishLZAsync(slot);

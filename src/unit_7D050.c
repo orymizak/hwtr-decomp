@@ -1,78 +1,8 @@
 #include "common.h"
+#include "include_asm.h"
 
-void osInvalDCache(void *vaddr, s32 nbytes) {
-    asm volatile(
-        ".set noreorder\n\t"
-        ".set noat\n\t"
-        "blez %1, 3f\n\t"
-        "nop\n\t"
-        "addiu $t3, $zero, 0x2000\n\t"
-        "sltu $at, %1, $t3\n\t"
-        "beqz $at, 4f\n\t"
-        "nop\n\t"
-        "addu $t0, %0, $zero\n\t"
-        "addu $t1, %0, %1\n\t"
-        "sltu $at, $t0, $t1\n\t"
-        "beqz $at, 3f\n\t"
-        "nop\n\t"
-        "addiu $t1, $t1, -0x10\n\t"
-        "andi $t2, $t0, 0xF\n\t"
-        "beqz $t2, 1f\n\t"
-        "nop\n\t"
-        "subu $t0, $t0, $t2\n\t"
-        "cache 0x15, 0x0($t0)\n\t"
-        "sltu $at, $t0, $t1\n\t"
-        "beqz $at, 3f\n\t"
-        "nop\n\t"
-        "addiu $t0, $t0, 0x10\n"
-        "1:\n\t"
-        "andi $t2, $t1, 0xF\n\t"
-        "beqz $t2, 2f\n\t"
-        "nop\n\t"
-        "subu $t1, $t1, $t2\n\t"
-        "cache 0x15, 0x10($t1)\n\t"
-        "sltu $at, $t1, $t0\n\t"
-        "bnez $at, 3f\n\t"
-        "nop\n"
-        "2:\n\t"
-        "cache 0x11, 0x0($t0)\n\t"
-        "sltu $at, $t0, $t1\n\t"
-        "bnez $at, 2b\n\t"
-        "addiu $t0, $t0, 0x10\n"
-        "3:\n\t"
-        "jr $ra\n\t"
-        "nop\n"
-        "4:\n\t"
-        "lui $t0, 0x8000\n\t"
-        "addu $t1, $t0, $t3\n\t"
-        "addiu $t1, $t1, -0x10\n"
-        "5:\n\t"
-        "cache 0x01, 0x0($t0)\n\t"
-        "sltu $at, $t0, $t1\n\t"
-        "bnez $at, 5b\n\t"
-        "addiu $t0, $t0, 0x10\n\t"
-        ".set at\n\t"
-        ".set reorder"
-        : : "r"(vaddr), "r"(nbytes)
-        : "t0", "t1", "t2", "t3"
-    );
-}
 
-void osWritebackDCacheAll(void) {
-    asm volatile(
-        ".set noreorder\n\t"
-        ".set noat\n\t"
-        "lui $t0, 0x8000\n\t"
-        "addiu $t2, $zero, 0x2000\n\t"
-        "addu $t1, $t0, $t2\n\t"
-        "addiu $t1, $t1, -0x10\n"
-        "1:\n\t"
-        "cache 0x01, 0x0($t0)\n\t"
-        "sltu $at, $t0, $t1\n\t"
-        "bnez $at, 1b\n\t"
-        "addiu $t0, $t0, 0x10\n\t"
-        ".set at\n\t"
-        ".set reorder"
-        : : : "t0", "t1", "t2"
-    );
-}
+
+INCLUDE_ASM("asm/nonmatchings/unit_7D050", osInvalDCache);
+
+INCLUDE_ASM("asm/nonmatchings/unit_7D050", osWritebackDCacheAll);
