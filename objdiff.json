@@ -226,7 +226,7 @@
           "game"
         ],
         "source_path": "src/lz.c",
-        "complete": true
+        "complete": false
       },
       "base_path": "build/base/src/lz.o"
     },
