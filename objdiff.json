@@ -70,7 +70,7 @@
           "game"
         ],
         "source_path": "src/unit_0D1F0.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_0D1F0.o"
     },
@@ -238,7 +238,7 @@
           "game"
         ],
         "source_path": "src/util.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/util.o"
     },
@@ -574,7 +574,7 @@
           "game"
         ],
         "source_path": "src/unit_69E80.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_69E80.o"
     },

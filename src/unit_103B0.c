@@ -472,7 +472,36 @@ INCLUDE_ASM("asm/nonmatchings/unit_103B0", Gfx_SetViewport);
 
 INCLUDE_ASM("asm/nonmatchings/unit_103B0", Gfx_SetPerspective);
 
-INCLUDE_ASM("asm/nonmatchings/unit_103B0", Gfx_BeginScene);
+extern s32 D_800F2170; /* viewport already set for this frame */
+extern u8 D_800F20FE[3]; /* fog color r, g, b */
+void Gfx_SetupRDP(s32 w, s32 h);
+void Gfx_SetViewport();
+void Gfx_SetPerspective(u8 clipFar);
+
+/* Starts the 3D scene once per frame: RDP and geometry modes, projection, viewport, lights and fog. */
+void Gfx_BeginScene(void) {
+    u8 *on = &gLightsEnabled;
+
+    if (*on != 1) {
+        *on = 1;
+        Gfx_SetupRDP(gScreenWidth, gScreenHeight);
+        GFX_RESERVE(4);
+        gDPPipeSync(gDisplayListHead++);
+        gDPSetCycleType(gDisplayListHead++, G_CYC_1CYCLE);
+        gSPLoadGeometryMode(gDisplayListHead++, 0);
+        gSPSetGeometryMode(gDisplayListHead++, G_ZBUFFER | G_SHADE | G_CULL_BACK | G_SHADING_SMOOTH);
+        Gfx_SetPerspective(0);
+        if (D_800F2170 == 0) {
+            Gfx_SetViewport();
+        }
+        Light_Reset();
+        Gfx_UpdateLights();
+        GFX_RESERVE(3);
+        gDPPipeSync(gDisplayListHead++);
+        gDPSetFogColor(gDisplayListHead++, D_800F20FE[0], D_800F20FE[1], D_800F20FE[2], 0x20);
+        gSPFogFactor(gDisplayListHead++, 0x15BD, 0xEA43);
+    }
+}
 
 /* Sphere-in-frustum test: o's translation transformed by view matrix m, radius r. */
 u8 Frustum_TestSphere(f32 (*m)[4], f32 (*o)[4], f32 r) {

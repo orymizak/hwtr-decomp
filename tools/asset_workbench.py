@@ -152,11 +152,17 @@ def import_background(png: Path, original: Path, output: Path) -> None:
     palette_raw = data[:BG_PALETTE_BYTES]
     palette = [rgba5551_to_rgba(struct.unpack_from(">H", palette_raw, i)[0]) for i in range(0, BG_PALETTE_BYTES, 2)]
     indices = bytearray(BG_WIDTH * BG_HEIGHT)
+    original_indices = data[BG_PALETTE_BYTES:]
     exact = {colour[:3]: index for index, colour in enumerate(palette) if index != 0}
     for pixel in range(BG_WIDTH * BG_HEIGHT):
         colour = tuple(rgba[pixel * 4 : pixel * 4 + 4])
         if colour[3] == 0:
             indices[pixel] = 0
+            continue
+        # Palettes may repeat a colour; keep the original index for unchanged
+        # pixels so an unedited export round-trips byte-identically.
+        if palette[original_indices[pixel]][:3] == colour[:3]:
+            indices[pixel] = original_indices[pixel]
             continue
         index = exact.get(colour[:3])
         if index is None:

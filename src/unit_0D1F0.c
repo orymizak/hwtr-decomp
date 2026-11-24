@@ -15,7 +15,8 @@ typedef struct { u32 t; Vec3f pos; Vec3f vel; f32 m[9]; } MvD6_;
 typedef struct {
     /* 0x000 */ s32 timer;     /* ms left; 0 = free slot */
     /* 0x004 */ s32 light;     /* point light handle, -1 = none */
-    /* 0x008 */ u8 pad8[8];
+    /* 0x008 */ f32 scale;
+    /* 0x00C */ u8 padC[4];
     /* 0x010 */ Ring6D_ ring;
     /* 0x250 */ MvD6_ debris[12];
 } Explosion; /* size = 0x550 */
@@ -37,9 +38,167 @@ extern BufD_ *gEnvMapTex;
 BufD_ *Texture_Load(s32);
 extern s32 gEnvMapDynamic;
 
-INCLUDE_ASM("asm/nonmatchings/unit_0D1F0", Explosion_InitDebris);
+s32 PointLight_Alloc(void);
+void PointLight_Enable(s32 id);
+s32 rand(void);
+f32 cosf(f32);
+f32 sinf(f32);
 
-INCLUDE_ASM("asm/nonmatchings/unit_0D1F0", Explosion_Start);
+static inline void Mtx34_RotateZ(Mtx34f *m, f32 a) {
+    f32 c, s, u, v;
+
+    c = cosf(a);
+    s = sinf(a);
+    u = m->m[0][0] * c + m->m[0][1] * s; v = m->m[0][1] * c - m->m[0][0] * s; m->m[0][0] = u; m->m[0][1] = v;
+    u = m->m[1][0] * c + m->m[1][1] * s; v = m->m[1][1] * c - m->m[1][0] * s; m->m[1][0] = u; m->m[1][1] = v;
+    u = m->m[2][0] * c + m->m[2][1] * s; v = m->m[2][1] * c - m->m[2][0] * s; m->m[2][0] = u; m->m[2][1] = v;
+}
+static inline void Mtx34_RotateY(Mtx34f *m, f32 a) {
+    f32 c, s, u, v;
+
+    c = cosf(a);
+    s = sinf(a);
+    u = m->m[0][0] * c - m->m[0][2] * s; v = m->m[0][2] * c + m->m[0][0] * s; m->m[0][0] = u; m->m[0][2] = v;
+    u = m->m[1][0] * c - m->m[1][2] * s; v = m->m[1][2] * c + m->m[1][0] * s; m->m[1][0] = u; m->m[1][2] = v;
+    u = m->m[2][0] * c - m->m[2][2] * s; v = m->m[2][2] * c + m->m[2][0] * s; m->m[2][0] = u; m->m[2][2] = v;
+}
+static inline void Mtx34_RotateX(Mtx34f *m, f32 a) {
+    f32 c, s, u, v;
+
+    c = cosf(a);
+    s = sinf(a);
+    u = m->m[0][1] * c + m->m[0][2] * s; v = m->m[0][2] * c - m->m[0][1] * s; m->m[0][1] = u; m->m[0][2] = v;
+    u = m->m[1][1] * c + m->m[1][2] * s; v = m->m[1][2] * c - m->m[1][1] * s; m->m[1][1] = u; m->m[1][2] = v;
+    u = m->m[2][1] * c + m->m[2][2] * s; v = m->m[2][2] * c - m->m[2][1] * s; m->m[2][1] = u; m->m[2][2] = v;
+}
+
+/* Debris piece o of an explosion at matrix m: random lifetime, an upward direction with random x/y
+ * at a random speed (8-38 times scale) and a small random tilt. */
+void Explosion_InitDebris(MvD6_ *o, Mtx34f *m, f32 scale) {
+    Mtx34f r;
+    f32 t[3];
+    f32 len;
+    f32 ang;
+    s32 bits;
+
+    o->t = 1000 - (u8)rand();
+    o->pos.x = m->m[0][3];
+    o->pos.y = m->m[1][3];
+    o->pos.z = m->m[2][3];
+    o->vel.x = (u8)rand() / 128.0f - 1.0f;
+    o->vel.y = (u8)rand() / 128.0f - 1.0f;
+    o->vel.z = 0.7f;
+    len = sqrtf(o->vel.x * o->vel.x + o->vel.y * o->vel.y + 0.7f * 0.7f);
+    len = 1.0f / len;
+    o->vel.x *= len;
+    o->vel.y *= len;
+    o->vel.z *= len;
+    ang = ((rand() & 0xF) * 2.0f + 8.0f) * scale;
+    o->vel.x *= ang;
+    o->vel.y *= ang;
+    o->vel.z *= ang;
+    bits = rand();
+    r.m[0][0] = r.m[0][1] = r.m[0][2] = r.m[0][3] = r.m[1][0] = r.m[1][1] = r.m[1][2] = r.m[1][3] = r.m[2][0] =
+        r.m[2][1] = r.m[2][2] = r.m[2][3] = 0.0f;
+    r.m[0][0] = r.m[1][1] = r.m[2][2] = 1.0f;
+    ang = (rand() & 0x3F) / 1024.0f;
+    if (bits & 1) {
+        ang = -ang;
+    }
+    Mtx34_RotateZ(&r, ang);
+    ang = (rand() & 0x3F) / 1024.0f;
+    if (bits & 2) {
+        ang = -ang;
+    }
+    Mtx34_RotateY(&r, ang);
+    ang = (rand() & 0x3F) / 1024.0f;
+    if (bits & 4) {
+        ang = -ang;
+    }
+    Mtx34_RotateX(&r, ang);
+    o->m[0] = r.m[0][0];
+    o->m[1] = r.m[0][1];
+    o->m[2] = r.m[0][2];
+    o->m[3] = r.m[1][0];
+    o->m[4] = r.m[1][1];
+    o->m[5] = r.m[1][2];
+    o->m[6] = r.m[2][0];
+    o->m[7] = r.m[2][1];
+    o->m[8] = r.m[2][2];
+    t[0] = r.m[0][3];
+    t[1] = r.m[1][3];
+    t[2] = r.m[2][3];
+}
+
+/* Starts explosion e at the position of matrix m: debris, shock ring (randomly tilted for big ones,
+ * 1 in 4 of which use the other ring texture) and a white point light. */
+void Explosion_Start(Explosion *e, s32 mtx, f32 scale, u8 big) {
+    u32 i;
+    u32 j;
+    Vtx *v;
+    f32 ang;
+
+    e->timer = 1000;
+    e->scale = scale;
+    e->light = PointLight_Alloc();
+    for (i = 0; i < 12; i++) {
+        Explosion_InitDebris(&e->debris[i], (Mtx34f *)mtx, scale);
+    }
+    e->ring.m.m[0][0] = e->ring.m.m[0][3] = e->ring.m.m[1][3] = e->ring.m.m[2][3] = 0.0f;
+    e->ring.m.m[2][2] = e->ring.m.m[2][1] = e->ring.m.m[2][0] = 0.0f;
+    e->ring.m.m[1][2] = e->ring.m.m[1][1] = e->ring.m.m[1][0] = 0.0f;
+    e->ring.m.m[0][2] = e->ring.m.m[0][1] = 0.0f;
+    e->ring.m.m[0][0] = e->ring.m.m[1][1] = e->ring.m.m[2][2] = 1.0f;
+    e->ring.m.m[0][0] *= scale;
+    e->ring.m.m[0][1] *= scale;
+    e->ring.m.m[0][2] *= scale;
+    e->ring.m.m[1][0] *= scale;
+    e->ring.m.m[1][1] *= scale;
+    e->ring.m.m[1][2] *= scale;
+    e->ring.m.m[2][0] *= scale;
+    e->ring.m.m[2][1] *= scale;
+    e->ring.m.m[2][2] *= scale;
+    e->ring.m.m[0][3] = ((Mtx34f *)mtx)->m[0][3];
+    e->ring.m.m[1][3] = ((Mtx34f *)mtx)->m[1][3];
+    e->ring.m.m[2][3] = ((Mtx34f *)mtx)->m[2][3];
+    e->ring.r = 1.0f;
+    e->ring.a = 0.0f;
+    v = e->ring.v;
+    for (j = 0; j < 32; j++) {
+        v[j].v.ob[0] = 0;
+        v[j].v.ob[1] = 0;
+        v[j].v.ob[2] = 0;
+        v[j].v.flag = 0;
+        v[j].v.tc[0] = (j & 2) << 11;
+        v[j].v.tc[1] = ((j ^ 1) & 1) << 11;
+        v[j].v.cn[3] = 0xFF;
+        v[j].v.cn[2] = 0xFF;
+        v[j].v.cn[1] = 0xFF;
+        v[j].v.cn[0] = 0xFF;
+    }
+    if (big == 1) {
+        if (rand() & 3) {
+            e->ring.mode = 0;
+            e->ring.p238 = 0x1A;
+        } else {
+            e->ring.mode = 1;
+            e->ring.p238 = 0x1B;
+            ang = (u8)rand() / 64.0f;
+            Mtx34_RotateX(&e->ring.m, ang);
+            ang = (u8)rand() / 64.0f;
+            Mtx34_RotateY(&e->ring.m, ang);
+            ang = (u8)rand() / 64.0f;
+            Mtx34_RotateZ(&e->ring.m, ang);
+        }
+    } else {
+        e->ring.mode = 2;
+    }
+    if (e->light != -1) {
+        PointLight_SetColor(e->light, 0x7F, 0x7F, 0x7F);
+        PointLight_SetPos(e->light, 0.0f, e->ring.m.m[0][3], e->ring.m.m[1][3], e->ring.m.m[2][3]);
+        PointLight_Enable(e->light);
+    }
+}
 
 void Explosion_Update(Explosion *p, s32 dt) {
     u8 v;
@@ -71,7 +230,64 @@ void Explosion_Update(Explosion *p, s32 dt) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_0D1F0", Explosion_Draw);
+extern void *D_801380C8[];
+extern u8 D_800F2418[];
+extern u8 D_800F0550[];
+s32 Mtx_New(Mtx34f *);
+void Mtx34_Mul(s32 a, Mtx34f *b, Mtx34f *out);
+Gfx *Gfx_LoadTexture(Gfx *, void *);
+void Particle_SpawnColored(Vec3f pos, u32 size, s32 kind, s32 r, s32 g, s32 b);
+void Particle_SpawnJittered(Vec3f pos, u32 size, s32 kind);
+f32 fabsf(f32);
+
+/* Draws explosion e with camera matrix cam: on pass 1 sparks from the debris and the fireball, and
+ * the shock ring while the explosion is young (fading out from 800 ms). */
+s32 Explosion_Draw(s32 *ep, s32 cam, s32 pass) {
+    Explosion *e = (Explosion *)ep;
+    u32 i;
+    Mtx34f m;
+    Vec3f p;
+    s32 mtx;
+    u8 a;
+
+    if (e->timer == 0) {
+        return;
+    }
+    if ((u8)pass == 1) {
+        for (i = 0; i < 12; i++) {
+            if (e->debris[i].t != 0) {
+                Particle_SpawnColored(e->debris[i].pos, (u32)(((rand() & 0x1F) + 40) * e->scale), 2, 0xFF, 0xFF, 0xFF);
+            }
+        }
+    }
+    if (e->ring.mode != 2 && e->timer > 600) {
+        GFX_RESERVE(13);
+        gDisplayListHead = Gfx_LoadTexture(gDisplayListHead, D_801380C8[e->ring.p238]);
+        Mtx34_Mul(cam, &e->ring.m, &m);
+        if ((fabsf(m.m[0][3]) < 32767.0f) & (fabsf(m.m[1][3]) < 32767.0f) & (fabsf(m.m[2][3]) < 32767.0f)) {
+            mtx = Mtx_New(&m);
+            gSPMatrix(gDisplayListHead++, mtx - 0x80000000, G_MTX_MODELVIEW | G_MTX_LOAD | G_MTX_NOPUSH);
+            gSPVertex(gDisplayListHead++, (s32)e->ring.v - 0x80000000, 32, 0);
+            gSPDisplayList(gDisplayListHead++, D_800F2418);
+            if (e->timer > 800) {
+                gDPSetPrimColor(gDisplayListHead++, 0, 0, 0xFF, 0xFF, 0xFF, 0xE0);
+            } else {
+                a = 0xE0 - (u32)((800.0f - e->timer) / 0.89285713f);
+                gDPSetPrimColor(gDisplayListHead++, 0, 0, 0xFF, 0xFF, 0xFF, a);
+            }
+            gSPDisplayList(gDisplayListHead++, D_800F0550);
+        }
+    }
+    if ((u8)pass == 1) {
+        p.x = e->ring.m.m[0][3];
+        p.y = e->ring.m.m[1][3];
+        p.z = e->ring.m.m[2][3];
+        rand();
+        if (e->timer > 800) {
+            Particle_SpawnJittered(p, (u32)(e->scale * 70.0f), 3);
+        }
+    }
+}
 
 void ExplosionDebris_Update(MvD6_ *o, u32 dt) {
     Vec3f v;

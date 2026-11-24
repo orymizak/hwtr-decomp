@@ -27,7 +27,7 @@ extern S_D_800EFF54 D_800EFF54[];
 extern f64 D_800FE868;
 typedef struct { s32 f0; } S_D_800EFC78;
 typedef struct { u8 kind; u8 mode; u8 pad[2]; u8 flag; u8 pad2[0x47]; } Slot_;
-typedef struct { s32 h[6]; f32 rpm; f32 f1C; f32 f20; f32 f24; f32 f28; u8 p2C[0x18]; u8 b44; u8 b45; u8 p46[6]; } Snd29_;
+typedef struct { s32 h[6]; f32 rpm; f32 f1C; f32 f20; f32 f24; f32 f28; Vec3f pos; Vec3f vel; u8 b44; u8 b45; u8 p46[6]; } Snd29_;
 typedef struct Nd29_ { u8 p0[0x10]; s32 h; struct Nd29_ *next; } Nd29_;
 typedef struct N64c_ { f32 x; f32 y; f32 z; f32 v; s32 f10; struct N64c_ *next; u8 b18; u8 b19; u8 id; u8 b1B; } N64c_;
 typedef struct { s32 w; u8 p4[0x10]; } E14s_;
@@ -1038,7 +1038,72 @@ s32 Audio_SetReverb(s32 a, f32 v) {
     return ok;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", CarSnd_StartEngine);
+extern f64 D_800FE850; /* 1.0 */
+extern f64 D_800FE858; /* pitch limit */
+extern f64 D_800FE860;
+f32 Snd3D_GetVolume(void *a);
+
+/* Starts car i's engine: both engine loops (b44/b45) at the volume split given by f1C, panned and
+ * Doppler-shifted from the car's position; returns 0 if a sound is missing or already playing. */
+s32 CarSnd_StartEngine(s32 i) {
+    s32 snd1;
+    s32 snd2;
+    s32 pri;
+    f32 mix;
+    f32 vol;
+    s32 pan;
+    f32 pitch;
+    f32 rpm;
+    f32 v;
+    s32 vol1;
+    s32 vol2;
+
+    snd1 = gCarSnd[(u8)i].b44;
+    snd2 = gCarSnd[(u8)i].b45;
+    if (snd1 == 0 || snd2 == 0) {
+        return 0;
+    }
+    gCarSnd[(u8)i].p46[2] = 1;
+    pri = ((u8)i < 2 ? 0xF0 : 0) | 0x80;
+    mix = gCarSnd[(u8)i].f1C;
+    vol = Snd3D_GetVolume(&gCarSnd[(u8)i].pos) * gSfxVolume;
+    pan = Snd3D_GetPan(&gCarSnd[(u8)i].pos);
+    pitch = Snd3D_GetDoppler(&gCarSnd[(u8)i].pos, &gCarSnd[(u8)i].vel);
+    if (snd1 != 14) {
+        rpm = (gCarSnd[(u8)i].rpm - 1000.0f) * 0.0021818182f + -17.0f;
+    } else {
+        rpm = 0.0f;
+    }
+    v = vol * 128.0f;
+    pitch += rpm;
+    vol1 = v * mix;
+    if (vol1 == 0) {
+        vol1 = 1;
+    }
+    vol2 = v * (D_800FE850 - mix);
+    if (vol2 == 0) {
+        vol2 = 1;
+    }
+    if (Snd_IsPlaying(gCarSnd[(u8)i].h[0]) == 0) {
+        if (pitch > D_800FE858) {
+            pitch = 12.0f;
+        }
+        gCarSnd[(u8)i].h[0] = Snd_Play(snd1, vol1, pan, 0, pri);
+        Snd_SetPitch(gCarSnd[(u8)i].h[0], pitch);
+    } else {
+        return 0;
+    }
+    if (Snd_IsPlaying(gCarSnd[(u8)i].h[1]) == 0) {
+        if (pitch > D_800FE860) {
+            pitch = 12.0f;
+        }
+        gCarSnd[(u8)i].h[1] = Snd_Play(snd2, vol2, pan, 0, pri);
+        Snd_SetPitch(gCarSnd[(u8)i].h[1], pitch);
+    } else {
+        return 0;
+    }
+    return 1;
+}
 
 s32 CarSnd_StopEngine(u8 i) {
     gCarSnd[i].p46[2] = 0;

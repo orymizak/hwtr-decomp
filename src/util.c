@@ -56,7 +56,7 @@ s32 Video_LeaveRaceMode(void) {
     return 1;
 }
 
-s32 Math_Log2(u32 value) {
+inline s32 Math_Log2(u32 value) {
     s32 log2 = 0;
 
     value >>= 1;
@@ -90,7 +90,35 @@ Texture *Texture_Create(s32 width, s32 height) {
     return texture;
 }
 
-INCLUDE_ASM("asm/nonmatchings/util", Gfx_LoadTexture);
+/* Emits the commands that load texture t into TMEM (tile 0, wrapping, masks from its size):
+ * format 0 RGBA16, 1 I8, 3 RGBA32, 4 CI8 (the image follows a palette of n entries). */
+Gfx *Gfx_LoadTexture(Gfx *g, Texture *t) {
+    s32 ms;
+    s32 mt;
+    u32 w;
+    u32 h;
+    s16 *pal;
+
+    ms = Math_Log2(t->width);
+    mt = Math_Log2(t->height);
+    w = t->width;
+    h = t->height;
+    if (t->format == 1) {
+        gDPLoadTextureBlock(g++, t->data, G_IM_FMT_I, G_IM_SIZ_8b, w, h, 0, G_TX_WRAP, G_TX_WRAP, ms, mt,
+                            G_TX_NOLOD, G_TX_NOLOD);
+    } else if (t->format == 0) {
+        gDPLoadTextureBlock(g++, t->data, G_IM_FMT_RGBA, G_IM_SIZ_16b, w, h, 0, G_TX_WRAP, G_TX_WRAP, ms, mt,
+                            G_TX_NOLOD, G_TX_NOLOD);
+    } else if (t->format == 3) {
+        gDPLoadTextureBlock(g++, t->data, G_IM_FMT_RGBA, G_IM_SIZ_32b, w, h, 0, G_TX_WRAP, G_TX_WRAP, ms, mt,
+                            G_TX_NOLOD, G_TX_NOLOD);
+    } else if (t->format == 4) {
+        pal = t->data;
+        gDPLoadTextureBlock(g++, (u8 *)t->data + pal[0] * 2 + 8, G_IM_FMT_CI, G_IM_SIZ_8b, w, h, 0,
+                            G_TX_WRAP, G_TX_WRAP, ms, mt, G_TX_NOLOD, G_TX_NOLOD);
+    }
+    return g;
+}
 
 typedef struct { u8 w; u8 h; u8 fmt; u8 pad; void *data; } Img7F_;
 /* Fills an image with one of its texels (the first one for 16-bit images). */

@@ -326,4 +326,86 @@ s32 Fsm_Trigger(Ob9F_ *o, s32 id) {
     return 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_69E80", Fsm_Update);
+typedef struct { s16 id; s16 target; } FsmTrans_;
+typedef struct FsmState_ {
+    void (**enter)(void);
+    void (**update)(void);
+    void (**exit)(void);
+    FsmTrans_ *trans;
+    s8 nEnter;
+    s8 nUpdate;
+    s8 nExit;
+    s8 nTrans;
+} FsmState_;
+typedef struct {
+    FsmState_ **states;
+    s16 a;
+    s16 b;
+    FsmState_ *cur;
+    FsmState_ *next;
+    FsmState_ *end;
+    s16 phase;
+    s16 trigger;
+} Fsm_;
+
+s32 Fsm_Update(Fsm_ *f) {
+    s32 i;
+
+    if (f->phase == 3) {
+        return 2;
+    }
+    switch (f->phase) {
+    case 0:
+        for (i = 0; i < f->cur->nEnter; i++) {
+            f->cur->enter[i]();
+        }
+        f->phase = 1;
+        break;
+    case 1:
+        for (i = 0; i < f->cur->nUpdate; i++) {
+            f->cur->update[i]();
+        }
+        if (f->cur == f->end) {
+            f->phase = 2;
+            break;
+        }
+        if (f->trigger != -1) {
+            for (i = 0; i < f->cur->nTrans; i++) {
+                if (f->trigger == f->cur->trans[i].id) {
+                    f->next = f->states[f->cur->trans[i].target];
+                    f->phase = 2;
+                    f->trigger = -1;
+                    if (f->cur->nExit == 0) {
+                        if (f->cur != f->end) {
+                            f->cur = f->next;
+                            if (f->cur->nEnter > 0) {
+                                f->phase = 0;
+                            } else {
+                                f->phase = 1;
+                            }
+                        } else {
+                            f->phase = 3;
+                        }
+                    }
+                }
+            }
+        }
+        break;
+    case 2:
+        for (i = 0; i < f->cur->nExit; i++) {
+            f->cur->exit[i]();
+        }
+        if (f->cur != f->end) {
+            f->cur = f->next;
+            if (f->cur->nEnter > 0) {
+                f->phase = 0;
+            } else {
+                f->phase = 1;
+            }
+        } else {
+            f->phase = 3;
+        }
+        break;
+    }
+    return (f->phase == 3) * 2;
+}

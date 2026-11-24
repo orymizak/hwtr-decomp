@@ -31,7 +31,7 @@ void Replay_Record(void);
 void Car_UpdateWheelSpin(Car *);
 void Car_UpdateAirTricks(Car *, f32);
 void Car_Unstick(u8 *);
-void Car_Respawn(void);
+void Car_Respawn();
 void Ai_RestoreSlot(u8 *, u8 *);
 B88_ *Ai_GetSlot(u8 *);
 void RigidBody_Integrate(void *, f32);
@@ -603,9 +603,211 @@ void Car_UpdatePoints(Car *car) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_31E10", Car_Respawn);
+/* Respawn point returned by Bld_FindRecord: room, position and forward direction. */
+typedef struct { u16 room; u16 key; Vec3f pos; Vec3f dir; } RespawnRec_;
+u8 Bld_FindRecord(u32 time, u32 n, Vec3f *pts, RespawnRec_ *out);
+void Debris_RemoveForCar(void *c);
+extern void (*svcModelRepair)(u8);
+void Coll_SetCarRoom(u8 *obj, s32 room);
+void RaceCam_Reset(s32 id);
+void Pickup_ClearCar(u8 *o);
 
-INCLUDE_ASM("asm/nonmatchings/unit_31E10", Car_ApplyAero);
+/* Puts car c back on the track: a racing car takes the recorded respawn point that is farthest
+ * from the other cars, as position and orientation (right, forward, up); then the car is reset. */
+void Car_Respawn(Car *c) {
+    RespawnRec_ rec;
+    Vec3f r;
+    Vec3f f;
+    Vec3f u;
+    Vec3f pts[6];
+    u32 i;
+    u32 n;
+    f32 len;
+
+    if (c->flags & 1) {
+        n = 0;
+        for (i = 0; i < (u32)gCarCount; i++) {
+            if (&gCars[i] != c) {
+                pts[n].x = gCars[i].pos.x + gCars[i].v8C.x;
+                pts[n].y = gCars[i].pos.y + gCars[i].v8C.y;
+                pts[n].z = gCars[i].pos.z + gCars[i].v8C.z;
+                n++;
+            }
+        }
+        if (Bld_FindRecord(c->unk474, n, pts, &rec)) {
+            f = rec.dir;
+            u.x = 0.0f;
+            u.y = 0.0f;
+            u.z = 1.0f;
+            r.x = f.y * u.z - u.y * f.z;
+            r.y = f.z * u.x - u.z * f.x;
+            r.z = f.x * u.y - u.x * f.y;
+            if (sqrtf(r.x * r.x + r.y * r.y + r.z * r.z) > 0.1f) {
+                len = 1.0f / sqrtf(r.x * r.x + r.y * r.y + r.z * r.z);
+                r.x *= len;
+                r.y *= len;
+                r.z *= len;
+                u.x = r.y * f.z - f.y * r.z;
+                u.y = f.x * r.z - r.x * f.z;
+                u.z = r.x * f.y - f.x * r.y;
+                c->savedPos = rec.pos;
+                c->savedRoom = rec.room;
+                c->savedRot.m[0][0] = r.x;
+                c->savedRot.m[1][0] = r.y;
+                c->savedRot.m[2][0] = r.z;
+                c->savedRot.m[0][1] = f.x;
+                c->savedRot.m[1][1] = f.y;
+                c->savedRot.m[2][1] = f.z;
+                c->savedRot.m[0][2] = u.x;
+                c->savedRot.m[1][2] = u.y;
+                c->savedRot.m[2][2] = u.z;
+            }
+        }
+    }
+    c->pos = c->savedPos;
+    c->rot.m[0][0] = c->savedRot.m[0][0];
+    c->rot.m[0][1] = c->savedRot.m[0][1];
+    c->rot.m[0][2] = c->savedRot.m[0][2];
+    c->rot.m[1][0] = c->savedRot.m[1][0];
+    c->rot.m[1][1] = c->savedRot.m[1][1];
+    c->rot.m[1][2] = c->savedRot.m[1][2];
+    c->rot.m[2][0] = c->savedRot.m[2][0];
+    c->rot.m[2][1] = c->savedRot.m[2][1];
+    c->rot.m[2][2] = c->savedRot.m[2][2];
+    c->b13C = 0;
+    c->w140 = 0;
+    c->b4B8 = 0;
+    c->unk4BC = 0;
+    c->flags &= ~0x3800;
+    Debris_RemoveForCar(c);
+    svcModelRepair(c->id);
+    svcModelFlashOff(c->id);
+    c->impulse.x = 0.0f;
+    c->impulse.y = 0.0f;
+    c->impulse.z = 0.0f;
+    c->vel.x = 0.0f;
+    c->vel.y = 0.0f;
+    c->vel.z = 0.0f;
+    c->vE4.x = 0.0f;
+    c->vE4.y = 0.0f;
+    c->vE4.z = 0.0f;
+    c->angVel.x = 0.0f;
+    c->angVel.y = 0.0f;
+    c->angVel.z = 0.0f;
+    c->force.x = 0.0f;
+    c->force.y = 0.0f;
+    c->force.z = 0.0f;
+    c->torque.x = 0.0f;
+    c->torque.y = 0.0f;
+    c->torque.z = 0.0f;
+    Coll_SetCarRoom((u8 *)c, c->savedRoom);
+    c->airborne = 0;
+    if (c->flags & 1) {
+        audSfxPlay(0xD, 0, 1.0f, 1.0f);
+        RaceCam_Reset(c->id);
+    }
+    c->unk75C = 0;
+    c->unk760 = 0;
+    c->unk764 = 0;
+    if (c->turbos == 0) {
+        /* one free turbo, as in Car_AddTurbos */
+        if (++c->turbos > 10) {
+            c->turbos = 10;
+        }
+        /* TODO(match-debt): turbos == 10 && unk6CD == 0 is read as one word. */
+        if ((*(u32 *)&c->turbos & 0xFFFF0000) == 0x0A000000) {
+            RaceAudio_QueueAnnouncer(3);
+            c->unk6CD = 1;
+        }
+    }
+    Pickup_ClearCar((u8 *)c);
+    c->unk774 = 2000;
+    c->roomObj->flags |= 1;
+    for (i = 0; i < c->nPoints; i++) {
+        c->points[i].contact = 0;
+    }
+    c->b778 = 1;
+}
+
+extern u8 D_80138D42;   /* tuning: boost speed bonus */
+extern u8 D_80138D38[]; /* tuning table (percentages) */
+
+/* Aerodynamics: drag against the velocity (applied at the center offset, so it also adds torque)
+ * and the two lift/downforce values returned in outA/outB, scaled by the surface tuning. */
+void Car_ApplyAero(Car *c, f32 *outA, f32 *outB) {
+    Vec3f dir;
+    Vec3f f;
+    Vec3f pos;
+    Vec3f r;
+    Vec3f t;
+    f32 speed;
+    f32 q;
+    f32 drag;
+    f32 force;
+    f32 a;
+    f32 b;
+    s32 flags;
+    s32 i;
+    s32 j;
+
+    speed = c->fBC;
+    if (1.0f < speed) {
+        dir = c->vel;
+        dir.x /= speed;
+        dir.y /= speed;
+        dir.z /= speed;
+        speed *= 0.083333336f;
+        q = speed * speed * 2.377f * 0.5f;
+        q /= 1000.0f;
+        drag = c->unk5E8 * 0.083333336f * (c->unk5F0 * 0.083333336f) * c->k[5];
+        force = q * drag;
+        if (c->cnt3E7 != 0) {
+            speed += D_80138D42 * 17.6f * 0.083333336f;
+            q = speed * speed * 2.377f * 0.5f;
+            q /= 1000.0f;
+        }
+        a = q * (c->k[8] * c->k[6]);
+        b = q * (c->k[9] * c->k[7]);
+        flags = c->flags;
+        if (flags & 0x380) {
+            if (flags & 0x80) {
+                i = 0x21;
+                j = 0x22;
+            } else if (flags & 0x100) {
+                i = 0x24;
+                j = 0x25;
+            } else {
+                i = 0x27;
+                j = 0x28;
+            }
+            a *= D_80138D38[i] / 100.0f;
+            b *= D_80138D38[j] / 100.0f;
+        }
+        f.x = dir.x * -force;
+        f.y = dir.y * -force;
+        f.z = dir.z * -force;
+        pos.x = c->pos.x + c->v8C.x;
+        pos.y = c->pos.y + c->v8C.y;
+        pos.z = c->pos.z + c->v8C.z;
+        r.x = pos.x - c->pos.x;
+        r.y = pos.y - c->pos.y;
+        r.z = pos.z - c->pos.z;
+        t.x = r.y * f.z - f.y * r.z;
+        t.y = f.x * r.z - r.x * f.z;
+        t.z = r.x * f.y - f.x * r.y;
+        c->torque.x = t.x + c->torque.x;
+        c->torque.y = t.y + c->torque.y;
+        c->torque.z = t.z + c->torque.z;
+        c->force.x += f.x;
+        c->force.y += f.y;
+        c->force.z += f.z;
+        *outA = a;
+        *outB = b;
+    } else {
+        *outA = 0.0f;
+        *outB = 0.0f;
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_31E10", Car_Simulate);
 

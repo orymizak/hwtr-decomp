@@ -15,7 +15,8 @@ typedef struct { u16 count; u8 pad[0x2A]; Item54_ *items; } ItemList_;
 typedef struct { union { u32 flags; struct { u32 pad:30; u32 b1:1; u32 b0:1; } b; } u; f32 f[4]; u8 r; u8 g; u8 b; u8 p17; } SlotM_;
 s32 Mtx_New(void *);
 s32 Frustum_TestSphere(s32, s32, s32);
-void SceneNode_DrawMesh(u8 *, void *, s32, s32, s32);
+struct Node72_;
+void SceneNode_DrawMesh(struct Node72_ *, void *, s32, s32, s32);
 void Mtx34_Mul(s32, s32, void *);
 void Image_DrawRGBA16Scaled(s32, s32, s32, s32, s32, f32, f32);
 extern u16 gScreenWidth;
@@ -209,7 +210,7 @@ s32 SceneNode_DrawSingle(u8 *a0, s32 a1, s32 a2, s32 a3, s32 a4) {
     return 1;
 }
 
-void SceneNode_PrepareMaterial(Node72_ *n, s32 arg1) {
+inline void SceneNode_PrepareMaterial(Node72_ *n, s32 arg1) {
     Node72_ *mat;
 
     if (n->p40 == 0) {
@@ -238,7 +239,104 @@ s32 File_LoadAlloc(s32 name) {
     return buf;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_13490", WorldData_Relocate);
+typedef struct { u8 p0[0x10]; s32 data; } WdEnt_;               /* 0x14 */
+typedef struct { u8 p0[8]; u8 shadeR; u8 shadeG; u8 pA[0x2A]; } WdMesh_; /* 0x34 */
+typedef struct { s32 p0; s32 data; } WdTex_;                     /* 0x08 */
+typedef struct WdNode_ {
+    /* 0x00 */ u8 p0[0x3C];
+    /* 0x3C */ s32 mesh;   /* mesh index, -1 = none; relocated to WdMesh_ * */
+    /* 0x40 */ u8 p40[8];
+    /* 0x48 */ s32 ent;    /* index into ents; relocated to WdEnt_ * */
+    /* 0x4C */ s32 next;   /* node index, -1 = none; relocated to WdNode_ * */
+    /* 0x50 */ s32 child;  /* node index, -1 = none; relocated to WdNode_ * */
+} WdNode_;                                                       /* 0x54 */
+typedef struct {
+    /* 0x00 */ u16 nNodes;
+    /* 0x02 */ u16 nMeshes;
+    /* 0x04 */ u16 nTex;
+    /* 0x06 */ u8 p6[6];
+    /* 0x0C */ u16 nEnts;
+    /* 0x0E */ u8 pE[0x1E];
+    /* 0x2C */ WdNode_ *nodes;
+    /* 0x30 */ WdMesh_ *meshes;
+    /* 0x34 */ WdTex_ *tex;
+    /* 0x38 */ s32 p38;
+    /* 0x3C */ s32 p3C;
+    /* 0x40 */ s32 p40;
+    /* 0x44 */ WdEnt_ *ents;
+    /* 0x48 */ s32 p48;
+    /* 0x4C */ s32 p4C;
+    /* 0x50 */ s32 p50;
+} WorldData_;
+extern u8 D_80138AAE;
+extern u8 D_80138AAF;
+void Mesh_Relocate(WdMesh_ *m);
+void Image_FillSolid(WdTex_ *t);
+
+#define WD_RELOC(f) if ((f) != 0) { *(s32 *)&(f) += (s32)w; }
+
+/* Turns the offsets of a loaded world file into pointers and node indices into node, mesh and
+ * entry pointers; optionally flattens mesh shading and texture images (debug switches). */
+WorldData_ *WorldData_Relocate(WorldData_ *w) {
+    u32 i;
+    WdNode_ *n;
+    WdNode_ *nodes;
+    WdMesh_ *meshes;
+
+    *(s32 *)&w->nodes += (s32)w;
+    *(s32 *)&w->meshes += (s32)w;
+    *(s32 *)&w->tex += (s32)w;
+    WD_RELOC(w->p40);
+    if (w->ents != NULL) {
+        *(s32 *)&w->ents += (s32)w;
+        for (i = 0; i < w->nEnts; i++) {
+            w->ents[i].data += (s32)w;
+        }
+    }
+    WD_RELOC(w->p48);
+    WD_RELOC(w->p3C);
+    WD_RELOC(w->p38);
+    WD_RELOC(w->p4C);
+    WD_RELOC(w->p50);
+    for (i = 0; i < w->nMeshes; i++) {
+        Mesh_Relocate(&w->meshes[i]);
+        if (D_80138AAF == 1) {
+            w->meshes[i].shadeR = 0x80;
+            w->meshes[i].shadeG = 0x80;
+        }
+    }
+    for (i = 0; i < w->nNodes; i++) {
+        /* TODO(match-debt): byte-offset form; &w->nodes[i] adds the operands the other way round. */
+        n = (WdNode_ *)(i * sizeof(WdNode_) + (u32)w->nodes);
+        nodes = w->nodes;
+        meshes = w->meshes;
+        if (n->mesh != -1) {
+            n->mesh = (s32)&meshes[n->mesh];
+        } else {
+            n->mesh = 0;
+        }
+        if (n->next != -1) {
+            n->next = (s32)&nodes[n->next];
+        } else {
+            n->next = 0;
+        }
+        if (n->child != -1) {
+            n->child = (s32)&nodes[n->child];
+        } else {
+            n->child = 0;
+        }
+        w->nodes[i].ent = (s32)&w->ents[w->nodes[i].ent];
+    }
+    for (i = 0; i < w->nTex; i++) {
+        w->tex[i].data += (s32)w;
+    }
+    if (D_80138AAE == 1) {
+        for (i = 1; i < w->nTex; i++) {
+            Image_FillSolid(&w->tex[i]);
+        }
+    }
+    return w;
+}
 
 ItemList_ *WorldData_SetMirrored(ItemList_ *l) {
     u32 i;

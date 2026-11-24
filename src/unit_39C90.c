@@ -1319,7 +1319,72 @@ void CollList_Remove(Nd4_ **list, s32 key) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_39C90", Car_CheckWrongWay);
+/* Wrong-way detection: when every wheel touches the ground and the car moves forward through a room,
+ * find the portal it is heading for (the one whose normal faces the velocity most); driving towards
+ * a room with a lower time for over 500 ms raises the wrong-way flag. */
+void Car_CheckWrongWay(Car *c, u32 dt) {
+    Room_ *room;
+    Portal_ *p;
+    u32 i;
+    s32 best;
+    f32 bestDot;
+    f32 dot;
+    f32 fwdSpeed;
+    PlF_ pl;
+    Vec3f fwd;
+    u16 curTime;
+    u16 nextTime;
+
+    bestDot = 0.0f;
+    best = -1;
+    if (c->cnt3E7 == c->nPoints) {
+        fwd.x = c->rot.m[0][1];
+        fwd.y = c->rot.m[1][1];
+        fwd.z = c->rot.m[2][1];
+        fwdSpeed = fwd.x * c->vel.x + fwd.y * c->vel.y + fwd.z * c->vel.z;
+        room = &gCollLevel->rooms[c->roomObj->list->key];
+        if (!(room->flags & 0x400) && fwdSpeed > 176.0f) {
+            p = &gCollLevel->portals[room->firstPortal];
+            for (i = 0; i < room->nPortals; p++, i++) {
+                if (p->flag != 0) {
+                    continue;
+                }
+                pl.a = p->nx / 4096.0f;
+                pl.b = p->ny / 4096.0f;
+                pl.c = p->nz / 4096.0f;
+                pl.d = p->d;
+                pl.e = p->flag;
+                pl.f = p->to;
+                dot = c->vel.x * pl.a + c->vel.y * pl.b + c->vel.z * pl.c;
+                if (best == -1 || dot < bestDot) {
+                    best = pl.f;
+                    bestDot = dot;
+                }
+            }
+            if (best == -1) {
+                c->wrongWayTime = 0;
+            } else {
+                curTime = room->time;
+                nextTime = gCollLevel->rooms[best].time;
+                if (c->wrongWayTime != 0) {
+                    c->wrongWayTime += dt;
+                    if (nextTime < curTime) {
+                        c->wrongWayTime = 0;
+                    }
+                } else if (curTime < nextTime) {
+                    c->wrongWayTime = dt;
+                }
+            }
+        } else {
+            c->wrongWayTime = 0;
+        }
+    }
+    if (c->wrongWayTime > 500) {
+        c->wrongWay = 1;
+    } else {
+        c->wrongWay = 0;
+    }
+}
 
 void Coll_GetStartPos(u8 i, V12_ *v, V16_ *q) {
     if (gCollLevel != NULL) {

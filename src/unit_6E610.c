@@ -293,7 +293,95 @@ s32 Snd_PlaySong(void) {
     return h;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", Snd_PlaySongAtMarker);
+extern s32 (*gSndSeqCmds[])(SndVoice *, u8 *);
+
+/* Starts a song and fast-forwards each of its voices to the marker event (0xAB id), running the
+ * commands and adding up note times on the way; the following note's time is left pending. */
+s32 Snd_PlaySongAtMarker(s32 song, s32 marker) {
+    s32 h;
+    SndVoice *v;
+    s32 i;
+    u8 *p;
+    u8 *q;
+    u8 c;
+    u8 b;
+    s32 n;
+
+    h = SndSong_Start(song);
+    v = gSndVoices;
+    for (i = 0; i < gSndNumVoices; i++, v++) {
+        if (v->unk44 == h && (s32)v->unk74 == song && v->unk4 != 0) {
+            /* TODO(match-debt): goto loop; as a do-while, gcc reorders the command branch and hoists gSndSeqCmds. */
+        next:
+            p = (u8 *)v->unk4;
+            c = *p;
+            if (c >= 0x80) {
+                if (c == 0xAB && p[1] == marker) {
+                    goto found;
+                }
+                v->unk4 = gSndSeqCmds[c & 0x7F](v, p + 1);
+            } else {
+                v->unk4 = (s32)(p + 1);
+                if (v->unkD2) {
+                    v->unk4 = (s32)(p + 2);
+                    b = p[1];
+                    v->unkBB = b;
+                    if (b >= 0x80) {
+                        v->unkBB = b & 0x7F;
+                        v->unkD2 = 0;
+                        v->unkD3 = v->unkBB;
+                    }
+                } else {
+                    v->unkBB = v->unkD3;
+                }
+                if (v->unkAC == 0 || v->unkB7 != 0) {
+                    v->unkB7 = 0;
+                    q = (u8 *)v->unk4;
+                    v->unk4 = (s32)(q + 1);
+                    c = *q;
+                    if (c < 0x80) {
+                        v->unk9A = c;
+                    } else {
+                        v->unk4 = (s32)(q + 2);
+                        v->unk9A = ((c & 0x7F) << 8) + q[1];
+                    }
+                } else {
+                    v->unk9A = v->unkAC;
+                }
+                v->unkC += v->unk9A << 8;
+            }
+        if (v->unk4 != 0) {
+            goto next;
+        }
+        found:
+            v->unk3C = v->unkC;
+            if (v->unk4 != 0) {
+                q = (u8 *)v->unk4;
+                n = q[2];
+                p = q + 3;
+                if (n >= 0x80) {
+                    n &= 0x7F;
+                    n <<= 8;
+                    n |= q[3];
+                    p = q + 4;
+                }
+                v->unkAA = 0;
+                v->unk9A = n;
+                v->unk4 = (s32)p;
+                v->unkC -= n << 8;
+            }
+            v->unk40 = v->unkC;
+            if (v->unk38 != 0) {
+                SndVolCurve_Update(v);
+            }
+            if (v->unk34 != 0) {
+                SndPitchCurve_Update(v);
+            }
+        }
+    }
+    Snd_Resume(h);
+    return h;
+}
 
 s32 Snd_PlaySfxDefault(s32 id) {
     s32 bank;
@@ -1375,7 +1463,73 @@ s32 SndVoice_PlaySfx(SndBank *b, s32 idx, s32 a2, s32 a3, s32 prio) {
     return 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", SndSong_Start);
+/* Song header: offsets of its streams relative to the header until the first start. */
+typedef struct {
+    /* 0x00 */ u8 p0[4];
+    /* 0x04 */ s32 nTracks;
+    /* 0x08 */ u8 p8[4];
+    /* 0x0C */ s32 tracks;     /* track streams (also seen as the first of 7 relocated offsets) */
+    /* 0x10 */ s32 volCurves;
+    /* 0x14 */ s32 pitchCurves;
+    /* 0x18 */ s32 p18[3];
+    /* 0x24 */ s32 master;     /* master (tempo) stream */
+    /* 0x28 */ s32 relocated;
+} SongHdr_;
+
+/* Adds base to every non-null offset of the n-entry table t. */
+static inline void Song_Relocate(s32 *t, s32 n, s32 base) {
+    s32 i;
+    s32 b = base; /* TODO(match-debt): the copy keeps base in its own register per call. */
+
+    for (i = 0; i < n; i++) {
+        if (t[i] != 0) {
+            t[i] += b;
+        }
+    }
+}
+
+/* Starts a song: relocates it on first use, then gives the master stream and each track a voice
+ * (all with a new handle, which is returned). */
+s32 SndSong_Start(SongHdr_ *song) {
+    s32 n;
+    s32 base;
+    s32 h;
+    s32 i;
+    SndVoice *v;
+
+    n = song->nTracks;
+    base = (s32)song;
+    if (!song->relocated) {
+        song->relocated = 1;
+        Song_Relocate(&song->tracks, 7, base);
+        Song_Relocate((s32 *)song->tracks, n, base);
+        Song_Relocate((s32 *)song->volCurves, n, base);
+        Song_Relocate((s32 *)song->pitchCurves, n, base);
+    }
+    h = gSndNextHandle++;
+    v = &((SndVoice *)gSndVoices)[SndVoice_Alloc((SndSeq *)song, -1)];
+    SndVoice_Reset(v);
+    v->unkD2 = 1;
+    v->unk74 = (SndSeq *)song;
+    v->unk0 |= 3;
+    v->unk4 = v->unk80 = song->master;
+    v->unk44 = h;
+    for (i = 0; i < n; i++) {
+        if (((s32 *)song->tracks)[i] != 0) {
+            v = &((SndVoice *)gSndVoices)[SndVoice_Alloc((SndSeq *)song, i)];
+            SndVoice_Reset(v);
+            v->unkD2 = 1;
+            v->unk74 = (SndSeq *)song;
+            v->unk0 |= 1;
+            v->unk38 = v->unk8C = ((u8 **)song->volCurves)[i];
+            v->unk34 = v->unk88 = ((u8 **)song->pitchCurves)[i];
+            v->unk4 = v->unk80 = ((s32 *)song->tracks)[i];
+            v->unk44 = h;
+        }
+    }
+    gSndCurWaveBank = 0;
+    return h;
+}
 
 void SndVoice_SetFlags(s32 id, s32 mask, s32 bits) {
     s32 i;

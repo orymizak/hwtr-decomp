@@ -8,7 +8,7 @@ extern void (*svcFontDrawChar)(s32, u8, u16, s32, s32);
 extern char D_80100AF0[];
 void Cars_CollideObstacles(void);
 void Debris_Draw(u32);
-void RaceView_DrawScene(u32);
+s32 RaceView_DrawScene(u32);
 void Hud_Draw(void);
 u32 strlen(const char *);
 extern s32 D_801415B8;

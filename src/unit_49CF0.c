@@ -9,7 +9,7 @@ extern u16 D_800F3B38[];
 typedef struct { u8 a[32]; } E32_;
 typedef struct { E32_ e[7]; u8 pad[16]; } E240_;
 typedef struct { s32 t; u8 a; u8 b; s8 c; u8 d; s32 pad; } E0Cb_;
-typedef struct { u8 p0[8]; s16 h8; u8 pA[2]; u8 bC; u8 bD; u8 pE[2]; } El10_;
+typedef struct { s16 x0; s16 x1; s16 x; u16 y; s16 h8; u16 w; u8 bC; u8 bD; u8 gap; u8 pF; } El10_;
 typedef struct { u8 on; u8 p1[0x27]; } Blk28_;
 typedef struct { s32 t; s32 w4; s32 w8; u8 pC[4]; El10_ el[6]; Blk28_ blk[3]; u8 pE8; u8 flag; u8 bEA; u8 bEB; u8 pEC[4]; } HudF0_;
 extern u8 gHudRacerCount;
@@ -123,7 +123,68 @@ s32 Hud_Shutdown(void) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_49CF0", Hud_DrawSpeed);
+typedef struct { u8 pad[0xBC]; f32 spd; u8 pad2[0x7C]; u8 flag; } CarA_;
+extern char D_80100A90[];
+void Hud_DrawSpeed(u8 arg0, u8 arg1) {
+    u8 buf[0x50];
+    u8 idx;
+    CarA_ *c;
+    u16 x;
+    u16 y;
+    f32 f;
+    s32 t;
+    s32 v;
+    s32 len;
+    u8 *p;
+
+    idx = arg0;
+    c = (CarA_ *)Car_Get((&gHudRacer)[idx]);
+    svcDraw2DSetColor(0xFF, 0xFF, 0xFF);
+    if (!arg1) {
+        x = 0;
+        y = 0x15;
+    } else {
+        x = 0;
+        y = idx ? 0x7F : 0x15;
+    }
+    svcFontDrawChar(1, 0, x, y, 2);
+    svcDraw2DSetColor(0, 0xFF, 0xFF);
+    f = c->spd;
+    f *= 0.056818184f;
+    if (f <= 80.0f) {
+        f *= 100.0f;
+        f /= 80.0f;
+    } else {
+        f -= 80.0f;
+        f *= 80.0f;
+        f /= 50.0f;
+        f += 100.0f;
+    }
+    t = (s32)f;
+    if (t > 180) {
+        v = 180;
+    } else {
+        v = t;
+    }
+    v = c->flag == 0 ? v : 0;
+    sprintf((char *)buf, D_80100A90, (u16)v);
+    len = strlen((char *)buf);
+    if (!arg1) {
+        x = 0x24 - (((s8)len * 12) | 1) / 2;
+        y = 0x12;
+    } else {
+        x = 0x24 - (((s8)len * 12) | 1) / 2;
+        if (!arg0) {
+            y = 0x12;
+        } else {
+            y = 0x7C;
+        }
+    }
+    for (p = buf; *p != 0; p++) {
+        svcFontDrawChar(1, *p, x, y, 1);
+        x += 12;
+    }
+}
 
 /* Draws the race position as "pos/racers" (yellow while leading). */
 void Hud_DrawPosition(u8 idx, u8 flag) {

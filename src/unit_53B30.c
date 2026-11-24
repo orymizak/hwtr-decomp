@@ -1127,7 +1127,7 @@ void Menu_DrawTicker(Scroll4E_ *t) {
     t->x -= Menu_DeltaSeconds(4) * 45.0f;
 }
 
-s32 Text_ButtonGlyphs(char *name, u8 *out) {
+u8 Text_ButtonGlyphs(char *name, u8 *out) {
     u8 i;
     u8 j;
 
@@ -4180,7 +4180,63 @@ void Garage_Animate(void) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_53B30", Garage_SetupTexts);
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", Garage_Draw);
+extern s32 D_80100F68;
+extern f32 D_800F6494;
+extern f32 D_800F6498;
+void Garage_Draw(void) {
+    u8 id;
+    f32 twoPi;
+    s32 *p;
+
+    Menu_SetupCamera();
+    if (D_80124C94 == 0) {
+        D_80124C94 = sysModelPollLoad(0);
+    }
+    if (D_80124C95 == 0) {
+        D_80124C95 = sysModelPollLoad(1);
+    }
+    Menu_UpdateFade();
+    if (gMenuHideText == 0) {
+        Garage_DrawStats();
+    }
+    p = &D_800F5F40;
+    Menu_Draw(*p, -1, -1, -1, -1, -1, -1, gMenuHideText);
+    if ((u8)Car_IsUnlocked(gGarageCarP1, gProfileP1)) {
+        if (D_80124C94) {
+            MenuCar_Draw(0, D_801240E8, D_801240EC, D_801240F0);
+        }
+    } else if (gMenuHideText == 0) {
+        id = NameList_Find(&D_80100F68);
+        twoPi = 6.28318f;
+        D_800F6494 += Menu_DeltaSeconds(6) * 1.256636f;
+        while (twoPi < D_800F6494) {
+            D_800F6494 -= twoPi;
+        }
+        if (gNumPlayers == 1) {
+            Menu_DrawModel(id, MenuPos_ToWorldX(330), MenuPos_ToWorldY(460), 0.0f, -1.3962624f, 0.0f, D_800F6494, 2.0f);
+        } else {
+            Menu_DrawModel(id, MenuPos_ToWorldX(330), MenuPos_ToWorldY(640), 0.0f, -1.3962624f, 0.0f, D_800F6494, 1.5f);
+        }
+    }
+    if (gNumPlayers == 2) {
+        p = &D_800F5F44;
+        Menu_Draw(*p, -1, -1, -1, -1, -1, -1, gMenuHideText);
+        if ((u8)Car_IsUnlocked(gGarageCarP2, gProfileP2)) {
+            if (D_80124C95) {
+                MenuCar_Draw(1, D_801240F4, D_801240F8, D_801240FC);
+            }
+        } else if (gMenuHideText == 0) {
+            id = NameList_Find(&D_80100F68);
+            twoPi = 6.28318f;
+            D_800F6498 += Menu_DeltaSeconds(7) * 1.256636f;
+            while (twoPi < D_800F6498) {
+                D_800F6498 -= twoPi;
+            }
+            Menu_DrawModel(id, MenuPos_ToWorldX(700), MenuPos_ToWorldY(640), 0.0f, -1.3962624f, 0.0f, D_800F6498, 1.5f);
+        }
+    }
+    Menu_EndFrame();
+}
 
 void Garage_CancelP1(void) {
     if (gGarageReadyP1 != 0) {
@@ -5407,7 +5463,56 @@ void LoadGame_ApplySlot(void) {
     Menu_Advance();
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", LoadGame_SyncProfiles);
+extern u32 D_80124A04[3]; /* P1 default profile unlocks */
+extern u32 D_80124B44[3]; /* P2 default profile unlocks */
+void LoadGame_SyncProfiles(void) {
+    Profile a;
+    Profile b;
+    s32 i;
+    s32 j;
+    Profile *p;
+
+    a = *gProfileP1;
+    b = *gProfileP2;
+    gProfileP1 = NULL;
+    gProfileP2 = NULL;
+    for (i = 0; (u8) i < 4; i++) {
+        for (j = 0; (u8) j < 4; j++) {
+            p = SaveSlot_Get((u8) i, (u8) j);
+            if (p != NULL) {
+                if (p->id == D_80124150) {
+                    gProfileP1 = SaveSlot_Get((u8) i, (u8) j);
+                    gActiveSave->player1Id = gProfileP1->id;
+                } else if (p->id == D_80124154) {
+                    gProfileP2 = SaveSlot_Get((u8) i, (u8) j);
+                    gActiveSave->player2Id = gProfileP2->id;
+                }
+            }
+        }
+    }
+    if (gProfileP1 == NULL) {
+        Profile_InitDefault(&D_801249F0, 0);
+        if ((D_80124A04[0] | a.carUnlocks[0]) != D_80124A04[0] || (D_80124A04[1] | a.carUnlocks[1]) != D_80124A04[1] || (D_80124A04[2] | a.trackUnlocks) != D_80124A04[2]) {
+            D_80124A04[0] |= a.carUnlocks[0];
+            D_80124A04[1] |= a.carUnlocks[1];
+            D_80124A04[2] |= a.trackUnlocks;
+            *(s32 *) &gPasswordP1 = D_80100DBC;
+        }
+        gProfileP1 = (Profile *)&D_801249F0;
+        gActiveSave->player1Id = 0;
+    }
+    if (gProfileP2 == NULL) {
+        Profile_InitDefault(&D_80124B30, 1);
+        if ((D_80124B44[0] | b.carUnlocks[0]) != D_80124B44[0] || (D_80124B44[1] | b.carUnlocks[1]) != D_80124B44[1] || (D_80124B44[2] | b.trackUnlocks) != D_80124B44[2]) {
+            D_80124B44[0] |= b.carUnlocks[0];
+            D_80124B44[1] |= b.carUnlocks[1];
+            D_80124B44[2] |= b.trackUnlocks;
+            *(s32 *) &gPasswordP2 = D_80100DBC;
+        }
+        gProfileP2 = (Profile *)&D_80124B30;
+        gActiveSave->player2Id = 0;
+    }
+}
 
 void LoadGame_Leave(void) {
     Menu_StartLeave(D_800F5F64);

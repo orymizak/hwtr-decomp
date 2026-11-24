@@ -93,7 +93,8 @@ typedef struct Car {
     /* 0x124 */ Vec3f force;
     /* 0x130 */ Vec3f torque;
     /* 0x13C */ u8 b13C;
-    /* 0x13D */ u8 pad13D[0x7];
+    /* 0x13D */ u8 pad13D[0x3];
+    /* 0x140 */ s32 w140;
     /* 0x144 */ CarPoint points[6];
     /* 0x3E4 */ u8 nPoints;
     /* 0x3E5 */ u8 pad3E5[0x2];

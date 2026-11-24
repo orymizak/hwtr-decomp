@@ -2,7 +2,7 @@
 #include "include_asm.h"
 #include "car.h"
 #include "race.h"
-typedef struct { u8 id; u8 p1[3]; u8 *car; u8 p8[0x1C]; f32 f24; u8 p28[0x1E4]; f32 f20C; u8 p210[8]; f32 f218; u8 p21C[0xC]; Vec3f v228; u8 p234[0xC]; Vec3f v240; u8 p24C[0x5C]; } Slot85_;
+typedef struct { u8 id; u8 p1[3]; u8 *car; u8 p8[0x1C]; f32 f24; u8 p28[0x1E0]; u8 braking; u8 p209[3]; f32 f20C; u8 p210[8]; f32 f218; u8 p21C[0xC]; Vec3f v228; u8 p234[0xC]; Vec3f v240; s32 ctlTimer; f32 throttle; f32 steer; u8 p258[0x50]; } Slot85_;
 typedef struct { Vec3f p; u8 pad[0x7C]; } BlkD_;
 typedef struct { u8 id; u8 p1[0xBF]; f32 m[3][3]; } CarD_;
 typedef struct { u8 id; u8 p1[7]; BlkD_ blk; u8 p90[4]; Vec3f v94[4]; f32 m[3][3]; Vec3f h1[10]; s32 n160; Vec3f h2[10]; s32 n1DC; Vec3f v1E0; Vec3f v1EC; s32 z1F8; u8 p1FC[4]; s32 z200; s32 z204; u8 p208[0xC]; s32 z214; f32 f218; Vec3f v21C; Vec3f v228; Vec3f v234; Vec3f v240; Vec3f v24C; u8 p258[0x10]; s32 z268; s32 z26C; u8 p270[0x38]; } SlotD_;
@@ -20,7 +20,7 @@ u32 RaceClock_Get(void);
 extern Slot85_ gAi[];
 extern s32 D_80115824;
 extern f32 D_80115820;
-void Ai_ApplyImpulse(u8 *);
+void Ai_ApplyImpulse(Car *);
 extern u8 D_80114838;
 
 s32 Ai_Step();
