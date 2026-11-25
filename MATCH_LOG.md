@@ -4,6 +4,18 @@ One entry per function worked on: size, initial match, final result, hypotheses 
 Failed reconstructions keep their lessons here; decide whether they belong in `NON_MATCHING`.
 Percentages of the whole project follow METRICS.md (objdiff only).
 
+**Plantilla por función (AGENTS.md §5):**
+```
+## <Func> (<unit>, <B> B / <n> instr, frame 0x..) — MATCH exacto | NON_MATCHING <x>/<n> — <fecha>
+- **REA/Ghidra:** consultas usadas (pseudocódigo, callers/callees, xrefs, hermanas) y qué aportaron; consultas omitidas + justificación técnica.
+- **Confirmado en ASM:** qué se verificó contra el .s (y qué del pseudocódigo era engañoso).
+- **Hipótesis:** numeradas, con la instrucción concreta que debía cambiar y el efecto medido.
+- **Cambios:** lo que quedó en src/ / include/.
+- **Resultado objdiff:** match exacto (cuenta) | NON_MATCHING (no cuenta) + % de objdiff del proyecto si se midió.
+- **Bytes recuperados:** B oficiales (0 si NON_MATCHING).
+```
+Las entradas anteriores a la sesión 42 usan un formato libre; se conservan tal cual.
+
 ## Car_ComputeMass (unit_31E10, 752 B / 188 instr, frame 0x0) — MATCHED 2026-11-24
 - **Initial match:** previous draft `.scratch/ul/nr/near_95970.c` (70/202 per PATTERNS.md; 102/188 in this session).
 - **Final:** 188/188 words, `make clean && make` OK, `verify_funcs.py` all functions OK. objdiff +752 B.
@@ -101,3 +113,308 @@ direcciones, cabeceras de sección y los 206 contenidos PROGBITS; el ELF no tien
 - Firma deducida: (u8 slot, u8 w, f32 rx, f32 ry, f32 rz, s32 unused, u8 surface, u8 contact, Vec3f *pos, Vec3f *n); llama a Model_SetWheelContact y luego Model_SetPartRotation. Lógica correcta.
 - Residual: registros. Original s0=slot, s1=w, f20=rz, f22=rx, f24=ry; nosotros s1=slot, s0=w, f24=rz, f20=rx, f22=ry.
 - Probado: 325 combinaciones de locales (s, ww, x, y, z en todos los órdenes/subconjuntos) sin efecto. Fuente devuelta a INCLUDE_ASM.
+
+## Ai_ApplyImpulse (unit_22440, 1088 B / 272 instr, frame 0x40) — MATCHED 2026-11-24
+- **Contexto:** Evaluación e integración de REA 6.4.0 + Ghidra 12.1.4 (`tools/rea/prepare_elf.py`, `tools/rea/rea_query.py`).
+- **Initial match:** borrador `.scratch/ul/nr/near_84B9C.c` (250/272 palabras, tamaño 1072/1088 B).
+- **Final:** 272/272 palabras (100% ByteMatch), `make` OK (SHA-1 `94913a07e49005ffd43dfdfa16ff5862bdb93748`), `verify_funcs.py` OK, objdiff +1088 B (75.17% code, 1777/1910 functions; `inventory.py`: 75.20%, 417064/554576 B).
+- **Hallazgos REA/Ghidra + contraste con ASM:**
+  1. `procedure_pseudo_code` mostró los tres productos escalares (`impulse` contra las 3 filas de `car->rot`), el stride `0x2A8` sobre `gAi[*param_1]` y los accesos a `D_80114A84` (`steer`), `D_80114A80` (`throttle`), `D_80114A7C` (`ctlTimer = 2`) y `D_80114A38` (`braking = 1`).
+  2. `procedure_callers` identificó al único llamador directo (`0x80084fdc` = `Ai_SyncCars`), y `xrefs` sobre `0x80114a80`, `0x80114a84` y `0x80114a7c` localizó todos los accesos en `Ai_ApplyImpulse`, `Ai_InitRacer` (`0x80086140`) y `Ai_RestoreSlot` (`0x80086b40`).
+  3. Contrastando el pseudocódigo con el ASM original: en el borrador previo `gAi[o[0]].ctlTimer = 2` estaba fuera de los `if/else` de `0.0f < x` y `0.0f < z`, lo que hacía que GCC 2.7.2 pusiera `ctlTimer = 2` en el mismo bloque básico que `if (0.0f < y)`, hoisteando `li $a2, 2` y adelantando `mtc1 $zero, $fv0; c.lt.s $fv0, $ft2`. Al colocar `gAi[o[0]].ctlTimer = 2` dentro de cada rama `if/else` (igual que en `0.0f < y`), el diff bajó de 22 instrucciones a solo 2 (`270/272`, tamaño exacto 1088/1088 B).
+  4. Las 2 diferencias restantes eran el orden de `sll $a1, $v0, 3` frente a la carga de `D_80138D4E`/`D_80138D50` en las dos ramas de resta de `throttle`: cambiar `((f32)(D_80138D4C - 100) < gAi[o[0]].throttle - D_80138D4E)` por `(gAi[o[0]].throttle - D_80138D4E > (f32)(D_80138D4C - 100))` evaluó primero el operando izquierdo (`gAi[o[0]].throttle - ...`) igual que en las ramas de suma, logrando **272/272 (COINCIDE 0x440)**.
+
+## Sesión 40 (2026-11-24) — Hud_DrawSlideFromLeft/Right y Save_ReadAll: 3 reconstrucciones NON_MATCHING
+Sin matches exactos nuevos; ROM OK (`#ifdef NON_MATCHING` con `INCLUDE_ASM` en el `#else`). Borradores en `.scratch/s40/`.
+- **Hud_DrawSlideFromLeft/Right (unit_49CF0)**: mismo tamaño (452/440 B) y mismas instrucciones salvo el intercambio $s1/$s2 (cadena ↔ elemento).
+  Claves halladas: `u8 pad[8]` (8 B extra de frame), `s32 w` unido tras if/else (la suma va después del join), `e->gap` (0xE), `-(e->w >> 1) + mid`
+  en la rama central, `(s16)e->x` en Left. Sin efecto en el swap: `register`, copias `s0/e0`, orden de declaración, do-while, `while (*s)`, `p = s`.
+- **Save_ReadAll (unit_50510)**: 772/776 B. Dos variables de bucle (i para el principal, j para los bucles de borrado y de slots).
+  Residual: el original hoistea `&sysSaveRead` en $fp (usos [0] y [-1] = sysPakGetState) y deja `&gSaveSlots` sin hoistear; nosotros al revés.
+  Sin efecto: `fn = sysSaveRead`, `register`, forma por offsets en bytes, flag `r` en la cola (el original usa bnel/beql con v1).
+- Candidatas siguientes: Race_ReadPlayerControls (844 B, float), CupResults_SetupTexts.
+
+## Sesión 41 (2026-11-24) — REA + Ghidra como método activo
+Flujo por función: `procedure_pseudo_code` + `procedure_callers/callees` + `xrefs` + `procedure_assembly` (REA) → contraste con el `.s` MIPS → C → `try.py`/comparación por palabras → `make` (SHA-1) + `verify_funcs.py`.
+- **LZ_AdvanceBits (src/lz.c, 168 B) — MATCH 42/42.** El pseudocódigo de Ghidra tipó `param_1` como `char` (u8); el TODO previo asumía `int n`. Con `register u8 n, register u8 *p` (-O0) coincide. REA además dio el único llamador (`LZ_Decompress`) y todas las xrefs de `D_8010C400`; `procedure_assembly` del llamador confirmó `a0 = n`, `a1 = p`.
+- **Model_SwapPalette (unit_06050, 324 B) — NON_MATCHING 72/81.** Ghidra dio estructura (`Model.palIdx`, `pals[].colors + 8`, 7 colores, darken >>1 / >>3). Hallazgos aplicados contra el ASM: indexado `dst[k]` (genera el puntero de bucle `$t4`), `dst += 4` separado (delay slot `addiu`), temporales `u32 hi/mid/lo` y `lo | (hi | mid)`. Residual: orden de 3 `sll` en el empaquetado.
+- **SndCmd_SetEnvelopePreset (unit_6E610, 332 B) — NON_MATCHING 79/83.** Ghidra: varint (0x80), tabla de 7 bytes en `unk74->unk18`, mismo cuerpo que `SndCmd_SetEnvelope` (ya igualada). `id &= 0x7F; id <<= 8; id |= *p++` quitó 4 diferencias. Residual: el original copia el puntero de la entrada en `$a3` (delay slot de `bnez`).
+- **PauseUi_DrawText (unit_6AE90, 352 B) — NON_MATCHING ~71/88.** Ghidra: dos recorridos (medir/dibujar), centrado con `(s16)w`, kerning solo si `s[1] != 0`. Una copia local de `cx` y sumas `kern + t` fijaron la asignación de registros ($s4/$fp/$s5-$s7). Residual: cabecera de bucle (`lbu $v0,0($s3)`) y movimientos del prólogo.
+- ROM intacta: `make` OK (SHA-1) y `verify_funcs.py` OK. Único match nuevo: LZ_AdvanceBits; las otras tres quedan como NON_MATCHING con `INCLUDE_ASM` en el `#else`.
+
+## Sesión 42 (2026-11-24)
+- **Race_ReadPlayerControls (unit_2C6A0, 844 B) — NON_MATCHING 194/211.** Firma K&R (`u8 pl` → s32), `sysInputGetControl` como array (dirección en registro), `D_80138D40` como array (evita mover los stores de `yaw` al delay slot), clamp `if/else if/else if` con tercera comprobación `t<0`, car.h: `unk01C/unk020` (f32). Residual: 1.0 cae en `$f6` en vez de `$f0` y el 2º salto no es branch-likely. Permuter 7 min: mejor 550 (base 620), sin match. Borradores en .scratch/s42/.
+
+## Sesión 43 (2026-11-24)
+- **RaceAudio_Update (unit_2C6A0, 1400 B) — borrador 317/350 palabras, tamaño exacto 1400/1400, NO aplicado** (`.scratch/s43/ra9.c`, previo `.scratch/ul/s36/auto/RaceAudio_Update.c` ~258). REA/Ghidra dieron la estructura (do-while con guardia `D_801184C1 != 0`, clamp, suavizado de rpm, bucle de marcadores `puVar4/puVar6`).
+  Hallazgos que subieron 258 → 317: tabla de punteros `audCarSndSetRpm[]` con índices negativos (-5 pos, -4 vel, -3 reverb; +1 throttle, +2 StartLoopA, +3 StopLoopA) para que GCC hoistee `s4/s6`; todos los args de audio como `s32` (los floats/vectores se pasan como palabras: `*(s32 *)&D_801184C8[n].vol`, `s32 pos[4]`/`vel`/`up`/`fwd` de 16 B); `n = i` (u32) como índice del primer bloque; `MIN(MAX(vol,1000),6000)`; `u32 *tm = &D_80118534`; `snd = D_800F3708[kind][(b < a) ? 0 : 1]`; timer con `if (t <= dt) {StopLoopB(); t = 0;} else t -= dt`; StopLoopA/StopLoopB del else/timer por símbolo propio.
+  Residual: falta el hoist de `s7 = s4 + 0x10` (SetLoopAVolume), orden de carga de `a/b` antes de `c.lt.s`, `andi/sll` de `m` en el bloque del timer, orden de los args de pila de `audListenerSetOrientation`, y por ello un registro guardado menos (s7). Ni `fv = &audCarSndSetRpm[4]` ni array propio lo arreglan.
+- SndCmd_SetEnvelopePreset: sin cambios (ya probadas var_a..var_p6 en s41).
+
+## Sesión 44 (2026-11-25) — 3 nuevos MATCH exactos (+3,696 B, 2 unidades completas) y 1 NON_MATCHING
+
+## Bld_StepRacer (unit_21150, 1892 B / 473 instr, frame 0xF8) — MATCH exacto — 2026-11-25
+- **REA/Ghidra:** `procedure_pseudo_code` + `procedure_callers`/`procedure_callees` sobre `Bld_StepRacer`; mostró la lectura de registros de pista con `Bld_ReadRecord`, el switch de 6 casos (`jtbl_800FFA50`) para transiciones de waypoints, y la actualización de `a0/b0` y `a1/b1` según `rec.a.kind == 0`.
+- **Confirmado en ASM:** Ghidra fusionaba la cola del `if (rec.a.kind == 0)` en un único bloque antes de `a->ang = 0.0f; if (flag)`. En el `.s` original (`0x80080EA8..0x80080EE0`), las asignaciones `a->a1 = rec.a.f30; a->b1 = rec.a.f34;` están en la etiqueta `.L80080EC8` antes de `if (flag)` (`beqz $s1, .L80080F08`), con `sw $zero, 0x14($s0)` (`a->ang = 0.0f`) colocado en el delay slot del `beqz`. Además, en la rama `rec.a.kind == 0`, los stores van en orden `a->a0 = a->a1; a->b0 = a->b1;` (`0x6C/0x70` antes de `0x74/0x78`), diferencia que `try.py` ocultaba por el enmascarado de `RELOC_OPS` en `lwc1`/`swc1`.
+- **Hipótesis:**
+  1. Borrador previo `.scratch/ul/nr/near_80C20.c` (471/473 palabras): colocar `a->ang = 0.0f; a->a1 = rec.a.f30; a->b1 = rec.a.f34;` juntos tras el `if/else` hacía que el scheduler de GCC 2.7.2 intercalara `sw $zero, 0x14($s0)` entre `a1` y `b1`, metiendo `swc1 $f0, 0x78($s0)` en el delay slot de `beqz $s1`.
+  2. Duplicar `a->a1 = rec.a.f30; a->b1 = rec.a.f34;` en un segundo `if (rec.a.kind == 0) { ... } else { ... }` justo antes de `a->ang = 0.0f; if (flag)`: GCC aplica cross-jumping a `.L28` antes de `a->ang = 0.0f`, aislando `a->ang = 0.0f; if (flag)` para que `sw $zero, 0x14($s0)` ocupe el delay slot de `beqz` → **473/473 palabras**.
+  3. Reordenar `a->a0 = a->a1; a->b0 = a->b1;` en la rama `rec.a.kind == 0` y añadir `Bld_StepRacer jtbl_800FFA50` en `rodata_refs.txt`: corrigió las 4 palabras en `0x80080EAC..0x80080EBC` en el enlace final de la ROM.
+- **Cambios:** `src/unit_21150.c` (`Bld_StepRacer` en C, unidad `unit_21150` 100% completa), `rodata_refs.txt`.
+- **Resultado objdiff:** MATCH exacto (473/473), 78.35 % del proyecto tras integrarla.
+- **Bytes recuperados:** 1,892 B.
+
+## HighScores_SetupTexts (unit_53B30, 1080 B / 270 instr, frame 0x98) — MATCH exacto — 2026-11-25
+- **REA/Ghidra:** `procedure_pseudo_code` + `xrefs` de `0x800F5F80` (`D_800F5F80`) y revisión de funciones hermanas en `src/unit_53B30.c` (`HighScores_Enter`, `HighScores_Draw`).
+- **Confirmado en ASM:** En `.L800C4D10`, el ASM original calcula `lui $v0, %hi(gMenuObjs+120); addiu $v0, $v0, %lo(gMenuObjs+120); lw $a0, 0($v0); move $s7, $v0` en la primera llamada a `Menu_SetText`, y reutiliza `lw $a0, 0($s7)` en las siguientes. `0x800F5F80` es exactamente `gMenuObjs[30]` (`0x800F5F08 + 30 * 4`). Además, el `switch (D_80141226)` requiere `case 2:` explícito junto a `default:` para emitir el árbol `bltz / slti / beqz`, y `y = 0xA0;` va justo después de `Menu_SetText(gMenuObjs[30], 1, ...)` y antes del bucle `for (i = 0; i < 5; i++)`.
+- **Hipótesis:**
+  1. Reemplazar el puntero local `p = &D_800F5F80` por el acceso directo a array `gMenuObjs[30]` en todas las llamadas a `Menu_SetText`: GCC 2.7.2 CSEa la dirección `&gMenuObjs[30]` en `$s7` tras el primer `lw $a0, 0($v0)`, eliminando las 4 palabras de diferencia de `.scratch/ul/nr/near_C4D10.c` (266/270 → **270/270**).
+- **Cambios:** `src/unit_53B30.c` (promovida de `#ifdef NON_MATCHING` a código C activo).
+- **Resultado objdiff:** MATCH exacto (270/270), 78.54 % del proyecto tras integrarla.
+- **Bytes recuperados:** 1,080 B.
+
+## RaceView_DrawScene (unit_4F640, 724 B / 181 instr, frame 0xB0) — MATCH exacto — 2026-11-25
+- **REA/Ghidra:** `procedure_pseudo_code` + `procedure_callees` (`svcCameraSetPerspective`, `svcModelSetAlpha`, `svcScreenSetViewport`, `World_Draw`, `Cars_Draw`, `Particles_Draw`).
+- **Confirmado en ASM:**
+  1. La llamada a `svcCameraSetPerspective` está desdoblada en un `if (gRaceViewCount == 1) ... else ...`, cargando el 4.º argumento float (`1.3333334f` o `2.6666667f`) en `$a3` con `lui/ori` en cada rama.
+  2. El cálculo de alpha (`((car->timer == 0 ? 0xFF : 0) & 0xFF) | 0x7F`) pasa un `s32` a `svcModelSetAlpha(u8, s32)` sin `andi $a1, 0xFF` extra.
+  3. En el bloque de pantalla dividida (`if ((u32)gRaceViewCount >= 2)`), antes del bucle o invariante al mismo se calculan `$fp = (h >> 1) + 1` y `$s7 = (h >> 1) - 1`, y el segundo argumento de `svcScreenSetViewport` usa `-(i == 0) & t` (`andi / sltiu / negu / and / sll / sra`).
+- **Hipótesis:**
+  1. Combinar el `if/else` de `svcCameraSetPerspective` y el cálculo de `alpha` de `.scratch/ul/nr/near_AEB28.c` con las variables locales `t = h / 2 + 1; b2 = h / 2 - 1; mask = i == 0; vh = b2; svcScreenSetViewport(0, -mask & t, w, vh);` de `.scratch/ul/s37/rv_lote.c`: GCC hoistea `t` a `$fp` y `b2` a `$s7` en el orden exacto del prólogo del bucle → **181/181 palabras**.
+- **Cambios:** `src/unit_4F640.c` (`RaceView_DrawScene` en C, unidad `unit_4F640` 100% completa).
+- **Resultado objdiff:** MATCH exacto (181/181), 78.67 % del proyecto (434,864 / 552,760 B, 1,791 / 1,910 funciones).
+- **Bytes recuperados:** 724 B.
+
+## Coll_LoadLevel (unit_39C90, 636 B / 159 instr, frame 0x138) — NON_MATCHING 155/159 — 2026-11-25
+- **REA/Ghidra:** `procedure_pseudo_code` + `procedure_callees` (`sprintf`, `File_Load`, `Memory_Alloc`, `Coll_RelocateTree`, `Coll_InitRooms`, `Coll_BuildRoomBounds`, `Coll_InitCells`).
+- **Confirmado en ASM:** La función formatea `"%s.bvh"`, carga el archivo en `gCollLevel`, reserva las tablas de rooms/cells y llama a las rutinas de inicialización. En `0x80099110`, el ASM original recarga `gCollLevel` dos veces seguidas (`lw $v0, %lo(gCollLevel)($s2); lw $a1, %lo(gCollLevel)($s2)`).
+- **Hipótesis:**
+  1. Reconstrucción limpia a partir de `.scratch/ul/nr/near_98FE8.c`: **155/159 palabras** (628/636 B); la única diferencia es la doble carga redundante de `gCollLevel` en `0x80099110` y 1 instrucción de orden en los argumentos del bucle final.
+- **Cambios:** Guardada bajo `#ifdef NON_MATCHING` con `INCLUDE_ASM` en el `#else` en `src/unit_39C90.c`.
+- **Resultado objdiff:** NON_MATCHING (no cuenta en objdiff).
+- **Bytes recuperados:** 0 B.
+
+# Session 45 (2026-11-25) — investigation only, no exact match integrated
+
+Nothing was promoted into `src/` this session: every candidate is still a near miss, so objdiff stays at
+**78.67 %** (434,864 / 552,760 B, 1,791 / 1,910 functions). All drafts are kept in `.scratch/s45/`.
+
+## Tooling fix: `tools/match/try.py` printed the wrong `+` lines
+- **Confirmado en ASM:** the `+` side of every diff was taken from `objdump`'s *line index* instead of the
+  instruction address, so from the first `nop` onward our instructions were reported shifted (e.g. a `nop`
+  shown as `bc1f`). The masked word comparison and the `iguales N/M` count were always correct; only the
+  printed mnemonics were wrong, which had been sending earlier sessions after phantom differences.
+- **Cambios:** `tools/match/try.py` now maps `objdump` output by `address / 4`. A side-by-side variant of the
+  same diff lives in `.scratch/s45/sbs.py`.
+
+## Garage_SetupTexts (unit_53B30, 1388 B / 347 instr, frame 0x50) — NON_MATCHING 341/347
+- **REA/Ghidra:** `procedure_pseudo_code` gave the whole shape: per-player `ready` / `dirty` branches, the
+  `prev` / `cur` / `next` wrap-around over 41 cars, three `Car_IsUnlocked` probes and the shared third
+  `Menu_SetText` reached by `goto LAB_800bed78` (GCC cross-jumping).
+- **Confirmado en ASM:** (1) `gGarageDirtyP1/P2` are read with `lbu`, so they are `u8`, not `s8`.
+  (2) `$s5 = 0x64` is hoisted into the prologue and each use is `andi $s1, $s5, 0xFF` — the greyed-out colour
+  is a local `u8 dim = 100;`, not a literal. (3) `addu $s0, $v1, $zero` appears at the end of *both* arms,
+  so `cur` is assigned inside each arm; that 2-instruction tail is what lets GCC cross-jump `cur = i;
+  next = cur + 1;` into the shared block at `.L800BEC38`. (4) the inner test is written
+  `if (i + 1 >= 0x29) next = 0; else next = cur + 1;` — the `>=` form puts the `next = 0` block in the
+  fall-through and makes the branch `bnez` on the `slti` result, as in the ROM.
+- **Hipótesis probadas:** nested vs flat `if/else` (294 → 314), `u8 dim = 100` (320), `cur = i` in all three
+  arms (329, exact size), inverted inner test (334), plus 120 permutations of the declaration block and
+  `register` qualifiers (no change). decomp-permuter then found a copy (`new_var = i` in the P2 half) that
+  fixes the `i` / `i & 0xFF` register swap: **341/347**.
+- **Residual:** 6 words. `prev` must live in `$v0` (shared with the `i - 1` / `i + 1` / `slti` temporaries);
+  GCC gives it `$a2`. `s32 prev`, `register u8 prev` and moving its declaration do not change it.
+- **Bytes recuperados:** 0 B. Draft: `.scratch/s45/garage_setuptexts_341.c`.
+
+## GfxPools_Init (gfx_pools, 416 B / 104 instr, frame 0) — NON_MATCHING 82/104
+- **REA/Ghidra:** `procedure_pseudo_code` listed all 40 stores; mapping them onto `GfxPool`/`VtxPool`/
+  `MtxPool` (0x320 / 0x90 / 0x90 bytes) shows the function is exactly six inlined `*Pool_Init` calls plus
+  `gGfxPoolIndex = 0` and the three head pointers.
+- **Confirmado en ASM:** the store order (`end`, `chunks[0]`, `ptr`, `capacity`, …, with every
+  `chunks[1] = NULL` / `chunkCount = 1` grouped at the end) is what the existing `inline` helpers already
+  produce — those helpers are real ROM functions (`GfxPool_Init = 0x80071B50`, `VtxPool_Init = 0x80071D44`,
+  `MtxPool_Init = 0x80071EBC`) and already match, so their bodies are fixed. `0x300`/`0x40`/`0x80` share one
+  register (`$a0`) and the constant `1` lives in `$a2`.
+- **Hipótesis probadas:** `&gGfxPools[n]` vs `gGfxPools + n`, `D_80134FD0[n]` vs `&D_80134FD0[n][0]`,
+  `gGfxPools[gGfxPoolIndex]` in the tail, and a `for (i = 0; i < 2; i++)` loop (11/104, wrong size) all stay
+  at 53/104 with the exact size. decomp-permuter found that moving `gGfxPoolIndex = 0;` *between the two
+  `GfxPool_Init` calls* jumps to **82/104**; all seven positions for that statement were then measured
+  (0: 49, 1: 82, 2-5: 72-73, 6: 53).
+- **Residual:** 22 words, all in the Mtx half plus the constant `1` landing in `$a1` instead of `$a2`.
+- **Bytes recuperados:** 0 B. Draft: `.scratch/s45/gfxpools_init_82.c`.
+- **TODO(match-debt):** the `gGfxPoolIndex = 0;` position that scores best is not plausible source; keep it
+  as a measurement, not as the answer.
+
+## CupResults_SetupTexts (unit_53B30, 1516 B / 379 instr, frame 0xB8) — NON_MATCHING 306/380
+- **REA/Ghidra:** `procedure_pseudo_code` gave both copies of the row loop (3 rows + 3 blanks when
+  `gProfileP1->cup == 2`, else 6 rows) and the trailing `Menu_SetText(..., 0x12, D_80141500, 200, 200, ...)`.
+- **Confirmado en ASM:** (1) `D_80123F8A` is `D_80123F60[i].f2A` (stride 0x2C) and `D_80123EDC` is
+  `gRaceSetup.p[i].car` (`gRaceSetup = 0x80123EA8`, `p` at +0x24, `RacerSetup` 0x14 bytes, `car` at +0x10).
+  (2) `D_80123EC1` is read inside the first loop (`lbu $v0, 0x0($t1)` after the store), so it goes through the
+  `lap = &D_80123EC1` pointer idiom already used by `Race_ReturnCup`. (3) `sprintf(buf1, ...)` is called in
+  *both* arms of `if (i == 0)` and GCC cross-jumps the `jal` — writing it as a single call after the `if`
+  costs ~17 words. (4) the blank-row loop reuses the `y` of the last row (original bug, must be kept).
+- **Hipótesis probadas:** single `sprintf` after the `if` (289) → one `sprintf` per arm (**306**);
+  `lap`/`recs` pointer idiom (−2), `s32 m, s` (−21), `s32 pos` (−20) all made it worse.
+- **Residual:** 74 words: `pos` gets two moves instead of one, `y` is computed before the call instead of
+  in the middle of the argument setup, and the blank-row loop keeps `y` in a different register.
+- **Bytes recuperados:** 0 B. Draft: `.scratch/s45/cupresults_setuptexts_306.c`.
+
+## Race_ReadPlayerControls (unit_2C6A0, 844 B / 211 instr, frame 0x30) — NON_MATCHING 194/211
+- **REA/Ghidra:** `procedure_pseudo_code` confirmed the 13 `sysInputGetControl` reads, the `0x47B`
+  (`finished`) early-out and the speed-dependent steering scale.
+- **Confirmado en ASM:** `add.s $fv0, $fv0, $ft1` means the scale is `t * (b - a) + a`, not `a + t * (b - a)`
+  (fixed this session); `a` is `$f6` and `b` is `$f8`, with `1.0f` in `$f0`.
+- **Hipótesis probadas:** operand order of the final `add` (fixed, no net count change), `a`/`b` declaration
+  order, hoisting them to the top of the function, inlining both `(f32)D_80138D4x` reads (179/213) and the
+  Ghidra `if (0.0f <= t)` clamp shape (192) — none beat 194. ANSI vs K&R parameter form is equivalent.
+- **Residual:** 17 words: `1.0f` must stay in `$f0` (we get `$f6`, which pushes `b` into `$f0`), and the
+  second and third clamp arms must be branch-likely (`bc1tl` + `mov.s` in the delay slot) into the shared
+  `sub.s` block. decomp-permuter only reached 595 from a 615 base.
+- **Bytes recuperados:** 0 B. Draft: `.scratch/s45/race_readplayercontrols_194.c`.
+
+## Coll_LoadLevel (unit_39C90) — still NON_MATCHING 155/159, 9 new hypotheses ruled out
+- **Confirmado en ASM:** at `0x80099110` the ROM really loads the same symbol twice
+  (`lw $a0, %lo(gCollLevel)($a0)` then `lw $v1, %lo(gCollLevel)($v1)`); both relocations resolve to
+  `0x8011B334`. Everything else in the function (155/159 words, 628/636 B) already matches, including the
+  registers: base in `$a0`, running pointer in `$v1`.
+- **Hipótesis probadas (all 155/159 or worse):** `h = gCollLevel` local base; `(Ent90_ *)(gCollLevel + 1)`
+  pointer arithmetic; `sizeof(Level_)` instead of `0xD8`; a running `p` assigned before the stores;
+  `(u8 *)mem + 0xD8` with `mem` live across `svcFileLoad` (GCC keeps `mem` in `$s0` instead of
+  rematerialising it from the global — 149/159); passing `gCollLevel` instead of `mem` to `svcFileLoad`;
+  `u8 *mem`; and a `volatile` re-read (156/160 but 640 B — the volatile form needs `lui/addiu/lw`, the ROM
+  has `lui/lw`).
+- **Conclusión:** GCC 2.7.2 CSEs a repeated global load inside one basic block and does not invalidate it
+  across stores through pointers, so no plain C form reproduces the duplicate. Two distinct pseudos are
+  needed; the remaining idea is a second declaration of the same address, which would be match debt.
+- **Bytes recuperados:** 0 B. Draft: `.scratch/s45/coll_loadlevel_155.c`.
+
+# Session 46 (2026-11-25)
+
+## Model_SetWheel (unit_06050, 140 B / 35 instr, frame 0x40) — MATCH exacto
+- **REA/Ghidra:** not queried this session; session 40 already had the full signature and both callees
+  (`Model_SetWheelContact`, `Model_SetPartRotation`), and the function has no globals.
+- **Confirmado en ASM:** the C from session 40 was already correct; the only difference was register
+  allocation (ROM: `slot`→`$s0`, `w`→`$s1`, `rz`→`$fs0`, `rx`→`$fs1`, `ry`→`$fs2`; ours swapped both sets).
+- **Hipótesis:** compiling the same draft at `-O3` gave 35/35, so the difference is not in the code but in
+  how GCC 2.7.2 treats a function it may inline (it keeps a copy of the RTL and renumbers the parameter
+  pseudos, which changes the global-alloc order).
+- **Cambios:** the definition is declared `inline void Model_SetWheel(...)` (non-static, so the body is still
+  emitted at -O2); added the `Model_SetWheelContact` prototype before it.
+- **Resultado objdiff:** 35/35, `make` OK (SHA-1 unchanged).
+- **Bytes recuperados:** 140 B.
+- **Pattern:** a near-miss whose only diff is the parameter register order can be a non-static `inline`
+  function: test the draft at `-O3` first (`sbs.py ... -O3`). Checked on the session-45 drafts
+  (Garage_SetupTexts, GfxPools_Init, CupResults_SetupTexts, Race_ReadPlayerControls, Coll_LoadLevel) and on
+  every `#ifdef NON_MATCHING` block: no change there.
+
+## Cup_SetupRace (unit_53B30, 508 B / 127 instr, frame 0x38) — NON_MATCHING 126/127 (was 96/127)
+- **REA/Ghidra:** pseudocode from session 37 (`D_80100E98` / `D_80100EA0` 5-byte locals, stride 0x2C).
+- **Confirmado en ASM:** (1) in the `cup == 2` path `D_80123EC1` is reloaded after every `sw` and its address
+  is CSE'd in `$a0`: the lap byte is `gRaceSetup.f19` (a struct field, so MEM_IN_STRUCT aliasing forces the
+  reload). With the scalar `D_80123EC1` GCC keeps it in a register (85 → 112/127). (2) Each arm of
+  `if (sysRandRange(5))` writes both rows 1 and 2 (`f2A` and `lap[]`); GCC cross-jumps the shared tail.
+  (3) The lap-clear address in the shuffle loop is `(&lap[l] + base) + i*44`, not `(base + i*44) + lap*4`.
+- **Hipótesis probadas:** plain `D_80123F60[i].lap[l]` (112), `ofs` byte trick with a constant base (106:
+  combine folds `l + i*11`), the same with a local `recs` base (120, but the base gets hoisted to `$s4`),
+  and the row pointer `recs = (CupRec_ *)&D_80123F60->lap[D_80123EC1]; *(s32 *)((s32)recs + ofs) = 0;`
+  (**126/127**). 25 further orderings/types and 20 min of decomp-permuter did not move the last word.
+- **Residual:** 1 word of scheduling: `subu` of `i * 44` should come before the `lbu D_80123EC1`.
+- **Bytes recuperados:** 0 B. Draft: `.scratch/s46/_v_c3.c` (header `.scratch/s46/cup_h.c`).
+
+## Input_Init (unit_0B140, 600 B / 150 instr, frame 0x40) — MATCH exacto
+- **REA/Ghidra:** not re-queried; the session-36 draft (`.scratch/ul/nr/near_6B2A0.c`) already had the logic
+  (layout reset per pad, rumble probe, START-pad selection) and the 24-byte `D_800FEB20` initialiser.
+- **Confirmado en ASM:** (1) the ROM keeps `&gInputLayoutCount` in `$s0` and derives the `gRumbleState`
+  slot pointers (`$s0 + 0x54`) and `gContPattern` from it: the three symbols are one struct
+  (`InputCtl_`: layout count, pattern at +0xC, four 0x54-byte slots at +0x10). With separate globals the
+  code is the same but with `$s0`/`$s1` swapped (60 words); with a cast `*(T *)&gInputLayoutCount` GCC
+  generates a different, shorter function. (2) The only other difference in the draft (147/151) was the
+  delay slot of the first START test: the source loop is
+  `i = 0; while (!(pads[i].button & 0x1000)) { if (++i >= 4) break; }`; `for` and `do/while` forms fill
+  the slot from the branch target instead.
+- **Cambios:** `gInputLayoutCount` is now declared `extern InputCtl_ gInputLayoutCount;` in the unit
+  (`Input_SetLayout` uses `.layouts`); local `ContPadII_` (Pad_ without the tail byte).
+- **Resultado objdiff:** 150/150, `make` OK.
+- **Bytes recuperados:** 600 B.
+
+## Mesh_GetMaterialList (unit_19D40, 392 B / 98 instr, leaf) — still NON_MATCHING 91/98
+- **Confirmado en ASM:** the session-36 draft is right except for one register swap in the object-list loop:
+  the ROM gives the `out[count++]` pointer (loop giv) `$t0` (reusing the command pointer's register) and the
+  id `$t1`; GCC gives them the other way round.
+- **Hipótesis probadas:** block-scoped id, reusing `id` for both loops (77), `out[count] = ...; count++`,
+  operand order of the `&` test, `<` instead of `!=` (85), `s32`/`u16` types for `id`/`ref`/`count`, all 720
+  declaration orders, `inline` / `-O3` (no change), decomp-permuter 400 s (best 40, only by reusing `max`,
+  which changes the semantics).
+- **Bytes recuperados:** 0 B. Draft: `.scratch/s46/ml1.c`.
+
+## SndSrc_Play (unit_01050, 420 B / 105 instr, frame 0x48) — NON_MATCHING 92/105 (was 90/105)
+- **Confirmado en ASM:** (1) the `Snd_IsPlaying` result is a variable reused for the new handle
+  (`h = Snd_IsPlaying(n->f10); if (h == 0) { h = Snd_Play(...); n->f10 = h; Snd_SetPitch(h, pitch); return 1; }
+  return 0;`), which gives the ROM's `beqz` / `j` layout (+2). (2) The ROM computes
+  `Snd3D_GetVolume(n) * gSfxVolume` into `$fs0` and never reads it (the `$fs0` save/restore is why the frame
+  is 0x48); every sibling (`CarSnd_StartLoopA/B`) uses that volume as `v = ... * 128.0f * vol;
+  if (v == 0) v = 1;` for `Snd_Play`'s second argument, which is a constant 1 here.
+- **Hipótesis probadas:** `if (vol) {}`, `v = vol * 0.0f` / `0 * vol` (keeps the mul but adds a
+  conversion), unused `f32` parameter of a `static inline` helper, `inline` / `-O3`: none keeps exactly a dead
+  `mul.s`.
+- **Residual:** the dead `lwc1 gSfxVolume; mul.s` pair, `$fs1` for `pitch`, and the `move $a0, $v0` before
+  the `beqz` (13 words).
+- **Bytes recuperados:** 0 B. Draft: `.scratch/s46/sp3.c`.
+
+## Gfx_SetPerspective (unit_103B0, 708 B / 177 instr, frame 0x40) — NON_MATCHING, rewritten with GBI macros
+- **Confirmado en ASM:** (1) `$s0 = 1` is hoisted to the prologue and used both for `clipFar != 1` and for the
+  four `gSPClipRatio(FRUSTRATIO_1)` words: a local `one = 1`. (2) The display list is exactly
+  `GFX_RESERVE(6); gSPMatrix(proj | load | nopush); gSPPerspNormalize(norm); gSPClipRatio(FRUSTRATIO_1);`.
+  (3) `far = D_800F2114; far *= 0.25f;` (load straight into `$fs0`) fixes the prologue.
+- **Residual (111 normalized words):** the ROM reloads `D_800F2168` for `guPerspective`'s first argument and
+  loads `aspect` with an integer `lw $a3` instead of reusing the FPR copy of `D_800F2124` from the fovy
+  division, i.e. CSE lost both values before the call; we have not found which source form causes that.
+  The tail (DL stores) differs only by scheduling.
+- **Bytes recuperados:** 0 B. Draft: `.scratch/s46/gsp3.c` (applies inside unit_103B0 with `tryin.py`).
+
+## Lap_GetTimes (unit_482C0, 624 B / 156 instr, frame 0x30) — MATCH exacto
+- **REA/Ghidra:** not re-queried; the session-37 draft (`.scratch/ul/nr/near_A7C8C.c`, 120/157) had the logic
+  (finish estimate from `Ai_GetRaceDistance`, per-lap random times, best lap).
+- **Confirmado en ASM / Cambios (in order of effect):**
+  1. `car->lapStart[lap] = X` evaluated the array address before the right-hand side; the ROM converts
+     first: `t = (s32)((f32)t / car->k534);` as its own statement (122 → 18 normalized words).
+  2. The random lap time adds the conversion first: `(s32)(gLapLength / k534) + svcRandRange(...)` (−1).
+  3. `t = d * 1000` is computed before the remaining-distance threshold, written
+     `n = (gLapCount - 1 - lap) * gLapLength;` (that form puts `lap + 1` in `$v0` like the ROM) (−9).
+  4. decomp-permuter found the last 8 words: `gRaceClock` is read into a local before the store
+     (`now = gRaceClock; car->lapStart[lap] = now + t;`), so it is loaded ahead of the `lap` index.
+- **Resultado objdiff:** 156/156, `make` OK.
+- **Bytes recuperados:** 624 B.
+
+## Model_SwapPalette (unit_06050, 324 B / 81 instr, frame 8) — NON_MATCHING, 9 → 5 words
+- **Confirmado en ASM:** the loop counter is unsigned (`sltiu`), and the palette index is first loaded into the
+  same register as the counter (`$t3`): the source reuses the counter, `k = gModels[i]->palIdx;
+  dst = gModels[i]->pals[k].colors;`.
+- **Hipótesis probadas:** 8 orderings/types of the RGBA5551 pack expression, `static inline` pack helpers,
+  4 forms of the palette address, decomp-permuter 360 s (best only with a bogus double store).
+- **Residual:** the three `sll` of the pack come out lo-first (ROM: hi, mid, lo) and the palette pointer /
+  offset use `$v1`/`$v0` instead of `$v0`/`$v1`. The improved draft replaces the `#ifdef NON_MATCHING` body.
+- **Bytes recuperados:** 0 B.
+
+## Gfx_ClearFrame (unit_13490, 668 B / 167 instr, frame 0x30) — NON_MATCHING, rewritten with GBI macros (52 words)
+- **Confirmado en ASM:** the function is the standard z-buffer + frame-buffer clear:
+  `GFX_RESERVE(12); gDPPipeSync; gDPSetDepthImage(OS_K0_TO_PHYSICAL(D_801380A8)); gDPPipeSync;
+  gDPSetCycleType(G_CYC_FILL); gDPSetColorImage(RGBA, 16b, w, zbuffer); gDPSetFillColor(GPACK_ZDZ x2);
+  gDPFillRectangle(0, 0, w - 1, h - 1); gDPPipeSync; gDPSetColorImage(..., osVirtualToPhysical(D_8014C648));
+  gDPSetFillColor(GPACK_RGBA5551(r, g, b, 1) x2); if (gBgImage == 0) gDPFillRectangle(...); gDPPipeSync;`
+  With the macros the whole middle (0x88–0x1E8) is identical (the old hand-written draft was 84/167).
+- **Residual:** parameter registers (ROM: r→`$s5`, g→`$s6`, b→`$s4`; ours r→`$s4`, g→`$s5`, b→`$s6`) and
+  the scheduling of the second fill colour. `inline`, K&R definition and signed/unsigned parameter types do
+  not change the allocation; decomp-permuter (1630 → 720) only by inserting an empty `do {} while (0)`.
+- **Bytes recuperados:** 0 B. Draft: `.scratch/s46/cf1.c` (applies in unit_13490 with `tryin.py`).
+
+## Gfx_SetViewport (unit_103B0, 820 B) — investigation only
+- **Confirmado en ASM:** `gDPPipeSync; gDPSetScissor(G_SC_NON_INTERLACE, x, y, x + w - 1, y + h - 1);
+  gSPViewport(*vp)` with a manual 3-command reserve on a `gDisplayListHead` copy taken before the Vp stores.
+  The ROM reloads `D_800F2170` after every `sh` into the viewport, i.e. those stores are treated as aliasing
+  the pointer; `Vp *`, `s16 *`, `volatile` and a one-field struct view all fail to reproduce that order.
+- Draft: `.scratch/s46/sv1.c`; the unit was left unchanged.
+
+**Session 46 result:** 3 exact matches (Model_SetWheel 140 B, Input_Init 600 B, Lap_GetTimes 624 B);
+objdiff 78.92 % (1,794 / 1,910 functions). No commit (below the 30-function threshold).

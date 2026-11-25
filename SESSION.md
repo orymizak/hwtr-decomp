@@ -1,5 +1,64 @@
 # Sesión de Decompilación HWTR
 
+## Sesión 45 (2026-11-25) — solo investigación, sin match nuevo
+- **objdiff sin cambios: 78.67 %** (434.864 / 552.760 B, 1.791 / 1.910 funciones). ROM OK, `make` incremental verde.
+- No se integró nada en `src/`: los cinco candidatos siguen a pocas palabras. Borradores en `.scratch/s45/`.
+- **Arreglo de herramienta:** `tools/match/try.py` imprimía las líneas `+` desalineadas (indexaba la salida de
+  `objdump` por número de línea en vez de por dirección), así que a partir del primer `nop` el diff mostraba
+  instrucciones nuestras equivocadas. El recuento `iguales N/M` siempre fue correcto. Añadido `.scratch/s45/sbs.py`
+  (diff en paralelo con la palabra hex).
+
+| Función | Unidad / tamaño | Antes | Ahora | Residual |
+|---|---|---|---|---|
+| `Garage_SetupTexts` | `unit_53B30`, 1.388 B | — (INCLUDE_ASM) | **341/347**, tamaño exacto | `prev` debe ir a `$v0` (6 palabras) |
+| `CupResults_SetupTexts` | `unit_53B30`, 1.516 B | — (INCLUDE_ASM) | 306/380 | `pos`/`y` y el bucle de filas vacías (74) |
+| `Race_ReadPlayerControls` | `unit_2C6A0`, 844 B | 194/211 | 194/211 (orden del `add` corregido) | `1.0f` en `$f0` y 2 ramas `bc1tl` (17) |
+| `GfxPools_Init` | `gfx_pools`, 416 B | — (INCLUDE_ASM) | 82/104, tamaño exacto | mitad Mtx y la constante `1` en `$a2` (22) |
+| `Coll_LoadLevel` | `unit_39C90`, 636 B | 155/159 | 155/159 | la doble carga de `gCollLevel` (4) |
+
+Detalle por función, con las hipótesis descartadas, en `MATCH_LOG.md` («Session 45»).
+Para el 80 % siguen faltando **7.344 B**.
+
+---
+
+
+## Estado actual (actualizado al cierre de la sesión 44, 2026-11-25)
+- **Métrica oficial: objdiff** (`tools/objdiff_report.py`, regenerado y verificado contra `build/us/report.json`; ver `METRICS.md`).
+- **ByteMatch confirmado:** 78.67 % de código (**434.864 / 552.760 B**), 1.791 / 1.910 funciones (93.77 %), 173 / 221 unidades completas.
+- **Para el 80 %:** 442.208 B → faltan **7.344 B**.
+- **ROM:** SHA-1 `94913a07e49005ffd43dfdfa16ff5862bdb93748` (OK). `verify_funcs.py`: 1.765 funciones en C, 403.604 B, todas en su dirección final.
+- **HEAD:** `8f28b9e`. El árbol de trabajo tiene 15 funciones nuevas con MATCH exacto sin commit (se agrupan hacia el objetivo de ~30 funciones por commit según `AGENTS.md` §4).
+- Las funciones `NON_MATCHING` no se cuentan: la build normal usa `INCLUDE_ASM` en su lugar.
+- Regla de reintentos vigente: 2 sesiones por función sin progreso medible (ver `AGENTS.md`; la mención de "3 intentos" más abajo es histórica).
+
+### Sesión 44 — REA + Ghidra + C (3 matches exactos = +3.696 B, 2 unidades completadas, 1 parcial)
+| Función | Unidad / tamaño | Resultado | Detalle |
+|---|---|---|---|
+| `Bld_StepRacer` | `src/unit_21150.c`, 1.892 B | **MATCH 473/473** (completa `unit_21150` al 100%) | Cross-jumping de `a1/b1` antes de `a->ang = 0.0f; if (flag)` para colocar `sw $zero, 0x14($s0)` en el delay slot de `beqz`; orden `a0/b0` verificado en ROM; `jtbl_800FFA50` en `rodata_refs.txt` |
+| `HighScores_SetupTexts` | `src/unit_53B30.c`, 1.080 B | **MATCH 270/270** | `D_800F5F80` identificado como `gMenuObjs[30]`, `case 2:` explícito en el `switch`, `y = 0xA0;` antes del bucle de 5 filas |
+| `RaceView_DrawScene` | `src/unit_4F640.c`, 724 B | **MATCH 181/181** (completa `unit_4F640` al 100%) | `if/else` en `svcCameraSetPerspective`, `s32 alpha` para `svcModelSetAlpha`, y locales `t`/`b2`/`mask`/`vh` para hoistear `(h >> 1) + 1` en `$fp` y `(h >> 1) - 1` en `$s7` |
+| `Coll_LoadLevel` | `src/unit_39C90.c`, 636 B | NON_MATCHING 155/159 (0 B) | Guardada bajo `#ifdef NON_MATCHING`; residual de 4 palabras por doble carga de `gCollLevel` en `0x80099110` |
+
+### Sesión 41 — REA + Ghidra (4 funciones: 1 match, 3 parciales)
+| Función | Unidad / tamaño | Resultado | Residual |
+|---|---|---|---|
+| `LZ_AdvanceBits` | `src/lz.c`, 168 B | **MATCH 42/42** (cuenta en objdiff) | — (Ghidra tipó `param_1` como `u8`; `register u8 n, register u8 *p`) |
+| `Model_SwapPalette` | `unit_06050`, 324 B | NON_MATCHING 72/81 (0 B) | orden de 3 `sll` en el empaquetado |
+| `SndCmd_SetEnvelopePreset` | `unit_6E610`, 332 B | NON_MATCHING 79/83 (0 B) | el original copia el puntero en `$a3` (delay slot de `bnez`) |
+| `PauseUi_DrawText` | `unit_6AE90`, 352 B | NON_MATCHING ~71/88 (0 B) | cabecera del bucle y movimientos del prólogo |
+
+Detalle en `MATCH_LOG.md` (sección «Sesión 41»). Sesión 40 añadió el match de `Ai_ApplyImpulse` (1.088 B) y tres NON_MATCHING
+(`Hud_DrawSlideFromLeft/Right`, `Save_ReadAll`); sesión 39, cuatro NON_MATCHING (`Controls_SetupTexts` 224/228, `HighScores_SetupTexts`,
+`Password_Encode` 782/800, `Password_Decode`).
+
+### Nota sobre cifras históricas
+Las cifras de abajo (74.77 %, 413.280 B) son objdiff en HEAD `31d1fab`; no son el estado actual.
+`objdiff.json` cambió solo en un flag (`complete: true`) al regenerar el informe.
+
+---
+
+# Historial: sesión previa (HEAD 31d1fab / 569d788)
+
 ## Estado y Avance Confirmado
 - **Último ByteMatch Confirmado:** 74.77% de código (413.280 / 552.760 bytes).
 - **Funciones Coincidentes:** 92.88% (1.774 / 1.910 funciones).

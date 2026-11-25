@@ -403,7 +403,151 @@ void World_Update(s32 dt) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", World_Draw);
+typedef struct { u8 p0[8]; u16 n; u8 pA[0x22]; u8 *items; u8 p30[4]; s32 p34; } Scn5_;
+typedef struct { s32 ids[6]; u8 p18[0x8F8 - 0x18]; u8 mode[6]; u8 p8FE[6]; s32 cur[6]; u8 p91C[0x93C - 0x91C]; u8 flip; } G5_;
+extern s32 gGameState;
+void Gfx_SetPerspective(s32);
+void SceneNode_Draw(void *, Mtx34f *, s32, s32);
+void Clouds_Draw(Mtx34f *, Vec3f *);
+u8 Model_GetVariant(s32);
+void Gfx_SetAllLightColors(u8, u8, u8);
+void ModelData_Draw(Model_ *, CameraState_ *, s32, u8, u8, u8, u8);
+void Explosions_Draw(Mtx34f *, s32);
+void Particles_Draw(void *, Mtx34f *);
+void SortQueue_Flush(void);
+void WorldData_TrimMaterialCache(void *, s32);
+void WorldData_TrimNodeCache(void *, s32);
+
+s32 World_Draw(Vec3f *eye, Vec3f *a, Vec3f *b, Vec3f *c) {
+    f32 m[3][3];
+    f32 t[3][3];
+    Mtx34f out;
+    Mtx34f r;
+    f32 cs;
+    f32 sn;
+    f32 u;
+    f32 v;
+    s32 i;
+    s32 flag;
+    s32 col;
+    u8 *flp;
+    s32 *id;
+    s32 gx;
+    G5_ *g;
+    u8 *md;
+    s32 *cu;
+    f32 zero;
+    void **scn;
+    s32 *gp;
+
+    flp = &((G5_ *)&gModels)->flip;
+    if (*flp == 1) {
+        a->x = -a->x;
+        a->y = -a->y;
+        a->z = -a->z;
+    }
+    m[0][0] = a->x;
+    m[1][0] = a->y;
+    m[2][0] = a->z;
+    m[0][1] = b->x;
+    m[1][1] = b->y;
+    m[2][1] = b->z;
+    m[0][2] = c->x;
+    m[1][2] = c->y;
+    m[2][2] = c->z;
+    t[0][0] = m[0][0];
+    t[0][1] = m[1][0];
+    t[0][2] = m[2][0];
+    t[1][0] = m[0][1];
+    t[1][1] = m[1][1];
+    t[1][2] = m[2][1];
+    t[2][0] = m[0][2];
+    t[2][1] = m[1][2];
+    t[2][2] = m[2][2];
+    zero = 0.0f;
+    r.m[0][0] = r.m[0][1] = r.m[0][2] = r.m[0][3] = r.m[1][0] = r.m[1][1] = r.m[1][2] = r.m[1][3] = r.m[2][0] = r.m[2][1] = r.m[2][2] = r.m[2][3] = zero;
+    r.m[0][0] = r.m[1][1] = r.m[2][2] = 1.0f;
+    cs = cosf(-1.570795f);
+    sn = sinf(-1.570795f);
+    u = r.m[0][1] * cs + r.m[0][2] * sn; v = r.m[0][2] * cs - r.m[0][1] * sn; r.m[0][1] = u; r.m[0][2] = v;
+    u = r.m[1][1] * cs + r.m[1][2] * sn; v = r.m[1][2] * cs - r.m[1][1] * sn; r.m[1][1] = u; r.m[1][2] = v;
+    u = r.m[2][1] * cs + r.m[2][2] * sn; v = r.m[2][2] * cs - r.m[2][1] * sn; r.m[2][1] = u; r.m[2][2] = v;
+    out.m[0][0] = r.m[0][0] * t[0][0] + r.m[0][1] * t[1][0] + r.m[0][2] * t[2][0];
+    out.m[0][1] = r.m[0][0] * t[0][1] + r.m[0][1] * t[1][1] + r.m[0][2] * t[2][1];
+    out.m[0][2] = r.m[0][0] * t[0][2] + r.m[0][1] * t[1][2] + r.m[0][2] * t[2][2];
+    out.m[0][3] = r.m[0][3];
+    out.m[1][0] = r.m[1][0] * t[0][0] + r.m[1][1] * t[1][0] + r.m[1][2] * t[2][0];
+    out.m[1][1] = r.m[1][0] * t[0][1] + r.m[1][1] * t[1][1] + r.m[1][2] * t[2][1];
+    out.m[1][2] = r.m[1][0] * t[0][2] + r.m[1][1] * t[1][2] + r.m[1][2] * t[2][2];
+    out.m[1][3] = r.m[1][3];
+    out.m[2][0] = r.m[2][0] * t[0][0] + r.m[2][1] * t[1][0] + r.m[2][2] * t[2][0];
+    out.m[2][1] = r.m[2][0] * t[0][1] + r.m[2][1] * t[1][1] + r.m[2][2] * t[2][1];
+    out.m[2][2] = r.m[2][0] * t[0][2] + r.m[2][1] * t[1][2] + r.m[2][2] * t[2][2];
+    out.m[2][3] = r.m[2][3];
+    out.m[0][3] += out.m[0][0] * -eye->x + out.m[0][1] * -eye->y + out.m[0][2] * -eye->z;
+    out.m[1][3] += out.m[1][0] * -eye->x + out.m[1][1] * -eye->y + out.m[1][2] * -eye->z;
+    out.m[2][3] += out.m[2][0] * -eye->x + out.m[2][1] * -eye->y + out.m[2][2] * -eye->z;
+    Gfx_SetLookAt((CameraState_ *)&out);
+    Gfx_SetPerspective(0);
+    if (gTrackSky != NULL) {
+        r.m[0][0] = out.m[0][0];
+        r.m[0][1] = out.m[0][1];
+        r.m[0][2] = out.m[0][2];
+        r.m[0][3] = out.m[0][3];
+        r.m[1][0] = out.m[1][0];
+        r.m[1][1] = out.m[1][1];
+        r.m[1][2] = out.m[1][2];
+        r.m[1][3] = out.m[1][3];
+        r.m[2][0] = out.m[2][0];
+        r.m[2][1] = out.m[2][1];
+        r.m[2][2] = out.m[2][2];
+        r.m[2][3] = out.m[2][3];
+        r.m[0][3] = zero;
+        r.m[1][3] = zero;
+        r.m[2][3] = zero;
+        SceneNode_Draw(((Scn5_ *)gTrackSky)->items, &r, D_800F2138.f4C, ((Scn5_ *)gTrackSky)->p34);
+        Clouds_Draw(&out, eye);
+    }
+    Gfx_SetPerspective(1);
+    flag = ((D_80138190.contactOn == 0) | (gGameState == 1)) ^ 1;
+    for (i = 0; i < 6; i++) {
+        if (Model_GetVariant(*(((G5_ *)&gModels)->ids + i)) == 0xFF) {
+            col = *(((G5_ *)&gModels)->cur + i);
+            if (*(((G5_ *)&gModels)->mode + i) == 1) {
+                col >>= 4;
+            }
+            Gfx_SetAllLightColors(col, col, col);
+            gx = D_800F2138.f4C;
+            ModelData_Draw((Model_ *)*(((G5_ *)&gModels)->ids + i), (CameraState_ *)&out, gx, D_80138150[i], D_80138156[i], *(((G5_ *)&gModels)->mode + i), flag);
+        }
+    }
+    Gfx_SetAllLightColors(100, 100, 100);
+    for (i = 0; i < ((Scn5_ *)gTrackWorld)->n; i++) {
+        SceneNode_Draw(((Scn5_ *)gTrackWorld)->items + i * 0x54, &out, D_800F2138.f4C, ((Scn5_ *)gTrackWorld)->p34);
+    }
+    for (i = 0; i < 6; i++) {
+        if (Model_GetVariant(*(((G5_ *)&gModels)->ids + i)) != 0xFF) {
+            col = *(((G5_ *)&gModels)->cur + i);
+            if (*(((G5_ *)&gModels)->mode + i) == 1) {
+                col >>= 4;
+            }
+            Gfx_SetAllLightColors(col, col, col);
+            gx = D_800F2138.f4C;
+            ModelData_Draw((Model_ *)*(((G5_ *)&gModels)->ids + i), (CameraState_ *)&out, gx, D_80138150[i], D_80138156[i], *(((G5_ *)&gModels)->mode + i), flag);
+        }
+    }
+    Gfx_SetAllLightColors(100, 100, 100);
+    Explosions_Draw(&out, flag);
+    Particles_Draw(&gParticles, &out);
+    Particles_Draw(&gParticlesAlt, &out);
+    Particles_Draw(&D_80145488, &out);
+    SortQueue_Flush();
+    scn = (void **)&gTrackWorld;
+    gp = &D_800F2138.f4C;
+    WorldData_TrimMaterialCache(*scn, *gp);
+    WorldData_TrimNodeCache(*scn, *gp);
+    return 0;
+}
 
 void World_SetCollLevel(s32 arg0) {
     D_8013818C = arg0;
@@ -459,7 +603,38 @@ inline void Color_Unpack5551(u32 color, void *r, void *g, void *b) {
     *(u8 *)b = cb;
 }
 
+/* TODO(match-debt): 5 words left (s46): the order of the three `sll` in the pack and the `$v0`/`$v1` swap of the
+ * palette pointer and its offset. `u32 k` (sltiu) and `k = palIdx` (shares `$t3`) are confirmed in the ASM. */
+#ifdef NON_MATCHING
+void Model_SwapPalette(u8 i, u8 mode) {
+    u16 *dst;
+    u32 k;
+    u8 r, g, b;
+
+    if (gModels[i] != NULL && gModels[i]->palIdx != 0 && D_80138190.palette[i] != mode) {
+        D_80138190.palette[i] = mode;
+        k = gModels[i]->palIdx;
+        dst = gModels[i]->pals[k].colors;
+        dst += 4;
+        if (mode == 1) {
+            for (k = 0; k < 7; k++) {
+                dst[k] = gModels[i]->savedPal[k];
+            }
+        } else {
+            for (k = 0; k < 7; k++) {
+                gModels[i]->savedPal[k] = dst[k];
+                Color_Unpack5551(dst[k], &r, &g, &b);
+                r >>= 1;
+                g >>= 1;
+                b >>= 1;
+                { u32 hi = r >> 3; u32 mid = g >> 3; u32 lo = b >> 3; dst[k] = (lo << 1) | ((hi << 11) | (mid << 6)) | 1; }
+            }
+        }
+    }
+}
+#else
 INCLUDE_ASM("asm/nonmatchings/unit_06050", Model_SwapPalette);
+#endif
 
 void Model_FlashOff(u8 i) {
     gModels[i]->b105 = 0;
@@ -617,7 +792,7 @@ void World_SetupLod(s32 a, s32 b) {
 
 void Light_Reset(void);
 void Gfx_UpdateLights(void);
-void ModelData_Draw(Model_ *, CameraState_ *, s32, u8, u8, s32, s32);
+void ModelData_Draw(Model_ *, CameraState_ *, s32, u8, u8, u8, u8);
 
 s32 Model_Draw(u8 idx) {
     if (gModels[idx] != NULL) {
@@ -689,8 +864,14 @@ s32 Model_SetTransform(u8 idx, Vec3f *p, f32 *r) {
     }
 }
 
-/* Sets wheel contact state and updates wheel part rotation */
-INCLUDE_ASM("asm/nonmatchings/unit_06050", Model_SetWheel);
+void Model_SetWheelContact(u8 slot, u8 w, u8 contact, Vec3f *pos, Vec3f *n, u8 surface);
+
+/* Sets wheel contact state and updates wheel part rotation. Declared inline: GCC 2.7.2 keeps the RTL of
+   inline functions, which changes the register allocation of the parameters (it also matches at -O3). */
+inline void Model_SetWheel(u8 slot, u8 w, f32 rx, f32 ry, f32 rz, s32 unused, u8 surface, u8 contact, Vec3f *pos, Vec3f *n) {
+    Model_SetWheelContact(slot, w, contact, pos, n, surface);
+    Model_SetPartRotation(slot, w, rx, ry, rz);
+}
 
 
 /* Wheel w of model slot touched (contact 1) or left the ground; keeps the contact points and counters

@@ -55,7 +55,50 @@ s32 n_alFxParamHdl(void *filter, s32 paramID, void *param) {
     return 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_74AB0", _n_loadOutputBuffer);
+f32 _doModFunc(ALDelay *d, s32 count);
+Acmd *_n_loadBuffer(ALFx *r, s16 *curr_ptr, s32 buff, s32 count, Acmd *p);
+
+/* Loads the delayed output of section d into buff (flags >> 8 select the DMEM buffer); with a chorus
+ * resampler, pulls a modulated number of samples and resamples them to 184. */
+Acmd *_n_loadOutputBuffer(ALFx *r, ALDelay *d, s32 buff, Acmd *p) {
+    Acmd *ptr = p;
+    s32 ratio;
+    s32 count;
+    s32 rbuff = 0x2E0;
+    s16 *out_ptr;
+    f32 fincount;
+    f32 fratio;
+    f32 delta;
+    s32 ramalign = 0;
+    s32 length;
+    s32 incount = 184;
+
+    if (d->rs) {
+        length = d->output - d->input;
+        delta = _doModFunc(d, 184);
+        delta /= length;
+        delta = (s32)(delta * UNITY_PITCH);
+        delta = delta / UNITY_PITCH;
+        fratio = 1.0 - delta;
+        fincount = d->rs->delta + (fratio * (f32)incount);
+        count = (s32)fincount;
+        d->rs->delta = fincount - (f32)count;
+        out_ptr = &r->input[-(d->output - d->rsdelta)];
+        ramalign = ((s32)out_ptr & 0x7) >> 1;
+        ptr = _n_loadBuffer(r, out_ptr - ramalign, rbuff, count + ramalign, ptr);
+        ratio = (s32)(fratio * UNITY_PITCH);
+        {
+            s32 t = buff >> 8;
+            n_aResample(ptr++, osVirtualToPhysical(d->rs->state), d->rs->first, ratio, rbuff + (ramalign << 1), t);
+        }
+        d->rs->first = 0;
+        d->rsdelta += count - incount;
+    } else {
+        out_ptr = &r->input[-d->output];
+        ptr = _n_loadBuffer(r, out_ptr, buff, incount, ptr);
+    }
+    return ptr;
+}
 
 /* Loads count samples of the circular delay line at curr_ptr into DMEM buff. */
 Acmd *_n_loadBuffer(ALFx *r, s16 *curr_ptr, s32 buff, s32 count, Acmd *p) {

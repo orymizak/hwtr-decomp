@@ -50,7 +50,86 @@ void RaceView_BeginFrame(void) {
     svcScreenBeginFrame();
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_4F640", RaceView_DrawScene);
+typedef struct { f32 x, y, z; } RvVec_;
+typedef struct { u8 p0[0x774]; s32 timer; } RvCar_;
+RvCar_ *Car_Get(u8 i);
+extern u16 (*svcScreenGetWidth)(void);
+extern u16 (*svcScreenGetHeight)(void);
+extern void (*svcScreenSetViewport)(s16 x, s16 y, u16 w, u16 h);
+extern void (*svcModelSetAlpha)(u8 id, s32 alpha);
+extern void (*svcModelSetVisible)(u8 id, u8 on);
+extern void (*svcCameraSetPerspective)(f32 near, f32 far, f32 fovy, f32 aspect);
+extern s32 (*svcWorldDraw)(RvVec_ *pos, RvVec_ *a, RvVec_ *b, RvVec_ *c, u8 view);
+extern void (*D_801416C0)(s16 x0, s16 y0, s16 x1, s16 y1); /* draws the split-screen divider */
+void RaceCam_Get(u8 i, RvVec_ *pos, RvVec_ *a, RvVec_ *b, RvVec_ *c, f32 *fovy, u8 *inside, u8 *car);
+
+/* Draws the world once per player view (split screen for two players), hiding the car whose
+ * camera is inside it and fading cars whose timer ran out; returns the sum of svcWorldDraw. */
+s32 RaceView_DrawScene(u32 dt) {
+    u8 i;
+    u8 j;
+    u16 w;
+    u16 h;
+    u16 vh;
+    s32 total;
+    f32 near;
+    f32 far;
+    RvVec_ pos;
+    RvVec_ a;
+    RvVec_ b;
+    RvVec_ c;
+    f32 fovy;
+    u8 inside;
+    u8 camCar;
+    RvCar_ *car;
+    u8 hide;
+    s32 alpha;
+    s32 t;
+    s32 b2;
+    s32 mask;
+
+    vh = 0;
+    w = svcScreenGetWidth();
+    h = svcScreenGetHeight();
+    near = 10.0f;
+    far = 4000.0f;
+    total = 0;
+    for (i = 0; i < (u32)gRaceViewCount; i++) {
+        if ((u32)gRaceViewCount >= 2) {
+            t = h / 2 + 1;
+            b2 = h / 2 - 1;
+            mask = i == 0;
+            vh = b2;
+            svcScreenSetViewport(0, -mask & t, w, vh);
+        }
+        RaceCam_Get(i, &pos, &a, &b, &c, &fovy, &inside, &camCar);
+        for (j = 0; j < (u32)D_801415B8; j++) {
+            car = Car_Get(j);
+            hide = 0;
+            if (j == camCar) {
+                hide = inside != 0;
+            }
+            alpha = ((car->timer == 0 ? 0xFF : 0) & 0xFF) | 0x7F;
+            if (D_800F3B81) {
+                svcModelSetAlpha(j, 0x7F);
+            } else {
+                svcModelSetAlpha(j, alpha);
+            }
+            svcModelSetVisible(j, !hide);
+        }
+        if (gRaceViewCount == 1) {
+            svcCameraSetPerspective(near, far, fovy, 1.3333334f);
+        } else {
+            svcCameraSetPerspective(near, far, fovy, 2.6666667f);
+        }
+        total += svcWorldDraw(&pos, &a, &b, &c, i);
+    }
+    svcScreenSetViewport(0, 0, w, h);
+    if ((u32)gRaceViewCount >= 2) {
+        D_801416C0(0, vh, w - 1, vh + 1);
+    }
+    return total;
+}
 
 void RaceView_EndFrame(void) {
     svcScreenEndFrame();

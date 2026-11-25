@@ -95,12 +95,91 @@ u16 Coll_FindRoom(Vec3f pos);
 void Coll_Register(RObj_ *o);
 void CollShape_InitPoint(u8 *n, u8 *o);
 void *Memory_Alloc(s32 size);
-void CollShape_InitCar(u8 *, u8 *);
+void CollShape_InitCar(u8 *n, Car *o);
 
 extern void *gCollNodeFree;
 extern Level_ *gCollLevel;
 
+/* 155/159 words (628/636 B): original reloads gCollLevel twice at 0x80099110 (into $a0 and $v1) before adding 0xD8. */
+#ifdef NON_MATCHING
+typedef struct { u16 idx; u16 h4; u16 h6; u16 val; u8 pad[0x14 - 10]; } Sub90_;
+typedef struct { u16 flags; Sub90_ s; } Ent90_;
+typedef struct { u16 flags; u16 h2; u16 h4; u8 pad[6]; } Ev90_;
+typedef struct { s32 n0; s32 n4; s32 n8; s32 nC; s32 n10; u8 pad[0xC0 - 0x14]; Ent90_ *c0; u8 *c4; u8 *c8; u8 *cc; Ev90_ *d0; u8 *d4; } Hdr90_;
+extern u32 D_8011C82C[];
+extern char D_801009A0[];
+extern s32 (*svcFileGetSize)(char *);
+extern s32 (*svcFileLoad)(char *, void *);
+s32 AnimTrack_Start(u32 index);
+
+u8 Coll_LoadLevel(u8 *o) {
+    char buf[0x100];
+    s32 size;
+    s32 r2;
+    void *mem;
+    Hdr90_ *h;
+    Ent90_ *p;
+    Sub90_ *q;
+    Ev90_ *e;
+    u32 i;
+    u8 r;
+
+    sprintf(buf, D_801009A0, o + 4, o[0x17]);
+    size = svcFileGetSize(buf);
+    if (size == 0) {
+        return 0;
+    }
+    mem = Memory_Alloc(size);
+    gCollLevel = mem;
+    if (svcFileLoad(buf, mem) != size) {
+        return 0;
+    }
+
+    ((Hdr90_ *)gCollLevel)->c0 = (Ent90_ *)((u8 *)gCollLevel + 0xD8);
+    ((Hdr90_ *)gCollLevel)->c4 = (u8 *)((Hdr90_ *)gCollLevel)->c0 + ((Hdr90_ *)gCollLevel)->n0 * 0x14;
+    ((Hdr90_ *)gCollLevel)->c8 = ((Hdr90_ *)gCollLevel)->c4 + ((Hdr90_ *)gCollLevel)->n4 * 0x18;
+    ((Hdr90_ *)gCollLevel)->cc = ((Hdr90_ *)gCollLevel)->c8 + ((Hdr90_ *)gCollLevel)->n8 * 0xC;
+    ((Hdr90_ *)gCollLevel)->d0 = (Ev90_ *)(((Hdr90_ *)gCollLevel)->cc + ((Hdr90_ *)gCollLevel)->nC * 0x14);
+    ((Hdr90_ *)gCollLevel)->d4 = (u8 *)((Hdr90_ *)gCollLevel)->d0 + ((Hdr90_ *)gCollLevel)->n10 * 0xC;
+
+    for (i = 0; i < D_8011C828; i++) {
+        D_8011C830[i] = gCollLapLength;
+    }
+
+    p = ((Hdr90_ *)gCollLevel)->c0;
+
+    for (i = 0; i < ((Hdr90_ *)gCollLevel)->n0; p++, i++) {
+        if (p->flags & 1) {
+            q = &p->s;
+            if (q->val * 10 < D_8011C82C[q->idx]) {
+                D_8011C82C[q->idx] = q->val * 10;
+            }
+        }
+    }
+
+    p = ((Hdr90_ *)gCollLevel)->c0;
+    for (i = 0; i < ((Hdr90_ *)gCollLevel)->n0; p++, i++) {
+        if (p->flags & 2) {
+            e = &((Hdr90_ *)gCollLevel)->d0[p->s.idx];
+            if (e->flags & 2) {
+                r = AnimTrack_Start(e->h2);
+                if (!r) {
+                    return 0;
+                }
+                if (e->flags & 4) {
+                    r = AnimTrack_Start(e->h4);
+                    if (!r) {
+                        return 0;
+                    }
+                }
+            }
+        }
+    }
+    return 1;
+}
+#else
 INCLUDE_ASM("asm/nonmatchings/unit_39C90", Coll_LoadLevel);
+#endif
 
 s32 Coll_Init(u8 *o) {
     s32 v = *(s32 *)(o + 0x1C);
@@ -198,7 +277,92 @@ void Coll_SetCarRoom(u8 *obj, s32 room) {
     Coll_ApplyRoomFlags(o, room, 1);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_39C90", CollShape_InitCar);
+void CollShape_InitCar(u8 *n, Car *o) {
+    Vec3f c;
+    Vec3f v;
+    Vec3f t;
+    Vec3f p;
+    f32 m[3][4];
+    Vec3f *q;
+    u8 cnt;
+    u8 i;
+    f32 x;
+    f32 y;
+    f32 z;
+
+    c.x = 0.0f;
+    c.y = 0.0f;
+    c.z = 0.0f;
+    v = o->extent;
+    cnt = o->nPoints;
+    v.x *= 0.5f;
+    v.y *= 0.5f;
+    v.z *= 0.5f;
+    *(Vec3f *)(n + 0xC) = v;
+    *(f32 *)(n + 0xC) += 1.0f;
+    *(f32 *)(n + 0x10) += 1.0f;
+    *(f32 *)(n + 0x14) += 1.0f;
+    n[0x3C] = cnt + 8;
+    *(void **)(n + 0x40) = Memory_Alloc(n[0x3C] * 0xC);
+    *(void **)(n + 0x44) = Memory_Alloc(n[0x3C] * 0xC);
+    memset(*(void **)(n + 0x40), 0, n[0x3C] * 0xC);
+    memset(*(void **)(n + 0x44), 0, n[0x3C] * 0xC);
+    for (i = 0; i < cnt; i++) {
+        (*(Vec3f **)(n + 0x40))[i].x = o->points[i].pos.x - o->center.x;
+        (*(Vec3f **)(n + 0x40))[i].y = o->points[i].pos.y - o->center.y;
+        (*(Vec3f **)(n + 0x40))[i].z = o->points[i].pos.z - o->center.z;
+    }
+    (*(Vec3f **)(n + 0x40))[cnt + 0].x = c.x + v.x;
+    (*(Vec3f **)(n + 0x40))[cnt + 0].y = c.y + v.y;
+    (*(Vec3f **)(n + 0x40))[cnt + 0].z = c.z + v.z;
+    (*(Vec3f **)(n + 0x40))[cnt + 1].x = c.x + v.x;
+    (*(Vec3f **)(n + 0x40))[cnt + 1].y = c.y + v.y;
+    (*(Vec3f **)(n + 0x40))[cnt + 1].z = c.z - v.z;
+    (*(Vec3f **)(n + 0x40))[cnt + 2].x = c.x + v.x;
+    (*(Vec3f **)(n + 0x40))[cnt + 2].y = c.y - v.y;
+    (*(Vec3f **)(n + 0x40))[cnt + 2].z = c.z + v.z;
+    (*(Vec3f **)(n + 0x40))[cnt + 3].x = c.x + v.x;
+    (*(Vec3f **)(n + 0x40))[cnt + 3].y = c.y - v.y;
+    (*(Vec3f **)(n + 0x40))[cnt + 3].z = c.z - v.z;
+    (*(Vec3f **)(n + 0x40))[cnt + 4].x = c.x - v.x;
+    (*(Vec3f **)(n + 0x40))[cnt + 4].y = c.y + v.y;
+    (*(Vec3f **)(n + 0x40))[cnt + 4].z = c.z + v.z;
+    (*(Vec3f **)(n + 0x40))[cnt + 5].x = c.x - v.x;
+    (*(Vec3f **)(n + 0x40))[cnt + 5].y = c.y + v.y;
+    (*(Vec3f **)(n + 0x40))[cnt + 5].z = c.z - v.z;
+    (*(Vec3f **)(n + 0x40))[cnt + 6].x = c.x - v.x;
+    (*(Vec3f **)(n + 0x40))[cnt + 6].y = c.y - v.y;
+    (*(Vec3f **)(n + 0x40))[cnt + 6].z = c.z + v.z;
+    (*(Vec3f **)(n + 0x40))[cnt + 7].x = c.x - v.x;
+    (*(Vec3f **)(n + 0x40))[cnt + 7].y = c.y - v.y;
+    (*(Vec3f **)(n + 0x40))[cnt + 7].z = c.z - v.z;
+    *(void **)(n + 0x48) = Memory_Alloc(n[0x3C] * 2);
+    t.x = o->pos.x + o->v8C.x;
+    t.y = o->pos.y + o->v8C.y;
+    t.z = o->pos.z + o->v8C.z;
+    m[0][0] = o->rot.m[0][0];
+    m[0][1] = o->rot.m[0][1];
+    m[0][2] = o->rot.m[0][2];
+    m[0][3] = t.x;
+    m[1][0] = o->rot.m[1][0];
+    m[1][1] = o->rot.m[1][1];
+    m[1][2] = o->rot.m[1][2];
+    m[1][3] = t.y;
+    m[2][0] = o->rot.m[2][0];
+    m[2][1] = o->rot.m[2][1];
+    m[2][2] = o->rot.m[2][2];
+    m[2][3] = t.z;
+    for (i = 0; i < n[0x3C]; i++) {
+        x = (*(Vec3f **)(n + 0x40))[i].x;
+        y = (*(Vec3f **)(n + 0x40))[i].y;
+        z = (*(Vec3f **)(n + 0x40))[i].z;
+        p.x = m[0][0] * x + m[0][1] * y + m[0][2] * z + m[0][3];
+        p.y = m[1][0] * x + m[1][1] * y + m[1][2] * z + m[1][3];
+        p.z = m[2][0] * x + m[2][1] * y + m[2][2] * z + m[2][3];
+        (*(s16 **)(n + 0x48))[i] = Coll_FindRoom(p);
+    }
+    *(f32 *)(n + 0x4C) = sqrtf(*(f32 *)(n + 0xC) * *(f32 *)(n + 0xC) + *(f32 *)(n + 0x10) * *(f32 *)(n + 0x10) + *(f32 *)(n + 0x14) * *(f32 *)(n + 0x14));
+}
 
 void CollShape_InitPoint(u8 *n, u8 *o) {
     s32 zero[3];
@@ -1394,7 +1558,204 @@ void Coll_GetStartPos(u8 i, V12_ *v, V16_ *q) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_39C90", Coll_ClipCamera);
+typedef struct { u16 flags; u16 quad; u8 pad4; s8 x; s8 y; s8 z; u8 pad8[2]; u8 n; u8 padB; u16 first; u8 padE[6]; } WpA41_;
+typedef struct { s16 nx; s16 ny; s16 nz; s16 d; u16 to; u8 flag; u8 padB; } PlA41_;
+typedef struct { f32 a; f32 b; f32 c; f32 d; s16 e; u16 f; } PlFA41_;
+typedef struct { s16 v[4][3]; } QdA41_;
+typedef struct { u16 pad0[2]; u16 cur; } P54A41_;
+typedef struct { u8 pad0[0x54]; P54A41_ *p54; u8 pad58[4]; s32 type; u8 pad60[0x10]; s32 *p70; } OA41_;
+#define WPS (*(WpA41_ **) ((u8 *) gCollLevel + 0xC0))
+#define QDS (*(QdA41_ **) ((u8 *) gCollLevel + 0xC4))
+#define PLS (*(PlA41_ **) ((u8 *) gCollLevel + 0xC8))
+#define PLCONV(l) pl.a = (l).nx / 4096.0f; pl.b = (l).ny / 4096.0f; pl.c = (l).nz / 4096.0f; pl.d = (l).d; pl.e = (l).flag; pl.f = (l).to;
+#define LERP(V, k) \
+    t.x = q[0].v[k][0]; t.y = q[0].v[k][1]; t.z = q[0].v[k][2]; \
+    s.x = t.x * r; s.y = t.y * r; s.z = t.z * r; \
+    t.x = q[1].v[k][0]; t.y = q[1].v[k][1]; t.z = q[1].v[k][2]; \
+    u.x = t.x * (1.0f - r); u.y = t.y * (1.0f - r); u.z = t.z * (1.0f - r); \
+    V.x = s.x + u.x; V.y = s.y + u.y; V.z = s.z + u.z;
+u8 Coll_ClipCamera(u8 id, Vec3f *pos) {
+    PlFA41_ pl;
+    Vec3f p;
+    Vec3f d;
+    Vec3f acc;
+    Vec3f t;
+    Vec3f s;
+    Vec3f u;
+    Vec3f v0;
+    Vec3f v2;
+    Vec3f v1;
+    Vec3f v3;
+    OA41_ *o;
+    WpA41_ *w;
+    PlA41_ *l;
+    QdA41_ *q;
+    u32 cnt;
+    u8 found;
+    s32 prev;
+    s32 cur;
+    u32 j;
+    u8 hit;
+    f32 d0;
+    f32 d1;
+    f32 r;
+    f32 len;
+    f32 dist;
+
+    o = (OA41_ *)Car_Get(id)->roomObj;
+    if (o->type == 3) {
+        cur = o->p54->cur;
+    } else {
+        cur = *o->p70;
+    }
+    cnt = 0;
+    found = 0;
+    prev = -1;
+    do {
+        w = &WPS[cur];
+        p.x = w->x << 8;
+        p.y = w->y << 8;
+        p.z = w->z << 8;
+        d.x = pos->x - p.x;
+        d.y = pos->y - p.y;
+        d.z = pos->z - p.z;
+        l = &PLS[w->first];
+        for (j = 0; j < w->n; l++, j++) {
+            if (l->flag == 0) {
+                PLCONV(*l);
+                if (d.x * pl.a + d.y * pl.b + d.z * pl.c + pl.d < 0.0f) {
+                    if (pl.f == prev) {
+                        found = 1;
+                    }
+                    prev = cur;
+                    cur = pl.f;
+                    break;
+                }
+            }
+        }
+        if (++cnt > 100) {
+            return 0;
+        }
+        if (j == w->n) {
+            found = 1;
+        }
+    } while (!found);
+    w = &WPS[cur];
+    p.x = w->x << 8;
+    p.y = w->y << 8;
+    p.z = w->z << 8;
+    d.x = pos->x - p.x;
+    d.y = pos->y - p.y;
+    d.z = pos->z - p.z;
+    acc.x = 0.0f;
+    acc.y = 0.0f;
+    acc.z = 0.0f;
+    hit = 0;
+    if (w->flags & 0x800) {
+        PLCONV(PLS[w->first]);
+        d0 = d.x * pl.a + d.y * pl.b + d.z * pl.c + pl.d;
+        PLCONV(PLS[w->first + 1]);
+        d1 = d.x * pl.a + d.y * pl.b + d.z * pl.c + pl.d;
+        r = d1 / (d0 + d1);
+        q = &QDS[w->quad];
+        LERP(v0, 0);
+        LERP(v1, 1);
+        LERP(v2, 2);
+        LERP(v3, 3);
+        s.x = v2.x - v0.x;
+        s.y = v2.y - v0.y;
+        s.z = v2.z - v0.z;
+        len = sqrtf(s.x * s.x + s.y * s.y + s.z * s.z);
+        u.x = v1.x - v0.x;
+        u.y = v1.y - v0.y;
+        u.z = v1.z - v0.z;
+        s.x *= 1.0f / len;
+        s.y *= 1.0f / len;
+        s.z *= 1.0f / len;
+        len = sqrtf(u.x * u.x + u.y * u.y + u.z * u.z);
+        u.x *= 1.0f / len;
+        u.y *= 1.0f / len;
+        u.z *= 1.0f / len;
+        t.x = d.x - v0.x;
+        t.y = d.y - v0.y;
+        t.z = d.z - v0.z;
+        dist = t.x * s.x + t.y * s.y + t.z * s.z;
+        if (dist < 48.0f) {
+            t.x = s.x * (48.0f - dist);
+            t.y = s.y * (48.0f - dist);
+            t.z = s.z * (48.0f - dist);
+            hit = 1;
+            acc.x += t.x;
+            acc.y += t.y;
+            acc.z += t.z;
+        }
+        t.x = d.x - v0.x;
+        t.y = d.y - v0.y;
+        t.z = d.z - v0.z;
+        dist = t.x * u.x + t.y * u.y + t.z * u.z;
+        if (dist < 48.0f) {
+            t.x = u.x * (48.0f - dist);
+            t.y = u.y * (48.0f - dist);
+            t.z = u.z * (48.0f - dist);
+            hit = 1;
+            acc.x += t.x;
+            acc.y += t.y;
+            acc.z += t.z;
+        }
+        t.x = v3.x - d.x;
+        t.y = v3.y - d.y;
+        t.z = v3.z - d.z;
+        dist = t.x * s.x + t.y * s.y + t.z * s.z;
+        if (dist < 48.0f) {
+            t.x = s.x * (48.0f - dist);
+            t.y = s.y * (48.0f - dist);
+            t.z = s.z * (48.0f - dist);
+            hit = 1;
+            acc.x -= t.x;
+            acc.y -= t.y;
+            acc.z -= t.z;
+        }
+        t.x = v3.x - d.x;
+        t.y = v3.y - d.y;
+        t.z = v3.z - d.z;
+        dist = t.x * u.x + t.y * u.y + t.z * u.z;
+        if (dist < 48.0f) {
+            t.x = u.x * (48.0f - dist);
+            t.y = u.y * (48.0f - dist);
+            t.z = u.z * (48.0f - dist);
+            hit = 1;
+            acc.x -= t.x;
+            acc.y -= t.y;
+            acc.z -= t.z;
+        }
+    } else {
+        l = &PLS[w->first];
+        for (j = 0; j < w->n; l++, j++) {
+            if (l->flag != 0) {
+                PLCONV(*l);
+                dist = d.x * pl.a + d.y * pl.b + d.z * pl.c + pl.d;
+                if (dist < 48.0f) {
+                    t.x = pl.a * (48.0f - dist);
+                    t.y = pl.b * (48.0f - dist);
+                    t.z = pl.c * (48.0f - dist);
+                    hit = 1;
+                    acc.x += t.x;
+                    acc.y += t.y;
+                    acc.z += t.z;
+                }
+            }
+        }
+    }
+    pos->x += acc.x;
+    pos->y += acc.y;
+    pos->z += acc.z;
+    return hit;
+}
+#undef WPS
+#undef QDS
+#undef PLS
+#undef PLCONV
+#undef LERP
 
 INCLUDE_ASM("asm/nonmatchings/unit_39C90", Coll_GetRoomAxis);
 

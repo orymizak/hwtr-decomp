@@ -658,7 +658,72 @@ u8 Race_IsFinished(void) {
     return ok;
 }
 
+/* NON_MATCHING 194/211 words: FP register allocation in the t clamp (1.0 lands in $f6 instead of $f0) and
+ * the second clamp branch is not branch-likely. D_80138D40 as array fixes store scheduling. */
+#ifdef NON_MATCHING
+#include "common.h"
+#include "race.h"
+#include "input.h"
+#include "physics.h"
+#include "include_asm.h"
+#include "car.h"
+extern u8 gHumanRacer[];
+extern s32 (*sysInputGetControl[])(s32, s32);
+extern u8 D_80138D40[];
+extern u8 D_80138D41;
+extern u8 D_80138D72;
+void RaceCam_SetFlag4A(u8, u8);
+void Hud_SetVisible(u8, u8);
+
+void Race_ReadPlayerControls(pl)
+u8 pl;
+{
+    Car *c = Car_Get(gHumanRacer[pl]);
+    f32 s;
+    f32 lim;
+    f32 t;
+
+    if (c->finished != 0) {
+        c->unk014 = 0;
+        c->unk018 = 0;
+        c->unk024 = 1;
+        c->unk025 = 0;
+        c->unk027 = 0;
+        c->yaw = 1.0f;
+        return;
+    }
+    s = (f32)((u8)sysInputGetControl[0](pl, 1) - (u8)sysInputGetControl[0](pl, 0)) / 255.0f;
+    c->yaw = s;
+    c->yaw = s * c->k4CC;
+    lim = D_80138D40[0] * 17.6f;
+    if (lim < c->fBC) {
+        f32 a = D_80138D41;
+        f32 b = D_80138D72;
+
+        t = 1.0f - (c->fBC - lim) / (2304.0f - lim);
+        if (t < 0.0f) {
+            t = 0.0f;
+        } else if (1.0f < t) {
+            t = 1.0f;
+        } else if (t < 0.0f) {
+            t = 0.0f;
+        }
+        c->yaw = (a + t * (b - a)) / 100.0f * c->yaw;
+    }
+    c->unk014 = (f32)(u8)sysInputGetControl[0](pl, 2) / 255.0f;
+    c->unk018 = (f32)(u8)sysInputGetControl[0](pl, 3) / 255.0f;
+    c->unk01C = (f32)((u8)sysInputGetControl[0](pl, 4) - (u8)sysInputGetControl[0](pl, 5)) / 255.0f;
+    c->unk020 = (f32)((u8)sysInputGetControl[0](pl, 6) - (u8)sysInputGetControl[0](pl, 7)) / 255.0f;
+    c->unk024 = sysInputGetControl[0](pl, 8);
+    c->unk025 = sysInputGetControl[0](pl, 9);
+    c->unk026 = sysInputGetControl[0](pl, 10);
+    c->unk027 = sysInputGetControl[0](pl, 10);
+    RaceCam_SetFlag4A(pl, sysInputGetControl[0](pl, 11));
+    Hud_SetVisible(pl, sysInputGetControl[0](pl, 12));
+}
+#else
 INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", Race_ReadPlayerControls);
+#endif
 
 s32 Race_GetPhase(void) {
     return gRacePhase;

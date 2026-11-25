@@ -18,7 +18,7 @@ extern u16 D_800F2650[];
 extern u16 D_800F2660[];
 extern u8 D_8010C400;
 
-u8 *LZ_AdvanceBits(int n, u8 *p);
+u8 *LZ_AdvanceBits(u8 n, u8 *p);
 
 s32 LZ_Decompress(u8 *src, u8 *dst) {
     u16 length;
@@ -72,20 +72,14 @@ s32 LZ_Decompress(u8 *src, u8 *dst) {
     return hdr->size;
 }
 
-    /* TODO
-    * El C de esta función aún difiere en la asignación de registros: el original usa $a2 como
-    * temporal porque mantiene $a1 ocupado. Equivale a:
-    *
-    * u8 *LZ_AdvanceBits(register int n, register u8 *p) {
-    *     D_8010C400 += n;
-    *     while (D_8010C400 >= 8) {
-    *         D_8010C400 -= 8;
-    *         if (D_8010C400 >= 0x10) {
-    *             while (1);
-    *         }
-    *         p++;
-    *     }
-    *     return p;
-    * }
-    */
-INCLUDE_ASM("asm/nonmatchings/lz", LZ_AdvanceBits);
+u8 *LZ_AdvanceBits(register u8 n, register u8 *p) {
+    D_8010C400 += n;
+    while (D_8010C400 >= 8) {
+        D_8010C400 -= 8;
+        if (D_8010C400 >= 0x10) {
+            LZ_HANG(); /* the original hangs here as well */
+        }
+        p++;
+    }
+    return p;
+}

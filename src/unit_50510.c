@@ -176,7 +176,69 @@ s32 Save_CreateOnPak(u32 i) {
     return ok;
 }
 
+/* TODO(match-debt): 772/776 B, same structure as the target (s40). Residual: the target hoists &sysSaveRead into $fp
+ * (uses [0] and [-1] = sysPakGetState) and keeps &gSaveSlots un-hoisted per inner loop; ours hoists gSaveSlots into $s8
+ * and loads sysSaveRead with lui/lw. Pointer copy, register, decl order and byte-offset forms had no effect. */
+#ifdef NON_MATCHING
+extern void *sysSaveRead[];
+
+u8 Save_ReadAll(void) {
+    u32 i;
+    u32 j;
+    u16 k;
+    u32 n;
+    u32 sum;
+    u8 *buf;
+    u8 *c;
+    u8 r;
+
+    for (j = 0; j < 4; j++) {
+        D_80123D28[j] = 0;
+    }
+    for (j = 0; j < 4; j++) {
+        gSaveIds[j] = 0;
+    }
+    buf = Memory_Alloc(0xDA0);
+    for (i = 0; i < 4; i++) {
+        if (D_80123D20[i] == 0) {
+            continue;
+        }
+        if (((s32 (*)(u32, u8 *))sysSaveRead[0])(i, buf) != 0) {
+            sum = 0;
+            c = buf;
+            n = 0xD90;
+            for (k = 0; k < n; k++) {
+                sum += *c++;
+            }
+            if (*(u32 *)(buf + 0xD90) != sum) {
+                gPakStatus[i] = 0x40;
+            } else {
+                if (D_80123D28[i] == 0) {
+                    *(Big88C_ *)(&gSaves + i * 0x88C) = *(Big88C_ *)buf;
+                }
+                gSaveIds[i] = *(s32 *)buf;
+                gSaveSlotCount[i] = buf[0x88C];
+                for (j = 0; j < buf[0x88C]; j++) {
+                    *(Blk140_ *)&gSaveSlots[i][j] = *(Blk140_ *)(buf + 0x890 + j * 0x140);
+                    *(s32 *)&gSaveSlots[i][j] = gSaveIds[i];
+                }
+                D_80123D28[i] = 1;
+            }
+        } else {
+            gPakStatus[i] = ((u32 (*)(u32))sysSaveRead[-1])(i);
+        }
+    }
+    Memory_Free(buf);
+    r = 0;
+    if (D_80123D20[0] == 0 || D_80123D28[0] != 0 || D_80123D20[1] == 0 || D_80123D28[1] != 0 ||
+        D_80123D20[2] == 0 || D_80123D28[2] != 0 || D_80123D20[3] == 0 || D_80123D28[3] != 0) {
+        r = 1;
+    }
+    return r;
+}
+#else
 INCLUDE_ASM("asm/nonmatchings/unit_50510", Save_ReadAll);
+#endif
 
 void Save_NewId(void);
 s32 Save_Commit(void) {

@@ -66,7 +66,8 @@ typedef struct Car {
     /* 0x010 */ f32 yaw;
     /* 0x014 */ f32 unk014;
     /* 0x018 */ f32 unk018;
-    /* 0x01C */ u8 pad01C[0x8];
+    /* 0x01C */ f32 unk01C;
+    /* 0x020 */ f32 unk020;
     /* 0x024 */ u8 unk024;
     /* 0x025 */ u8 unk025;
     /* 0x026 */ u8 unk026;

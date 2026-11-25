@@ -43,6 +43,7 @@ Particle_SpawnColored D_800FFA00
 Particle_SpawnJittered D_800FFA08
 Particle_SpawnBurst D_800FFA10
 Bld_ReadNode jtbl_800FFA38
+Bld_StepRacer jtbl_800FFA50
 Ai_Step D_800FFA70 D_800FFA78 D_800FFA80
 Ai_SyncCars D_800FFA88
 Ai_Init D_800FFA98

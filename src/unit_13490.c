@@ -229,7 +229,57 @@ inline void SceneNode_PrepareMaterial(Node72_ *n, s32 arg1) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_13490", SceneNode_DrawMesh);
+/* Translucent material of a mesh. */
+typedef struct { u8 p0[0x10]; s32 dl; } MatN_;
+/* Mesh shared by scene nodes. */
+typedef struct {
+    /* 0x00 */ u8 p0[6];
+    /* 0x06 */ u16 nVtx;
+    /* 0x08 */ u8 b8;
+    /* 0x09 */ u8 p9[3];
+    /* 0x0C */ s32 lastId;
+    /* 0x10 */ s32 nTris;
+    /* 0x14 */ MatN_ *mat;
+    /* 0x18 */ u8 p18[0x18];
+    /* 0x30 */ Gfx *dl;
+} MeshN_;
+extern s32 D_800F217C;
+s32 Mesh_Alloc(void);
+void SortQueue_AddMesh(MatN_ *m, s32 mtx, void *cam);
+void Mesh_ApplyPointLights(MeshXf75_ *n, s32 id);
+
+void SceneNode_DrawMesh(Node72_ *n, void *cam, s32 mtx, s32 id, s32 arg4) {
+    s32 *tris;
+
+    if (n->p3C != 0) {
+        if (((MeshN_ *)n->p3C)->nVtx != 0 && ((n->p40 == 0) | (((MeshN_ *)n->p3C)->dl == NULL))) {
+            SceneNode_PrepareMaterial(n, arg4);
+        }
+        tris = &D_800F217C;
+        *tris += ((MeshN_ *)n->p3C)->nTris;
+        if ((n->p40 != 0) & (((MeshN_ *)n->p3C)->dl != NULL)) {
+            if (gFrameParity == 0) {
+                Mesh_ApplyPointLights((MeshXf75_ *)n, id);
+            }
+            GFX_RESERVE(3);
+            gSPMatrix(gDisplayListHead++, mtx - 0x80000000, G_MTX_MODELVIEW | G_MTX_LOAD | G_MTX_NOPUSH);
+            gSPSegment(gDisplayListHead++, 3, n->p40 - 0x80000000);
+            gSPDisplayList(gDisplayListHead++, ((MeshN_ *)n->p3C)->dl);
+            n->flags |= 0x80;
+        }
+        if ((tris = (s32 *)((MeshN_ *)n->p3C)->mat) != NULL) {
+            if (((MatN_ *)tris)->dl == 0) {
+                ((MeshN_ *)n->p3C)->mat->dl = Mesh_Alloc();
+                Mesh_BuildMaterialDL((s32 *)((MeshN_ *)n->p3C)->mat, arg4, ((MeshN_ *)n->p3C)->b8);
+            }
+            SortQueue_AddMesh(((MeshN_ *)n->p3C)->mat, mtx, cam);
+            ((MeshN_ *)n->p3C)->lastId = id;
+        } else {
+            ((MeshN_ *)n->p3C)->lastId = id;
+        }
+    }
+    n->id = id;
+}
 
 s32 File_LoadAlloc(s32 name) {
     s32 buf;
@@ -492,7 +542,143 @@ s32 File_LoadAllocCopy(s32 name) {
     return buf;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_13490", ModelData_Load);
+typedef struct { Gfx *end; Gfx *start; Gfx *vtxCmd; u8 pC[4]; Gfx dl[1]; } MdlDL_;
+typedef struct { s32 n; Gfx *dl; Gfx *cur; } MdlPartDL_;
+typedef struct {
+    u8 p0[0x34];
+    u8 *tex;
+    u8 p38[0xC6];
+    s8 light;
+    u8 nA;
+    u8 p100[8];
+    Vtx *envVtx;
+    u8 nB;
+    u8 p10D[3];
+    Vtx *vtxA;
+    Vtx *vtxB;
+    Vtx *quad;
+    u8 p11C[0xC];
+    void *p128;
+    MdlPartDL_ *dlA;
+    MdlPartDL_ *dlB;
+    MdlDL_ *shadow;
+    MdlDL_ *env;
+} MdlData_;
+typedef struct { s16 s; s16 t; } TexST_;
+extern TexST_ D_800F1EA8[4];
+extern s32 D_800F2630;
+extern struct { u8 *tex; } D_80138138;
+extern u8 D_F1F20[];
+extern u8 D_F1EB8[];
+void EnvMap_Apply(MdlData_ *);
+s32 PointLight_Alloc(void);
+Gfx *Gfx_LoadTexture(Gfx *, u8 *);
+
+MdlData_ *ModelData_Load(MdlData_ *m) {
+    s32 i;
+    Gfx *g;
+    MdlPartDL_ *e;
+    Vtx *v;
+    s32 w;
+    s32 h;
+
+    ((void (*)(void))WorldData_Relocate)();
+    EnvMap_Apply(m);
+    if (m->vtxA != NULL) {
+        m->vtxA = (Vtx *)((s32)m + (s32)m->vtxA);
+        m->light = PointLight_Alloc();
+    } else {
+        m->light = -1;
+    }
+    if ((m->vtxB) != 0) { *(s32 *)&(m->vtxB) = (s32)m + *(s32 *)&(m->vtxB); };
+    if ((m->envVtx) != 0) { *(s32 *)&(m->envVtx) = (s32)m + *(s32 *)&(m->envVtx); };
+    if ((m->p128) != 0) { *(s32 *)&(m->p128) = (s32)m + *(s32 *)&(m->p128); };
+    if ((m->quad) != 0) { *(s32 *)&(m->quad) = (s32)m + *(s32 *)&(m->quad); };
+    if ((m->shadow) != 0) { *(s32 *)&(m->shadow) = (s32)m + *(s32 *)&(m->shadow); };
+    if ((m->dlA) != 0) { *(s32 *)&(m->dlA) = (s32)m + *(s32 *)&(m->dlA); };
+    if ((m->dlB) != 0) { *(s32 *)&(m->dlB) = (s32)m + *(s32 *)&(m->dlB); };
+    if ((m->env) != 0) { *(s32 *)&(m->env) = (s32)m + *(s32 *)&(m->env); };
+    if (m->nA != 0) {
+        e = m->dlA;
+        g = (Gfx *)(((s32)&e[m->nA] + 7) & ~7);
+        for (i = 0; i < m->nA; i++) {
+            e[i].n = 0;
+            e[i].dl = g;
+            e[i].cur = g;
+            { Gfx *_g = (Gfx *)(g++); _g->words.w0 = ((unsigned int) (((unsigned int)(0xfc) & ((0x01 << (8)) - 1)) << (24))) | ((unsigned int) (((unsigned int)((((unsigned int) (((unsigned int)((31)) & ((0x01 << (4)) - 1)) << (20))) | ((unsigned int) (((unsigned int)((31)) & ((0x01 << (5)) - 1)) << (15))) | ((unsigned int) (((unsigned int)((7)) & ((0x01 << (3)) - 1)) << (12))) | ((unsigned int) (((unsigned int)((7)) & ((0x01 << (3)) - 1)) << (9)))) | (((unsigned int) (((unsigned int)((31)) & ((0x01 << (4)) - 1)) << (5))) | ((unsigned int) (((unsigned int)((31)) & ((0x01 << (5)) - 1)) << (0))))) & ((0x01 << (24)) - 1)) << (0))); _g->words.w1 = (unsigned int)((((unsigned int) (((unsigned int)((31)) & ((0x01 << (4)) - 1)) << (28))) | ((unsigned int) (((unsigned int)((4)) & ((0x01 << (3)) - 1)) << (15))) | ((unsigned int) (((unsigned int)((7)) & ((0x01 << (3)) - 1)) << (12))) | ((unsigned int) (((unsigned int)((4)) & ((0x01 << (3)) - 1)) << (9)))) | (((unsigned int) (((unsigned int)((31)) & ((0x01 << (4)) - 1)) << (24))) | ((unsigned int) (((unsigned int)((7)) & ((0x01 << (3)) - 1)) << (21))) | ((unsigned int) (((unsigned int)((7)) & ((0x01 << (3)) - 1)) << (18))) | ((unsigned int) (((unsigned int)((0)) & ((0x01 << (3)) - 1)) << (6))) | ((unsigned int) (((unsigned int)((7)) & ((0x01 << (3)) - 1)) << (3))) | ((unsigned int) (((unsigned int)((0)) & ((0x01 << (3)) - 1)) << (0))))); };
+            { Gfx *_g = (Gfx *)(g++); _g->words.w0 = (((unsigned int) (((unsigned int)(0xe2) & ((0x01 << (8)) - 1)) << (24)))|((unsigned int) (((unsigned int)(32-(3)-(29)) & ((0x01 << (8)) - 1)) << (8)))| ((unsigned int) (((unsigned int)((29)-1) & ((0x01 << (8)) - 1)) << (0)))); _g->words.w1 = (unsigned int)(( 0x8 | 0x10 | 0x40 | 0x100 | 0x80 | 0x4000 | 0x800 | (0) << 30 | ( 0) << 26 | ( 1) << 22 | ( 0) << 18) | ( 0x8 | 0x10 | 0x40 | 0x100 | 0x80 | 0x4000 | 0x800 | (0) << 28 | ( 0) << 24 | ( 1) << 20 | ( 0) << 16)); };
+            { Gfx *_g = (Gfx *)(g++); _g->words.w0 = (((unsigned int) (((unsigned int)(0xd7) & ((0x01 << (8)) - 1)) << (24))) | ((unsigned int) (((unsigned int)(0) & ((0x01 << (8)) - 1)) << (16))) | ((unsigned int) (((unsigned int)(( 0)) & ((0x01 << (3)) - 1)) << (11))) | ((unsigned int) (((unsigned int)(( 0)) & ((0x01 << (3)) - 1)) << (8))) | ((unsigned int) (((unsigned int)(( (0))) & ((0x01 << (7)) - 1)) << (1)))); _g->words.w1 = (((unsigned int) (((unsigned int)(( 0x8000)) & ((0x01 << (16)) - 1)) << (16))) | ((unsigned int) (((unsigned int)(( 0x8000)) & ((0x01 << (16)) - 1)) << (0)))); };
+            { Gfx *_g = (Gfx *)((g++)); _g->words.w0 = ((unsigned int) (((unsigned int)(0xd9) & ((0x01 << (8)) - 1)) << (24)))|((unsigned int) (((unsigned int)(~(u32)(( 0x00010000 | 0x00020000 | 0x00040000))) & ((0x01 << (24)) - 1)) << (0))); _g->words.w1 = (u32)(0); };
+            { Gfx *_g = (Gfx *)(g++); _g->words.w0 = ((unsigned int) (((unsigned int)(0x01) & ((0x01 << (8)) - 1)) << (24)))|((unsigned int) (((unsigned int)(( 5)) & ((0x01 << (8)) - 1)) << (12)))|((unsigned int) (((unsigned int)(( 0)+( 5)) & ((0x01 << (7)) - 1)) << (1))); _g->words.w1 = (unsigned int)( &m->vtxA[i * 5]); };
+            { Gfx *_g = (Gfx *)(g++); _g->words.w0 = (((unsigned int) (((unsigned int)(0x06) & ((0x01 << (8)) - 1)) << (24)))| ((( 0) == 0) ? (((unsigned int) (((unsigned int)(( 0)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 1)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 2)*2) & ((0x01 << (8)) - 1)) << (0)))): (( 0) == 1) ? (((unsigned int) (((unsigned int)(( 1)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 2)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 0)*2) & ((0x01 << (8)) - 1)) << (0)))): (((unsigned int) (((unsigned int)(( 2)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 0)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 1)*2) & ((0x01 << (8)) - 1)) << (0)))))); _g->words.w1 = ((( 0) == 0) ? (((unsigned int) (((unsigned int)(( 0)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 3)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 1)*2) & ((0x01 << (8)) - 1)) << (0)))): (( 0) == 1) ? (((unsigned int) (((unsigned int)(( 3)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 1)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 0)*2) & ((0x01 << (8)) - 1)) << (0)))): (((unsigned int) (((unsigned int)(( 1)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 0)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 3)*2) & ((0x01 << (8)) - 1)) << (0))))); };
+            { Gfx *_g = (Gfx *)(g++); _g->words.w0 = ((unsigned int) (((unsigned int)(0x05) & ((0x01 << (8)) - 1)) << (24)))| ((( 0) == 0) ? (((unsigned int) (((unsigned int)(( 0)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 2)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 4)*2) & ((0x01 << (8)) - 1)) << (0)))): (( 0) == 1) ? (((unsigned int) (((unsigned int)(( 2)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 4)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 0)*2) & ((0x01 << (8)) - 1)) << (0)))): (((unsigned int) (((unsigned int)(( 4)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 0)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 2)*2) & ((0x01 << (8)) - 1)) << (0))))); _g->words.w1 = 0; };
+            { Gfx *_g = (Gfx *)(g++); _g->words.w0 = ((unsigned int) (((unsigned int)(0xdf) & ((0x01 << (8)) - 1)) << (24))); _g->words.w1 = 0; };
+        }
+    }
+    if (m->nB != 0) {
+        e = m->dlB;
+        g = (Gfx *)(((s32)&e[m->nB] + 7) & ~7);
+        for (i = 0; i < m->nB; i++) {
+            e[i].n = 0;
+            e[i].dl = g;
+            e[i].cur = g;
+            { Gfx *_g = (Gfx *)(g++); _g->words.w0 = ((unsigned int) (((unsigned int)(0xfc) & ((0x01 << (8)) - 1)) << (24))) | ((unsigned int) (((unsigned int)((((unsigned int) (((unsigned int)((31)) & ((0x01 << (4)) - 1)) << (20))) | ((unsigned int) (((unsigned int)((31)) & ((0x01 << (5)) - 1)) << (15))) | ((unsigned int) (((unsigned int)((7)) & ((0x01 << (3)) - 1)) << (12))) | ((unsigned int) (((unsigned int)((7)) & ((0x01 << (3)) - 1)) << (9)))) | (((unsigned int) (((unsigned int)((31)) & ((0x01 << (4)) - 1)) << (5))) | ((unsigned int) (((unsigned int)((31)) & ((0x01 << (5)) - 1)) << (0))))) & ((0x01 << (24)) - 1)) << (0))); _g->words.w1 = (unsigned int)((((unsigned int) (((unsigned int)((31)) & ((0x01 << (4)) - 1)) << (28))) | ((unsigned int) (((unsigned int)((4)) & ((0x01 << (3)) - 1)) << (15))) | ((unsigned int) (((unsigned int)((7)) & ((0x01 << (3)) - 1)) << (12))) | ((unsigned int) (((unsigned int)((4)) & ((0x01 << (3)) - 1)) << (9)))) | (((unsigned int) (((unsigned int)((31)) & ((0x01 << (4)) - 1)) << (24))) | ((unsigned int) (((unsigned int)((7)) & ((0x01 << (3)) - 1)) << (21))) | ((unsigned int) (((unsigned int)((7)) & ((0x01 << (3)) - 1)) << (18))) | ((unsigned int) (((unsigned int)((0)) & ((0x01 << (3)) - 1)) << (6))) | ((unsigned int) (((unsigned int)((7)) & ((0x01 << (3)) - 1)) << (3))) | ((unsigned int) (((unsigned int)((0)) & ((0x01 << (3)) - 1)) << (0))))); };
+            { Gfx *_g = (Gfx *)(g++); _g->words.w0 = (((unsigned int) (((unsigned int)(0xe2) & ((0x01 << (8)) - 1)) << (24)))|((unsigned int) (((unsigned int)(32-(3)-(29)) & ((0x01 << (8)) - 1)) << (8)))| ((unsigned int) (((unsigned int)((29)-1) & ((0x01 << (8)) - 1)) << (0)))); _g->words.w1 = (unsigned int)(( 0x8 | 0x10 | 0x40 | 0x100 | 0x80 | 0x4000 | 0x800 | (0) << 30 | ( 0) << 26 | ( 1) << 22 | ( 0) << 18) | ( 0x8 | 0x10 | 0x40 | 0x100 | 0x80 | 0x4000 | 0x800 | (0) << 28 | ( 0) << 24 | ( 1) << 20 | ( 0) << 16)); };
+            { Gfx *_g = (Gfx *)(g++); _g->words.w0 = (((unsigned int) (((unsigned int)(0xd7) & ((0x01 << (8)) - 1)) << (24))) | ((unsigned int) (((unsigned int)(0) & ((0x01 << (8)) - 1)) << (16))) | ((unsigned int) (((unsigned int)(( 0)) & ((0x01 << (3)) - 1)) << (11))) | ((unsigned int) (((unsigned int)(( 0)) & ((0x01 << (3)) - 1)) << (8))) | ((unsigned int) (((unsigned int)(( (0))) & ((0x01 << (7)) - 1)) << (1)))); _g->words.w1 = (((unsigned int) (((unsigned int)(( 0x8000)) & ((0x01 << (16)) - 1)) << (16))) | ((unsigned int) (((unsigned int)(( 0x8000)) & ((0x01 << (16)) - 1)) << (0)))); };
+            { Gfx *_g = (Gfx *)((g++)); _g->words.w0 = ((unsigned int) (((unsigned int)(0xd9) & ((0x01 << (8)) - 1)) << (24)))|((unsigned int) (((unsigned int)(~(u32)(( 0x00010000 | 0x00020000 | 0x00040000))) & ((0x01 << (24)) - 1)) << (0))); _g->words.w1 = (u32)(0); };
+            { Gfx *_g = (Gfx *)(g++); _g->words.w0 = ((unsigned int) (((unsigned int)(0x01) & ((0x01 << (8)) - 1)) << (24)))|((unsigned int) (((unsigned int)(( 7)) & ((0x01 << (8)) - 1)) << (12)))|((unsigned int) (((unsigned int)(( 0)+( 7)) & ((0x01 << (7)) - 1)) << (1))); _g->words.w1 = (unsigned int)( &m->vtxB[i * 7]); };
+            { Gfx *_g = (Gfx *)(g++); _g->words.w0 = (((unsigned int) (((unsigned int)(0x06) & ((0x01 << (8)) - 1)) << (24)))| ((( 0) == 0) ? (((unsigned int) (((unsigned int)(( 0)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 1)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 2)*2) & ((0x01 << (8)) - 1)) << (0)))): (( 0) == 1) ? (((unsigned int) (((unsigned int)(( 1)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 2)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 0)*2) & ((0x01 << (8)) - 1)) << (0)))): (((unsigned int) (((unsigned int)(( 2)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 0)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 1)*2) & ((0x01 << (8)) - 1)) << (0)))))); _g->words.w1 = ((( 0) == 0) ? (((unsigned int) (((unsigned int)(( 0)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 2)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 3)*2) & ((0x01 << (8)) - 1)) << (0)))): (( 0) == 1) ? (((unsigned int) (((unsigned int)(( 2)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 3)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 0)*2) & ((0x01 << (8)) - 1)) << (0)))): (((unsigned int) (((unsigned int)(( 3)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 0)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 2)*2) & ((0x01 << (8)) - 1)) << (0))))); };
+            { Gfx *_g = (Gfx *)(g++); _g->words.w0 = (((unsigned int) (((unsigned int)(0x06) & ((0x01 << (8)) - 1)) << (24)))| ((( 0) == 0) ? (((unsigned int) (((unsigned int)(( 0)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 3)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 4)*2) & ((0x01 << (8)) - 1)) << (0)))): (( 0) == 1) ? (((unsigned int) (((unsigned int)(( 3)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 4)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 0)*2) & ((0x01 << (8)) - 1)) << (0)))): (((unsigned int) (((unsigned int)(( 4)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 0)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 3)*2) & ((0x01 << (8)) - 1)) << (0)))))); _g->words.w1 = ((( 0) == 0) ? (((unsigned int) (((unsigned int)(( 0)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 4)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 5)*2) & ((0x01 << (8)) - 1)) << (0)))): (( 0) == 1) ? (((unsigned int) (((unsigned int)(( 4)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 5)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 0)*2) & ((0x01 << (8)) - 1)) << (0)))): (((unsigned int) (((unsigned int)(( 5)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 0)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 4)*2) & ((0x01 << (8)) - 1)) << (0))))); };
+            { Gfx *_g = (Gfx *)(g++); _g->words.w0 = (((unsigned int) (((unsigned int)(0x06) & ((0x01 << (8)) - 1)) << (24)))| ((( 0) == 0) ? (((unsigned int) (((unsigned int)(( 0)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 5)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 6)*2) & ((0x01 << (8)) - 1)) << (0)))): (( 0) == 1) ? (((unsigned int) (((unsigned int)(( 5)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 6)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 0)*2) & ((0x01 << (8)) - 1)) << (0)))): (((unsigned int) (((unsigned int)(( 6)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 0)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 5)*2) & ((0x01 << (8)) - 1)) << (0)))))); _g->words.w1 = ((( 0) == 0) ? (((unsigned int) (((unsigned int)(( 0)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 6)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 1)*2) & ((0x01 << (8)) - 1)) << (0)))): (( 0) == 1) ? (((unsigned int) (((unsigned int)(( 6)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 1)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 0)*2) & ((0x01 << (8)) - 1)) << (0)))): (((unsigned int) (((unsigned int)(( 1)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 0)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 6)*2) & ((0x01 << (8)) - 1)) << (0))))); };
+            { Gfx *_g = (Gfx *)(g++); _g->words.w0 = ((unsigned int) (((unsigned int)(0xdf) & ((0x01 << (8)) - 1)) << (24))); _g->words.w1 = 0; };
+        }
+    }
+    w = (m->tex[8] - 1) * 64;
+    h = (m->tex[9] - 1) * 64;
+    for (i = 0, v = m->quad; i < 4; i++, v++) {
+        v->v.flag = 0;
+        v->v.tc[0] = D_800F1EA8[i].s * w;
+        v->v.tc[1] = D_800F1EA8[i].t * h;
+        v->v.cn[0] = 0x60;
+        v->v.cn[1] = 0x60;
+        v->v.cn[2] = 0x60;
+        v->v.cn[3] = 0xFF;
+    }
+    g = m->shadow->dl;
+    m->shadow->start = g;
+    { Gfx *_g = (Gfx *)(g++); _g->words.w0 = (((unsigned int) (((unsigned int)((0xde)) & ((0x01 << (8)) - 1)) << (24))) | ((unsigned int) (((unsigned int)((0x00)) & ((0x01 << (8)) - 1)) << (16))) | ((unsigned int) (((unsigned int)((0)) & ((0x01 << (16)) - 1)) << (0)))); _g->words.w1 = (unsigned int)( D_F1F20); };
+    g = Gfx_LoadTexture(g, m->tex + 8);
+    { Gfx *_g = (Gfx *)(g++); _g->words.w0 = (((unsigned int) (((unsigned int)(0xd7) & ((0x01 << (8)) - 1)) << (24))) | ((unsigned int) (((unsigned int)(0) & ((0x01 << (8)) - 1)) << (16))) | ((unsigned int) (((unsigned int)(( 0)) & ((0x01 << (3)) - 1)) << (11))) | ((unsigned int) (((unsigned int)(( 0)) & ((0x01 << (3)) - 1)) << (8))) | ((unsigned int) (((unsigned int)(( (1))) & ((0x01 << (7)) - 1)) << (1)))); _g->words.w1 = (((unsigned int) (((unsigned int)(( 0x8000)) & ((0x01 << (16)) - 1)) << (16))) | ((unsigned int) (((unsigned int)(( 0x8000)) & ((0x01 << (16)) - 1)) << (0)))); };
+    { Gfx *_g = (Gfx *)((g++)); _g->words.w0 = ((unsigned int) (((unsigned int)(0xd9) & ((0x01 << (8)) - 1)) << (24)))|((unsigned int) (((unsigned int)(~(u32)(( 0x00010000 | 0x00020000 | 0x00040000))) & ((0x01 << (24)) - 1)) << (0))); _g->words.w1 = (u32)(0); };
+    m->shadow->vtxCmd = g;
+    { Gfx *_g = (Gfx *)(g++); _g->words.w0 = ((unsigned int) (((unsigned int)(0x01) & ((0x01 << (8)) - 1)) << (24)))|((unsigned int) (((unsigned int)(( 4)) & ((0x01 << (8)) - 1)) << (12)))|((unsigned int) (((unsigned int)(( 0)+( 4)) & ((0x01 << (7)) - 1)) << (1))); _g->words.w1 = (unsigned int)( m->quad); };
+    { Gfx *_g = (Gfx *)(g++); _g->words.w0 = (((unsigned int) (((unsigned int)(0x06) & ((0x01 << (8)) - 1)) << (24)))| ((( 0) == 0) ? (((unsigned int) (((unsigned int)(( 0)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 1)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 2)*2) & ((0x01 << (8)) - 1)) << (0)))): (( 0) == 1) ? (((unsigned int) (((unsigned int)(( 1)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 2)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 0)*2) & ((0x01 << (8)) - 1)) << (0)))): (((unsigned int) (((unsigned int)(( 2)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 0)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 1)*2) & ((0x01 << (8)) - 1)) << (0)))))); _g->words.w1 = ((( 0) == 0) ? (((unsigned int) (((unsigned int)(( 0)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 2)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 3)*2) & ((0x01 << (8)) - 1)) << (0)))): (( 0) == 1) ? (((unsigned int) (((unsigned int)(( 2)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 3)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 0)*2) & ((0x01 << (8)) - 1)) << (0)))): (((unsigned int) (((unsigned int)(( 3)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 0)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 2)*2) & ((0x01 << (8)) - 1)) << (0))))); };
+    { Gfx *_g = (Gfx *)(g++); _g->words.w0 = (((unsigned int) (((unsigned int)(0xe3) & ((0x01 << (8)) - 1)) << (24)))|((unsigned int) (((unsigned int)(32-(20)-(2)) & ((0x01 << (8)) - 1)) << (8)))| ((unsigned int) (((unsigned int)((2)-1) & ((0x01 << (8)) - 1)) << (0)))); _g->words.w1 = (unsigned int)( (1 << 20)); };
+    { Gfx *_g = (Gfx *)(g++); _g->words.w0 = ((unsigned int) (((unsigned int)(0xdf) & ((0x01 << (8)) - 1)) << (24))); _g->words.w1 = 0; };
+    m->shadow->end = g;
+    if (D_800F2630 != 0) {
+        e = (MdlPartDL_ *)m->env;
+        g = ((MdlDL_ *)e)->dl;
+        ((MdlDL_ *)e)->start = g;
+        { Gfx *_g = (Gfx *)(g++); _g->words.w0 = ((unsigned int) (((unsigned int)(0xe7) & ((0x01 << (8)) - 1)) << (24))); _g->words.w1 = 0; };
+        { Gfx *_g = (Gfx *)(g++); _g->words.w0 = (((unsigned int) (((unsigned int)(0xfa) & ((0x01 << (8)) - 1)) << (24))) | ((unsigned int) (((unsigned int)( 0) & ((0x01 << (8)) - 1)) << (8))) | ((unsigned int) (((unsigned int)( 0) & ((0x01 << (8)) - 1)) << (0)))); _g->words.w1 = (((unsigned int) (((unsigned int)( 255) & ((0x01 << (8)) - 1)) << (24))) | ((unsigned int) (((unsigned int)( 255) & ((0x01 << (8)) - 1)) << (16))) | ((unsigned int) (((unsigned int)( 255) & ((0x01 << (8)) - 1)) << (8))) | ((unsigned int) (((unsigned int)( 0x78) & ((0x01 << (8)) - 1)) << (0)))); };
+        { Gfx *_g = (Gfx *)(g++); _g->words.w0 = (((unsigned int) (((unsigned int)((0xde)) & ((0x01 << (8)) - 1)) << (24))) | ((unsigned int) (((unsigned int)((0x00)) & ((0x01 << (8)) - 1)) << (16))) | ((unsigned int) (((unsigned int)((0)) & ((0x01 << (16)) - 1)) << (0)))); _g->words.w1 = (unsigned int)( D_F1EB8); };
+        g = Gfx_LoadTexture(g, D_80138138.tex);
+        m->env->vtxCmd = g;
+        { Gfx *_g = (Gfx *)(g++); _g->words.w0 = ((unsigned int) (((unsigned int)(0xe7) & ((0x01 << (8)) - 1)) << (24))); _g->words.w1 = 0; };
+        { Gfx *_g = (Gfx *)(g++); _g->words.w0 = (((unsigned int) (((unsigned int)(0xe3) & ((0x01 << (8)) - 1)) << (24)))|((unsigned int) (((unsigned int)(32-(20)-(2)) & ((0x01 << (8)) - 1)) << (8)))| ((unsigned int) (((unsigned int)((2)-1) & ((0x01 << (8)) - 1)) << (0)))); _g->words.w1 = (unsigned int)( (0 << 20)); };
+        { Gfx *_g = (Gfx *)(g++); _g->words.w0 = ((unsigned int) (((unsigned int)(0x01) & ((0x01 << (8)) - 1)) << (24)))|((unsigned int) (((unsigned int)(( 16)) & ((0x01 << (8)) - 1)) << (12)))|((unsigned int) (((unsigned int)(( 0)+( 16)) & ((0x01 << (7)) - 1)) << (1))); _g->words.w1 = (unsigned int)( m->envVtx); };
+        { Gfx *_g = (Gfx *)(g++); _g->words.w0 = (((unsigned int) (((unsigned int)(0x06) & ((0x01 << (8)) - 1)) << (24)))| ((( 0) == 0) ? (((unsigned int) (((unsigned int)(( 0)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 1)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 2)*2) & ((0x01 << (8)) - 1)) << (0)))): (( 0) == 1) ? (((unsigned int) (((unsigned int)(( 1)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 2)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 0)*2) & ((0x01 << (8)) - 1)) << (0)))): (((unsigned int) (((unsigned int)(( 2)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 0)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 1)*2) & ((0x01 << (8)) - 1)) << (0)))))); _g->words.w1 = ((( 0) == 0) ? (((unsigned int) (((unsigned int)(( 0)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 2)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 3)*2) & ((0x01 << (8)) - 1)) << (0)))): (( 0) == 1) ? (((unsigned int) (((unsigned int)(( 2)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 3)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 0)*2) & ((0x01 << (8)) - 1)) << (0)))): (((unsigned int) (((unsigned int)(( 3)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 0)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 2)*2) & ((0x01 << (8)) - 1)) << (0))))); };
+        { Gfx *_g = (Gfx *)(g++); _g->words.w0 = (((unsigned int) (((unsigned int)(0x06) & ((0x01 << (8)) - 1)) << (24)))| ((( 0) == 0) ? (((unsigned int) (((unsigned int)(( 4)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 5)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 6)*2) & ((0x01 << (8)) - 1)) << (0)))): (( 0) == 1) ? (((unsigned int) (((unsigned int)(( 5)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 6)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 4)*2) & ((0x01 << (8)) - 1)) << (0)))): (((unsigned int) (((unsigned int)(( 6)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 4)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 5)*2) & ((0x01 << (8)) - 1)) << (0)))))); _g->words.w1 = ((( 0) == 0) ? (((unsigned int) (((unsigned int)(( 4)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 6)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 7)*2) & ((0x01 << (8)) - 1)) << (0)))): (( 0) == 1) ? (((unsigned int) (((unsigned int)(( 6)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 7)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 4)*2) & ((0x01 << (8)) - 1)) << (0)))): (((unsigned int) (((unsigned int)(( 7)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 4)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 6)*2) & ((0x01 << (8)) - 1)) << (0))))); };
+        { Gfx *_g = (Gfx *)(g++); _g->words.w0 = (((unsigned int) (((unsigned int)(0x06) & ((0x01 << (8)) - 1)) << (24)))| ((( 0) == 0) ? (((unsigned int) (((unsigned int)(( 8)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 9)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 10)*2) & ((0x01 << (8)) - 1)) << (0)))): (( 0) == 1) ? (((unsigned int) (((unsigned int)(( 9)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 10)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 8)*2) & ((0x01 << (8)) - 1)) << (0)))): (((unsigned int) (((unsigned int)(( 10)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 8)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 9)*2) & ((0x01 << (8)) - 1)) << (0)))))); _g->words.w1 = ((( 0) == 0) ? (((unsigned int) (((unsigned int)(( 8)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 10)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 11)*2) & ((0x01 << (8)) - 1)) << (0)))): (( 0) == 1) ? (((unsigned int) (((unsigned int)(( 10)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 11)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 8)*2) & ((0x01 << (8)) - 1)) << (0)))): (((unsigned int) (((unsigned int)(( 11)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 8)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 10)*2) & ((0x01 << (8)) - 1)) << (0))))); };
+        { Gfx *_g = (Gfx *)(g++); _g->words.w0 = (((unsigned int) (((unsigned int)(0x06) & ((0x01 << (8)) - 1)) << (24)))| ((( 0) == 0) ? (((unsigned int) (((unsigned int)(( 12)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 13)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 14)*2) & ((0x01 << (8)) - 1)) << (0)))): (( 0) == 1) ? (((unsigned int) (((unsigned int)(( 13)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 14)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 12)*2) & ((0x01 << (8)) - 1)) << (0)))): (((unsigned int) (((unsigned int)(( 14)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 12)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 13)*2) & ((0x01 << (8)) - 1)) << (0)))))); _g->words.w1 = ((( 0) == 0) ? (((unsigned int) (((unsigned int)(( 12)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 14)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 15)*2) & ((0x01 << (8)) - 1)) << (0)))): (( 0) == 1) ? (((unsigned int) (((unsigned int)(( 14)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 15)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 12)*2) & ((0x01 << (8)) - 1)) << (0)))): (((unsigned int) (((unsigned int)(( 15)*2) & ((0x01 << (8)) - 1)) << (16)))|((unsigned int) (((unsigned int)(( 12)*2) & ((0x01 << (8)) - 1)) << (8)))|((unsigned int) (((unsigned int)(( 14)*2) & ((0x01 << (8)) - 1)) << (0))))); };
+        { Gfx *_g = (Gfx *)(g++); _g->words.w0 = ((unsigned int) (((unsigned int)(0xe7) & ((0x01 << (8)) - 1)) << (24))); _g->words.w1 = 0; };
+        { Gfx *_g = (Gfx *)(g++); _g->words.w0 = (((unsigned int) (((unsigned int)(0xe3) & ((0x01 << (8)) - 1)) << (24)))|((unsigned int) (((unsigned int)(32-(20)-(2)) & ((0x01 << (8)) - 1)) << (8)))| ((unsigned int) (((unsigned int)((2)-1) & ((0x01 << (8)) - 1)) << (0)))); _g->words.w1 = (unsigned int)( (1 << 20)); };
+        { Gfx *_g = (Gfx *)(g++); _g->words.w0 = ((unsigned int) (((unsigned int)(0xdf) & ((0x01 << (8)) - 1)) << (24))); _g->words.w1 = 0; };
+        m->env->end = g;
+    }
+    return m;
+}
 
 void ModelData_SetVariant(List74_ *l, u8 v) {
     u32 i;

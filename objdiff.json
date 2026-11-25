@@ -226,7 +226,7 @@
           "game"
         ],
         "source_path": "src/lz.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/lz.o"
     },
@@ -262,7 +262,7 @@
           "game"
         ],
         "source_path": "src/unit_21150.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_21150.o"
     },
@@ -430,7 +430,7 @@
           "game"
         ],
         "source_path": "src/unit_482C0.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_482C0.o"
     },
@@ -490,7 +490,7 @@
           "game"
         ],
         "source_path": "src/unit_4F640.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_4F640.o"
     },
@@ -610,7 +610,7 @@
           "game"
         ],
         "source_path": "src/unit_6C240.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_6C240.o"
     },

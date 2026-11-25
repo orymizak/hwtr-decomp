@@ -193,4 +193,54 @@ s32 Car_CheckFinished(u8 i) {
     return 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_482C0", Lap_GetTimes);
+extern s32 (*svcRandRange)(u32);
+f32 Ai_GetRaceDistance(u8);
+/* Returns the total race time and best lap of car id; a car still racing gets its remaining laps
+ * estimated from its distance to the finish and the reference lap time. */
+void Lap_GetTimes(u8 id, u32 *total, u32 *best) {
+    Car *car;
+    u8 lap;
+    f32 d;
+    u32 now;
+    u32 t;
+    u32 lapTime;
+    u32 n;
+
+    car = Car_Get(id);
+    if (!(car->flags & 1) && !car->finished) {
+        lap = car->lap;
+        d = Ai_GetRaceDistance(id);
+        if (d < 0.0f) {
+            d = -d;
+        }
+        t = (s32)(d * 1000.0f);
+        n = (gLapCount - 1 - lap) * gLapLength;
+        if (t < n) {
+            t = 0;
+        } else {
+            t -= n;
+        }
+        t = (s32)((f32)t / car->k534);
+        now = gRaceClock;
+        car->lapStart[lap] = now + t;
+        if (lap != 0) {
+            lapTime = car->lapStart[lap] - car->lapStart[lap - 1];
+        } else {
+            lapTime = car->lapStart[0];
+        }
+        if (car->bestLap == 0 || lapTime < car->bestLap) {
+            car->bestLap = lapTime;
+        }
+        for (lap++; lap < gLapCount; lap++) {
+            lapTime = (s32)((f32)gLapLength / car->k534) + svcRandRange(gLapLength / 20);
+            car->lapStart[lap] = lapTime + car->lapStart[lap - 1];
+            if (car->bestLap == 0 || lapTime < car->bestLap) {
+                car->bestLap = lapTime;
+            }
+        }
+        car->finished = 1;
+        car->lap = gLapCount;
+    }
+    *total = car->lapStart[gLapCount - 1];
+    *best = car->bestLap;
+}

@@ -6,10 +6,19 @@ Do not compare figures across metrics: only compare two objdiff runs with each o
 
 | Tool | What it counts | Total | Matched | % |
 |------|----------------|-------|---------|---|
-| objdiff (official) | bytes of functions whose bytes equal the original, exact symbol sizes | 552,760 B / 1,910 fn | 414,416 B / 1,776 fn | 74.97% |
-| `tools/inventory.py` | bytes of functions that have C source (not `INCLUDE_ASM`), size = distance to the next symbol | 554,576 B / 1,915 fn | 415,976 B / 1,782 fn | 75.01% |
+| objdiff (official) | bytes of functions whose bytes equal the original, exact symbol sizes | 552,760 B / 1,910 fn | 434,864 B / 1,791 fn | 78.67% |
+| `tools/inventory.py` | bytes of functions that have C source (not `INCLUDE_ASM`), size = distance to the next symbol | 554,576 B / 1,915 fn | 436,424 B / 1,797 fn | 78.70% |
 
-(Figures measured on 2026-11-24 right after matching `Car_ComputeMass`.)
+(Figures measured on 2026-11-25, end of session 44, by re-running `make` + `python3 tools/objdiff_report.py`
+on the working tree (HEAD 8f28b9e + uncommitted changes). ROM SHA-1 `94913a07…` OK; `tools/match/verify_funcs.py`:
+1,765 C functions, 403,604 B, all at their final address. `NON_MATCHING` is not defined in the build, so reconstructions
+guarded by `#ifdef NON_MATCHING` fall back to `INCLUDE_ASM` and contribute 0 B to either row. Complete units: 173/221.)
+
+### Progress to the goal (objdiff)
+- Matched: **434,864 B** of 552,760 B = **78.67 %** (1,791 / 1,910 functions, 93.77 %).
+- 80 % = 442,208 B, so **7,344 B** remain to reach it.
+- Previous objdiff points (do not mix with inventory.py): 74.77 % (413,280 B, HEAD 31d1fab) → 74.97 % (414,416 B,
+  after `Car_ComputeMass`) → 76.74 % (424,184 B, session 41) → 78.00 % (431,168 B) → 78.67 % (434,864 B, now). Net since 31d1fab: +21,584 B, +17 functions.
 
 ## Why they differ (measured, not assumed)
 

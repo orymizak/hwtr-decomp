@@ -539,17 +539,87 @@ s32 Hud_DrawPlayer(u8 idx) {
     return 1;
 }
 
+/* TODO(match-debt): functionally equivalent; only the swap of $s1/$s2 (string/element pointers) differs from the target
+ * (s40: register/decl/copy variants had no effect). The `pad` is the 8 bytes of extra frame in the target. See MATCH_LOG.md. */
+#ifdef NON_MATCHING
+extern s32 (*svcFontGetCharWidth)(s32, s32);
+
+void Hud_DrawSlideFromLeft(u8 *s, El10_ *e, u8 mod, u8 cnt) {
+    u16 x = e->x;
+    u16 y = e->y;
+    u8 pad[8];
+    s32 w;
+
+    while (*s != 0) {
+        if ((s16)x > e->x1) {
+            break;
+        }
+        cnt++;
+        if ((s16)x >= e->x0 && (u8)cnt % mod == 0) {
+            w = svcFontDrawChar(0, *s, x, y, 1);
+        } else {
+            w = svcFontGetCharWidth(0, *s);
+        }
+        x += w;
+        x += Font_GetKerning(0, *s++, *s) - e->gap;
+    }
+    if ((s16)x <= e->x0) {
+        e->bD = 1;
+    } else if (e->bC == 0 && (s16)e->x + (e->w >> 1) + e->h8 <= (e->x0 + e->x1) / 2) {
+        e->bC = 1;
+        e->x = -(e->w >> 1) + (e->x0 + e->x1) / 2;
+    } else {
+        e->x = e->x + e->h8;
+    }
+}
+
+void Hud_DrawSlideFromRight(Blk28_ *b, El10_ *e, u8 mod, u8 cnt) {
+    u8 *s = (u8 *)b;
+    u16 x = e->x;
+    u16 y = e->y;
+    u8 pad[8];
+    s32 w;
+
+    while (*s != 0) {
+        if ((s16)x > e->x1) {
+            break;
+        }
+        cnt++;
+        if ((s16)x >= e->x0 && (u8)cnt % mod == 0) {
+            w = svcFontDrawChar(0, *s, x, y, 1);
+        } else {
+            w = svcFontGetCharWidth(0, *s);
+        }
+        x += w;
+        x += Font_GetKerning(0, *s++, *s) - e->gap;
+    }
+    if (e->x >= e->x1) {
+        e->bD = 1;
+    } else if (e->bC == 0 && e->x + (e->w >> 1) - e->h8 >= (e->x0 + e->x1) / 2) {
+        e->bC = 1;
+        e->x = (e->x0 + e->x1) / 2 - (e->w >> 1);
+    } else {
+        e->x = e->x - e->h8;
+    }
+}
+#else
 INCLUDE_ASM("asm/nonmatchings/unit_49CF0", Hud_DrawSlideFromLeft);
 
 INCLUDE_ASM("asm/nonmatchings/unit_49CF0", Hud_DrawSlideFromRight);
-
-INCLUDE_ASM("asm/nonmatchings/unit_49CF0", Hud_DrawResults);
+#endif
 
 extern char D_80100ABC[];
 extern char D_80100AC0[];
+extern char D_80100AB0[];
+extern char *D_80141564;
+extern char *D_80141568;
 extern char *D_8014156C;
+extern char *D_8014143C;
+extern s8 D_8011F690[];
+extern u8 D_8011F696[];
 extern char D_80138D20[];
 extern char D_801345B8[];
+extern char *D_800FA180[];
 
 static inline void Hud_DrawKernedText(u8 *c, u16 x, u16 y) {
     s32 one;
@@ -560,6 +630,73 @@ static inline void Hud_DrawKernedText(u8 *c, u16 x, u16 y) {
             x += svcFontDrawChar(0, *c, x, y, one);
             x += Font_GetKerning(0, *c++, *c);
         } while (*c != 0);
+    }
+}
+
+static inline void Hud_DrawKernedTextLoop(u8 *c, u16 x, u16 y) {
+    while (*c != 0) {
+        x += svcFontDrawChar(0, *c, x, y, 1);
+        x += Font_GetKerning(0, *c++, *c);
+    }
+}
+
+void Hud_DrawResults(void) {
+    u8 buf[80];
+    u8 i;
+    Car *p;
+    u32 t;
+    u16 y;
+    u8 *b;
+
+    svcDraw2DSetColor(0, 0xFF, 0xFF);
+    y = 0x3C;
+    sprintf((char *)buf, D_80100ABC);
+    Hud_DrawKernedTextLoop(buf, 30, y);
+    if (gHudCountdown == 0) {
+        sprintf((char *)buf, D_80100AC0, D_80141564);
+        Hud_DrawKernedTextLoop(buf, 200, y);
+    } else {
+        sprintf((char *)buf, D_80100AC0, D_80141568);
+        Hud_DrawKernedTextLoop(buf, 200, y);
+    }
+    svcDraw2DSetColor(0xFF, 0xFF, 0xFF);
+    y = 0x50;
+    for (i = 0; i < gHudRacerCount; y += 20, i++) {
+        if (D_8011F690[i] == -1) {
+            continue;
+        }
+        p = Car_Get(D_8011F690[i]);
+        if (p->flags & 1) {
+            svcDraw2DSetColor(0, 0xFF, 0);
+            if (p->id == 0) {
+                sprintf((char *)buf, D_80100AC0, D_80138D20);
+            } else {
+                sprintf((char *)buf, D_80100AC0, D_801345B8);
+            }
+        } else {
+            svcDraw2DSetColor(0xFF, 0xFF, 0xFF);
+            sprintf((char *)buf, D_80100AC0, D_800FA180[D_8011F696[D_8011F690[i]]]);
+        }
+        Hud_DrawKernedTextLoop(buf, 30, y);
+        if (gHudCountdown == 0) {
+            t = *(u32 *)((u8 *)p + (gHudLapCount << 2) + 0x44C);
+            b = buf;
+            if (t == 0) {
+                sprintf((char *)b, D_8014143C);
+            } else {
+                sprintf((char *)b, D_80100A9C, t / 60000, (t % 60000) / 1000, ((t % 60000) % 1000) / 100, (((t % 60000) % 1000) % 100) / 10);
+            }
+            Hud_DrawKernedTextLoop(buf, 200, y);
+        } else {
+            t = p->bestLap;
+            b = buf;
+            if (t == 0) {
+                sprintf((char *)b, D_80100AB0);
+            } else {
+                sprintf((char *)b, D_80100A9C, t / 60000, (t % 60000) / 1000, ((t % 60000) % 1000) / 100, (((t % 60000) % 1000) % 100) / 10);
+            }
+            Hud_DrawKernedTextLoop(buf, 200, y);
+        }
     }
 }
 

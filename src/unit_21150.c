@@ -173,7 +173,158 @@ s32 Bld_InitRacer(TrAD_ *t, u8 i) {
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_21150", Bld_StepRacer);
+typedef struct { u8 kind; u8 p1[3]; Vec3f v; f32 f30; f32 f34; u16 h38; u16 h3A; } RecA_;
+typedef struct { u8 kind; u8 p1[3]; u16 h4; } RecB_;
+typedef struct { u8 kind; u8 p1[3]; u8 b4; u8 p5[3]; s32 w[2]; u16 h[2]; u8 nm[2][16]; } RecD_;
+typedef union { RecA_ a; RecB_ b; RecD_ d; } RecC_;
+typedef struct { Vec3f pos; f32 c; f32 d10; f32 ang; s32 flags; f32 f1C; f32 f20; s32 n; s32 w[2]; u8 nm[2][16]; s32 sel; Vec3f p0; Vec3f p1; f32 a0; f32 b0; f32 a1; f32 b1; u16 idx; u8 p7E[2]; f32 dur; f32 time; } TrkC_;
+extern u8 D_800F26A0;
+f32 Math_Acos(f32);
+Vec3f Vec3_Lerp(f32 t, Vec3f a, Vec3f b);
+
+s32 Bld_StepRacer(TrkC_ *a, f32 dt, u8 flag, Vec3f n) {
+    RecC_ rec;
+    Vec3f old;
+    Vec3f d;
+    Vec3f e;
+    Vec3f t;
+    Vec3f v;
+    u8 k;
+    u8 i;
+    u8 j;
+    f32 l1;
+    f32 l2;
+    f32 c;
+    f32 f;
+    f32 s;
+    f32 s2;
+    f32 dts;
+    f32 i1;
+    f32 i2;
+
+    if (D_80114800 == 0) {
+        return 0;
+    }
+    if (a->dur < a->time + dt) {
+        do {
+            k = Bld_ReadNode((Q817_ *)&rec, a->idx);
+            switch (rec.a.kind) {
+            case 2:
+                a->idx = rec.b.h4;
+                break;
+            case 3:
+                if (a->sel == -1) {
+                    a->n = rec.d.b4;
+                    for (i = 0; i < rec.d.b4; i++) {
+                        a->w[i] = rec.d.w[i];
+                        for (j = 0; j < 16; j++) {
+                            a->nm[i][j] = rec.d.nm[i][j];
+                        }
+                    }
+                    return 0;
+                }
+                a->idx = rec.d.h[a->sel];
+                a->sel = -1;
+                break;
+            case 0:
+                a->idx += k;
+                break;
+            case 1:
+                a->idx += k;
+                break;
+            case 4:
+                a->idx += k;
+                a->f20 = rec.d.b4 * (a->dur / 1000.0f);
+                a->f20 = a->f20 - (a->time - a->dur) / 1000.0f;
+                break;
+            }
+        } while (rec.a.kind >= 2);
+        a->time -= a->dur;
+        a->dur = 100.0f;
+        old = a->p0;
+        a->p0 = a->p1;
+        if (rec.a.kind == 0) {
+            a->p1 = rec.a.v;
+            a->flags = rec.a.h38;
+            a->f1C = rec.a.h3A * (a->dur / 1000.0f);
+            a->f1C = a->f1C - a->time / 1000.0f;
+            a->a0 = a->a1;
+            a->b0 = a->b1;
+        } else {
+            a->p1.x = a->p0.x + rec.a.v.x;
+            a->p1.y = a->p0.y + rec.a.v.y;
+            a->p1.z = a->p0.z + rec.a.v.z;
+            a->a0 = a->a1;
+            a->b0 = a->b1;
+        }
+        if (rec.a.kind == 0) {
+            a->a1 = rec.a.f30;
+            a->b1 = rec.a.f34;
+        } else {
+            a->a1 = rec.a.f30;
+            a->b1 = rec.a.f34;
+        }
+        a->ang = 0.0f;
+        if (flag) {
+            d.x = a->p0.x - old.x;
+            d.y = a->p0.y - old.y;
+            d.z = a->p0.z - old.z;
+            e.x = a->p1.x - a->p0.x;
+            e.y = a->p1.y - a->p0.y;
+            e.z = a->p1.z - a->p0.z;
+            s = d.x * n.x + d.y * n.y + d.z * n.z;
+            t.x = n.x * s;
+            t.y = n.y * s;
+            t.z = n.z * s;
+            d.x = d.x - t.x;
+            d.y = d.y - t.y;
+            d.z = d.z - t.z;
+            s2 = e.x * n.x + e.y * n.y + e.z * n.z;
+            t.x = n.x * s2;
+            t.y = n.y * s2;
+            t.z = n.z * s2;
+            e.x = e.x - t.x;
+            e.y = e.y - t.y;
+            e.z = e.z - t.z;
+            l1 = sqrtf(d.x * d.x + d.y * d.y + d.z * d.z);
+            l2 = sqrtf(e.x * e.x + e.y * e.y + e.z * e.z);
+            if ((l1 > 1.0f) & (l2 > 1.0f)) {
+                i1 = 1.0f / l1;
+                i2 = 1.0f / l2;
+                d.x *= i1;
+                d.y *= i1;
+                d.z *= i1;
+                e.x *= i2;
+                e.y *= i2;
+                e.z *= i2;
+                c = d.x * e.x + d.y * e.y + d.z * e.z;
+                a->ang = Math_Acos((((c > -1.0f) ? c : -1.0f) < 1.0f) ? ((c > -1.0f) ? c : -1.0f) : 1.0f);
+                t.x = d.y * e.z - e.y * d.z;
+                t.y = e.x * d.z - d.x * e.z;
+                t.z = d.x * e.y - e.x * d.y;
+                if (t.x * n.x + t.y * n.y + t.z * n.z < 0.0f) {
+                    a->ang = -a->ang;
+                }
+                a->ang = a->ang / 0.1f;
+            }
+        }
+    }
+    a->time += dt;
+    f = a->time / a->dur;
+    v = Vec3_Lerp(f, a->p0, a->p1);
+    a->pos = v;
+    a->c = a->a0 * (1.0f - f) + a->a1 * f;
+    a->d10 = a->b0 * (1.0f - f) + a->b1 * f;
+    dts = dt / 1000.0f;
+    a->f1C -= dts;
+    if (a->flags & 2) {
+        a->f20 -= dts;
+    }
+    if (D_800F26A0 != 0) {
+        a->pos.x = -a->pos.x;
+    }
+    return 1;
+}
 
 typedef struct { u16 a; u16 key; f32 x; f32 y; f32 z; f32 rx; f32 ry; f32 rz; } Wp81_;
 extern WpTbl81_ D_80114810;

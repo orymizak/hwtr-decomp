@@ -31,7 +31,56 @@ void Ai_Update(void) {
     Ai_Step();
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_22440", Ai_ApplyImpulse);
+extern u8 D_80138D4A;
+extern u8 D_80138D4B;
+extern u8 D_80138D4C;
+extern u8 D_80138D4D;
+extern u8 D_80138D4E;
+extern u8 D_80138D4F;
+extern u8 D_80138D50;
+
+void Ai_ApplyImpulse(Car *car) {
+    u8 *o = (u8 *)car;
+    f32 m[3][4];
+    f32 x;
+    f32 y;
+    f32 z;
+
+    m[0][0] = *(f32 *)(o + 0xC0);
+    m[0][1] = *(f32 *)(o + 0xCC);
+    m[0][2] = *(f32 *)(o + 0xD8);
+    m[1][0] = *(f32 *)(o + 0xC4);
+    m[1][1] = *(f32 *)(o + 0xD0);
+    m[1][2] = *(f32 *)(o + 0xDC);
+    m[2][0] = *(f32 *)(o + 0xC8);
+    m[2][1] = *(f32 *)(o + 0xD4);
+    m[2][2] = *(f32 *)(o + 0xE0);
+    x = *(f32 *)(o + 0xA4) * m[0][0] + *(f32 *)(o + 0xA8) * m[0][1] + *(f32 *)(o + 0xAC) * m[0][2];
+    y = *(f32 *)(o + 0xA4) * m[1][0] + *(f32 *)(o + 0xA8) * m[1][1] + *(f32 *)(o + 0xAC) * m[1][2];
+    z = *(f32 *)(o + 0xA4) * m[2][0] + *(f32 *)(o + 0xA8) * m[2][1] + *(f32 *)(o + 0xAC) * m[2][2];
+    if (0.0f < x) {
+        gAi[o[0]].steer = (gAi[o[0]].steer + D_80138D4A < 80.0f) ? gAi[o[0]].steer + D_80138D4A : 80.0f;
+        gAi[o[0]].ctlTimer = 2;
+    } else {
+        gAi[o[0]].steer = (-80.0f < gAi[o[0]].steer - D_80138D4A) ? gAi[o[0]].steer - D_80138D4A : -80.0f;
+        gAi[o[0]].ctlTimer = 2;
+    }
+    if (0.0f < y) {
+        gAi[o[0]].throttle = (gAi[o[0]].throttle + D_80138D4D < (f32)D_80138D4B) ? gAi[o[0]].throttle + D_80138D4D : D_80138D4B;
+        gAi[o[0]].ctlTimer = 2;
+    } else {
+        gAi[o[0]].throttle = (gAi[o[0]].throttle - D_80138D4E > (f32)(D_80138D4C - 100)) ? gAi[o[0]].throttle - D_80138D4E : D_80138D4C - 100;
+        gAi[o[0]].ctlTimer = 2;
+        gAi[o[0]].braking = 1;
+    }
+    if (0.0f < z) {
+        gAi[o[0]].throttle = (gAi[o[0]].throttle - D_80138D50 > (f32)(D_80138D4C - 100)) ? gAi[o[0]].throttle - D_80138D50 : D_80138D4C - 100;
+        gAi[o[0]].ctlTimer = 2;
+    } else {
+        gAi[o[0]].throttle = (gAi[o[0]].throttle + D_80138D4F < (f32)D_80138D4B) ? gAi[o[0]].throttle + D_80138D4F : D_80138D4B;
+        gAi[o[0]].ctlTimer = 2;
+    }
+}
 
 void Ai_SyncCars(void) {
     u32 i;

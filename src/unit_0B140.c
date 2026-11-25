@@ -20,7 +20,10 @@ extern void *sysInputRumbleStopAll;
 extern void *sysInputRumbleResume;
 extern void *sysInputLoadBindings;
 extern void *sysInputSaveBindings;
-extern s32 gInputLayoutCount;
+/* Controller block: layout count, then gContPattern (+0xC) and the four gRumbleState slots (+0x10).
+   Input_Init addresses all of it from this symbol. */
+typedef struct { s32 layouts; u8 p4[8]; u8 pattern; u8 pD[3]; SlotC_ slot[4]; } InputCtl_;
+extern InputCtl_ gInputLayoutCount;
 extern Bind6C_ gPadBindings[];
 s32 Input_SetLayout(u8 pad, u8 mode);
 extern s32 D_800F0394[];
@@ -150,7 +153,70 @@ void Clouds_Update(void) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_0B140", Input_Init);
+/* OSContPad as filled by nuContDataRead: Pad_ without the explicit tail byte (with it GCC copies the
+   local initialiser in a different order). */
+typedef struct { u16 button; s8 stick_x; s8 stick_y; u8 errnum; } ContPadII_;
+u8 nuContInit(void);
+void nuContDataRead(ContPadII_ *);
+void nuContPakCodeSet(char *, char *);
+void PakMenu_Run(s32);
+u32 osGetCount(void);
+extern char D_800FEB38[];
+extern char D_800FEB3C[];
+
+/* Initialises the controller slots, then picks the controlling pad: the only connected one, or the
+ * first connected pad holding START. */
+s32 Input_Init(void) {
+    s32 n = 0;
+    ContPadII_ pads[4] = { { 0 }, { 0 }, { 0 }, { 0 } };
+    s32 i;
+    s32 j;
+
+    gInputLayoutCount.layouts = 1;
+    gInputLayoutCount.pattern = nuContInit();
+    for (i = 0; i < 4; i++) {
+        Input_SetLayout(i, 0);
+        gInputLayoutCount.slot[i].time = osGetCount();
+        for (j = 13; j >= 0; j--) {
+            gInputLayoutCount.slot[i].keys[j] = 0;
+        }
+    }
+    nuContPakCodeSet(D_800FEB38, D_800FEB3C);
+    Rumble_ProbeAll();
+    nuContDataRead(pads);
+    for (i = 0; i < 4; i++) {
+        n += gInputLayoutCount.slot[i].state == 1;
+    }
+    if (n != 0) {
+        if (n == 1) {
+            i = 0;
+            while (!(pads[i].button & 0x1000)) {
+                if (++i >= 4) {
+                    break;
+                }
+            }
+            if (i < 4) {
+                for (i = 0; i < 4; i++) {
+                    if (gInputLayoutCount.slot[i].state == 1) {
+                        break;
+                    }
+                }
+                PakMenu_Run(i);
+            }
+        } else {
+            for (i = 0; i < 4; i++) {
+                if ((pads[i].button & 0x1000) && gInputLayoutCount.slot[i].state == 1) {
+                    break;
+                }
+            }
+            if (i < 4) {
+                PakMenu_Run(i);
+            }
+        }
+    }
+    nuContPakCodeSet(D_800FEB38, D_800FEB3C);
+    return 1;
+}
 
 s32 Input_IsKeyHeld(u8 ch, s32 key);
 s32 Input_IsKeyHeldAny(s32 key);
@@ -438,7 +504,7 @@ u8 Input_GetLayout(s32 arg0) {
 }
 
 s32 Input_SetLayout(u8 pad, u8 mode) {
-    if (mode >= gInputLayoutCount) {
+    if (mode >= gInputLayoutCount.layouts) {
         return 0;
     }
     gPadBindings[pad].mode = mode;

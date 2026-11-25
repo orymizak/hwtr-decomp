@@ -197,7 +197,43 @@ extern s32 gSndRandSeed;
 extern f64 D_801016A0;
 
 /* Sets ADSR envelope preset parameters */
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", SndCmd_SetEnvelopePreset);
+u8 *SndCmd_SetEnvelopePreset(SndVoice *s, u8 *p) {
+    s32 n;
+    u8 *e;
+    u8 c;
+    s32 r;
+
+    n = *p++;
+    if (n & 0x80) {
+        n &= 0x7F;
+        n <<= 8;
+        n |= (r = *p++);
+    }
+    r = n * 7;
+    if ((n = *(u8 *)(r + (s32)s->unk74->unk18)) != 0) {
+        e = (u8 *)(r + (s32)s->unk74->unk18);
+    } else {
+        e = (u8 *)(r + (s32)s->unk74->unk18);
+        n = 1;
+    }
+    s->unkBF = n;
+    s->unk64 = 1024 / n;
+    s->unkC0 = e[1];
+    n = e[2];
+    s->unkC6 = n;
+    c = e[3];
+    s->unk58 = (1.0 / (f32)n) * (f32)(c - s->unkC0);
+    s->unkC1 = c;
+    n = e[4];
+    s->unkC7 = n;
+    c = e[5];
+    s->unk5C = (1.0 / (f32)n) * (f32)(c - s->unkC1);
+    s->unkC2 = c;
+    n = e[6];
+    s->unkC8 = n;
+    s->unk60 = 1.0 / (f32)n;
+    return p;
+}
 
 typedef struct { s32 unk0; s32 unk4; s32 unk8; s32 unkC; s32 unk10; s32 unk14; s32 unk18; s32 unk1C; s32 unk20; s32 unk24; u8 p28[0x18]; s32 unk40; } AudCfgB_;
 typedef struct { u16 a; u16 b; u8 c; } AudMsgB_;

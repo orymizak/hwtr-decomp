@@ -32,8 +32,8 @@ s32 Pause_RequestRestart();
 s32 PauseUi_Animate(s32);
 extern s32 gPauseConfirmMenu;
 s32 PauseUi_Open(s32);
-extern s8 D_800FA240;
-extern s8 D_800FA241;
+extern u8 D_800FA240;
+extern u8 D_800FA241;
 extern s32 gPauseMainMenu;
 extern s32 gPauseOptionsMenu;
 extern s32 gPauseAudioMenu;
@@ -60,7 +60,127 @@ s32 Pause_StateHasEvent(s16 id) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_6C240", Pause_Input);
+extern u8 D_800FA244;
+extern void (*sysInputUpdate)(s32);
+
+static inline u8 Pause_EdgeKey(s32 pad, s32 btn) {
+    if (sysInputIsKeyHeld(pad, btn)) {
+        if ((&D_800FA244)[pad * 14 + btn - 14] != 0) {
+            return 0;
+        }
+        (&D_800FA244)[pad * 14 + btn - 14] = 1;
+        return 1;
+    }
+    (&D_800FA244)[pad * 14 + btn - 14] = 0;
+    return 0;
+}
+
+#define PAUSE_EDGE0(pad, btn, lbl) ({ \
+    s32 _r; \
+    if (sysInputIsKeyHeld(pad, btn)) { \
+        p = &(&D_800FA244)[pad * 14 + btn - 14]; \
+        if (*p != 0) { \
+            _r = 0; \
+            goto lbl; \
+        } \
+        *p = 1; \
+        _r = 1; \
+        goto lbl; \
+    } \
+    (&D_800FA244)[pad * 14 + btn - 14] = 0; \
+    _r = 0; \
+lbl: \
+    (u8)_r; \
+})
+
+static inline u8 Pause_HeldKey(s32 pad, s32 btn) {
+    return sysInputIsKeyHeld(pad, btn);
+}
+
+static inline u8 Pause_HasEventInline(s16 id) {
+    IdEntry *p = gPauseCurState->ids;
+    u8 i;
+
+    for (i = 0; i < gPauseCurState->n; i++, p++) {
+        if (p->id == id) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+void Pause_Input(void) {
+    u8 v;
+    u8 *p;
+
+    if (*(u8 *)&gPausePlayer == 1) {
+        sysInputUpdate(0);
+        if (PAUSE_EDGE0(0, KEY_UP, _l0) && Pause_HasEventInline(4)) {
+            audSfxPlay(0x20, 1, 1.0f, 1.0f);
+            Fsm_Trigger(&gPauseFsm, 4);
+        }
+        if (Pause_EdgeKey(0, KEY_DOWN) && Pause_HasEventInline(5)) {
+            audSfxPlay(0x1F, 1, 1.0f, 1.0f);
+            Fsm_Trigger(&gPauseFsm, 5);
+        }
+        if (Pause_EdgeKey(0, KEY_A) && Pause_HasEventInline(3)) {
+            audSfxPlay(0x21, 1, 1.0f, 1.0f);
+            Fsm_Trigger(&gPauseFsm, 3);
+        }
+        if (Pause_EdgeKey(0, KEY_B) && Pause_HasEventInline(9)) {
+            audSfxPlay(0x22, 1, 1.0f, 1.0f);
+            Fsm_Trigger(&gPauseFsm, 9);
+        }
+        if (Pause_EdgeKey(0, KEY_RIGHT) && Pause_HasEventInline(1)) {
+            audSfxPlay(0x31, 1, 1.0f, 1.0f);
+            Fsm_Trigger(&gPauseFsm, 1);
+        }
+        if (Pause_EdgeKey(0, KEY_LEFT) && Pause_HasEventInline(2)) {
+            audSfxPlay(0x30, 1, 1.0f, 1.0f);
+            Fsm_Trigger(&gPauseFsm, 2);
+        }
+        v = Pause_HeldKey(0, KEY_START);
+        if (v != 0 && D_800FA240 != 0 && sysInputIsPad1Connected()) {
+            Fsm_Trigger(&gPauseFsm, 6);
+        }
+        if (v == 0 && D_800FA240 == 0) {
+            D_800FA240 = 1;
+        }
+    } else {
+        sysInputUpdate(1);
+        if (PAUSE_EDGE0(1, KEY_UP, _l1) && Pause_HasEventInline(4)) {
+            audSfxPlay(0x20, 1, 1.0f, 1.0f);
+            Fsm_Trigger(&gPauseFsm, 4);
+        }
+        if (Pause_EdgeKey(1, KEY_DOWN) && Pause_HasEventInline(5)) {
+            audSfxPlay(0x1F, 1, 1.0f, 1.0f);
+            Fsm_Trigger(&gPauseFsm, 5);
+        }
+        if (Pause_EdgeKey(1, KEY_A) && Pause_HasEventInline(3)) {
+            audSfxPlay(0x21, 1, 1.0f, 1.0f);
+            Fsm_Trigger(&gPauseFsm, 3);
+        }
+        if (Pause_EdgeKey(1, KEY_B) && Pause_HasEventInline(9)) {
+            audSfxPlay(0x22, 1, 1.0f, 1.0f);
+            Fsm_Trigger(&gPauseFsm, 9);
+        }
+        if (Pause_EdgeKey(1, KEY_RIGHT) && Pause_HasEventInline(1)) {
+            audSfxPlay(0x31, 1, 1.0f, 1.0f);
+            Fsm_Trigger(&gPauseFsm, 1);
+        }
+        if (Pause_EdgeKey(1, KEY_LEFT) && Pause_HasEventInline(2)) {
+            audSfxPlay(0x30, 1, 1.0f, 1.0f);
+            Fsm_Trigger(&gPauseFsm, 2);
+        }
+        v = Pause_HeldKey(1, KEY_START);
+        if (v != 0 && D_800FA241 != 0 && sysInputIsPad1Connected()) {
+            Fsm_Trigger(&gPauseFsm, 6);
+        }
+        if (v == 0 && D_800FA241 == 0) {
+            D_800FA241 = 1;
+        }
+    }
+}
 
     /* TODO (Clean version): [evaluated 2026-11-18: direct calls change the ROM]
     Indirect call via 'fp' is a matching artifact to pin sysInputIsKeyHeld in a register.
