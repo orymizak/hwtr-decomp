@@ -97,7 +97,8 @@ typedef struct Car {
     /* 0x140 */ s32 w140;
     /* 0x144 */ CarPoint points[6];
     /* 0x3E4 */ u8 nPoints;
-    /* 0x3E5 */ u8 pad3E5[0x2];
+    /* 0x3E5 */ u8 nFront; /* wheels counted on the front axle */
+    /* 0x3E6 */ u8 nRear;
     /* 0x3E7 */ u8 cnt3E7;
     /* 0x3E8 */ u8 cnt3E8;
     /* 0x3E9 */ u8 pad3E9[0x3];
@@ -139,12 +140,18 @@ typedef struct Car {
     /* 0x538 */ f32 k538;
     /* 0x53C */ f32 k53C;
     /* 0x540 */ u32 w540;
-    /* 0x544 */ u8 pad544[0x98];
+    /* 0x544 */ u32 wheelCount; /* low byte = number of wheels, also the mass divisor */
+    /* 0x548 */ Vec3f centerRaw; /* unscaled, copied to center by Car_ComputeMass */
+    /* 0x554 */ Vec3f extentRaw; /* unscaled, copied to extent by Car_ComputeMass */
+    /* 0x560 */ Vec3f wheelPosRaw[6];
+    /* 0x5A8 */ f32 wheelWRaw[6];
+    /* 0x5C0 */ f32 wheelHRaw[6];
+    /* 0x5D8 */ u8 pad5D8[0x4];
     /* 0x5DC */ Vec3f center;
-    /* 0x5E8 */ f32 unk5E8;
-    /* 0x5EC */ f32 unk5EC;
-    /* 0x5F0 */ f32 unk5F0;
-    /* 0x5F4 */ u8 pad5F4[0xC];
+    /* 0x5E8 */ Vec3f extent; /* half sizes: x from the wheel track, y/z from the raw extent */
+    /* 0x5F4 */ f32 f5F4;
+    /* 0x5F8 */ f32 f5F8;
+    /* 0x5FC */ f32 f5FC;
     /* 0x600 */ Vec3f savedPos; /* respawn snapshot */
     /* 0x60C */ Mtx3f savedRot;
     /* 0x630 */ s32 savedRoom;

@@ -153,7 +153,24 @@ void Quat_ToMtx3(Quat q, Mtx3f *out) {
     out->m[2][2] = 1.0f - (xx + yy);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_48FA0", Quat_Mul);
+/* Quaternion product with 8 multiplications (Game Programming Gems); returns a*b */
+Quat Quat_Mul(Quat a, Quat b) {
+    Quat r;
+    f32 A, B, C, D, E, F, G, H;
+    A = (a.w + a.x) * (b.w + b.x);
+    B = (a.z - a.y) * (b.y - b.z);
+    C = (a.x - a.w) * (b.y + b.z);
+    D = (a.y + a.z) * (b.x - b.w);
+    E = (a.x + a.z) * (b.x + b.y);
+    F = (a.x - a.z) * (b.x - b.y);
+    G = (a.w + a.y) * (b.w - b.z);
+    H = (a.w - a.y) * (b.w + b.z);
+    r.w = B + ((G - E) + (H - F)) / 2.0f;
+    r.x = A - ((E + F) + (G + H)) / 2.0f;
+    r.y = ((E - F) + (G - H)) / 2.0f - C;
+    r.z = ((E - F) + (H - G)) / 2.0f + D;
+    return r;
+}
 
 void Quat_Normalize(Quat *q) {
     f32 w = q->w;

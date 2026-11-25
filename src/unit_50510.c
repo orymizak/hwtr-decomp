@@ -327,7 +327,7 @@ void Save_NewId(void) {
     } while (sysRandRange(0x17D78400) == 0);
 }
 
-void Unlocks_GetMask(Bits5_ *b, u32 *mask) {
+inline void Unlocks_GetMask(Bits5_ *b, u32 *mask) {
     u8 i;
     s32 bit;
 
@@ -348,7 +348,7 @@ void Unlocks_GetMask(Bits5_ *b, u32 *mask) {
     }
 }
 
-void Unlocks_SetMask(Bits5_ *b, u32 mask) {
+inline void Unlocks_SetMask(Bits5_ *b, u32 mask) {
     u8 i;
 
     for (i = 0; i < 24; i++, mask >>= 1) {
@@ -367,9 +367,205 @@ void Unlocks_SetMask(Bits5_ *b, u32 mask) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_50510", Password_Encode);
+/* TODO(match-debt): 782/800 words (s39, REA pseudocode as base; Unlocks_GetMask is now `inline`, which reproduces the
+ * stack-resident mask). Residual: gcc swaps the registers of bi/r ($a2/$a3) and schedules the out[k] store differently.
+ * The swap loop needs a local `j2 = i * 2` (otherwise gcc hoists the table addresses). See MATCH_LOG.md. */
+#ifdef NON_MATCHING
+typedef struct { u8 pad[0x14]; u32 lo; u32 hi; u32 w1C; u8 p20[2]; u8 b22; u8 b23; s32 w24; s32 w28; s32 w2C; s32 w30; s32 w34; s32 w38; } PwSrc_;
+extern u8 gPasswordChars[];
+extern u8 D_800F6028[];
+extern u8 D_800F601C[];
+extern u8 D_800F601D[];
+extern u8 D_80123D2C;
+s32 Password_Encode(p, out)
+    PwSrc_ *p;
+    u8 *out;
+{
+    u8 buf[12];
+    u32 mask;
+    u8 i;
+    u8 bi;
+    u8 r;
+    u8 k;
+    s32 v;
+    u32 sum;
+    u8 t;
+    s32 j2;
 
+    Unlocks_GetMask((Bits5_ *)p, &mask);
+    buf[0] = mask;
+    buf[1] = mask >> 8;
+    buf[2] = mask >> 16;
+    buf[3] = p->w1C;
+    buf[4] = p->w1C >> 8;
+    buf[5] = (p->w24 & 0x7F) | ((p->b22 & 1) << 7);
+    buf[6] = (p->w28 & 0x7F) | ((u8)(p->b22 << 6) & 0x80);
+    buf[7] = (p->w2C & 0x7F) | ((p->b23 & 1) << 7);
+    buf[8] = (p->w30 & 0x7F) | ((u8)(p->b23 << 6) & 0x80);
+    buf[9] = (p->w34 & 0x7F) | ((u8)(p->b23 << 5) & 0x80);
+    buf[10] = (p->w38 & 0x7F) | ((u8)(p->b23 << 4) & 0x80);
+    buf[11] = 0;
+    D_80123D2C = 0;
+    r = 0;
+    k = 0;
+    bi = 0;
+    do {
+        if (r < 4) {
+            v = (((buf[bi] >> r) & 0x1F) + D_80123D2C) % 32;
+        } else {
+            v = ((((buf[bi] >> r) | ((buf[bi + 1] & D_800F6028[r]) << (8 - r))) & 0x1F) + D_80123D2C) % 32;
+        }
+        D_80123D2C = v;
+        out[k] = gPasswordChars[(u8)v];
+        k++;
+        r += 5;
+        if (r >= 8) {
+            bi++;
+            r -= 8;
+        }
+    } while (k < 18);
+    sum = 0;
+    for (i = 0; i < 18; i++) {
+        sum += out[i];
+    }
+    out[18] = gPasswordChars[sum & 0x1F];
+    out[19] = gPasswordChars[31 - (sum & 0x1F)];
+    out[20] = 0;
+    for (i = 0; i < 6; i++) {
+        j2 = i * 2;
+        t = out[D_800F601C[j2]];
+        out[D_800F601C[j2]] = out[D_800F601D[j2]];
+        out[D_800F601D[j2]] = t;
+    }
+}
+#else
+INCLUDE_ASM("asm/nonmatchings/unit_50510", Password_Encode);
+#endif
+
+/* TODO(match-debt): 239/328 words (s39, REA pseudocode as base). Structure and constants confirmed (cheat table
+ * {name, unlock mask, w1C bits}, checksum bytes 18/19, 5-bit packing). Residual: register allocation (the original keeps
+ * the name index in $s1, we use $a3) and the char-search loop shape. The pair-swap loop needs `j2 = i * 2` and two
+ * distinct table symbols (D_800F601C / D_800F601D) to stop gcc hoisting the table addresses. */
+#ifdef NON_MATCHING
+typedef struct { char s[20]; } Cdt20_;
+typedef struct { char *name; u32 mask; u32 w1C; } Cheat_;
+extern u8 gPasswordChars[];
+extern u8 D_800F6030[];
+extern u8 D_800F601C[];
+extern u8 D_800F601D[];
+extern u8 D_800F5FC7[];
+extern char D_80100BA4[];
+extern Cheat_ D_800F5FC8[];
+s32 Password_Decode(in, dst)
+    char *in;
+    PwSrc_ *dst;
+{
+    u8 buf[11];
+    u8 name[21];
+    u8 i;
+    u8 k;
+    u8 bi;
+    u8 r;
+    u8 j;
+    u8 n;
+    u8 t;
+    u32 sum;
+    s32 d;
+    s32 prev;
+    s32 v;
+    s32 j2;
+
+    *(Cdt20_ *)name = *(Cdt20_ *)in;
+    name[20] = 0;
+    if (strcmp((char *)name, D_80100BA4) == 0) {
+        dst->hi |= 0x20;
+        return 0;
+    }
+    for (k = 0; k < 7; k++) {
+        if (strcmp(D_800F5FC8[k].name, (char *)name) == 0) {
+            Unlocks_SetMask((Bits5_ *)dst, D_800F5FC8[k].mask);
+            dst->w1C |= D_800F5FC8[k].w1C;
+            return 0;
+        }
+    }
+    i = 6;
+    do {
+        i--;
+        j2 = i * 2;
+        t = name[D_800F601C[j2]];
+        name[D_800F601C[j2]] = name[D_800F601D[j2]];
+        name[D_800F601D[j2]] = t;
+    } while (i != 0);
+    sum = 0;
+    for (i = 0; i < 18; i++) {
+        sum += name[i];
+    }
+    if (name[18] != gPasswordChars[sum & 0x1F] || name[19] != D_800F5FC7[-(sum & 0x1F)]) {
+        return 1;
+    }
+    for (i = 0; i < 11; i++) {
+        buf[i] = 0;
+    }
+    D_80123D2C = 0;
+    bi = 0;
+    k = 0;
+    r = 0;
+    do {
+        n = 0;
+        j = 0;
+        for (;;) {
+            if (gPasswordChars[j] == name[k]) {
+                v = j;
+                break;
+            }
+            n++;
+            if (n >= 32) {
+                v = 0xFF;
+                break;
+            }
+            j = n;
+        }
+        prev = D_80123D2C;
+        D_80123D2C = v;
+        d = (u8)v - prev;
+        if (d < 0) {
+            d += 32;
+        }
+        d = (u8)d;
+        if (r < 4) {
+            buf[bi] |= (d & 0x1F) << r;
+        } else {
+            buf[bi] |= (d & 0xFF) << r;
+            buf[bi + 1] |= D_800F6030[r] & ((d & 0xFF) >> (8 - r));
+        }
+        k++;
+        r += 5;
+        if (r >= 8) {
+            bi++;
+            r -= 8;
+        }
+    } while (k < 18);
+    Unlocks_SetMask((Bits5_ *)dst, buf[0] | (buf[1] << 8) | (buf[2] << 16));
+    dst->w1C |= (buf[4] << 8) | buf[3];
+    dst->w24 = buf[5] & 0x7F;
+    dst->w28 = buf[6] & 0x7F;
+    dst->w2C = buf[7] & 0x7F;
+    dst->w30 = buf[8] & 0x7F;
+    dst->w34 = buf[9] & 0x7F;
+    dst->w38 = buf[10] & 0x7F;
+    dst->b22 = (buf[5] >> 7) | ((buf[6] >> 6) & 2);
+    dst->b23 = (buf[7] >> 7) | ((buf[8] >> 6) & 2) | ((buf[9] >> 5) & 4) | ((buf[10] >> 4) & 8);
+    if (dst->b22 > 2) {
+        dst->b22 = 0;
+    }
+    if (dst->b23 > 5) {
+        dst->b23 = 0;
+    }
+    return 0;
+}
+#else
 INCLUDE_ASM("asm/nonmatchings/unit_50510", Password_Decode);
+#endif
 
 s32 Password_Get(void) {
     Password_Encode();

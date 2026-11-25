@@ -1,0 +1,18 @@
+# Match debt: inline asm that predates tools/check_no_asm.py.
+# One line per hit: <path><TAB><normalized code>. Only ever delete lines.
+src/file_table.c	register s32 offset asm("$16");
+src/file_table.c	register s32 temp asm("$2");
+src/unit_28C10.c	register Lnk89_ **p asm("$4") = *pp;
+src/unit_53B30.c	register u8 opt asm("$4");
+src/unit_53B30.c	register u8 ff asm("$3");
+src/unit_6E610.c	register SndVoice *v asm("$6") = voice;
+src/unit_6E610.c	register u8 *p asm("$4") = (u8 *)voice;
+src/unit_6E610.c	register s32 i asm("$3") = 0;
+src/unit_6E610.c	register u8 c9 asm("$7") = v->unkC9;
+src/unit_6E610.c	register u8 ff asm("$5");
+src/unit_6E610.c	register s32 rate asm("$4");
+src/unit_6E610.c	register s32 v7f asm("$3");
+src/unit_6E610.c	register void *wb asm("$3");
+src/unit_72FB0.c	asm("nop");
+src/unit_83D50.c	register OSThread *t asm("$2");
+src/unit_83D50.c	register OSThread *next asm("$25");

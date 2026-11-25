@@ -112,7 +112,10 @@ def rewrite_function(lines, name, refs, db, blocks=None, used=None):
             i += 1
             out.append(f"{m.group(1)}{sym}")
             continue
-        m = re.match(r"(\s*lw\s+\$\d+,)(\.L\w+)(\(\$\d+\))", line)
+        # Con la base de la tabla sacada del bucle, gcc la carga con `la $r,.Ln` en vez de `lw $r,.Ln($x)`.
+        m = re.match(r"(\s*la\s+\$\d+,)(\.L\w+)()\s*$", line)
+        if not (m and m.group(2) in tables):
+            m = re.match(r"(\s*lw\s+\$\d+,)(\.L\w+)(\(\$\d+\))", line)
         if m and m.group(2) in tables:
             if i >= len(refs) or not refs[i].startswith("jtbl_"):
                 raise SystemExit(f"{name}: tabla de saltos sin referencia en rodata_refs.txt")

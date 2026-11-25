@@ -454,7 +454,7 @@
           "game"
         ],
         "source_path": "src/unit_48FA0.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_48FA0.o"
     },

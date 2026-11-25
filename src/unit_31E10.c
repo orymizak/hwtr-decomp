@@ -759,7 +759,7 @@ void Car_ApplyAero(Car *c, f32 *outA, f32 *outB) {
         speed *= 0.083333336f;
         q = speed * speed * 2.377f * 0.5f;
         q /= 1000.0f;
-        drag = c->unk5E8 * 0.083333336f * (c->unk5F0 * 0.083333336f) * c->k[5];
+        drag = c->extent.x * 0.083333336f * (c->extent.z * 0.083333336f) * c->k[5];
         force = q * drag;
         if (c->cnt3E7 != 0) {
             speed += D_80138D42 * 17.6f * 0.083333336f;
@@ -852,7 +852,77 @@ void Car_UpdateWheelSpin(Car *c) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_31E10", Car_ComputeMass);
+void Car_ComputeMass(Car *c) {
+    u32 n;
+    u8 i;
+    CarPoint *w;
+    u8 f;
+    f32 d;
+    f32 y;
+
+    n = c->wheelCount;
+    c->f5F4 = c->k[0] * 386.0f / (u8)n;
+    c->f5F8 = c->f5F4 / c->k[10];
+    c->f5FC = c->f5F4 / c->k[16];
+    c->nPoints = n;
+    c->center = c->centerRaw;
+    c->extent = c->extentRaw;
+    if (D_8011B320 & 4) {
+        c->center.x *= 0.33333334f;
+        c->center.y *= 0.33333334f;
+        c->center.z *= 0.33333334f;
+        c->extent.x *= 0.33333334f;
+        c->extent.y *= 0.33333334f;
+        c->extent.z *= 0.33333334f;
+    }
+    c->nFront = 0;
+    c->nRear = 0;
+    w = c->points;
+    for (i = 0; i < c->nPoints; w++, i++) {
+        w->pos = c->wheelPosRaw[i];
+        w->w = c->wheelWRaw[i];
+        w->h = c->wheelHRaw[i];
+        if (D_8011B320 & 4) {
+            w->pos.x *= 0.33333334f;
+            w->pos.y *= 0.33333334f;
+            w->pos.z *= 0.33333334f;
+            w->w *= 0.33333334f;
+            w->h *= 0.33333334f;
+        }
+        if (D_8011B320 & 0x20) {
+            w->w += w->w;
+            w->h += w->h;
+        }
+        if (i < 2) {
+            f = ((c->col[0] != 0) << 2);
+            if (c->col[1] != 0) {
+                f |= 2;
+            }
+            c->nFront++;
+        } else {
+            f = (-(c->col[2] != 0) & 5) | 1;
+            if (c->col[3] != 0) {
+                f |= 3;
+            }
+            c->nRear++;
+        }
+        w->flags = f;
+        w->pos.z -= (f & 1) ? c->k[21] : c->k[15];
+    }
+    w = c->points;
+    for (i = 0; i < c->nPoints; w++, i++) {
+        d = w->pos.x - c->center.x;
+        y = d;
+        if (d < 0.0f) {
+            y = -d;
+        }
+        d = y + y;
+        if (d < c->extent.x) {
+            d = c->extent.x;
+        }
+        c->extent.x = d;
+    }
+}
 
 /* Returns the car state: position (with offset), rotation, velocity, flags and the 0x13C byte. */
 void Car_GetState(u8 id, Vec3f *pos, Mtx3f *rot, Vec3f *vel, u32 *flags, u8 *out) {
@@ -1115,7 +1185,7 @@ void Car_SelfRight(Car *c) {
         *(u32 *)((u8 *)c + 0x75C) += 10;
         if (*(u32 *)((u8 *)c + 0x75C) > D_80138D6D) {
             Vec3f tq;
-            f = c->unk5E8 * c->unk5E8 + c->unk5F0 * c->unk5F0;
+            f = c->extent.x * c->extent.x + c->extent.z * c->extent.z;
             if (d > 0.0f) {
                 f = -f;
             }
@@ -1134,7 +1204,7 @@ void Car_SelfRight(Car *c) {
     if ((d < 0.0f ? -d : d) > 0.7071f) {
         *(u32 *)((u8 *)c + 0x760) += 10;
         if (*(u32 *)((u8 *)c + 0x760) > D_80138D6E) {
-            f = c->unk5EC * c->unk5EC + c->unk5F0 * c->unk5F0;
+            f = c->extent.y * c->extent.y + c->extent.z * c->extent.z;
             if (d > 0.0f) {
                 f = -f;
             }
@@ -1161,7 +1231,7 @@ void Car_SelfRight(Car *c) {
         c->unk764 += 10;
         if (c->unk768) {
             if (c->unk764 > D_80138D6F) {
-                f = c->unk5E8 * c->unk5E8 + c->unk5F0 * c->unk5F0;
+                f = c->extent.x * c->extent.x + c->extent.z * c->extent.z;
                 if (c->unk769) {
                     f = -f;
                 }
@@ -1572,7 +1642,7 @@ void Car_Unstick(u8 *arg) {
     axis.x = c->rot.m[0][1];
     axis.y = c->rot.m[1][1];
     axis.z = c->rot.m[2][1];
-    f = (c->unk5E8 * c->unk5E8 + c->unk5EC * c->unk5EC) * c->yaw;
+    f = (c->extent.x * c->extent.x + c->extent.y * c->extent.y) * c->yaw;
     fl.x = f;
     fl.y = 0.0f;
     fl.z = 0.0f;

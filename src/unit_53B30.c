@@ -4859,7 +4859,55 @@ void Controls_Enter(void) {
 }
 
 
+/* TODO(match-debt): 224/228 words (s39, REA pseudocode as base). Only difference: gcc loads D_8012410B/C (a1) before
+ * D_8014126C (a2) in the two remap calls; the original loads a0, a2, a1. Tried: 50*n, (u8) cast, local n, local t,
+ * assignment inside the call, char * extern, volatile: none changes the order. */
+#ifdef NON_MATCHING
+extern s32 D_8014126C;
+extern char *(*sysInputGetKeyName)(s32 player, u8 action);
+void Controls_SetupTexts(void) {
+    u8 buf[32];
+    u8 i;
+    u8 j;
+    s32 y;
+    u8 g;
+
+    j = 0;
+    y = 173;
+    for (i = D_80124107; i <= D_80124109; j++, i++) {
+        Menu_SetText((Ls2C_ *)((s32 *)&D_800F5F4C)[0], j, (void *)D_80124110[i], 138, y, 0, 0, 1, 1, 127, 127, 127);
+        g = Text_ButtonGlyphs(sysInputGetKeyName(0, i), buf);
+        if (g) {
+            Menu_SetText((Ls2C_ *)((s32 *)&D_800F5F4C)[2], j, buf, 250, y - 15, 0, 0, 0, 2, 127, 127, 127);
+        } else {
+            Menu_SetText((Ls2C_ *)((s32 *)&D_800F5F4C)[2], j, buf, 270, y, 0, 0, 1, 1, 127, 127, 127);
+        }
+        y += 50;
+    }
+    if (gNumPlayers == 2) {
+        j = 0;
+        y = 173;
+        for (i = D_80124108; i <= D_8012410A; j++, i++) {
+            Menu_SetText((Ls2C_ *)((s32 *)&D_800F5F50)[0], j, (void *)D_80124110[i], 510, y, 0, 0, 1, 1, 127, 127, 127);
+            g = Text_ButtonGlyphs(sysInputGetKeyName(1, i), buf);
+            if (g) {
+                Menu_SetText((Ls2C_ *)((s32 *)&D_800F5F50)[2], j, buf, 340, y - 15, 0, 0, 0, 2, 127, 127, 127);
+            } else {
+                Menu_SetText((Ls2C_ *)((s32 *)&D_800F5F50)[2], j, buf, 375, y, 0, 0, 1, 1, 127, 127, 127);
+            }
+            y += 50;
+        }
+    }
+    if (*(u8 *)&gControlsRemapP1) {
+        Menu_SetText((Ls2C_ *)D_800F5F54, D_8012410B, (void *)D_8014126C, 270, D_8012410B * 50 + 173, 0, 0, 1, 1, 127, 127, 127);
+    }
+    if (*(u8 *)&gControlsRemapP2) {
+        Menu_SetText((Ls2C_ *)D_800F5F58, D_8012410C, (void *)D_8014126C, 380, D_8012410C * 50 + 173, 0, 0, 1, 1, 127, 127, 127);
+    }
+}
+#else
 INCLUDE_ASM("asm/nonmatchings/unit_53B30", Controls_SetupTexts);
+#endif
 
 void Controls_Animate(void) {
     Menu_Animate((*(void * *)&D_800F5F4C), 0x11U);
@@ -6301,7 +6349,73 @@ void HighScores_NextCategory(void) {
     }
 }
 
+/* TODO(match-debt): 209/270 words (s39, REA pseudocode as base). Structure confirmed: the category dispatch is a
+ * `switch` (bltz/slti tree; `case 2: default:` shares the body), sel is u32, fmt is a local pointer. Residual:
+ * gcc hoists &buf[1] into a register and gives sel/i different registers than the original ($s4/$s2). */
+#ifdef NON_MATCHING
+extern u8 gHighScoresCategory;
+extern u8 D_80124102;
+extern u16 D_800F61D8[];
+extern u8 D_80101008, D_80100EEC, D_80101010;
+void HighScores_SetupTexts(void) {
+    char a[32];
+    char b[32];
+    u32 sel;
+    u8 i;
+    s32 y;
+    s32 *m;
+    s32 s;
+    char *fmt;
+
+    switch (gHighScoresCategory) {
+        case 0:
+        case 1:
+            sel = D_80124101;
+            break;
+        case 2:
+        default:
+            sel = D_80124102;
+            break;
+    }
+    fmt = (char *)&D_80100CA0;
+    sprintf(a, fmt, (s32)gLangText[D_800F61D8[gHighScoresCategory]]);
+    if (gHighScoresCategory == 2) {
+        s = ((s32 *)&D_8012406C)[sel];
+    } else {
+        s = (s32)D_800F9FE0[sel / 3][sel % 3];
+    }
+    sprintf(b, fmt, s);
+    y = 160;
+    m = &D_800F5F80;
+    Menu_SetText((Ls2C_ *)*m, 0, a, 68, 160, 0, 0, 0, 1, 127, 127, 127);
+    Menu_SetText((Ls2C_ *)*m, 1, b, 68, 205, 0, 0, 0, 1, 127, 127, 127);
+    for (i = 0; i < 5; i++, y += 46) {
+        switch (gHighScoresCategory) {
+            case 0:
+                sprintf(a, (char *)&D_80101008, i + 1, SAVE_DATA->highA[sel].e[i].name);
+                sprintf(b, (char *)&D_80101010, SAVE_DATA->highA[sel].e[i].value);
+                break;
+            case 1:
+                sprintf(a, (char *)&D_80101008, i + 1, SAVE_DATA->times[sel].e[i].name);
+                sprintf(b, (char *)&D_80100EEC, Time_Minutes(SAVE_DATA->times[sel].e[i].value), Time_Seconds(SAVE_DATA->times[sel].e[i].value), Time_Hundredths(SAVE_DATA->times[sel].e[i].value));
+                break;
+            case 2:
+                sprintf(a, (char *)&D_80101008, i + 1, SAVE_DATA->highB[sel].e[i].name);
+                sprintf(b, (char *)&D_80101010, SAVE_DATA->highB[sel].e[i].value);
+                break;
+        }
+        if (gHighScoresAutoCycle == 0 || i < gHighScoresCycleTicks) {
+            Menu_SetText((Ls2C_ *)*m, i + 2, a, 375, y, 0, 0, 1, 1, 255, 255, 255);
+            Menu_SetText((Ls2C_ *)*m, i + 7, b, 535, y, 0, 0, 1, 1, 255, 255, 255);
+        } else {
+            Menu_SetText((Ls2C_ *)*m, i + 2, (s32 *)&D_80100CC8, 375, y, 0, 0, 1, 1, 255, 255, 255);
+            Menu_SetText((Ls2C_ *)*m, i + 7, (s32 *)&D_80100CC8, 535, y, 0, 0, 1, 1, 255, 255, 255);
+        }
+    }
+}
+#else
 INCLUDE_ASM("asm/nonmatchings/unit_53B30", HighScores_SetupTexts);
+#endif
 
 void HighScores_Draw(void) {
     Menu_SetupCamera();

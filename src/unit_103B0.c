@@ -356,7 +356,38 @@ void Gfx_SetAllLightColors(s32 a, s32 b, s32 c) {
     gSPLightColor(gDisplayListHead++, LIGHT_6, color);
 }
 
+/* TODO(match-debt): 146/169 words vs original (REA/Ghidra session 2026-11-24, see MATCH_LOG.md).
+ * Structure and constants confirmed: gSPLight x(n+1), gSPNumLights; residual diff is register allocation
+ * (original keeps &gNumLights in $s1, lights block in $s0, plus a second pointer copy for the loop test). */
+#ifdef NON_MATCHING
+typedef struct { s32 w[30]; } LightBlk_;
+void Gfx_UpdateLights(void) {
+    s32 lights;
+    s32 i;
+    u8 *n;
+
+    if (gLightsDirty) {
+        if ((u32)(gMtxHead + 0x80) >= (u32)gMtxPools[gGfxPoolIndex].f4) {
+            gMtxPools[gGfxPoolIndex].f0 = gMtxHead;
+            MtxPool_Grow(&gMtxPools[gGfxPoolIndex], 2);
+            gMtxHead = gMtxPools[gGfxPoolIndex].f0;
+        }
+        lights = gMtxHead;
+        gMtxHead = lights + 0x80;
+        *(LightBlk_ *)lights = *(LightBlk_ *)&D_800F1DE0;
+        n = &gNumLights;
+        GFX_RESERVE(*n + 2);
+        for (i = 0; i < *n; i++) {
+            gSPLight(gDisplayListHead++, lights + i * 16 + 8, i + 1);
+        }
+        gSPLight(gDisplayListHead++, lights, *n + 1);
+        gSPNumLights(gDisplayListHead++, *n);
+        gLightsDirty = 0;
+    }
+}
+#else
 INCLUDE_ASM("asm/nonmatchings/unit_103B0", Gfx_UpdateLights);
+#endif
 
 void Gfx_SetNumLights(void) {
     u8 n = gNumLights;

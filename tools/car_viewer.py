@@ -394,6 +394,14 @@ def main() -> None:
     if not cars:
         raise SystemExit(f"error: no .CAR files found in {args.assets}")
 
+    custom_dir = ROOT / "assets/workbench/custom_cars"
+    if custom_dir.exists():
+        for custom_path in sorted(custom_dir.glob("*.car.json")):
+            try:
+                cars.append(json.loads(custom_path.read_text()))
+            except (OSError, json.JSONDecodeError) as error:
+                print(f"warning: skipping custom car {custom_path.name}: {error}", file=sys.stderr)
+
     page = template.replace("/*CAR_DATA*/[]", json.dumps(cars, separators=(",", ":")))
     page = page.replace("/*ENVMAP*/null", json.dumps(envmap_uri(args.assets)))
     page = page.replace("/*EFFECTS*/[]", json.dumps(effect_sprites(args.assets)))

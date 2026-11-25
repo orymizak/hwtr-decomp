@@ -116,13 +116,12 @@ Solo se distinguen por el reparto de registros o por el orden de una carga: `fun
 - **Diff:** 104/161 instrucciones iguales tras 3 variantes.
 - **Root cause:** Operaciones de estimación de tiempo de carrera con división entera usando el multiplicador recíproco `0xCCCCCCCD`, conversiones flotante/entero con dobles ocultos de .rodata (`D_80100A50`, `D_80100A58`), y preservación de registros callee-saved ($s0-$s4, $fs0).
 
-### unit_0B140:  (600 B, marco=0x40)
-- **Diff:** 98/167 instrucciones iguales tras 3 variantes.
-- **Causa raíz:** Múltiples bucles complejos de sondeo de mandos y rumble pak con desenrollado parcial y saltos con / generados por GCC 2.7.2. El registro base  comparte cálculo de dirección con  desplazado 0x54 bytes.
-
 ### unit_0B140: Input_Init (600 B, marco=0x40)
-- **Diff:** 98/167 instrucciones iguales tras 3 variantes.
-- **Causa raiz:** Bucles de sondeo de mandos y rumble pak con desenrollado parcial y saltos con branches probables (beql/bnel) generados por GCC 2.7.2. El registro base $s0 comparte calculo de direccion con $s2 desplazado 0x54 bytes.
+- **Diff:** 120/151 instrucciones iguales tras 3 variantes (tamaño 604/600 B).
+  - *Hipótesis 1 (Puntero a estructura gInputLayoutCount y do-while pads):* `register InputLayout_ *m = &gInputLayoutCount;`. Produce 92/150 instrucciones iguales, pero reserva `$s3` para el puntero `m` en lugar de `$s0`, desalineando los registros callee-saved y los bucles de comprobación del botón START.
+  - *Hipótesis 2 (Bucle de asignación con puntero SlotC_ *s iterativo):* Inicialización de slots mediante `SlotC_ *s = gRumbleState; s->time = osGetCount()`. Acerca a 110/150 instrucciones pero asigna `$s2` al puntero de slots en vez de inicializar `$s2` como `&gInputLayoutCount + 0x54`.
+  - *Hipótesis 3 (Indexación plana directa y copia de 24 bytes desde rodata):* Inicialización de `Pad_ pads[4] = {{0}}` reproduciendo exactamente la secuencia de 24 bytes `lwl/lwr/swl/swr` desde `D_800FEB20`. Alcanza 120/151 iguales.
+- **Causa raiz:** El acceso inicial a `gInputLayoutCount` se realiza mediante un puntero base local en `$s0` reutilizado como acumulador de desplazamiento (`s0 += 0x54`), mientras que el bucle de cuenta de mandos activos y la verificación de `CONT_START (0x1000)` utiliza saltos probables (`beql`) generados por condiciones anidadas compuestas que GCC 2.7.2 compila con un orden de bifurcación diferente.
 
 ### unit_39C90: Coll_LoadLevel (636 B, marco=0x138)
 - **Diff:** 127/160 instrucciones iguales tras 3 variantes.
@@ -364,9 +363,34 @@ Solo se distinguen por el reparto de registros o por el orden de una carga: `fun
 - **Diff:** Función con tabla de saltos (`jtbl_800FE870`) de audio 3D para fuentes de sonido y control de canales.
 - **Causa raiz:** Tabla de saltos en rodata con llamadas dinámicas de audio y cálculo de volumen y paneo.
 
+### unit_49CF0: Hud_DrawSlideFromLeft (452 B, marco=0x40)
+- **Diff:** 71/113 instrucciones iguales tras 3 variantes (tamaño exacto 452 B).
+  - *Hipótesis 1 (do-while con comprobación previa):* `if (*s != 0) do { ... } while (*s != 0)`. Genera expansión de prólogo (476 B) y bifurcación adicional de salida con inversión de registros `$s1` y `$s2`.
+  - *Hipótesis 2 (tipos de parámetros explícitos y goto kerning):* `void Hud_DrawSlideFromLeft(u8 *s, Marquee_ *m, s32 n, s32 cnt)` con salto explícito a medición de kerning tras dibujo. Mantiene tamaño exacto 452 B pero persiste `$s1/$s2` invertidos y retraso en el cálculo modular `divu`.
+  - *Hipótesis 3 (variable de registro explícita y pre-incremento inline):* `register u16 x;` y `(u8)++cnt % (u8)n == 0`. Reduce el marco a 440 B omitiendo salvado de `$s4` (`m->y`) en pila, alterando las llamadas a `svcFontDrawChar`.
+- **Causa raiz:** El asignador de registros de GCC 2.7.2 asigna `$s1` y `$s2` en orden inverso entre el puntero de cadena `s` (`$a0`) y la estructura de marquesina `m` (`$a1`) debido a las referencias tempranas a campos `m->x`/`m->y`. Además, la división modular de tiempo con la instrucción `divu` y la macro de kerning fuerzan a GCC a reordenar los bloques básicos del bucle de medición de caracteres.
+
 ### unit_49CF0: Hud_DrawSlideFromRight (440 B, marco=0x40)
 - **Diff:** 76/110 instrucciones iguales tras 3 variantes.
 - **Causa raiz:** Bucle de medición y renderizado de texto deslizante con kerning (`Font_GetKerning`) y sub-píxeles; simétrica a `Hud_DrawSlideFromLeft`. El bucle `do-while` con división modular de tiempo (`(u8)cnt % (u8)step`) genera ramas condicionales que GCC 2.7.2 ordena de forma invertida.
+
+### unit_53B30: Controls_SetupTexts (912 B, marco=0x78)
+- **Diff:** 198/231 instrucciones iguales tras 3 variantes (tamaño 924/912 B).
+  - *Hipótesis 1 (puntero de array de objetos menú dentro del bucle):* Asignación de `w = &D_800F5F4C;` dentro de cada iteración del bucle `for`. Provoca recarga constante de `D_80124110` mediante `lui` y desalinea los registros callee-saved `$s7` y `$fp`.
+  - *Hipótesis 2 (puntero base exterior y reordenamiento de incremento):* `w = &D_800F5F4C;` previo al bucle con incremento `y += 50, k++, row++`. Acerca el match a 198/231 pero GCC ubica el incremento de fila en un bloque previo en lugar del slot de retardo de la rama de continuación.
+  - *Hipótesis 3 (desdoblamiento de bucle de mapeo de mandos P1/P2):* Separación de la comprobación `gControlsRemapP1` y `gControlsRemapP2` en variables locales auxiliares. Introduce 12 bytes adicionales en el epílogo.
+- **Causa raiz:** El array de objetos de menú `D_800F5F4C` a `D_800F5F58` (stride 4 bytes) y la tabla de textos `D_80124110` provocan que GCC 2.7.2 reserve `$s7` y `$fp` para los punteros base. El programador original estructuró los incrementos de las 3 variables del bucle (`y`, `k`, `row`) de forma que el slot de retardo de la bifurcación condicional contuviera exactamente `addiu $s5, $s5, 0x1` (`row++`).
+
+### unit_103B0: Gfx_SetPerspective (708 B, marco=0x40)
+- **Diff:** 136/177 instrucciones iguales tras 3 variantes (tamaño 696/708 B).
+  - *Hipótesis 1 (struct MtxPool unificado y macros GBI directas):* Uso de `sizeof(MtxPool) == 0x90` reproduciendo exactamente la secuencia de escalado `sll $v0, $v1, 3; addu $v0, $v0, $v1; sll $a2, $v0, 4`. Match perfecto en el bloque de comprobación de memoria del pool.
+  - *Hipótesis 2 (eliminación de variable local temporal de display list):* Escritura directa sobre `gDisplayListHead++`. GCC combina los 6 incrementos en una única adición final `addiu $2, $2, 48`, a diferencia de la ROM que emite la actualización de `gDisplayListHead` tras cada comando GBI.
+  - *Hipótesis 3 (reordenamiento de cálculo fov y aspectos):* Reordenar divisiones escalares para emparejar registros FPR `$fs0/$fs1`. Persiste la diferencia en el paso del argumento de aspect ratio a `guPerspective` (`lw $a3` directo de memoria en la ROM vs `mfc1 $7, $f4` en GCC).
+- **Causa raiz:** La ROM original no tenía prototipo para `guPerspective` en la unidad, provocando que `D_800F2124` se cargara como palabra entera desde memoria en lugar de compartirse como registro de punto flotante. Asimismo, la expansión de los comandos GBI (`gSPMatrix`, `gSPPerspNormalize`, `gSPClipRatio`) escribe de forma secuencial en `gDisplayListHead` global, comportamiento que GCC 2.7.2 optimiza si no se fuerzan accesos volátiles.
+
+### unit_50510: Save_ReadAll (776 B, marco=0x48)
+- **Diff:** 120/194 instrucciones iguales (tamaño 760/776 B).
+- **Causa raiz:** Uso extensivo de instrucciones de salto probable (`beql`, `bnel`) en el análisis de estado de los Memory Paks (`D_80123D20`), copia de bloques estructurados de 0x88C bytes (`Big88C_`) y avance simultáneo de cuatro variables de inducción en el pie del bucle (`s1`, `s3`, `s6`, `s7`) que GCC 2.7.2 reasigna a registros temporales distintos.
 
 ### unit_19D40: Mesh_FillVtx (488 B, marco=0x18)
 - **Diff:** Bucle de empaquetado y descompresión de vértices 3D con colores de iluminación y coordenadas de textura.
@@ -415,3 +439,7 @@ Solo se distinguen por el reparto de registros o por el orden de una carga: `fun
 ### libc & runtime CRT (`asm/1000.s`, `asm/libc.s`)
 - **Funciones:** `entrypoint` (60 B), `ldiv` (132 B), `lldiv` (308 B), `memset` (160 B), `func_800E6BF0` (36 B), `rand` (52 B), `srand` (12 B), `__sincos` (544 B), `sin` (224 B), `cos` (152 B), `tan` (212 B), `strcat` (176 B), `strcmp` (260 B), `strcasecmp` (132 B), `strlwr` (96 B), `tolower` (36 B), `toupper` (36 B), `__muldi3` (52 B), `func_800E74E8` (252 B), `func_800E75E4` (200 B), `func_800E76B0` (356 B), `__udivdi3` (24 B), `__umoddi3` (64 B), `func_800E7880` (284 B), `func_800E79A0` (248 B).
 - **Causa raiz:** Biblioteca estándar de C de terceros / Runtime GCC (`libgcc` / `libc` embebida) y punto de entrada IPL3 (`entrypoint`). Estas funciones contienen rutinas aritméticas de 64 bits en software (`__udivdi3`, `__umoddi3`, `__muldi3`), funciones trigonométricas y de cadena precompiladas que no pertenecen a las unidades C del juego (`src/*.c`) y permanecen en sus archivos de ensamblador de enlace.
+
+### s38 notes (drafts in `.scratch/ul/s37/`)
+- **SceneNode_DrawMesh** (`dm6.c`, 5 diffs): duplicating `->lastId = id` in an `else` of the `mat != NULL` test reproduces the target structure (`beqzl` with the `sw` in the delay slot). Only the registers differ: target keeps `n->p3C` in `$v0` and `mat` in `$a0`; ours gives `p3C=$v1`, `mat=$v0`. A local `mat`/`m`, using `mat` as call argument, and declaration order did not change it (using it as argument breaks the frame).
+- **SndCmd_SetEnvelopePreset** (`env0.c`, 5 diffs; `env3.c` gets `n` into `$a2` but 328 B): target computes `n*7 + env` into `$v0`, loads `e[0]` into `$a2` (same variable as `n`), then `move $a3,$v0` in the `bnez` delay slot; also operand order `addu v0,v0,v1` (index first). `r`-less form coalesces `e` with the sum; `q`/`e` split, `n*7 + env` and `Env7_` array typing did not separate them.

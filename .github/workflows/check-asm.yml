@@ -1,0 +1,14 @@
+# Fails when decompiled C contains inline assembly (see tools/check_no_asm.py).
+# Needs no ROM, so it runs on every push and pull request.
+name: No inline asm
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tools/check_no_asm.py
