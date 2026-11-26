@@ -900,7 +900,7 @@ s32 SndMsg_Post(AudMsgE_ *msg) {
 }
 
 
-void SndVoice_ProcessEvents(void *arg0, s32 arg1);
+void SndVoice_ProcessEvents(SndVoice *arg0, s32 arg1);
 void SndPitchCurve_Update(void *arg0);
 void SndEnv_Update(SndVoice *s);
 void SndAutoPan_Update(SndVoice *s);
@@ -987,7 +987,167 @@ s32 Snd_Update(void) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_6E610", SndVoice_ProcessEvents);
+typedef struct { u8 p0[0x28]; f32 *unk28; s32 *unk2C; } SndWavePE_;
+void SndEnv_Start(SndVoice *);
+void SndAutoPan_Reset(SndVoice *);
+void SndVoice_KeyOn(SndVoice *, s32);
+void n_alSynSetVol(s32, s16, s32);
+void n_alSynSetFXMix(s32, u8);
+
+void SndVoice_ProcessEvents(SndVoice *s, s32 idx) {
+    u8 *p;
+    u8 c;
+    u32 note;
+    SndWavePE_ *wave;
+    u32 inst;
+
+    p = (u8 *)s->unk4;
+    if (p != NULL) {
+    cmd_loop:
+        c = *p;
+        if (c >= 0x80) {
+            p = (u8 *)gSndSeqCmds[c & 0x7F](s, p + 1);
+            if (p != NULL) {
+                goto cmd_loop;
+            }
+        }
+    }
+    s->unk4 = (s32)p;
+    if (p != NULL) {
+        s->unk4C = s->unk50;
+        note = *((u8 *)s->unk4)++;
+        if (s->unkD2 != 0) {
+            u8 vel = *((u8 *)s->unk4)++;
+            if (vel >= 0x80) {
+                vel &= 0x7F;
+                s->unkD2 = 0;
+                s->unkD3 = vel;
+            }
+            if (note != 0x60) {
+                s->unkBB = vel;
+            }
+        } else {
+            s->unkBB = s->unkD3;
+        }
+
+        if (s->unkAC != 0) {
+            if (s->unkB7 == 0) {
+                s->unk9A = s->unkAC;
+            } else {
+                s->unkB7 = 0;
+                c = *((u8 *)s->unk4)++;
+                if (c < 0x80) {
+                    s->unk9A = c;
+                } else {
+                    s->unk9A = ((c & 0x7F) << 8) + *((u8 *)s->unk4)++;
+                }
+            }
+        } else {
+            c = *((u8 *)s->unk4)++;
+            if (c < 0x80) {
+                s->unk9A = c;
+            } else {
+                s->unk9A = ((c & 0x7F) << 8) + *((u8 *)s->unk4)++;
+            }
+        }
+
+        s->unk40 = s->unk3C;
+        s->unk3C += s->unk9A << 8;
+        s->unkAA = 0;
+        s->unkD1 = 0;
+        s->unkD0 = s->unkCF;
+
+        if (s->unk74 != NULL && s->unk84 == NULL && ((u16 *)s->unk74->unk20)[s->unkAE] == 0xFFFF) {
+            note = 0x60;
+        }
+        if (note != 0x60) {
+            wave = (SndWavePE_ *)s->unk7C;
+            if (s->unk84 != NULL) {
+                s32 off = note * 6;
+                s32 n;
+                u8 *e;
+                u8 v;
+
+                s->unkAE = *(u16 *)(off + (s32)s->unk84);
+                s->unkBD = ((u8 *)(off + (s32)s->unk84))[4] >> 1;
+                if ((n = *(s->unk74->unk18 + *(u16 *)(off + (s32)s->unk84 + 2) * 7)) != 0) {
+                    e = s->unk74->unk18 + *(u16 *)(off + (s32)s->unk84 + 2) * 7;
+                } else {
+                    e = s->unk74->unk18 + *(u16 *)(off + (s32)s->unk84 + 2) * 7;
+                    n = 1;
+                }
+                s->unkBF = n;
+                s->unk64 = 1024 / n;
+                s->unkC0 = e[1];
+                n = e[2];
+                s->unkC6 = n;
+                v = e[3];
+                s->unk58 = (1.0 / (f32)n) * (f32)(v - s->unkC0);
+                s->unkC1 = v;
+                n = e[4];
+                s->unkC7 = n;
+                v = e[5];
+                s->unk5C = (1.0 / (f32)n) * (f32)(v - s->unkC1);
+                s->unkC2 = v;
+                n = e[6];
+                s->unkC8 = n;
+                s->unk60 = 1.0 / (f32)n;
+                note = ((u8 *)(off + (s32)s->unk84))[5];
+            }
+
+            if (s->unkD6 == 0) {
+                SndEnv_Start(s);
+            }
+            if (s->unkD4 != 0) {
+                SndAutoPan_Reset(s);
+            }
+
+            inst = s->unkAE;
+            if (s->unk74 != NULL) {
+                inst = ((u16 *)s->unk74->unk20)[inst];
+            } else {
+                inst = ((u16 *)s->unk78->unk14)[inst];
+            }
+
+            if (s->unkD7 == 0) {
+                s->unk8 = wave->unk2C[inst];
+                if (s->unkC9 != 0 && s->unkA0 != 0) {
+                    s->unkA0 = 0;
+                    n_alSynSetVol(gSndPVoices + idx * 0x1C, 0, gSndTickUsec);
+                } else {
+                    SndVoice_KeyOn(s, idx);
+                }
+            }
+
+            s->unk2C = (f32)(s32)note + wave->unk28[inst];
+            c = s->unkB9 * (1 - s->unkBA);
+            if (c & 0x80) {
+                s->unk2C += (f32)((s32)c - 0x100);
+            } else {
+                s->unk2C += (f32)(s32)c;
+            }
+
+            c = s->unkCA;
+            if (c != s->unkCC) {
+                s->unkCC = c;
+                n_alSynSetFXMix(gSndPVoices + idx * 0x1C, (s->unkCB + (((0x80 - s->unkCB) * c) >> 7)) & 0xFF);
+            }
+        } else {
+            if (s->unkC3 < 4) {
+                s->unkC3 = 4;
+                s->unkC5 = 1;
+                s->unk54 = s->unkC;
+                s->unkCD = s->unkC4;
+            }
+        }
+    } else {
+        if (s->unkC9 != 0) {
+            s->unkC9 = 0;
+            n_alSynSetVol(gSndPVoices + idx * 0x1C, 0, gSndTickUsec);
+            n_alSynStopVoice(gSndPVoices + idx * 0x1C);
+        }
+    }
+}
 
 void SndVoice_KeyOn(SndVoice *c, s32 i) {
     if (c->unkC9 != 0) {

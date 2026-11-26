@@ -320,7 +320,7 @@ extern GameSave *gActiveSave;
 extern u8 D_80123EBE;
 extern u8 D_80123EBF;
 extern u8 D_80123EC1;
-s32 MenuCar_Draw(s32, s32, s32, s32);
+void MenuCar_Draw(u8 id, Vec3f off);
 void MenuGlobe_Draw(s8);
 /* A menu text: a run of positioned glyphs drawn from one font sheet. */
 typedef struct {
@@ -889,7 +889,114 @@ void MenuCar_MoveTo(s32 arg0, s32 a, s32 b, s32 c) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", MenuCar_Draw);
+extern void (*sysModelRotateAllParts)(u8, f32);
+extern void (*sysModelDrawWithLookAt)(u8);
+
+void MenuCar_Draw(u8 id, Vec3f off) {
+    Vec3f d;
+    f32 m[3][4];
+    f32 dt;
+
+    Menu_InitViewMtx(m);
+    if (id == 0) {
+        dt = Menu_DeltaTenths(0);
+    } else {
+        dt = Menu_DeltaTenths(1);
+    }
+    if (D_800F60C0[id] != 0) {
+        f32 diff = D_800F60B8[id] - D_800F60B0[id];
+        D_800F60B0[id] += diff * dt;
+    } else {
+        {
+            f32 ds;
+            if (id == 0) {
+                ds = Menu_DeltaSeconds(0);
+            } else {
+                ds = Menu_DeltaSeconds(1);
+            }
+            D_800F60B0[id] += ds * 1.256636f;
+        }
+        while (D_800F60B0[id] > 6.28318f) {
+            D_800F60B0[id] -= 6.28318f;
+        }
+        sysModelRotateAllParts(id, D_800F60B0[id] * 4.0f);
+    }
+    {
+        f32 diff = D_800F60A8[id] - D_800F60A0[id];
+        D_800F60A0[id] += diff * dt;
+    }
+    if (D_800F60A8[id] == 0.0f && D_800F60A0[id] < 1.0f / 3.0f) {
+        D_800F60A0[id] = 0.0f;
+    }
+
+    d.x = gMenuCarTarget[id].x - gMenuCarPos[id].x;
+    d.y = gMenuCarTarget[id].y - gMenuCarPos[id].y;
+    d.z = gMenuCarTarget[id].z - gMenuCarPos[id].z;
+    d.x *= dt;
+    d.y *= dt;
+    d.z *= dt;
+    gMenuCarPos[id].x += d.x;
+    gMenuCarPos[id].y += d.y;
+    gMenuCarPos[id].z += d.z;
+
+    m[0][0] *= D_800F60A0[id];
+    m[0][1] *= D_800F60A0[id];
+    m[0][2] *= D_800F60A0[id];
+    m[1][0] *= D_800F60A0[id];
+    m[1][1] *= D_800F60A0[id];
+    m[1][2] *= D_800F60A0[id];
+    m[2][0] *= D_800F60A0[id];
+    m[2][1] *= D_800F60A0[id];
+    m[2][2] *= D_800F60A0[id];
+
+    m[0][3] += m[0][0] * gMenuCarPos[id].x + m[0][1] * gMenuCarPos[id].y + m[0][2] * gMenuCarPos[id].z;
+    m[1][3] += m[1][0] * gMenuCarPos[id].x + m[1][1] * gMenuCarPos[id].y + m[1][2] * gMenuCarPos[id].z;
+    m[2][3] += m[2][0] * gMenuCarPos[id].x + m[2][1] * gMenuCarPos[id].y + m[2][2] * gMenuCarPos[id].z;
+
+    {
+        f32 c = cosf(-1.3962624f);
+        f32 s = sinf(-1.3962624f);
+        f32 a, b;
+
+        a = m[0][1] * c + m[0][2] * s;
+        b = m[0][2] * c - m[0][1] * s;
+        m[0][1] = a;
+        m[0][2] = b;
+        a = m[1][1] * c + m[1][2] * s;
+        b = m[1][2] * c - m[1][1] * s;
+        m[1][1] = a;
+        m[1][2] = b;
+        a = m[2][1] * c + m[2][2] * s;
+        b = m[2][2] * c - m[2][1] * s;
+        m[2][1] = a;
+        m[2][2] = b;
+    }
+    {
+        f32 c = cosf(D_800F60B0[id]);
+        f32 s = sinf(D_800F60B0[id]);
+        f32 a, b;
+
+        a = m[0][0] * c + m[0][1] * s;
+        b = m[0][1] * c - m[0][0] * s;
+        m[0][0] = a;
+        m[0][1] = b;
+        a = m[1][0] * c + m[1][1] * s;
+        b = m[1][1] * c - m[1][0] * s;
+        m[1][0] = a;
+        m[1][1] = b;
+        a = m[2][0] * c + m[2][1] * s;
+        b = m[2][1] * c - m[2][0] * s;
+        m[2][0] = a;
+        m[2][1] = b;
+    }
+
+    m[0][3] += m[0][0] * -off.x + m[0][1] * -off.y + m[0][2] * 0.0f;
+    m[1][3] += m[1][0] * -off.x + m[1][1] * -off.y + m[1][2] * 0.0f;
+    m[2][3] += m[2][0] * -off.x + m[2][1] * -off.y + m[2][2] * 0.0f;
+
+    sysCameraApply(m);
+    sysModelDrawWithLookAt(id);
+}
 
 void MenuGlobe_SpinLarge(void) {
     D_80123E98 = 0;
@@ -2802,10 +2909,10 @@ void MainMenu_Draw(void) {
             break;
     }
     if (D_80124C94 != 0) {
-        MenuCar_Draw(0, D_801240E8, D_801240EC, D_801240F0);
+        MenuCar_Draw(0, *(Vec3f *)&D_801240E8);
     }
     if (gNumPlayers == 2 && D_80124C95 != 0) {
-        MenuCar_Draw(1, D_801240F4, D_801240F8, D_801240FC);
+        MenuCar_Draw(1, *(Vec3f *)&D_801240F4);
     }
     ((s32 (*)(void)) MenuGlobe_Draw)();
     if (gMenuHideText == 0) {
@@ -3370,7 +3477,7 @@ void Championship_Draw(void) {
         break;
     }
     if (D_80124C94 != 0) {
-        MenuCar_Draw(0, D_801240E8, D_801240EC, D_801240F0);
+        MenuCar_Draw(0, *(Vec3f *)&D_801240E8);
     }
     ((s32 (*)())MenuGlobe_Draw)();
     if (gMenuHideText == 0) {
@@ -4203,7 +4310,7 @@ void Garage_Draw(void) {
     Menu_Draw(*p, -1, -1, -1, -1, -1, -1, gMenuHideText);
     if ((u8)Car_IsUnlocked(gGarageCarP1, gProfileP1)) {
         if (D_80124C94) {
-            MenuCar_Draw(0, D_801240E8, D_801240EC, D_801240F0);
+            MenuCar_Draw(0, *(Vec3f *)&D_801240E8);
         }
     } else if (gMenuHideText == 0) {
         id = NameList_Find(&D_80100F68);
@@ -4223,7 +4330,7 @@ void Garage_Draw(void) {
         Menu_Draw(*p, -1, -1, -1, -1, -1, -1, gMenuHideText);
         if ((u8)Car_IsUnlocked(gGarageCarP2, gProfileP2)) {
             if (D_80124C95) {
-                MenuCar_Draw(1, D_801240F4, D_801240F8, D_801240FC);
+                MenuCar_Draw(1, *(Vec3f *)&D_801240F4);
             }
         } else if (gMenuHideText == 0) {
             id = NameList_Find(&D_80100F68);
@@ -6600,7 +6707,7 @@ void Unlocks_Draw(void) {
         if (D_80124C94 == 0) {
             D_80124C94 = sysModelPollLoad(0);
         } else {
-            MenuCar_Draw(0, D_801240E8, D_801240EC, D_801240F0);
+            MenuCar_Draw(0, *(Vec3f *)&D_801240E8);
         }
     } else if (D_80124CFE != D_80124CFF || D_80124D00 != D_80124CFE) {
         MenuGlobe_Draw(D_80124CFE);

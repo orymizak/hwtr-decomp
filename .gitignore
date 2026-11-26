@@ -20,3 +20,13 @@ tools/objdiff-cli
 IDEAS.md
 SESSION.md
 android/
+# tools/: only the scripts needed by the build, pre-commit hook and CI are tracked
+tools/*
+!tools/cc.py
+!tools/fix_jump_labels.py
+!tools/extract_files.py
+!tools/progress.py
+!tools/objdiff_report.py
+!tools/treemap.py
+!tools/check_no_asm.py
+!tools/asm_allowlist.txt

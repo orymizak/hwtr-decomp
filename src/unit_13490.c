@@ -1110,7 +1110,28 @@ void Gfx_SetupRDP(s32 w, s32 h) {
     gSPDisplayList(gDisplayListHead++, D_800F1FA8);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_13490", Gfx_ClearFrame);
+typedef struct { void *img; } BgImg_;
+extern void *D_801380A8;
+extern void *D_8014C648;
+extern BgImg_ gBgImage;
+
+void Gfx_ClearFrame(u8 r, u8 g, u8 b, s32 w, s32 h) {
+    GFX_RESERVE(12);
+    gDPPipeSync(gDisplayListHead++);
+    gDPSetDepthImage(gDisplayListHead++, OS_K0_TO_PHYSICAL(D_801380A8));
+    gDPPipeSync(gDisplayListHead++);
+    gDPSetCycleType(gDisplayListHead++, G_CYC_FILL);
+    gDPSetColorImage(gDisplayListHead++, G_IM_FMT_RGBA, G_IM_SIZ_16b, w, OS_K0_TO_PHYSICAL(D_801380A8));
+    gDPSetFillColor(gDisplayListHead++, (GPACK_ZDZ(G_MAXFBZ, 0) << 16) | GPACK_ZDZ(G_MAXFBZ, 0));
+    gDPFillRectangle(gDisplayListHead++, 0, 0, w - 1, h - 1);
+    gDPPipeSync(gDisplayListHead++);
+    gDPSetColorImage(gDisplayListHead++, G_IM_FMT_RGBA, G_IM_SIZ_16b, w, osVirtualToPhysical(D_8014C648));
+    gDPSetFillColor(gDisplayListHead++, (GPACK_RGBA5551(r, g, b, 1) << 16) | GPACK_RGBA5551(r, g, b, 1));
+    if (gBgImage.img == NULL) {
+        gDPFillRectangle(gDisplayListHead++, 0, 0, w - 1, h - 1);
+    }
+    gDPPipeSync(gDisplayListHead++);
+}
 
 void Bg_SetPalette(B200_ *src) {
     if (src != NULL) {
@@ -1151,7 +1172,41 @@ void Bg_FadePalette(f32 k, u16 *src) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_13490", Bg_DrawImage);
+void Bg_DrawImage(u32 timg, s32 w, s32 h) {
+    s32 n;
+    s32 x;
+    s32 y;
+    s32 tw;
+    s32 th;
+
+    tw = 64;
+    th = 32;
+    n = ((w + 63) / tw) * ((h + 31) / th) * 10;
+    if ((u32)((u32)(n * 8) + (u32)gDisplayListHead + 14 * 8) >= (u32)gGfxPools[gGfxPoolIndex].end) {
+        gGfxPools[gGfxPoolIndex].ptr = gDisplayListHead;
+        GfxPool_Grow(&gGfxPools[gGfxPoolIndex], n + 14);
+        gDisplayListHead = gGfxPools[gGfxPoolIndex].ptr;
+    }
+    gDPPipeSync(gDisplayListHead++);
+    gDPSetCycleType(gDisplayListHead++, G_CYC_COPY);
+    gDPSetRenderMode(gDisplayListHead++, G_RM_NOOP, G_RM_NOOP2);
+    gDPSetTextureLUT(gDisplayListHead++, G_TT_RGBA16);
+    gDPSetTexturePersp(gDisplayListHead++, G_TP_NONE);
+    gDPSetTextureFilter(gDisplayListHead++, G_TF_POINT);
+    gDPLoadTLUT_pal256(gDisplayListHead++, gBgPalette);
+    timg += 0x200;
+    for (x = 0; x < w; x += tw) {
+        for (y = 0; y < h; y += th) {
+            gDPLoadTextureTile(gDisplayListHead++, timg, G_IM_FMT_CI, G_IM_SIZ_8b, w, h, x, y, x + tw - 1, y + th - 1, 0,
+                               G_TX_WRAP | G_TX_NOMIRROR, G_TX_WRAP | G_TX_NOMIRROR, G_TX_NOMASK, G_TX_NOMASK,
+                               G_TX_NOLOD, G_TX_NOLOD);
+            gSPTextureRectangle(gDisplayListHead++, x << 2, y << 2, (x + tw - 1) << 2, (y + th - 1) << 2,
+                                G_TX_RENDERTILE, x << 5, y << 5, 4 << 10, 1 << 10);
+        }
+    }
+    gDPSetTextureLUT(gDisplayListHead++, G_TT_NONE);
+    gDPSetTextureFilter(gDisplayListHead++, G_TF_BILERP);
+}
 
 void Draw2D_SetColor(s8 arg0, s8 arg1, s8 arg2) {
     D_800F1FA0 = arg0;

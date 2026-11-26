@@ -397,9 +397,137 @@ static inline void Mtx34_RotateX(Mtx34f *m, f32 a) {
     u = m->m[2][1] * c + m->m[2][2] * s; v = m->m[2][2] * c - m->m[2][1] * s; m->m[2][1] = u; m->m[2][2] = v;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_1CC80", ParticlePool_Update);
+int abs(int);
 
-INCLUDE_ASM("asm/nonmatchings/unit_1CC80", SkidMark_AddQuad);
+void ParticlePool_Update(ParticlePool *pool) {
+    u32 i;
+    u32 prev;
+    Particle *p;
+
+    if (pool == NULL) {
+        return;
+    }
+    i = pool->tail;
+    while (1) {
+        if (i == pool->cap) {
+            i = 0;
+        }
+        if (i == (u32)pool->head) {
+            break;
+        }
+        p = &pool->buf[i];
+        if (p->life != 0) {
+            p->life--;
+            p->pos.x += p->vx;
+            p->pos.y += p->vy;
+            p->pos.z += p->vz;
+            p->vz += p->f58;
+            if (p->flags & 0x10) {
+                p->angle += p->spin;
+            }
+            {
+                u32 a = p->flags & 1;
+                if (p->flags & 0x20) {
+                    goto L_ok;
+                }
+                if (a) {
+L_ok:
+                    p->q.x += p->q.y;
+                    p->q.z += p->q.w;
+                    if (p->q.x <= 0.5) {
+                        p->life = 0;
+                    }
+                }
+            }
+            if (abs(p->alphaVel) >= p->alpha) {
+                p->life = 0;
+            } else {
+                p->alpha += p->alphaVel;
+            }
+            if (p->frames != 0) {
+                p->frames--;
+                if (p->frames == 0) {
+                    p->def++;
+                    p->kind = p->def->kind;
+                    p->frames = p->def->frames;
+                }
+            }
+        } else {
+            if (i != (u32)pool->tail) {
+                prev = i;
+                if (prev == 0) {
+                    prev = pool->cap;
+                }
+                prev--;
+                *p = pool->buf[prev];
+                pool->buf[prev].life = 0;
+            } else {
+                pool->tail = i + 1;
+                if (pool->tail == (s32)pool->cap) {
+                    pool->tail = 0;
+                }
+            }
+        }
+        i++;
+    }
+}
+
+extern u8 D_800F2634[];
+
+static inline f32 maxf_sm_(f32 a, f32 b) {
+    return a > b ? a : b;
+}
+
+void SkidMark_AddQuad(Vec3f p0, Vec3f p1, Vec3f p2, Vec3f p3, Vec3f center, s32 alpha, s32 surf) {
+    Particle p;
+
+    surf = D_800F2634[surf];
+    p.pos = center;
+    p.flags = 6;
+    p.life = 0xFFFF;
+    p.vx = p.vy = p.vz = 0.0f;
+    p.f58 = 0.0f;
+    p.alpha = (alpha + 0x5A) << 8;
+    p.alphaVel = -0x40;
+    p.r = p.g = p.b = 0xFF;
+    p.kind = surf;
+
+    memcpy(&p, D_800F23C0, 4 * sizeof(Vtx));
+
+    p0.x -= center.x; p0.y -= center.y; p0.z -= center.z;
+    p1.x -= center.x; p1.y -= center.y; p1.z -= center.z;
+    p2.x -= center.x; p2.y -= center.y; p2.z -= center.z;
+    p3.x -= center.x; p3.y -= center.y; p3.z -= center.z;
+
+    p0.z += 3.5;
+    p1.z += 3.5;
+    p2.z += 3.5;
+    p3.z += 3.5;
+
+    ((Vtx *)&p)[0].v.ob[0] = p0.x;
+    ((Vtx *)&p)[0].v.ob[1] = p0.y;
+    ((Vtx *)&p)[0].v.ob[2] = p0.z;
+
+    ((Vtx *)&p)[1].v.ob[0] = p1.x;
+    ((Vtx *)&p)[1].v.ob[1] = p1.y;
+    ((Vtx *)&p)[1].v.ob[2] = p1.z;
+
+    ((Vtx *)&p)[2].v.ob[0] = p3.x;
+    ((Vtx *)&p)[2].v.ob[1] = p3.y;
+    ((Vtx *)&p)[2].v.ob[2] = p3.z;
+
+    ((Vtx *)&p)[3].v.ob[0] = p2.x;
+    ((Vtx *)&p)[3].v.ob[1] = p2.y;
+    ((Vtx *)&p)[3].v.ob[2] = p2.z;
+
+    p.f5C = maxf_sm_(p0.x * p0.x + p0.y * p0.y + p0.z * p0.z, p1.x * p1.x + p1.y * p1.y + p1.z * p1.z);
+    p.f5C = maxf_sm_(p2.x * p2.x + p2.y * p2.y + p2.z * p2.z, p.f5C);
+    p.f5C = maxf_sm_(p3.x * p3.x + p3.y * p3.y + p3.z * p3.z, p.f5C);
+    p.f5C = maxf_sm_(p.f5C, 0.0f);
+    p.f5C = sqrtf(p.f5C);
+
+    ParticlePool_Push(&gParticlesAlt, &p);
+}
 
 /* Spawns a coloured particle of the given kind at pos, sized by size. */
 void Particle_SpawnColored(Vec3f pos, u32 size, s32 kind, s32 r, s32 g, s32 b) {

@@ -1,5 +1,55 @@
 # Sesión de Decompilación HWTR
 
+## Sesión 49 (2026-11-25) — REA + Ghidra + C: 5 nuevos MATCH exactos (+10,920 B, 2 unidades completas) → **84.37 % objdiff**
+- **Métrica oficial objdiff:** **84.37 %** (**466,380 / 552,756 B**), **1,814 / 1,910 funciones (94.97 %)**, **176 / 221 unidades completas** (`report/us/report.json == build/us/report.json`).
+- **ROM:** SHA-1 `94913a07e49005ffd43dfdfa16ff5862bdb93748` (OK). `verify_funcs.py`: 1,788 funciones en C, 431,544 B, todas en su dirección final. `check_no_asm.py`: OK.
+- Sin commit aún (20 funciones exactas ganadas desde HEAD `51af82d`, en espera de ~30 funciones o confirmación del usuario con `make clean && make`).
+
+| Función | Unidad / tamaño | Resultado | Detalle clave |
+|---|---|---|---|
+| `Input_Update` | `src/unit_0B140.c`, 736 B | **MATCH 184/184** (completa `unit_0B140` 100 %) | `switch (i)` para `0..7`, casos de `bind` en orden inverso, `f32 dt2` para `u32->f64`, `if (bind & cont.button)` en `default:` digital |
+| `Ai_InitRacer` | `src/unit_22440.c`, 2,700 B | **MATCH 675/675** | `Slot85_` unificado, `static inline u32 Ai_Rand_(u32 n)` para emitir `divu` por `201`, `f1FC` tras `z204 = 0` |
+| `Car_AirControl` | `src/unit_31E10.c`, 3,120 B | **MATCH 780/780** | `Vec3_Scale_AC_(&car->vE4, ..., 0.98f)`, `sPitch *= pitch` primero, inercias antes de `center`, `Vec3_Neg_` tras `Vec3_Sub_`, `tq1`/`tq2` en `push_AC_` |
+| `CollBox_FindSeparatingAxis` | `src/unit_39C90.c`, 3,176 B | **MATCH 794/794** | Hermano de `CollBox_EdgeSeparatingAxis`: `Mat3T_MulVec_FSA_`, `f32 eps = 0.001f;`, sumas asociativas por la derecha en los 15 ejes SAT |
+| `SkidMark_AddQuad` | `src/unit_1CC80.c`, 1,188 B | **MATCH 297/297** (completa `unit_1CC80` 100 %) | `surf = D_800F2634[surf];` reutilizando `$a0`, encadenados `= 0.0f`/`= 0xFF`, `maxf_sm_` inline, `alphaVel` tras `alpha` |
+
+Borradores cercanos en `.scratch/s49/` (no integrados, 0 B oficiales): `Mesh_GetMaterialList` (`mg8.c` 91/98, bucle 1 exacto), `SndSrc_Play` (`sp5.c` 96/105). Detalle completo en `MATCH_LOG.md`.
+
+---
+
+## Sesión 48 (2026-11-25) — REA + Ghidra + C: 5 nuevos MATCH exactos (+7,484 B) → **81.37 % objdiff**
+- **Métrica oficial objdiff:** **81.37 %** (**449,764 / 552,756 B**), **1,803 / 1,910 funciones (94.40 %)**, **174 / 221 unidades completas** (`report/us/report.json == build/us/report.json`).
+- **ROM:** SHA-1 `94913a07e49005ffd43dfdfa16ff5862bdb93748` (OK). `verify_funcs.py`: 1,777 funciones en C, 414,928 B, todas en su dirección final. `check_no_asm.py`: OK.
+- Sin commit aún (9 funciones ganadas desde HEAD `8f28b9e`, en espera de ~30 funciones o confirmación del usuario con `make clean && make`).
+
+| Función | Unidad / tamaño | Resultado | Detalle clave |
+|---|---|---|---|
+| `RaceAudio_Update` | `src/unit_2C6A0.c`, 1,400 B | **MATCH 350/350** | `audVoicePlayRandom(D_8011852C)` (Ghidra omitía el arg), struct `AudLoop_` en `0x8014C0D0`, `D_801184C0` como `u8`, `p++, i++` |
+| `CollBox_EdgeSeparatingAxis` | `src/unit_39C90.c`, 1,220 B | **MATCH 305/305** | `Mat3T_MulVec_` inline con `Vec3f *`, `if (v < 0.0f) v = -v;`, `f32 eps = 0.001f;`, parentización de dot/extents |
+| `Cars_Init` | `src/unit_31E10.c`, 2,320 B | **MATCH 580/580** | `RigidBody_Init` 3 floats + `Vec3f`, `svcModelSetTransform(..., (u8 *)&m2C + 0x94)`, `k53C` en ambas ramas, `ox = offset.x` antes de `offset.z += h` |
+| `Model_SetPartRotation` | `src/unit_06050.c`, 1,276 B | **MATCH 319/319** | `= 0.0f` encadenado, `D_80138190.partScale` (`MEM_IN_STRUCT_P` fuerza 9 recargas), rotaciones fila a fila con 2 temporales `a, b` |
+| `Clouds_Init` | `src/unit_0B140.c`, 1,268 B | **MATCH 317/317** | `Vec2f_ vel` copia de struct, `s32 rv = Rand_Range(100)`, `if (max->z + 1200.0f > 10000.0f)`, `c++, j++`, `gCloudCount` antes de `D_80101EA0[1]` |
+
+Borradores cercanos en `.scratch/s48/` (no integrados, 0 B oficiales): `Hud_ShowTrick` (`ht5_cond_not1.c` 491/497, solo 5 palabras en `sprintf` de `turbos == 1`), `SortQueue_Sort` (`sq_v3.c` 808/816 B), `Hud_DrawTurbos` (`hd_v5.c` 1528/1528 B con rotación `$s4..$s7`). Detalle completo en `MATCH_LOG.md`.
+
+---
+
+## Sesión 47 (2026-11-25) — REA + Ghidra + C: 4 nuevos MATCH exactos (+6,052 B) → **80.01 % objdiff**
+- **Métrica oficial objdiff:** **80.01 %** (**442,280 / 552,756 B**), **1,798 / 1,910 funciones (94.14 %)**, **174 / 221 unidades completas** (`report/us/report.json == build/us/report.json`).
+- **ROM:** SHA-1 `94913a07e49005ffd43dfdfa16ff5862bdb93748` (OK). `verify_funcs.py`: 1,772 funciones en C, 411,032 B, todas en su dirección final.
+- **Meta del 80 % alcanzada.** Sin commit aún (en espera de alcanzar ~30 funciones nuevas o confirmación del usuario con `make clean && make`).
+
+| Función | Unidad / tamaño | Resultado | Detalle clave |
+|---|---|---|---|
+| `Bg_DrawImage` | `src/unit_13490.c`, 1,204 B | **MATCH 301/301** | Macros GBI CI8 + `gDPLoadTLUT_pal256(gBgPalette)`, `timg += 0x200` tras TLUT, `(u32)((u32)(n*8) + (u32)gDisplayListHead + 14*8)` |
+| `Model_UpdateWheelEffects` | `src/unit_06050.c`, 1,140 B | **MATCH 285/285** | `ModelAll_ gModels` sin cast, color `D_800F0220` como 3 escalares `s32`, `Model_ *m = gModels.models[i]`, `u32 j; u32 i;` |
+| `Ai_RestoreSlot` | `src/unit_22440.c`, 2,100 B | **MATCH 525/525** | Unificación de `SlotD_` en `Slot85_` (unión `f24`/`blk` en `+0x08`) sin cast sobre `gAi` |
+| `MenuCar_Draw` | `src/unit_53B30.c`, 1,608 B | **MATCH 402/402** | `Vec3f off` por valor, `Vec3f d` antes de `m[3][4]`, `if (id == 0)` en `Menu_DeltaTenths`/`Menu_DeltaSeconds`, `f32 diff` para lerp |
+
+Borradores muy cercanos guardados en `.scratch/s47/` (no integrados, 0 B oficiales): `Hud_DrawTurbos` (`hd_f2.c` 374/382, `hd_m2.c` 1528/1528 B exacto con rotación `$s4..$s7`), `Coll_SyncObjects` (`cs_for.c` 277/304), `Audio_Init` (`audio_init.c` 273/291, 1164/1164 B). Detalle completo en `MATCH_LOG.md`.
+
+---
+
 ## Sesión 45 (2026-11-25) — solo investigación, sin match nuevo
 - **objdiff sin cambios: 78.67 %** (434.864 / 552.760 B, 1.791 / 1.910 funciones). ROM OK, `make` incremental verde.
 - No se integró nada en `src/`: los cinco candidatos siguen a pocas palabras. Borradores en `.scratch/s45/`.

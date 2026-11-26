@@ -2,10 +2,55 @@
 #include "include_asm.h"
 #include "car.h"
 #include "race.h"
-typedef struct { u8 id; u8 p1[3]; u8 *car; u8 p8[0x1C]; f32 f24; u8 p28[0x1E0]; u8 braking; u8 p209[3]; f32 f20C; u8 p210[8]; f32 f218; u8 p21C[0xC]; Vec3f v228; u8 p234[0xC]; Vec3f v240; s32 ctlTimer; f32 throttle; f32 steer; u8 p258[0x50]; } Slot85_;
 typedef struct { Vec3f p; u8 pad[0x7C]; } BlkD_;
 typedef struct { u8 id; u8 p1[0xBF]; f32 m[3][3]; } CarD_;
-typedef struct { u8 id; u8 p1[7]; BlkD_ blk; u8 p90[4]; Vec3f v94[4]; f32 m[3][3]; Vec3f h1[10]; s32 n160; Vec3f h2[10]; s32 n1DC; Vec3f v1E0; Vec3f v1EC; s32 z1F8; u8 p1FC[4]; s32 z200; s32 z204; u8 p208[0xC]; s32 z214; f32 f218; Vec3f v21C; Vec3f v228; Vec3f v234; Vec3f v240; Vec3f v24C; u8 p258[0x10]; s32 z268; s32 z26C; u8 p270[0x38]; } SlotD_;
+typedef struct {
+    /* 0x000 */ u8 id;
+    /* 0x001 */ u8 p1[3];
+    /* 0x004 */ u8 *car;
+    /* 0x008 */ union {
+        struct { u8 p8[0x1C]; f32 f24; } s;
+        BlkD_ blk;
+    } u8_;
+    /* 0x090 */ u8 ok;
+    /* 0x091 */ u8 p91[3];
+    /* 0x094 */ Vec3f v94[4];
+    /* 0x0C4 */ f32 m[3][3];
+    /* 0x0E8 */ Vec3f h1[10];
+    /* 0x160 */ s32 n160;
+    /* 0x164 */ Vec3f h2[10];
+    /* 0x1DC */ s32 n1DC;
+    /* 0x1E0 */ Vec3f v1E0;
+    /* 0x1EC */ Vec3f v1EC;
+    /* 0x1F8 */ s32 z1F8;
+    /* 0x1FC */ f32 f1FC;
+    /* 0x200 */ s32 z200;
+    /* 0x204 */ s32 z204;
+    /* 0x208 */ u8 braking;
+    /* 0x209 */ u8 p209[3];
+    /* 0x20C */ f32 f20C;
+    /* 0x210 */ u8 p210[4];
+    /* 0x214 */ s32 z214;
+    /* 0x218 */ f32 f218;
+    /* 0x21C */ Vec3f v21C;
+    /* 0x228 */ Vec3f v228;
+    /* 0x234 */ Vec3f v234;
+    /* 0x240 */ Vec3f v240;
+    /* 0x24C */ s32 ctlTimer;
+    /* 0x250 */ f32 throttle;
+    /* 0x254 */ f32 steer;
+    /* 0x258 */ f32 f258;
+    /* 0x25C */ f32 f25C;
+    /* 0x260 */ f32 f260;
+    /* 0x264 */ u32 u264;
+    /* 0x268 */ s32 z268;
+    /* 0x26C */ s32 z26C;
+    /* 0x270 */ u8 p270[0x30];
+    /* 0x2A0 */ s32 s2A0;
+    /* 0x2A4 */ u8 b2A4;
+    /* 0x2A5 */ u8 b2A5;
+    /* 0x2A6 */ u8 p2A6[2];
+} Slot85_;
 typedef struct { Vec3f p; u8 pad[0x7C]; } BlkG_;
 typedef struct { u8 id; u8 p1[0x7B]; Vec3f v7C; f32 f88; u8 p8C[0xC]; Vec3f pos; Vec3f vA4; u8 pB0[0xC]; s32 zBC; f32 m[3][3]; Vec3f vE4; u8 pF0[0x444]; f32 f534; } CarG_;
 typedef struct { u8 id; u8 p1[7]; BlkG_ blk; u8 ok; u8 p91[3]; Vec3f v94[4]; f32 m[3][3]; Vec3f h1[10]; s32 n160; Vec3f h2[10]; s32 n1DC; Vec3f v1E0; Vec3f v1EC; s32 z1F8; f32 f1FC; s32 z200; s32 z204; u8 b208; u8 p209[3]; f32 f20C; u8 p210[4]; s32 z214; f32 f218; Vec3f v21C; Vec3f v228; Vec3f v234; Vec3f v240; Vec3f v24C; f32 f258; f32 f25C; f32 f260; u32 u264; s32 z268; s32 z26C; u8 p270[0x30]; s32 s2A0; u8 b2A4; u8 b2A5; u8 p2A6[2]; } SlotG_;
@@ -92,10 +137,10 @@ void Ai_SyncCars(void) {
     for (i = 0; i < 6; i++) {
         c1 = Car_Get(i);
         if (c1->state != 1) {
-            gAi[i].f24 = c1->unk474 / 1000.0f;
+            gAi[i].u8_.s.f24 = c1->unk474 / 1000.0f;
         }
         n = D_80115824 - 1;
-        gAi[i].f218 = (u32)(n - c1->lap) * D_80115820 + gAi[i].f24;
+        gAi[i].f218 = (u32)(n - c1->lap) * D_80115820 + gAi[i].u8_.s.f24;
     }
     for (i = 0; i < 6; i++) {
         car = Car_Get(gAi[i].id);
@@ -231,10 +276,152 @@ s32 Ai_Shutdown(void) {
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_22440", Ai_InitRacer);
+static inline u32 Ai_Rand_(u32 n) {
+    D_80115854 = D_80115854 * 0x19660D + 0x3C6EF35F;
+    return D_80115854 % n;
+}
+
+void Ai_InitRacer(CarG_ *car, u8 arg1, RaceSetup *cfg) {
+    u32 i;
+
+    gAi[car->id].id = car->id;
+    gAi[car->id].s2A0 = (cfg->f9C / 255.0f) * ((f32)D_80138D3F - (f32)D_80138D3E) + (f32)D_80138D3E;
+    gAi[car->id].v94[2] = car->pos;
+    gAi[car->id].v94[3] = car->pos;
+    gAi[car->id].v94[0] = car->pos;
+    gAi[car->id].v94[1] = car->pos;
+    gAi[car->id].m[0][0] = car->m[0][0];
+    gAi[car->id].m[0][1] = car->m[0][1];
+    gAi[car->id].m[0][2] = car->m[0][2];
+    gAi[car->id].m[1][0] = car->m[1][0];
+    gAi[car->id].m[1][1] = car->m[1][1];
+    gAi[car->id].m[1][2] = car->m[1][2];
+    gAi[car->id].m[2][0] = car->m[2][0];
+    gAi[car->id].m[2][1] = car->m[2][1];
+    gAi[car->id].m[2][2] = car->m[2][2];
+
+    car->v7C.x = 0.0f;
+    car->v7C.y = 0.0f;
+    car->v7C.z = 0.0f;
+    car->vA4.x = 0.0f;
+    car->vA4.y = 0.0f;
+    car->vA4.z = 0.0f;
+    car->vE4.x = 0.0f;
+    car->vE4.y = 0.0f;
+    car->vE4.z = 0.0f;
+    car->f88 = -1.0f;
+
+    gAi[car->id].v228.x = 0.0f;
+    gAi[car->id].v228.y = 0.0f;
+    gAi[car->id].v228.z = 0.0f;
+    gAi[car->id].v21C.x = 0.0f;
+    gAi[car->id].v21C.y = 0.0f;
+    gAi[car->id].v21C.z = 0.0f;
+    gAi[car->id].v240.x = 0.0f;
+    gAi[car->id].v240.y = 0.0f;
+    gAi[car->id].v240.z = 0.0f;
+    gAi[car->id].v234.x = 0.0f;
+    gAi[car->id].v234.y = 0.0f;
+    gAi[car->id].v234.z = 0.0f;
+
+    car->zBC = 0;
+    if (Bld_InitRacer((BlkG_ *)&gAi[car->id].u8_.blk, arg1) == 0) {
+        gAi[car->id].ok = 0;
+    } else {
+        gAi[car->id].ok = 1;
+        D_80115824 = cfg->f19;
+        for (i = 0; i < 10; i++) {
+            gAi[car->id].h1[i].x = car->m[0][2];
+            gAi[car->id].h1[i].y = car->m[1][2];
+            gAi[car->id].h1[i].z = car->m[2][2];
+        }
+        gAi[car->id].n160 = 0;
+        for (i = 0; i < 10; i++) {
+            gAi[car->id].h2[i].x = car->m[0][1];
+            gAi[car->id].h2[i].y = car->m[1][1];
+            gAi[car->id].h2[i].z = car->m[2][1];
+        }
+        gAi[car->id].n1DC = 0;
+        gAi[car->id].z1F8 = 0;
+        gAi[car->id].z200 = 0;
+        gAi[car->id].z204 = 0;
+        gAi[car->id].f1FC = (s32)Ai_Rand_(201) - 100;
+        gAi[car->id].braking = 0;
+        gAi[car->id].f20C = car->f534 * 100.0f - 100.0f;
+        gAi[car->id].ctlTimer = 0;
+        gAi[car->id].throttle = 0.0f;
+        gAi[car->id].steer = 0.0f;
+        gAi[car->id].f20C = (gAi[car->id].f20C + 100.0f) * D_80115828 - 100.0f;
+        gAi[car->id].f258 = D_8011582C;
+        gAi[car->id].f25C = D_80115830;
+        gAi[car->id].f260 = 1.0f;
+        gAi[car->id].u264 = RaceClock_Get();
+        gAi[car->id].z268 = 0;
+        gAi[car->id].z26C = 0;
+        gAi[car->id].b2A4 = 0;
+        gAi[car->id].b2A5 = 1;
+        gAi[car->id].f218 = (f32)(u32)D_80115824 * D_80115820;
+    }
+}
 
 void *Ai_GetSlot(u8 *arg0) {
     return (*arg0 * 0x2A8) + &D_80114838;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_22440", Ai_RestoreSlot);
+void Ai_RestoreSlot(CarD_ *car, BlkD_ *blk) {
+    s32 i;
+
+    gAi[car->id].u8_.blk = *blk;
+    gAi[car->id].z1F8 = 0;
+    gAi[car->id].z200 = 0;
+    gAi[car->id].z204 = 0;
+    gAi[car->id].z214 = 0;
+    gAi[car->id].v94[0] = gAi[car->id].u8_.blk.p;
+    gAi[car->id].v94[1] = gAi[car->id].u8_.blk.p;
+    gAi[car->id].v94[2] = gAi[car->id].u8_.blk.p;
+    gAi[car->id].v94[3] = gAi[car->id].u8_.blk.p;
+    gAi[car->id].m[0][0] = car->m[0][0];
+    gAi[car->id].m[0][1] = car->m[0][1];
+    gAi[car->id].m[0][2] = car->m[0][2];
+    gAi[car->id].m[1][0] = car->m[1][0];
+    gAi[car->id].m[1][1] = car->m[1][1];
+    gAi[car->id].m[1][2] = car->m[1][2];
+    gAi[car->id].m[2][0] = car->m[2][0];
+    gAi[car->id].m[2][1] = car->m[2][1];
+    gAi[car->id].m[2][2] = car->m[2][2];
+    for (i = 0; i < 10; i++) {
+        gAi[car->id].h1[i].x = car->m[0][2];
+        gAi[car->id].h1[i].y = car->m[1][2];
+        gAi[car->id].h1[i].z = car->m[2][2];
+    }
+    for (i = 0; i < 10; i++) {
+        gAi[car->id].h2[i].x = car->m[0][1];
+        gAi[car->id].h2[i].y = car->m[1][1];
+        gAi[car->id].h2[i].z = car->m[2][1];
+    }
+    gAi[car->id].n160 = 0;
+    gAi[car->id].n1DC = 0;
+    gAi[car->id].v1E0.x = car->m[0][2];
+    gAi[car->id].v1E0.y = car->m[1][2];
+    gAi[car->id].v1E0.z = car->m[2][2];
+    gAi[car->id].v1EC.x = car->m[0][2];
+    gAi[car->id].v1EC.y = car->m[1][2];
+    gAi[car->id].v1EC.z = car->m[2][2];
+    gAi[car->id].v228.x = 0.0f;
+    gAi[car->id].v228.y = 0.0f;
+    gAi[car->id].v228.z = 0.0f;
+    gAi[car->id].v21C.x = 0.0f;
+    gAi[car->id].v21C.y = 0.0f;
+    gAi[car->id].v21C.z = 0.0f;
+    gAi[car->id].v240.x = 0.0f;
+    gAi[car->id].v240.y = 0.0f;
+    gAi[car->id].v240.z = 0.0f;
+    gAi[car->id].v234.x = 0.0f;
+    gAi[car->id].v234.y = 0.0f;
+    gAi[car->id].v234.z = 0.0f;
+    gAi[car->id].ctlTimer = 0;
+    gAi[car->id].throttle = 0.0f;
+    gAi[car->id].steer = 0.0f;
+    gAi[car->id].z268 = 0;
+    gAi[car->id].z26C = 0;
+}

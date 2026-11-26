@@ -1,4 +1,5 @@
 #include "common.h"
+#include "math.h"
 #include "input.h"
 #include "gfx.h"
 #include "include_asm.h"
@@ -13,7 +14,7 @@ typedef struct { u8 c[0x54]; } Row6B_;
 typedef struct { f32 x; f32 y; f32 z; f32 vx; f32 vy; u8 type; } EntAA_;
 typedef struct { s32 keys[21]; } KeySetB_;
 typedef struct { s32 mode; s32 k[15]; u8 pad[0x54 - 0x40]; } Bind6C_;
-s32 Input_Update();
+void Input_Update(u8 pad);
 s32 Input_Rumble();
 extern void *sysInputIsKeyHeld;
 extern void *sysInputRumbleStopAll;
@@ -67,7 +68,116 @@ extern s32 D_800F0414;
 extern u8 gContPattern;
 s32 nuContRmbForceStop();
 
-INCLUDE_ASM("asm/nonmatchings/unit_0B140", Clouds_Init);
+typedef struct { f32 x; f32 y; } Vec2f_;
+typedef struct {
+    f32 x;
+    f32 y;
+    f32 z;
+    Vec2f_ vel;
+    u8 tex;
+    u8 pad15[3];
+} Cloud_;
+
+extern f32 D_80101E98[2];
+extern f32 D_80101EA0[2];
+extern char D_800FEA00[];
+u32 Rand_Range(s32);
+s32 File_GetSize(char *);
+void *Memory_Alloc(s32);
+void File_Load(char *, void *);
+
+s32 Clouds_Init(Vec3f *min, Vec3f *max, u8 r, u8 g, u8 b) {
+    char name[16];
+    Vec2f_ vel;
+    f32 z;
+    f32 dx;
+    f32 dy;
+    s32 nx;
+    s32 ny;
+    s32 i;
+    s32 j;
+    s32 k;
+    f32 x;
+    f32 y;
+    Cloud_ *c;
+
+    D_80101E94 = r;
+    D_80101E95 = g;
+    D_80101E96 = b;
+    {
+        s32 rv = Rand_Range(100);
+        vel.x = (f64)(rv % 7 - 3);
+        rv = Rand_Range(100);
+        vel.y = (f64)(rv % 7 - 3);
+    }
+
+    dx = (max->x - min->x) / 6.0f;
+    nx = 6;
+    ny = 6;
+    if (dx < 14000.0f) {
+        nx = (s32)(((f64)(max->x - min->x) + 21000.0) / 14000.0);
+        if (nx > 6) {
+            nx = 6;
+        }
+        dx = 14000.0f;
+    }
+
+    dy = (max->y - min->y) / 6.0f;
+    if (dy < 14000.0f) {
+        ny = (s32)(((f64)(max->y - min->y) + 21000.0) / 14000.0);
+        if (ny > 6) {
+            ny = 6;
+        }
+        dy = 14000.0f;
+    }
+
+    max->x += dx;
+    max->y += dy;
+    min->x -= dx;
+    min->y -= dy;
+
+    if (max->z + 1200.0f > 10000.0f) {
+        z = max->z + 1200.0f;
+    } else {
+        z = 10000.0f;
+    }
+
+    c = (Cloud_ *)gClouds;
+    x = min->x;
+    for (i = 0; i < nx; i++, x += dx) {
+        y = min->y;
+        for (j = 0; j < ny; c++, j++, y += dy) {
+            c->x = x + (f32)Rand_Range((s32)(dx / 2.0f)) + dx / 2.0f;
+            c->y = y + (f32)Rand_Range((s32)(dy / 2.0f)) + dy / 2.0f;
+            c->z = z + (f32)Rand_Range(1000);
+            c->vel = vel;
+            c->tex = Rand_Range(1000) % 3;
+        }
+    }
+
+    for (k = nx * ny; k < 36; c++, k++) {
+        c->x = 0.0f;
+        c->y = 0.0f;
+        c->z = 0.0f;
+        c->vel = vel;
+        c->tex = 3;
+    }
+
+    for (i = 0; i < 3; i++) {
+        void *buf;
+        sprintf(name, D_800FEA00, i);
+        buf = Memory_Alloc(File_GetSize(name));
+        File_Load(name, buf);
+        gCloudTextures[i] = buf;
+    }
+
+    D_80101E98[0] = max->x;
+    D_80101E98[1] = max->y;
+    D_80101EA0[0] = min->x;
+    gCloudCount = nx * ny;
+    D_80101EA0[1] = min->y;
+    return 1;
+}
 
 s32 Clouds_Free(void) {
     s32 i;
@@ -429,7 +539,107 @@ s32 Input_IsKeyHeldAny(s32 key) {
     return 0;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_0B140", Input_Update);
+u32 osGetCount(void);
+void Input_Update(u8 pad) {
+    Pad_ cont;
+    u32 t;
+    s32 i;
+    u32 bind;
+    s32 val;
+
+    t = osGetCount();
+    {
+        f32 dt2 = (f64)(u32)(t - gRumbleState[pad].time);
+        if (dt2 < 0.0f) {
+            dt2 = 0.0f;
+        }
+    }
+    nuContDataGet(&cont, pad);
+
+    for (i = 0; i < 14; i++) {
+        val = gRumbleState[pad].keys[i];
+        bind = gRumbleState[pad].k[i];
+        switch (i) {
+            case 0:
+            case 1:
+            case 2:
+            case 3:
+            case 4:
+            case 5:
+            case 6:
+            case 7:
+                switch (bind) {
+                    case 0x80000:
+                        if ((f64)cont.stick_y > 7.0) {
+                            val = (s32)(((f64)cont.stick_y - 7.0) * 255.0 / 63.0);
+                        } else {
+                            val = 0;
+                        }
+                        break;
+                    case 0x40000:
+                        if ((f64)cont.stick_y < -7.0) {
+                            val = (s32)(((f64)cont.stick_y + 7.0) * -255.0 / 63.0);
+                        } else {
+                            val = 0;
+                        }
+                        break;
+                    case 0x20000:
+                        if ((f64)cont.stick_x < -7.0) {
+                            val = (s32)(((f64)cont.stick_x + 7.0) * -255.0 / 63.0);
+                        } else {
+                            val = 0;
+                        }
+                        break;
+                    case 0x10000:
+                        if ((f64)cont.stick_x > 7.0) {
+                            val = (s32)(((f64)cont.stick_x - 7.0) * 255.0 / 63.0);
+                        } else {
+                            val = 0;
+                        }
+                        break;
+                    case 0:
+                        break;
+                    default:
+                        val = (bind & cont.button) ? 255 : 0;
+                        break;
+                }
+                break;
+            default:
+                switch (bind) {
+                    case 0x80000:
+                        val = cont.stick_y > 40;
+                        break;
+                    case 0x40000:
+                        val = cont.stick_y < -40;
+                        break;
+                    case 0x20000:
+                        val = cont.stick_x < -40;
+                        break;
+                    case 0x10000:
+                        val = cont.stick_x > 40;
+                        break;
+                    case 0:
+                        break;
+                    default:
+                        if (bind & cont.button) {
+                            val = 1;
+                        } else {
+                            val = 0;
+                        }
+                        break;
+                }
+                break;
+        }
+        if (val > 255) {
+            val = 255;
+        }
+        if (val < 0) {
+            val = 0;
+        }
+        gRumbleState[pad].keys[i] = val;
+    }
+    gRumbleState[pad].time = t;
+}
 
 u8 Input_GetControl(u8 a, s32 b) {
     return gPadControls[a].c[b];

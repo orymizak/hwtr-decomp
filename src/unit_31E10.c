@@ -2,6 +2,7 @@
 #include "ultra64.h"
 #include "include_asm.h"
 #include "car.h"
+#include "race.h"
 /* TODO(match-debt): empty loop needed to match (scheduling barrier). Assumed to be a debug hook
  * compiled out in release builds; verify against a real cause when one turns up. */
 #define DEBUG_NOP() do { } while (0)
@@ -24,8 +25,8 @@ extern s32 D_8011B320;
 extern s32 (*svcRandRange)(s32);
 extern void (*audSfxPlay)(s32, s32, f32, f32);
 u8 Car_UseTurbo(u8 *);
-void Car_Simulate(u8 *);
-void Car_AirControl(u8 *);
+void Car_Simulate(Car *);
+void Car_AirControl(Car *);
 u32 RaceClock_Get(void);
 void Replay_Record(void);
 void Car_UpdateWheelSpin(Car *);
@@ -48,7 +49,156 @@ s32 Coll_RemoveById(void *);
 
 extern s32 gCarCount;
 
-INCLUDE_ASM("asm/nonmatchings/unit_31E10", Cars_Init);
+typedef struct { f32 x, y, z, w; } Quat_;
+
+typedef struct {
+    u8 (*loadDefault)(u8, char *);
+    void *pad4;
+    void *pad8;
+    u8 (*loadCarInfo)(u8, char *, void *, void *);
+} SvcModel_;
+
+extern SvcModel_ svcModelLoadDefault;
+extern void (*svcModelSetTransform)(u8, Vec3f *, void *);
+extern void (*svcModelSetAlpha)(u8, u8);
+extern u8 D_8011B31C;
+extern u8 D_8011B31D;
+extern u8 gCarOrder[];
+extern u8 D_80138D46;
+extern u8 D_80138D47;
+extern u8 D_80138D48;
+extern u8 D_80138D49;
+
+void Coll_GetStartPos(u8 grid, Vec3f *pos, Quat_ *q);
+void Car_ComputeMass(Car *car);
+void RigidBody_Init(void *rb, f32 mass, f32 ex, f32 ey, f32 ez, Vec3f zero);
+void Quat_ToMtx3(Quat_ q, Mtx3f *m);
+u8 Bld_GetStartPos(u8 grid, Vec3f *pos);
+void Ai_InitRacer(Car *car, u8 grid, RaceSetup *cfg);
+void Race_LoadProgressStep(void);
+
+u8 Cars_Init(RaceSetup *cfg) {
+    Vec3f startPos;
+    Vec3f offset;
+    Vec3f tmp;
+    Quat_ q;
+    Mtx3f m;
+    u8 i;
+    f32 h;
+
+    memset(gCars, 0, sizeof(Car) * 6);
+    gCarCount = cfg->count;
+    D_8011B320 = cfg->cheats;
+    for (i = 0; i < cfg->count; i++) {
+        Coll_GetStartPos(cfg->p[i].grid, &startPos, &q);
+        gCars[i].id = i;
+        if (!svcModelLoadDefault.loadDefault(i, cfg->p[i].name)) {
+            return 0;
+        }
+        if (!svcModelLoadDefault.loadCarInfo(i, cfg->p[i].name, &gCars[i].col, &gCars[i].r3EC.hi)) {
+            return 0;
+        }
+        Car_ComputeMass(&gCars[i]);
+        offset.x = 0.0f;
+        offset.y = 0.0f;
+        offset.z = 0.0f;
+        RigidBody_Init(&gCars[i].m2C, gCars[i].k[0], gCars[i].extent.x, gCars[i].extent.y, gCars[i].extent.z, offset);
+        Quat_ToMtx3(q, &m);
+        gCars[i].rot.m[0][0] = m.m[0][0];
+        gCars[i].rot.m[0][1] = m.m[1][0];
+        gCars[i].rot.m[0][2] = m.m[2][0];
+        gCars[i].rot.m[1][0] = m.m[0][1];
+        gCars[i].rot.m[1][1] = m.m[1][1];
+        gCars[i].rot.m[1][2] = m.m[2][1];
+        gCars[i].rot.m[2][0] = m.m[0][2];
+        gCars[i].rot.m[2][1] = m.m[1][2];
+        gCars[i].rot.m[2][2] = m.m[2][2];
+
+        if (cfg->p[i].kind == 0 && Bld_GetStartPos(cfg->p[i].grid, &offset)) {
+            startPos = offset;
+            offset.x = gCars[i].rot.m[0][2];
+            offset.y = gCars[i].rot.m[1][2];
+            offset.z = gCars[i].rot.m[2][2];
+            h = MAX(gCars[i].k[15], gCars[i].k[21]);
+            offset.x *= (gCars[i].center.z + h) - 36.0f;
+            offset.y *= (gCars[i].center.z + h) - 36.0f;
+            offset.z *= (gCars[i].center.z + h) - 36.0f;
+            startPos.x += offset.x;
+            startPos.y += offset.y;
+            startPos.z += offset.z;
+            gCars[i].pos.x = startPos.x - gCars[i].v8C.x;
+            gCars[i].pos.y = startPos.y - gCars[i].v8C.y;
+            gCars[i].pos.z = startPos.z - gCars[i].v8C.z;
+        } else {
+            h = MAX(gCars[i].k[15], gCars[i].k[21]);
+            offset = gCars[i].center;
+            {
+                f32 ox = offset.x;
+                offset.z += h;
+                {
+                    Vec3f _r;
+                    f32 _vy = offset.y;
+                    f32 _vz = offset.z;
+                    _r.x = gCars[i].rot.m[0][0] * ox + gCars[i].rot.m[0][1] * _vy + gCars[i].rot.m[0][2] * _vz;
+                    _r.y = gCars[i].rot.m[1][0] * ox + gCars[i].rot.m[1][1] * _vy + gCars[i].rot.m[1][2] * _vz;
+                    _r.z = gCars[i].rot.m[2][0] * ox + gCars[i].rot.m[2][1] * _vy + gCars[i].rot.m[2][2] * _vz;
+                    tmp = _r;
+                }
+            }
+            offset.x = startPos.x + tmp.x;
+            offset.y = startPos.y + tmp.y;
+            offset.z = startPos.z + tmp.z;
+            gCars[i].pos.x = offset.x - gCars[i].v8C.x;
+            gCars[i].pos.y = offset.y - gCars[i].v8C.y;
+            gCars[i].pos.z = offset.z - gCars[i].v8C.z;
+        }
+
+        svcModelSetTransform(i, &startPos, (Mtx3f *)((u8 *)&gCars[i].m2C + 0x94));
+        gCars[i].turbos = 3;
+        gCars[i].airborne = 0;
+        gCars[i].unk4A4 = 0;
+        gCars[i].score = 0;
+        switch (cfg->p[i].kind) {
+            case 1:
+                gCars[i].flags |= 1;
+                break;
+            case 2:
+                gCars[i].flags |= 2;
+                break;
+        }
+        gCars[i].unk00C = cfg->p[i].player;
+        if ((gCars[i].flags & 1) || (gCars[i].flags & 2)) {
+            gCars[i].state = 2;
+            gCars[i].k53C *= (((f32)cfg->f9C / 255.0f) * ((f32)D_80138D49 - (f32)D_80138D48) + (f32)D_80138D48) / 100.0f;
+            gCars[i].k53C = MIN(gCars[i].k53C, 4.0f);
+        } else {
+            gCars[i].state = 1;
+            Ai_InitRacer(&gCars[i], cfg->p[i].grid, cfg);
+            gCars[i].k53C *= (((f32)cfg->f9C / 255.0f) * ((f32)D_80138D47 - (f32)D_80138D46) + (f32)D_80138D46) / 100.0f;
+            gCars[i].k53C = MIN(gCars[i].k53C, 4.0f);
+        }
+        Coll_AddCar(&gCars[i]);
+        gCars[i].savedRoom = -1;
+        if (((gCars[i].flags & 1) || (gCars[i].flags & 2)) && (cfg->cheats & 0x200)) {
+            svcModelSetAlpha(i, 0x7F);
+        }
+        Race_LoadProgressStep();
+    }
+    if (cfg->flags & 2) {
+        D_8011B31C = 1;
+    } else {
+        D_8011B31C = 0;
+    }
+    if (cfg->flags & 8) {
+        D_8011B31D = 1;
+    } else {
+        D_8011B31D = 0;
+    }
+    for (i = 0; i < cfg->count; i++) {
+        gCarOrder[i] = i;
+    }
+    return 1;
+}
 
 void RaceAudio_QueueAnnouncer(s32);
 
@@ -270,7 +420,201 @@ void Car_UpdateAirTricks(Car *p, f32 dt) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_31E10", Car_AirControl);
+void RigidBody_ConstrainSpin(void *, s32);
+
+#define ABSF_AC_(x) ((x) < 0.0f ? -(x) : (x))
+
+static inline void Vec3_Scale_AC_(Vec3f *dst, Vec3f *src, f32 s) {
+    dst->x = src->x * s;
+    dst->y = src->y * s;
+    dst->z = src->z * s;
+}
+
+static inline void Vec3_Add_AC_(Vec3f *dst, Vec3f *a, Vec3f *b) {
+    dst->x = a->x + b->x;
+    dst->y = a->y + b->y;
+    dst->z = a->z + b->z;
+}
+
+static inline void Vec3_Sub_AC_(Vec3f *dst, Vec3f *a, Vec3f *b) {
+    dst->x = a->x - b->x;
+    dst->y = a->y - b->y;
+    dst->z = a->z - b->z;
+}
+
+static inline void Vec3_Neg_AC_(Vec3f *v) {
+    v->x = -v->x;
+    v->y = -v->y;
+    v->z = -v->z;
+}
+
+static inline void push_AC_(Car *c, Vec3f *at, Vec3f *f, Vec3f *a, Vec3f *tq) {
+    a->x = at->x - c->pos.x;
+    a->y = at->y - c->pos.y;
+    a->z = at->z - c->pos.z;
+    tq->x = a->y * f->z - f->y * a->z;
+    tq->y = f->x * a->z - a->x * f->z;
+    tq->z = a->x * f->y - f->x * a->y;
+    c->torque.x = tq->x + c->torque.x;
+    c->torque.y = tq->y + c->torque.y;
+    c->torque.z = tq->z + c->torque.z;
+    c->force.x = c->force.x + f->x;
+    c->force.y = c->force.y + f->y;
+    c->force.z = c->force.z + f->z;
+}
+
+void Car_AirControl(Car *car) {
+    u8 b1;
+    u8 b2;
+    u8 flags;
+    f32 sPitch;
+    f32 sYaw;
+    f32 sRoll;
+    f32 yaw;
+    f32 roll;
+    f32 pitch;
+    Vec3f f1;
+    Vec3f f3;
+    Vec3f f2;
+    f32 m[3][4];
+    Vec3f fwd;
+    Vec3f right;
+    Vec3f up;
+    Vec3f center;
+    Vec3f pt1;
+    Vec3f pt3;
+    Vec3f pt2;
+    Vec3f r;
+    Vec3f tq1;
+    Vec3f tq2;
+    f32 iPitch;
+    f32 iYaw;
+    f32 iRoll;
+
+    b1 = 0;
+    car->pad6C2[0] = 0;
+    if (car->unk01C < 0.2f && -0.2f < car->unk01C) {
+        b1 = 1;
+    }
+    b2 = 0;
+    if (car->unk020 < 0.2f && -0.2f < car->unk020) {
+        b2 = 1;
+    }
+    if (b1) {
+        car->unk6C3 |= 2;
+    }
+    if (b2) {
+        car->unk6C3 |= 1;
+    }
+    if (car->fBC < 264.0f) {
+        car->unk6C3 = 0;
+    }
+    flags = car->unk6C3;
+    if (flags == 0) {
+        return;
+    }
+    if ((b1 || !(flags & 2)) && (b2 || !(flags & 1))) {
+        return;
+    }
+
+    car->pad6C2[0] = 1;
+    Vec3_Scale_AC_(&car->vE4, &car->vE4, 0.98f);
+    sPitch = car->scale;
+    sYaw = sPitch;
+    sRoll = sPitch;
+
+    yaw = 0.0f;
+    if (car->unk024 != 0) {
+        yaw = car->unk01C;
+    }
+    roll = 0.0f;
+    if (car->unk024 == 0) {
+        roll = car->unk01C;
+    }
+    pitch = car->unk020;
+    if (!(car->unk6C3 & 2)) {
+        roll = 0.0f;
+        yaw = 0.0f;
+    }
+    if (!(car->unk6C3 & 1)) {
+        pitch = 0.0f;
+    }
+    sPitch *= pitch;
+    sYaw *= yaw;
+    sRoll *= roll;
+    sYaw *= car->k[23];
+    sRoll *= car->k530;
+    sPitch *= car->k[22];
+    sYaw *= 0.5f;
+    sRoll *= 0.5f;
+    sPitch *= 0.5f;
+    iPitch = car->extent.y * car->extent.y + car->extent.z * car->extent.z;
+    iYaw = car->extent.x * car->extent.x + car->extent.z * car->extent.z;
+    iRoll = car->extent.x * car->extent.x + car->extent.y * car->extent.y;
+    Vec3_Add_AC_(&center, &car->pos, &car->v8C);
+    m[0][0] = car->rot.m[0][0];
+    m[0][1] = car->rot.m[0][1];
+    m[0][2] = car->rot.m[0][2];
+    m[0][3] = car->pos.x;
+    m[1][0] = car->rot.m[1][0];
+    m[1][1] = car->rot.m[1][1];
+    m[1][2] = car->rot.m[1][2];
+    m[1][3] = car->pos.y;
+    m[2][0] = car->rot.m[2][0];
+    m[2][1] = car->rot.m[2][1];
+    m[2][2] = car->rot.m[2][2];
+    m[2][3] = car->pos.z;
+
+    fwd.x = car->rot.m[0][2];
+    fwd.y = car->rot.m[1][2];
+    fwd.z = car->rot.m[2][2];
+
+    up.x = car->rot.m[0][1];
+    up.y = car->rot.m[1][1];
+    up.z = car->rot.m[2][1];
+
+    right.x = car->rot.m[0][0];
+    right.y = car->rot.m[1][0];
+    right.z = car->rot.m[2][0];
+
+    if (ABSF_AC_(yaw) > ABSF_AC_(roll) && ABSF_AC_(yaw) > ABSF_AC_(pitch)) {
+        Vec3_Scale_AC_(&f1, &right, iYaw);
+        Vec3_Scale_AC_(&pt1, &fwd, sYaw);
+        Vec3_Add_AC_(&pt1, &center, &pt1);
+        push_AC_(car, &pt1, &f1, &r, &tq1);
+
+        Vec3_Scale_AC_(&pt1, &fwd, sYaw);
+        Vec3_Sub_AC_(&pt1, &center, &pt1);
+        Vec3_Neg_AC_(&f1);
+        push_AC_(car, &pt1, &f1, &r, &tq2);
+
+        RigidBody_ConstrainSpin(&car->m2C, 1);
+    } else if (ABSF_AC_(roll) > ABSF_AC_(yaw) && ABSF_AC_(roll) > ABSF_AC_(pitch)) {
+        Vec3_Scale_AC_(&f2, &right, iRoll);
+        Vec3_Scale_AC_(&pt2, &up, sRoll);
+        Vec3_Add_AC_(&pt2, &center, &pt2);
+        push_AC_(car, &pt2, &f2, &r, &tq1);
+
+        Vec3_Scale_AC_(&pt2, &up, sRoll);
+        Vec3_Sub_AC_(&pt2, &center, &pt2);
+        Vec3_Neg_AC_(&f2);
+        push_AC_(car, &pt2, &f2, &r, &tq1);
+
+        RigidBody_ConstrainSpin(&car->m2C, 2);
+    } else if (ABSF_AC_(pitch) > ABSF_AC_(yaw) && ABSF_AC_(pitch) > ABSF_AC_(roll)) {
+        Vec3_Scale_AC_(&f3, &fwd, iPitch);
+        Vec3_Scale_AC_(&pt3, &up, sPitch);
+        Vec3_Add_AC_(&pt3, &center, &pt3);
+        push_AC_(car, &pt3, &f3, &r, &tq1);
+
+        Vec3_Scale_AC_(&pt3, &up, sPitch);
+        Vec3_Sub_AC_(&pt3, &center, &pt3);
+        Vec3_Neg_AC_(&f3);
+        push_AC_(car, &pt3, &f3, &r, &tq1);
+
+        RigidBody_ConstrainSpin(&car->m2C, 0);
+    }
+}
 
 void Car_UpdatePhysics(Car *p, f32 dt) {
     Vec3f col;
@@ -809,7 +1153,217 @@ void Car_ApplyAero(Car *c, f32 *outA, f32 *outB) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_31E10", Car_Simulate);
+extern u8 D_80138D6B;
+void Car_UpdatePoints(Car *);
+void Car_AverageGroundContacts(Car *);
+void Car_ApplyAero(Car *, f32 *, f32 *);
+
+static inline void Car_ApplyForce_(Car *car, Vec3f *at, Vec3f *f, Vec3f *r, Vec3f *tq) {
+    r->x = at->x - car->pos.x;
+    r->y = at->y - car->pos.y;
+    r->z = at->z - car->pos.z;
+    VEC3_CROSS(*tq, *r, *f);
+    car->torque.x = tq->x + car->torque.x;
+    car->torque.y = tq->y + car->torque.y;
+    car->torque.z = tq->z + car->torque.z;
+    car->force.x = car->force.x + f->x;
+    car->force.y = car->force.y + f->y;
+    car->force.z = car->force.z + f->z;
+}
+
+void Car_Simulate(Car *car) {
+    Vec3f F;
+    Vec3f cgOff;
+    Vec3f tmp1;
+    Vec3f pt;
+    f32 downFront;
+    f32 downRear;
+    u32 i;
+    u32 nDriven;
+    CarPoint *w;
+
+    nDriven = 0;
+    for (i = 0, w = car->points; i < car->nPoints; w++, i++) {
+        if (w->flags & 4) {
+            nDriven += (w->contact != 0);
+        }
+    }
+
+    Car_UpdatePoints(car);
+    Car_AverageGroundContacts(car);
+    Car_ApplyAero(car, &downFront, &downRear);
+
+    {
+    Vec3f tmp2;
+    Vec3f tmp3;
+    Vec3f tmp4;
+
+    downFront /= (f32)car->nFront;
+    downRear /= (f32)car->nRear;
+
+    tmp1.x = 0.0f;
+    tmp1.y = car->k[1] * (car->extent.y * 0.5f);
+    tmp1.z = car->k[2] * (car->extent.z * 0.5f);
+
+    tmp2.x = car->rot.m[0][0] * tmp1.x + car->rot.m[0][1] * tmp1.y + car->rot.m[0][2] * tmp1.z;
+    tmp2.y = car->rot.m[1][0] * tmp1.x + car->rot.m[1][1] * tmp1.y + car->rot.m[1][2] * tmp1.z;
+    tmp2.z = car->rot.m[2][0] * tmp1.x + car->rot.m[2][1] * tmp1.y + car->rot.m[2][2] * tmp1.z;
+    cgOff = tmp2;
+
+    for (i = 0, w = car->points; i < car->nPoints; w++, i++) {
+        F.x = 0.0f;
+        F.y = 0.0f;
+        F.z = 0.0f;
+
+        VEC3_SUB(pt, w->pt, cgOff);
+
+        if (w->contact != 0) {
+            f32 brake;
+            f32 vn;
+            f32 dampK;
+            f32 fn;
+            f32 downVal;
+            f32 len;
+            f32 grip;
+            f32 maxTan;
+            f32 drag;
+
+            tmp3 = w->vel;
+            VEC3_SCALE(tmp1, w->n, VEC3_DOT(tmp3, w->n));
+            VEC3_SUB(tmp3, tmp3, tmp1);
+
+            if ((w->flags & 1) && car->unk024 != 0) {
+                tmp2 = tmp3;
+            } else {
+                VEC3_SCALE(tmp2, w->dir, VEC3_DOT(tmp3, w->dir));
+                VEC3_SUB(tmp2, tmp3, tmp2);
+            }
+
+            tmp2.x = -tmp2.x;
+            tmp2.y = -tmp2.y;
+            tmp2.z = -tmp2.z;
+            VEC3_SCALE(tmp2, tmp2, (car->k[0] / (f32)car->nPoints) * 8.0f);
+            VEC3_ADD(F, F, tmp2);
+
+            brake = car->k[0] * 386.0f;
+            brake *= car->k[3];
+            brake *= (car->r3EC.b8 != 0) ? car->unk014 : car->unk018;
+            if (w->flags & 1) {
+                brake *= (1.0f - car->k[4]);
+                if (car->nPoints == 6) {
+                    brake *= 0.5f;
+                }
+            } else {
+                brake *= car->k[4];
+            }
+            brake *= 0.5f;
+            if (car->r3EC.b8 == 0) {
+                brake = -brake;
+            }
+            VEC3_SCALE(tmp1, w->dir, brake);
+            VEC3_ADD(F, F, tmp1);
+
+            if (w->flags & 4) {
+                brake = *(f32 *)((u8 *)&car->r3EC + 0x10);
+                brake /= (f32)nDriven;
+                VEC3_SCALE(tmp1, w->dir, brake);
+                VEC3_ADD(F, F, tmp1);
+            }
+
+            tmp2 = w->vel;
+            tmp1 = w->n;
+            vn = VEC3_DOT(tmp2, tmp1);
+            VEC3_SCALE(tmp2, tmp1, vn);
+            if (vn < 0.0f) {
+                dampK = (w->flags & 1) ? car->k[19] : car->k[13];
+                VEC3_SCALE(tmp4, tmp2, -dampK);
+            } else {
+                dampK = (w->flags & 1) ? car->k[20] : car->k[14];
+                VEC3_SCALE(tmp4, tmp2, -dampK);
+                {
+                    f32 dlen = sqrtf(VEC3_DOT(tmp4, tmp4));
+                    if (*(f32 *)&w->pad58[4] < dlen) {
+                        VEC3_SCALE(tmp4, tmp4, *(f32 *)&w->pad58[4] / dlen);
+                    }
+                }
+            }
+            VEC3_ADD(F, F, tmp4);
+
+            VEC3_SCALE(tmp1, w->n, *(f32 *)&w->pad58[4]);
+            VEC3_ADD(F, F, tmp1);
+
+            fn = VEC3_DOT(F, w->n);
+            VEC3_SCALE(tmp2, w->n, fn);
+            VEC3_SUB(tmp3, F, tmp2);
+            len = sqrtf(VEC3_DOT(tmp3, tmp3));
+
+            downVal = -((w->flags & 1) ? downRear : downFront);
+            if (w->flags & 1) {
+                grip = car->k[17];
+            } else {
+                s32 idx;
+                u32 flags = car->flags;
+                if (flags & 0x380) {
+                    if (flags & 0x80) {
+                        idx = 0x23;
+                    } else if (flags & 0x100) {
+                        idx = 0x26;
+                    } else {
+                        idx = 0x29;
+                    }
+                    grip = car->k[17] + (f32)D_80138D38[idx] / 10.0f;
+                } else {
+                    grip = car->k[11];
+                }
+            }
+            maxTan = (fn + downVal) * (grip * *(f32 *)&w->pad58[0]);
+            if (maxTan < len) {
+                f32 ratio = maxTan / len;
+                VEC3_SCALE(tmp3, tmp3, ratio);
+                w->b60 = 1;
+            } else {
+                w->b60 = 0;
+            }
+            VEC3_ADD(F, tmp2, tmp3);
+
+            if (w->c31 == 6 && car->pickupFx[1] == 0 && !(car->w540 & 1)) {
+                VEC3_SCALE(tmp1, w->vel, -car->k[0]);
+                drag = (f32)D_80138D6B / 100.0f;
+                VEC3_SCALE(tmp1, tmp1, drag);
+                VEC3_SCALE(tmp2, w->n, VEC3_DOT(w->n, tmp1));
+                VEC3_SUB(tmp1, tmp1, tmp2);
+                VEC3_ADD(F, F, tmp1);
+            }
+
+            Car_ApplyForce_(car, &pt, &F, &tmp2, &tmp3);
+        } else {
+            if (car->cnt3E7 == 0) {
+                VEC3_SCALE(F, car->up, -((w->flags & 1) ? downRear : downFront));
+                if (car->unk6C3 != 0 && car->pad6C2[0] != 0) {
+                    tmp1.x = car->rot.m[0][1];
+                    tmp1.y = car->rot.m[1][1];
+                    tmp1.z = car->rot.m[2][1];
+                    VEC3_SCALE(tmp1, tmp1, w->pos.y - car->center.y);
+                    VEC3_ADD(tmp1, tmp1, car->pos);
+                } else {
+                    tmp1.x = car->rot.m[0][0];
+                    tmp1.y = car->rot.m[1][0];
+                    tmp1.z = car->rot.m[2][0];
+                    VEC3_SCALE(tmp1, tmp1, car->center.x);
+                    VEC3_ADD(tmp1, tmp1, w->world);
+                }
+                Car_ApplyForce_(car, &tmp1, &F, &tmp2, &tmp3);
+            } else {
+                F.x = car->rot.m[0][2];
+                F.y = car->rot.m[1][2];
+                F.z = car->rot.m[2][2];
+                VEC3_SCALE(F, F, (w->flags & 1) ? downRear : downFront);
+                Car_ApplyForce_(car, &w->world, &F, &tmp2, &tmp3);
+            }
+        }
+    }
+    }
+}
 
 /* Sets each wheel's spin rate: from the ground speed when it touches the ground, else from the
  * engine rpm (driven wheels) or zero. */

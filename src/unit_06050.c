@@ -49,14 +49,16 @@ typedef struct {
 typedef struct { s32 d[0x114 / 4]; } Big114_;
 typedef struct { s32 d[0x40 / 4]; } Big40_;
 typedef struct { u8 p0[9]; u8 b9; } MdlMat_;
-typedef struct { u8 p0[0x30]; s32 flags; u8 p34[8]; MdlMat_ *mat; u8 p40[0x44]; s32 flags84; } MdlInst_;
+typedef struct MdlInst_ { u8 p0[0x30]; s32 flags; u8 p34[8]; MdlMat_ *mat; u8 p40[0xC]; struct MdlInst_ *next; struct MdlInst_ *child; u8 p54[0x30]; s32 flags84; } MdlInst_;
 typedef struct { s32 w0; u16 *colors; } MdlPal_;
 typedef struct {
     /* 0x000 */ u8 p0[0x2C];
     /* 0x02C */ MdlInst_ *inst;
     /* 0x030 */ u8 p30[4];
     /* 0x034 */ MdlPal_ *pals; /* palettes; palIdx selects the one Model_SwapPalette darkens */
-    /* 0x038 */ u8 p38[0xC4];
+    /* 0x038 */ u8 p38[0x1C];
+    /* 0x054 */ Vec3f partPos[6];
+    /* 0x09C */ u8 p9C[0x60];
     /* 0x0FC */ u8 nParts;
     /* 0x0FD */ u8 pFD;
     /* 0x0FE */ s8 id;
@@ -145,7 +147,18 @@ extern s32 D_8013818C;
 s32 GfxPools_Shutdown();
 s32 ModelData_FreeCaches(s32);
 s32 ModelData_Free(s32);
-extern Model_ *gModels[6];
+typedef struct {
+    /* 0x000 */ Model_ *models[6];
+    /* 0x018 */ u8 p18[4];
+    /* 0x01C */ s8 partA[6][6];
+    /* 0x040 */ s8 partB[6][6];
+    /* 0x064 */ s8 partC[6][6];
+    /* 0x088 */ struct { Vec3f pos; Vec3f n; Vec3f lastPos; Vec3f lastN; } contact[6][6];
+    /* 0x748 */ Vec3f touchPos[6][6];
+    /* 0x8F8 */ u8 pad8F8[0x40];
+    /* 0x938 */ u8 active;
+} ModelAll_;
+extern ModelAll_ gModels;
 s32 Model_Draw(u8);
 /* Camera block from screen.c: view matrix followed by draw state; 0x4C is passed to ModelData_Draw. */
 typedef struct {
@@ -344,7 +357,7 @@ void World_Update(s32 dt) {
         Explosions_Update(dt);
         ModelData_Update(gTrackWorld, dt);
         for (i = 0; i < 6; i++) {
-            o = gModels[i];
+            o = gModels.models[i];
             if (o == NULL) {
                 continue;
             }
@@ -558,8 +571,8 @@ inline void Models_FreeCaches(void) {
 
     GfxPools_Shutdown();
     for (i = 0; i < 6; i++) {
-        if (gModels[i] != NULL) {
-            ModelData_FreeCaches((s32)gModels[i]);
+        if (gModels.models[i] != NULL) {
+            ModelData_FreeCaches((s32)gModels.models[i]);
         }
     }
 }
@@ -611,18 +624,18 @@ void Model_SwapPalette(u8 i, u8 mode) {
     u32 k;
     u8 r, g, b;
 
-    if (gModels[i] != NULL && gModels[i]->palIdx != 0 && D_80138190.palette[i] != mode) {
+    if (gModels.models[i] != NULL && gModels.models[i]->palIdx != 0 && D_80138190.palette[i] != mode) {
         D_80138190.palette[i] = mode;
-        k = gModels[i]->palIdx;
-        dst = gModels[i]->pals[k].colors;
+        k = gModels.models[i]->palIdx;
+        dst = gModels.models[i]->pals[k].colors;
         dst += 4;
         if (mode == 1) {
             for (k = 0; k < 7; k++) {
-                dst[k] = gModels[i]->savedPal[k];
+                dst[k] = gModels.models[i]->savedPal[k];
             }
         } else {
             for (k = 0; k < 7; k++) {
-                gModels[i]->savedPal[k] = dst[k];
+                gModels.models[i]->savedPal[k] = dst[k];
                 Color_Unpack5551(dst[k], &r, &g, &b);
                 r >>= 1;
                 g >>= 1;
@@ -637,15 +650,15 @@ INCLUDE_ASM("asm/nonmatchings/unit_06050", Model_SwapPalette);
 #endif
 
 void Model_FlashOff(u8 i) {
-    gModels[i]->b105 = 0;
+    gModels.models[i]->b105 = 0;
 }
 
 void Model_FlashOn(u8 i) {
-    gModels[i]->b105 = 0xFF;
+    gModels.models[i]->b105 = 0xFF;
 }
 
 void Model_SetAlpha(u8 i, s8 val) {
-    Model_ *m = gModels[i];
+    Model_ *m = gModels.models[i];
 
     if (m != NULL) {
         m->inst->mat->b9 = val;
@@ -653,7 +666,7 @@ void Model_SetAlpha(u8 i, s8 val) {
 }
 
 void Model_SetVisible(u8 i, u8 on) {
-    Model_ *m = gModels[i];
+    Model_ *m = gModels.models[i];
 
     if (m != NULL) {
         if (on) {
@@ -687,13 +700,13 @@ s32 Model_LoadAsync(u8 id, char *name, u8 mode) {
     D_80138156[id] = mode ^ 1;
     strcpy(path, name);
     strcat(path, D_800FE95C);
-    if (gModels[id] != NULL) {
+    if (gModels.models[id] != NULL) {
         Model_Free(id);
     }
     GfxPools_Shutdown();
     for (i = 0; i < 6; i++) {
-        if (gModels[i] != NULL) {
-            ModelData_FreeCaches((s32)gModels[i]);
+        if (gModels.models[i] != NULL) {
+            ModelData_FreeCaches((s32)gModels.models[i]);
         }
     }
     h = File_LoadAsync(path, ((void **)&gModelBuffers)[id]);
@@ -712,8 +725,8 @@ s32 Model_PollLoad(u8 i) {
         return 0;
     }
     gModelLoading[i] = 0;
-    gModels[i] = (Model_ *)ModelData_Load(((s32 *)&gModelBuffers)[i]);
-    for (j = 0; j < gModels[i]->nParts; j++) {
+    gModels.models[i] = (Model_ *)ModelData_Load(((s32 *)&gModelBuffers)[i]);
+    for (j = 0; j < gModels.models[i]->nParts; j++) {
         Model_SetPartRotation(i, j, 0.0f, 0.0f, 0.0f);
     }
     return 1;
@@ -729,11 +742,11 @@ u8 Model_Load(u8 id, char *name, s32 unused) {
 
     strcpy(path, name);
     strcat(path, D_800FE95C);
-    if (gModels[id] != NULL) {
+    if (gModels.models[id] != NULL) {
         Model_Unload(id);
     }
-    gModels[id] = (Model_ *)ModelData_Load(File_LoadAllocCopy(path));
-    for (j = 0; j < gModels[id]->nParts; j++) {
+    gModels.models[id] = (Model_ *)ModelData_Load(File_LoadAllocCopy(path));
+    for (j = 0; j < gModels.models[id]->nParts; j++) {
         Model_SetPartRotation(id, j, 0.0f, 0.0f, 0.0f);
     }
     Model_ResetSlot(id);
@@ -741,16 +754,16 @@ u8 Model_Load(u8 id, char *name, s32 unused) {
 }
 
 s32 Model_Free(u8 i) {
-    ModelData_FreeCaches((s32)gModels[i]);
-    gModels[i] = NULL;
+    ModelData_FreeCaches((s32)gModels.models[i]);
+    gModels.models[i] = NULL;
     return 1;
 }
 
 s32 Model_Unload(u8 id) {
     Models_FreeCaches();
-    if (gModels[id] != NULL) {
-        ModelData_Free((s32)gModels[id]);
-        gModels[id] = NULL;
+    if (gModels.models[id] != NULL) {
+        ModelData_Free((s32)gModels.models[id]);
+        gModels.models[id] = NULL;
         return 1;
     }
     return 0;
@@ -795,18 +808,18 @@ void Gfx_UpdateLights(void);
 void ModelData_Draw(Model_ *, CameraState_ *, s32, u8, u8, u8, u8);
 
 s32 Model_Draw(u8 idx) {
-    if (gModels[idx] != NULL) {
+    if (gModels.models[idx] != NULL) {
         Light_Reset();
         Gfx_UpdateLights();
         GFX_RESERVE(1);
         gDPSetTexturePersp(gDisplayListHead++, G_TP_PERSP);
-        ModelData_Draw(gModels[idx], &D_800F2138, D_800F2138.f4C, D_80138150[idx], D_80138156[idx], 0, 0);
+        ModelData_Draw(gModels.models[idx], &D_800F2138, D_800F2138.f4C, D_80138150[idx], D_80138156[idx], 0, 0);
     }
     return 0;
 }
 
 void Model_GetColor(u8 i, u8 *r, u8 *g, u8 *b) {
-    Model_ *m = gModels[i];
+    Model_ *m = gModels.models[i];
 
     *r = m->c[0];
     *g = m->c[1];
@@ -826,7 +839,7 @@ s32 Model_SetTransform(u8 idx, Vec3f *p, f32 *r) {
 
     /* TODO(match-debt): the matrix is written through byte offsets (o->mtx[0]); as struct
      * members GCC moves the D_80138AB0 load above the last stores. */
-    o = (u8 *)gModels[idx];
+    o = (u8 *)gModels.models[idx];
     if (o == NULL) {
         return 1;
     }
@@ -852,7 +865,7 @@ s32 Model_SetTransform(u8 idx, Vec3f *p, f32 *r) {
         *(f32 *)(o + 0x170) = -*(f32 *)(o + 0x170);
         *(f32 *)(o + 0x180) = -*(f32 *)(o + 0x180);
     }
-    l = gModels[idx];
+    l = gModels.models[idx];
     if (l->cur != 0) {
         x = l->lightPos.x;
         y = l->lightPos.y;
@@ -904,26 +917,177 @@ void Model_SetWheelContact(u8 slot, u8 w, u8 contact, Vec3f *pos, Vec3f *n, u8 s
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", Model_UpdateWheelEffects);
+extern s32 D_800F0220[][3];
+extern Vec3f D_800F02BC;
+void Particle_SpawnColored(Vec3f, s32, s32, s32, s32, s32);
+void SkidMark_AddQuad(Vec3f, Vec3f, Vec3f, Vec3f, Vec3f, s32, s32);
+
+void Model_UpdateWheelEffects(void) {
+    u32 j;
+    u32 i;
+    Vec3f pos;
+    s32 c0;
+    s32 c1;
+    s32 c2;
+    s32 b;
+    s32 surf;
+
+    if (gModels.active == 1) {
+        for (i = 0; i < 6; i++) {
+            if (gModels.models[i] != NULL) {
+                for (j = 0; j < gModels.models[i]->nParts; j++) {
+                    if (gModels.partA[i][j] == 2) {
+                        b = gModels.partB[i][j];
+                        if ((rand() & 0x7F) < 0x6E) {
+                            c0 = D_800F0220[gModels.partC[i][j]][0];
+                            c1 = D_800F0220[gModels.partC[i][j]][1];
+                            c2 = D_800F0220[gModels.partC[i][j]][2];
+                            pos = gModels.contact[i][j].lastPos;
+                            {
+                                Model_ *m = gModels.models[i];
+                                pos.x += m->mtx[0][2][0] * 20.0f;
+                                pos.y += m->mtx[0][2][1] * 20.0f;
+                                pos.z += m->mtx[0][2][2] * 20.0f;
+                            }
+                            surf = gModels.partC[i][j];
+                            if (surf == 11 || surf == 12) {
+                                Particle_SpawnJitteredVel(pos, D_800F02BC);
+                            } else {
+                                Particle_SpawnColored(pos, b, 1, c0, c1, c2);
+                            }
+                            if ((rand() & 0x7F) < 0x3C) {
+                                if (surf == 11 || surf == 12) {
+                                    Particle_SpawnJitteredVel(pos, D_800F02BC);
+                                } else {
+                                    Particle_SpawnColored(pos, b, 1, c0, c1, c2);
+                                }
+                            }
+                        }
+                        if (gModels.partA[i][j] == 2) {
+                            SkidMark_AddQuad(
+                                gModels.contact[i][j].pos,
+                                gModels.contact[i][j].n,
+                                gModels.contact[i][j].lastPos,
+                                gModels.contact[i][j].lastN,
+                                gModels.touchPos[i][j],
+                                gModels.partB[i][j],
+                                gModels.partC[i][j]
+                            );
+                            gModels.contact[i][j].pos = gModels.contact[i][j].lastPos;
+                            gModels.contact[i][j].n = gModels.contact[i][j].lastN;
+                            gModels.partA[i][j] = 1;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
 void Model_RotateAllParts(u8 i, f32 v) {
     u32 j;
 
-    for (j = 0; j < gModels[i]->nParts; j++) {
+    for (j = 0; j < gModels.models[i]->nParts; j++) {
         Model_SetPartRotation(i, j, 0.0f, 0.0f, v);
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_06050", Model_SetPartRotation);
+static inline void Mtx34_Translate_(f32 m[3][4], f32 x, f32 y, f32 z) {
+    m[0][3] += m[0][0] * x + m[0][1] * y + m[0][2] * z;
+    m[1][3] += m[1][0] * x + m[1][1] * y + m[1][2] * z;
+    m[2][3] += m[2][0] * x + m[2][1] * y + m[2][2] * z;
+}
+
+static inline void Mtx34_RotateZ_(f32 m[3][4], f32 ang) {
+    f32 c = cosf(ang);
+    f32 s = sinf(ang);
+    f32 a, b;
+
+    a = m[0][0] * c + m[0][1] * s; b = m[0][1] * c - m[0][0] * s; m[0][0] = a; m[0][1] = b;
+    a = m[1][0] * c + m[1][1] * s; b = m[1][1] * c - m[1][0] * s; m[1][0] = a; m[1][1] = b;
+    a = m[2][0] * c + m[2][1] * s; b = m[2][1] * c - m[2][0] * s; m[2][0] = a; m[2][1] = b;
+}
+
+static inline void Mtx34_RotateX_(f32 m[3][4], f32 ang) {
+    f32 c = cosf(ang);
+    f32 s = sinf(ang);
+    f32 a, b;
+
+    a = m[0][1] * c + m[0][2] * s; b = m[0][2] * c - m[0][1] * s; m[0][1] = a; m[0][2] = b;
+    a = m[1][1] * c + m[1][2] * s; b = m[1][2] * c - m[1][1] * s; m[1][1] = a; m[1][2] = b;
+    a = m[2][1] * c + m[2][2] * s; b = m[2][2] * c - m[2][1] * s; m[2][1] = a; m[2][2] = b;
+}
+
+void Model_SetPartRotation(u8 slot, u8 part, f32 rx, f32 ry, f32 rz) {
+    f32 m[3][4];
+    Vec3f piv;
+    Model_ *mdl;
+    MdlInst_ *node;
+    s32 i;
+
+    if (D_80138190.wrecked[slot] == 1) {
+        return;
+    }
+    mdl = gModels.models[slot];
+    if (mdl == NULL || part >= mdl->nParts) {
+        return;
+    }
+    piv = mdl->partPos[part];
+    m[0][0] = m[0][1] = m[0][2] = m[0][3] =
+    m[1][0] = m[1][1] = m[1][2] = m[1][3] =
+    m[2][0] = m[2][1] = m[2][2] = m[2][3] = 0.0f;
+    m[0][0] = m[1][1] = m[2][2] = 1.0f;
+    Mtx34_Translate_(m, piv.x, piv.y, piv.z);
+    Mtx34_Translate_(m, 0.0f, 0.0f, ry);
+    Mtx34_RotateZ_(m, -rx);
+    Mtx34_RotateX_(m, -rz);
+    Mtx34_Translate_(m, -piv.x, -piv.y, -piv.z);
+
+    node = mdl->inst->child;
+    if (node == NULL) {
+        return;
+    }
+    for (i = 0; i < part; i++) {
+        node = node->next;
+        if (node == NULL) {
+            return;
+        }
+    }
+
+    mdl->mtx[part + 1][0][0] = m[0][0];
+    mdl->mtx[part + 1][0][1] = m[0][1];
+    mdl->mtx[part + 1][0][2] = m[0][2];
+    mdl->mtx[part + 1][0][3] = m[0][3];
+    mdl->mtx[part + 1][1][0] = m[1][0];
+    mdl->mtx[part + 1][1][1] = m[1][1];
+    mdl->mtx[part + 1][1][2] = m[1][2];
+    mdl->mtx[part + 1][1][3] = m[1][3];
+    mdl->mtx[part + 1][2][0] = m[2][0];
+    mdl->mtx[part + 1][2][1] = m[2][1];
+    mdl->mtx[part + 1][2][2] = m[2][2];
+    mdl->mtx[part + 1][2][3] = m[2][3];
+
+    if (D_80138190.partScaleOn == 1) {
+        mdl->mtx[part + 1][0][0] *= D_80138190.partScale;
+        mdl->mtx[part + 1][0][1] *= D_80138190.partScale;
+        mdl->mtx[part + 1][0][2] *= D_80138190.partScale;
+        mdl->mtx[part + 1][1][0] *= D_80138190.partScale;
+        mdl->mtx[part + 1][1][1] *= D_80138190.partScale;
+        mdl->mtx[part + 1][1][2] *= D_80138190.partScale;
+        mdl->mtx[part + 1][2][0] *= D_80138190.partScale;
+        mdl->mtx[part + 1][2][1] *= D_80138190.partScale;
+        mdl->mtx[part + 1][2][2] *= D_80138190.partScale;
+    }
+}
 
 void Model_SetShadowPlane(u8 i, u8 val, Vec4L_ *src) {
-    gModels[i]->b14C = val;
-    gModels[i]->v = *src;
+    gModels.models[i]->b14C = val;
+    gModels.models[i]->v = *src;
 }
 
 
 void Model_SetEngineShake(u8 i, f32 v) {
-    gModels[i]->b10E = v * 240.0f;
+    gModels.models[i]->b10E = v * 240.0f;
 }
 
 
@@ -1000,36 +1164,36 @@ void Model_Wreck(u8 slot, u8 mode, Pair68_ unused) {
     f32 m[3][4];
 
     D_80138190.wrecked[slot] = 1;
-    gModels[slot]->inst->flags84 &= ~0x40;
+    gModels.models[slot]->inst->flags84 &= ~0x40;
     if (mode != 2) {
-        m[0][0] = gModels[slot]->mtx[0][0][0];
-        m[0][1] = gModels[slot]->mtx[0][0][1];
-        m[0][2] = gModels[slot]->mtx[0][0][2];
-        m[0][3] = gModels[slot]->mtx[0][0][3];
-        m[1][0] = gModels[slot]->mtx[0][1][0];
-        m[1][1] = gModels[slot]->mtx[0][1][1];
-        m[1][2] = gModels[slot]->mtx[0][1][2];
-        m[1][3] = gModels[slot]->mtx[0][1][3];
-        m[2][0] = gModels[slot]->mtx[0][2][0];
-        m[2][1] = gModels[slot]->mtx[0][2][1];
-        m[2][2] = gModels[slot]->mtx[0][2][2];
-        m[2][3] = gModels[slot]->mtx[0][2][3];
+        m[0][0] = gModels.models[slot]->mtx[0][0][0];
+        m[0][1] = gModels.models[slot]->mtx[0][0][1];
+        m[0][2] = gModels.models[slot]->mtx[0][0][2];
+        m[0][3] = gModels.models[slot]->mtx[0][0][3];
+        m[1][0] = gModels.models[slot]->mtx[0][1][0];
+        m[1][1] = gModels.models[slot]->mtx[0][1][1];
+        m[1][2] = gModels.models[slot]->mtx[0][1][2];
+        m[1][3] = gModels.models[slot]->mtx[0][1][3];
+        m[2][0] = gModels.models[slot]->mtx[0][2][0];
+        m[2][1] = gModels.models[slot]->mtx[0][2][1];
+        m[2][2] = gModels.models[slot]->mtx[0][2][2];
+        m[2][3] = gModels.models[slot]->mtx[0][2][3];
         m[0][3] += m[0][0] * 0.0f + m[0][1] * 96.0f + m[0][2] * 0.0f;
         m[1][3] += m[1][0] * 0.0f + m[1][1] * 96.0f + m[1][2] * 0.0f;
         m[2][3] += m[2][0] * 0.0f + m[2][1] * 96.0f + m[2][2] * 0.0f;
         Explosion_Spawn((s32)m, 1.0f, 1);
     }
-    gModels[slot]->b105 = 0;
+    gModels.models[slot]->b105 = 0;
 }
 
 void Model_Repair(u8 slot) {
     u32 i;
 
     D_80138190.wrecked[slot] = 0;
-    for (i = 0; i < gModels[slot]->nParts; i++) {
+    for (i = 0; i < gModels.models[slot]->nParts; i++) {
         Model_SetPartRotation(slot, i, 0.0f, 0.0f, 0.0f);
     }
-    gModels[slot]->inst->flags84 |= 0x40;
+    gModels.models[slot]->inst->flags84 |= 0x40;
 }
 
 /* Sets part's matrix from rotation rot and position pos; scaled by partScale when partScaleOn is
@@ -1039,7 +1203,7 @@ void Model_SetPartTransform(u8 slot, u8 part, Vec3f pos, f32 (*rot)[3]) {
     Model_ *mdl;
 
     if (D_80138190.wrecked[slot]) {
-        mdl = gModels[slot];
+        mdl = gModels.models[slot];
         mdl->inst->flags84 |= 0x40;
         if (mdl != NULL && part < mdl->nParts) {
             m[0][0] = rot[0][0];
@@ -1273,7 +1437,7 @@ void Fx_SpawnPaintChips(u8 **car, f32 speed, Vec3f pos, Vec3f vel) {
     if (car == NULL || *car == NULL || *(s32 *)(*car + 0x5C) != 3) {
         return;
     }
-    o = gModels[**(u8 **)(*car + 0x64)];
+    o = gModels.models[**(u8 **)(*car + 0x64)];
     if (o == NULL) {
         return;
     }

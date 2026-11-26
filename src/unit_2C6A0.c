@@ -9,7 +9,7 @@ extern void (*audSfxPlay)(s32, s32, f32, f32);
 extern u8 (*audSndSrcCreate)(void);
 typedef struct { u8 id; u8 b; u8 pad[2]; s32 c; } Ent8_;
 typedef struct { u8 b0; u8 pad1[3]; s32 flags; s32 obj; s32 wC; } E10_; /* track sound marker source */
-typedef struct { u8 b0; u8 pad[0xF]; } E10b_;
+typedef struct { u8 b0; u8 loopA; u8 pad2[2]; f32 rpm; u8 loop; u8 pad9[3]; u32 hold; } E10b_;
 extern E10b_ D_801184C8[];
 extern u8 D_801184C2;
 extern s32 D_80118528;
@@ -31,7 +31,7 @@ void Debris_Update(s32);
 void RaceCam_Update(s32);
 void Pickup_Update(void);
 void RaceClock_Advance(s32);
-void RaceAudio_Update(s32);
+void RaceAudio_Update(u32);
 void AnimTrack_Update(void);
 void Hud_SetPlayer(u8, s32, u8);
 void RaceView_Draw(u32);
@@ -790,7 +790,7 @@ u8 RaceAudio_Init(RaceSetup *t) {
     return 1;
 }
 
-extern s8 D_801184C0;
+extern u8 D_801184C0;
 extern u8 (*svcTrackGetMarkerCount)(void);
 extern void (*svcTrackGetMarker)(u8, s32 *, s32 *, s32 *, u32 *);
 s32 AnimTrack_FindById(u8);
@@ -872,7 +872,121 @@ u8 RaceAudio_Unload(RaceResult *unused) {
     return audCarSndShutdown();
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_2C6A0", RaceAudio_Update);
+typedef struct {
+    void (*setPos)(u8, Vec3f);
+    void (*setVel)(u8, Vec3f);
+    void (*setReverb)(u8, f32);
+    void (*startEng)(u8, s32);
+    void (*stopEng)(u8);
+    void (*setRpm)(u8, f32);
+    void (*setThrottle)(u8, f32);
+    void (*startLoopA)(u8, u8);
+    void (*stopLoopA)(u8);
+    void (*setLoopAVol)(u8, f32);
+} AudLoop_;
+
+extern void (*D_8014C138)(void);
+extern void (*audVoicePlayRandom)(s32);
+extern void (*audCarSndStopLoopB)(u8);
+extern void (*audListenerSetPosition)(Vec3f);
+extern void (*audListenerSetOrientation)(Vec3f, Vec3f);
+extern void (*audListenerSetVelocity)(Vec3f);
+extern void (*audCarSndUpdate)(void);
+extern void (*audCarSndUpdateSplit)(void);
+extern void (*audSndSrcSetPosition)(u8, Vec3f);
+extern AudLoop_ audCarSndSetPosition;
+extern u8 D_800F3708[][2];
+void Car_GetAudioInfo(u8 id, Vec3f *pos, Vec3f *vel, f32 *rpm, f32 *load, u8 *surface, f32 *contact, f32 *slip, f32 *reverb);
+void RaceCam_GetListener(Vec3f *pos, Vec3f *vel, Vec3f *fwd, Vec3f *up);
+void AnimTrack_GetPos(s32 obj, Vec3f *pos);
+
+void RaceAudio_Update(u32 dt) {
+    Vec3f pos;
+    Vec3f vel;
+    Vec3f fwd;
+    Vec3f up;
+    f32 rpm;
+    f32 throttle;
+    u8 surface;
+    f32 slipA;
+    f32 slipB;
+    f32 reverb;
+    u8 loop;
+    u8 i;
+    E10_ *p;
+    u32 *tp;
+
+    D_8014C138();
+    if (D_80118528 == 1) {
+        return;
+    }
+    tp = &D_80118534;
+    *tp += dt;
+    if (D_80118530 == 0 && *tp > 300) {
+        D_80118530 = 1;
+        *tp = 0;
+        if (D_8011852C == 3) {
+            audSfxPlay(0x39, 1, 1.0f, 1.0f);
+        } else {
+            audVoicePlayRandom(D_8011852C);
+        }
+    }
+    for (i = 0; i < D_801184C1; i++) {
+        Car_GetAudioInfo(D_801184C8[i].b0, &pos, &vel, &rpm, &throttle, &surface, &slipA, &slipB, &reverb);
+        rpm = MIN(MAX(rpm, 1000.0f), 12000.0f);
+        if (D_801184C8[i].rpm < rpm) {
+            D_801184C8[i].rpm += MIN(rpm - D_801184C8[i].rpm, 1000.0f);
+        } else {
+            D_801184C8[i].rpm -= MIN(D_801184C8[i].rpm - rpm, 1000.0f);
+        }
+        audCarSndSetPosition.setRpm(i, D_801184C8[i].rpm);
+        audCarSndSetPosition.setThrottle(i, throttle);
+        if (D_801184C2 == 1) {
+            audCarSndSetPosition.setReverb(i, reverb);
+        }
+        if (D_801184C0 != 0) {
+            audCarSndSetPosition.setPos(i, pos);
+            audCarSndSetPosition.setVel(i, vel);
+        }
+        if (i <= D_801184C2) {
+            loop = 0;
+            if (surface != 0) {
+                loop = D_800F3708[surface][slipB < slipA ? 0 : 1];
+            }
+            if (loop != 0) {
+                if (D_801184C8[i].loopA != loop) {
+                    audCarSndSetPosition.stopLoopA(D_801184C8[i].b0);
+                    audCarSndSetPosition.startLoopA(D_801184C8[i].b0, loop);
+                }
+                audCarSndSetPosition.setLoopAVol(D_801184C8[i].b0, MAX(slipA, slipB));
+            } else if (D_801184C8[i].loopA != 0) {
+                audCarSndSetPosition.stopLoopA(D_801184C8[i].b0);
+            }
+            D_801184C8[i].loopA = loop;
+        }
+        if (D_801184C8[i].hold <= dt) {
+            audCarSndStopLoopB(i);
+            D_801184C8[i].hold = 0;
+        } else {
+            D_801184C8[i].hold -= dt;
+        }
+    }
+    if (D_801184C0 != 0) {
+        RaceCam_GetListener(&pos, &vel, &fwd, &up);
+        audListenerSetPosition(pos);
+        audListenerSetVelocity(vel);
+        audListenerSetOrientation(fwd, up);
+        audCarSndUpdate();
+    } else {
+        audCarSndUpdateSplit();
+    }
+    for (i = 0, p = D_800F3704; i < D_800F3700; p++, i++) {
+        if (p->flags & 1) {
+            AnimTrack_GetPos(p->obj, &pos);
+            audSndSrcSetPosition(p->b0, pos);
+        }
+    }
+}
 
 /* Per-car surface sound state (D_801184C8): current surface loop and its hold time. */
 typedef struct { u8 b0; u8 pad1[7]; u8 loop; u8 pad9[3]; s32 hold; } CarSurfSnd_;

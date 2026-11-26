@@ -1530,7 +1530,39 @@ f32 Snd3D_GetDoppler(void *pos, void *vel) {
     return 0.0f;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", Snd3D_GetPan);
+s32 Snd3D_GetPan(void *posArg) {
+    Vec3f *pos = (Vec3f *)posArg;
+    Vec3f *lpos = (Vec3f *)&gListenerPos;
+    struct {
+        f32 m[3][3];
+        Vec3f d;
+        Vec3f v;
+    } s;
+    f32 x;
+
+    s.d.x = pos->x - lpos->x;
+    s.d.y = pos->y - lpos->y;
+    s.d.z = pos->z - lpos->z;
+    s.m[0][0] = gListenerOriA.y * gListenerOriB.z - gListenerOriA.z * gListenerOriB.y;
+    s.m[1][0] = gListenerOriA.z * gListenerOriB.x - gListenerOriA.x * gListenerOriB.z;
+    s.m[2][0] = gListenerOriA.x * gListenerOriB.y - gListenerOriA.y * gListenerOriB.x;
+    s.m[0][2] = gListenerOriA.x;
+    s.m[1][2] = gListenerOriA.y;
+    s.m[2][2] = gListenerOriA.z;
+    s.m[0][1] = gListenerOriB.x;
+    s.m[1][1] = gListenerOriB.y;
+    s.m[2][1] = gListenerOriB.z;
+    s.v.x = s.m[0][0] * s.d.x + s.m[1][0] * s.d.y + s.m[2][0] * s.d.z;
+    s.v.y = s.m[0][1] * s.d.x + s.m[1][1] * s.d.y + s.m[2][1] * s.d.z;
+    s.v.z = s.m[0][2] * s.d.x + s.m[1][2] * s.d.y + s.m[2][2] * s.d.z;
+    if (s.v.z == 0.0f && s.v.x == 0.0f) {
+        return 0x80;
+    }
+    x = sqrtf(s.v.x * s.v.x + s.v.z * s.v.z);
+    x = s.v.x / x;
+    x = (x + 1.0f) * 128.0f;
+    return (s32)x;
+}
 
 f32 Snd3D_ApproachDistance(Vec3f *a, Vec3f *off, Vec3f *b) {
     f32 d[3];

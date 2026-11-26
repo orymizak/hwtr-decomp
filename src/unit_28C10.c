@@ -656,7 +656,450 @@ void Pickup_Update(void) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_28C10", Trick_Evaluate);
+extern u8 D_800F3040[];
+extern u8 D_800F3074[];
+extern s32 D_800F30A8[];
+
+void Trick_Evaluate(s32 pitchA, s32 pitchB, s32 rollA, s32 rollB, s32 yawA, s32 yawB,
+                    u32 airTime, u8 *outTurbos, s16 *outTrick, s32 *outPts) {
+    s32 pts = 0;
+    s16 tricks[4] = { -1, -1, -1, -1 };
+    u8 counts[3] = { 0, 0, 0 };
+    u8 turbos = 0;
+    u8 combo;
+    s32 a;
+    s32 b;
+    s32 absA;
+    s32 absB;
+    s32 val;
+    u8 best;
+    u8 i;
+
+    if (airTime >= 1000) {
+        if (airTime < 2000) {
+            tricks[0] = 0;
+            pts = D_800F30A8[0];
+            turbos = D_800F3074[0];
+        } else if (airTime < 3000) {
+            tricks[0] = 1;
+            pts = D_800F30A8[1];
+            turbos = D_800F3074[1];
+        } else if (airTime < 4000) {
+            tricks[0] = 2;
+            pts = D_800F30A8[2];
+            turbos = D_800F3074[2];
+        } else {
+            tricks[0] = 3;
+            pts = (airTime / 1000) * D_800F30A8[3];
+            turbos = D_800F3074[3];
+        }
+    }
+
+    combo = 0;
+    if (pitchA >= 0) {
+        a = pitchA + 45;
+    } else {
+        a = pitchA - 45;
+    }
+    b = (pitchB < 0) ? (pitchB - 45) : (pitchB + 45);
+    absA = a;
+    absB = b;
+    if (absA < 0) {
+        absA = -absA;
+    }
+    if (absB < 0) {
+        absB = -absB;
+    }
+    if ((a < 0 && b >= 0) || (a >= 0 && b < 0)) {
+        if (absA >= 360 && absB >= 360) {
+            combo = 1;
+            tricks[1] = 12;
+            pts += D_800F30A8[12];
+            turbos += D_800F3074[12];
+            val = absA + absB;
+        } else {
+            val = (absA < absB) ? b : a;
+        }
+    } else {
+        val = (absA < absB) ? b : a;
+    }
+
+    if (val > 1440) {
+        if (!combo) {
+            tricks[1] = 11;
+            counts[0] = 4;
+        }
+        pts += D_800F30A8[tricks[1]];
+        turbos += D_800F3074[tricks[1]];
+    } else if (val > 1080) {
+        if (!combo) {
+            tricks[1] = 10;
+            counts[0] = 3;
+        }
+        pts += D_800F30A8[tricks[1]];
+        turbos += D_800F3074[tricks[1]];
+    } else if (val > 720) {
+        if (!combo) {
+            tricks[1] = 9;
+            counts[0] = 2;
+        }
+        pts += D_800F30A8[tricks[1]];
+        turbos += D_800F3074[tricks[1]];
+    } else if (val > 360) {
+        if (!combo) {
+            tricks[1] = 8;
+            counts[0] = 1;
+        }
+        pts += D_800F30A8[tricks[1]];
+        turbos += D_800F3074[tricks[1]];
+    } else if (val < -1440) {
+        if (!combo) {
+            tricks[1] = 7;
+            counts[0] = 4;
+        }
+        pts += D_800F30A8[tricks[1]];
+        turbos += D_800F3074[tricks[1]];
+    } else if (val < -1080) {
+        if (!combo) {
+            tricks[1] = 6;
+            counts[0] = 3;
+        }
+        pts += D_800F30A8[tricks[1]];
+        turbos += D_800F3074[tricks[1]];
+    } else if (val < -720) {
+        if (!combo) {
+            tricks[1] = 5;
+            counts[0] = 2;
+        }
+        pts += D_800F30A8[tricks[1]];
+        turbos += D_800F3074[tricks[1]];
+    } else if (val < -360) {
+        if (!combo) {
+            tricks[1] = 4;
+            counts[0] = 1;
+        }
+        pts += D_800F30A8[tricks[1]];
+        turbos += D_800F3074[tricks[1]];
+    }
+
+    combo = 0;
+    if (rollA >= 0) {
+        a = rollA + 45;
+    } else {
+        a = rollA - 45;
+    }
+    b = (rollB < 0) ? (rollB - 45) : (rollB + 45);
+    absA = a;
+    absB = b;
+    if (absA < 0) {
+        absA = -absA;
+    }
+    if (absB < 0) {
+        absB = -absB;
+    }
+    if (((a < 0 && b >= 0) || (a >= 0 && b < 0)) && (absA >= 360 && absB >= 360)) {
+        combo = 1;
+        tricks[2] = 34;
+        pts += D_800F30A8[34];
+        turbos += D_800F3074[34];
+        val = absA + absB;
+    } else if (absA < absB) {
+        val = absB;
+    } else {
+        val = absA;
+    }
+
+    if (val > 1440) {
+        if (!combo) {
+            tricks[2] = 33;
+            counts[1] = 4;
+        }
+        pts += D_800F30A8[tricks[2]];
+        turbos += D_800F3074[tricks[2]];
+    } else if (val > 1080) {
+        if (!combo) {
+            tricks[2] = 32;
+            counts[1] = 3;
+        }
+        pts += D_800F30A8[tricks[2]];
+        turbos += D_800F3074[tricks[2]];
+    } else if (val > 720) {
+        if (!combo) {
+            tricks[2] = 31;
+            counts[1] = 2;
+        }
+        pts += D_800F30A8[tricks[2]];
+        turbos += D_800F3074[tricks[2]];
+    } else if (val > 360) {
+        if (!combo) {
+            tricks[2] = 30;
+            counts[1] = 1;
+        }
+        pts += D_800F30A8[tricks[2]];
+        turbos += D_800F3074[tricks[2]];
+    }
+
+    combo = 0;
+    if (yawA >= 0) {
+        a = yawA + 45;
+    } else {
+        a = yawA - 45;
+    }
+    b = (yawB < 0) ? (yawB - 45) : (yawB + 45);
+    absA = a;
+    absB = b;
+    if (absA < 0) {
+        absA = -absA;
+    }
+    if (absB < 0) {
+        absB = -absB;
+    }
+    if ((a < 0 && b >= 0) || (a >= 0 && b < 0)) {
+        if (absA >= 720 && absB >= 720) {
+            combo = 1;
+            tricks[3] = 29;
+            pts += D_800F30A8[29];
+            turbos += D_800F3074[29];
+            val = absA + absB;
+        } else if (absA >= 360 && absB >= 360) {
+            combo = 1;
+            tricks[3] = 28;
+            pts += D_800F30A8[28];
+            turbos += D_800F3074[28];
+            val = absA + absB;
+        } else {
+            val = absA;
+            if (val < absB) {
+                val = absB;
+            }
+        }
+    } else {
+        val = absA;
+        if (val < absB) {
+            val = absB;
+        }
+    }
+
+    if (val > 2880) {
+        if (!combo) {
+            tricks[3] = 27;
+            counts[2] = 8;
+        }
+        pts += D_800F30A8[tricks[3]];
+        turbos += D_800F3074[tricks[3]];
+    } else if (val > 2700) {
+        if (!combo) {
+            tricks[3] = 26;
+            counts[2] = 7;
+        }
+        pts += D_800F30A8[tricks[3]];
+        turbos += D_800F3074[tricks[3]];
+    } else if (val > 2520) {
+        if (!combo) {
+            tricks[3] = 25;
+            counts[2] = 7;
+        }
+        pts += D_800F30A8[tricks[3]];
+        turbos += D_800F3074[tricks[3]];
+    } else if (val > 2340) {
+        if (!combo) {
+            tricks[3] = 24;
+            counts[2] = 6;
+        }
+        pts += D_800F30A8[tricks[3]];
+        turbos += D_800F3074[tricks[3]];
+    } else if (val > 2160) {
+        if (!combo) {
+            tricks[3] = 23;
+            counts[2] = 6;
+        }
+        pts += D_800F30A8[tricks[3]];
+        turbos += D_800F3074[tricks[3]];
+    } else if (val > 1980) {
+        if (!combo) {
+            tricks[3] = 22;
+            counts[2] = 5;
+        }
+        pts += D_800F30A8[tricks[3]];
+        turbos += D_800F3074[tricks[3]];
+    } else if (val > 1800) {
+        if (!combo) {
+            tricks[3] = 21;
+            counts[2] = 5;
+        }
+        pts += D_800F30A8[tricks[3]];
+        turbos += D_800F3074[tricks[3]];
+    } else if (val > 1620) {
+        if (!combo) {
+            tricks[3] = 20;
+            counts[2] = 4;
+        }
+        pts += D_800F30A8[tricks[3]];
+        turbos += D_800F3074[tricks[3]];
+    } else if (val > 1440) {
+        if (!combo) {
+            tricks[3] = 19;
+            counts[2] = 4;
+        }
+        pts += D_800F30A8[tricks[3]];
+        turbos += D_800F3074[tricks[3]];
+    } else if (val > 1260) {
+        if (!combo) {
+            tricks[3] = 18;
+            counts[2] = 3;
+        }
+        pts += D_800F30A8[tricks[3]];
+        turbos += D_800F3074[tricks[3]];
+    } else if (val > 1080) {
+        if (!combo) {
+            tricks[3] = 17;
+            counts[2] = 3;
+        }
+        pts += D_800F30A8[tricks[3]];
+        turbos += D_800F3074[tricks[3]];
+    } else if (val > 900) {
+        if (!combo) {
+            tricks[3] = 16;
+            counts[2] = 2;
+        }
+        pts += D_800F30A8[tricks[3]];
+        turbos += D_800F3074[tricks[3]];
+    } else if (val > 720) {
+        if (!combo) {
+            tricks[3] = 15;
+            counts[2] = 2;
+        }
+        pts += D_800F30A8[tricks[3]];
+        turbos += D_800F3074[tricks[3]];
+    } else if (val > 540) {
+        if (!combo) {
+            tricks[3] = 14;
+            counts[2] = 1;
+        }
+        pts += D_800F30A8[tricks[3]];
+        turbos += D_800F3074[tricks[3]];
+    } else if (val > 360) {
+        if (!combo) {
+            tricks[3] = 13;
+            counts[2] = 1;
+        }
+        pts += D_800F30A8[tricks[3]];
+        turbos += D_800F3074[tricks[3]];
+    }
+
+    if ((counts[0] != 0) + (counts[1] != 0) + (counts[2] != 0) >= 2) {
+        if (counts[0] > 2) {
+            counts[0] = 2;
+        }
+        if (counts[1] > 2) {
+            counts[1] = 2;
+        }
+        if (counts[2] > 2) {
+            counts[2] = 2;
+        }
+        switch (counts[2] * 9 + counts[1] * 3 + counts[0]) {
+            case 4:
+                *outPts = pts + D_800F30A8[35];
+                *outTurbos = turbos + D_800F3074[35];
+                *outTrick = 35;
+                break;
+            case 5:
+                *outPts = pts + D_800F30A8[37];
+                *outTurbos = turbos + D_800F3074[37];
+                *outTrick = 37;
+                break;
+            case 7:
+                *outPts = pts + D_800F30A8[36];
+                *outTurbos = turbos + D_800F3074[36];
+                *outTrick = 36;
+                break;
+            case 8:
+                *outPts = pts + D_800F30A8[38];
+                *outTurbos = turbos + D_800F3074[38];
+                *outTrick = 38;
+                break;
+            case 12:
+                *outPts = pts + D_800F30A8[39];
+                *outTurbos = turbos + D_800F3074[39];
+                *outTrick = 39;
+                break;
+            case 15:
+                *outPts = pts + D_800F30A8[40];
+                *outTurbos = turbos + D_800F3074[40];
+                *outTrick = 40;
+                break;
+            case 21:
+                *outPts = pts + D_800F30A8[41];
+                *outTurbos = turbos + D_800F3074[41];
+                *outTrick = 41;
+                break;
+            case 24:
+                *outPts = pts + D_800F30A8[42];
+                *outTurbos = turbos + D_800F3074[42];
+                *outTrick = 42;
+                break;
+            case 10:
+                *outPts = pts + D_800F30A8[43];
+                *outTurbos = turbos + D_800F3074[43];
+                *outTrick = 43;
+                break;
+            case 11:
+                *outPts = pts + D_800F30A8[45];
+                *outTurbos = turbos + D_800F3074[45];
+                *outTrick = 45;
+                break;
+            case 19:
+                *outPts = pts + D_800F30A8[44];
+                *outTurbos = turbos + D_800F3074[44];
+                *outTrick = 44;
+                break;
+            case 20:
+                *outPts = pts + D_800F30A8[46];
+                *outTurbos = turbos + D_800F3074[46];
+                *outTrick = 46;
+                break;
+            case 13:
+            case 14:
+            case 16:
+            case 17:
+            case 22:
+            case 23:
+            case 25:
+                *outPts = pts + D_800F30A8[47];
+                *outTurbos = turbos + D_800F3074[47];
+                *outTrick = 47;
+                break;
+            case 26:
+                *outPts = pts + D_800F30A8[48];
+                *outTurbos = turbos + D_800F3074[48];
+                *outTrick = 48;
+                break;
+            case 0:
+            default:
+                *outPts = 0;
+                *outTurbos = 0;
+                break;
+        }
+    } else {
+        best = 0;
+        for (i = 1; i < 4; i++) {
+            if (tricks[i] != -1 && D_800F3040[tricks[best]] < D_800F3040[tricks[i]]) {
+                best = i;
+            }
+        }
+        if (tricks[best] == -1) {
+            *outPts = 0;
+            *outTurbos = 0;
+        } else {
+            *outPts = pts;
+            *outTurbos = turbos;
+            *outTrick = tricks[best];
+        }
+    }
+    if (*outTurbos > 10) {
+        *outTurbos = 10;
+    }
+}
 
 void Trick_GetName(u16 i, char *out) {
     if (i < 49) {

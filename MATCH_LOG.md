@@ -418,3 +418,186 @@ Nothing was promoted into `src/` this session: every candidate is still a near m
 
 **Session 46 result:** 3 exact matches (Model_SetWheel 140 B, Input_Init 600 B, Lap_GetTimes 624 B);
 objdiff 78.92 % (1,794 / 1,910 functions). No commit (below the 30-function threshold).
+
+# Session 47 (2026-11-25)
+
+## Bg_DrawImage (unit_13490, 1204 B / 301 instr, frame 0x40) — MATCH exacto — 2026-11-25
+- **REA/Ghidra:** `procedure_pseudo_code`, `procedure_callers` (`0x80078320`) y `procedure_callees` (`GfxPool_Grow`); mostró la división por tiles de 64×32, reserva de `n*10 + 14` comandos, paleta CI8 vía `gBgPalette`, `timg + 0x200` y bucle `x += 64` / `y += 32`.
+- **Confirmado en ASM:** los comandos GBI coinciden con la hermana `Image_DrawCI8Scaled`: `gDPPipeSync`, `G_CYC_COPY`, `G_RM_NOOP/G_RM_NOOP2`, `G_TT_RGBA16`, `G_TP_NONE`, `G_TF_POINT`, `gDPLoadTLUT_pal256(gBgPalette)` (que ya incluye su `gDPPipeSync` final), `timg += 0x200`, `gDPLoadTextureTile` CI8 + `gSPTextureRectangle` (`4<<10, 1<<10`), y restauración `G_TT_NONE` + `G_TF_BILERP`.
+- **Hipótesis:**
+  1. Con `GFX_RESERVE(n + 14)` + `gDPPipeSync` extra + `timg += 0x200` antes de los macros: 283/306 (1224/1204 B).
+  2. Quitando el `gDPPipeSync` duplicado y moviendo `timg += 0x200` tras `gDPLoadTLUT_pal256`: **300/301** (1204/1204 B), único diff `addu $a0, $a0, $a2` vs `addu $4, $6, $4` en `00E0`.
+  3. Escribiendo la suma de reserva como `(u32)((u32)(n * 8) + (u32)gDisplayListHead + 14 * 8)`: **301/301** exacto.
+- **Cambios:** integrada `Bg_DrawImage` en `src/unit_13490.c` reemplazando `INCLUDE_ASM`.
+- **Resultado objdiff:** MATCH exacto (cuenta), `make` OK (SHA-1 intacto), `verify_funcs.py` OK.
+- **Bytes recuperados:** 1204 B.
+
+## Model_UpdateWheelEffects (unit_06050, 1140 B / 285 instr, frame 0xE0) — MATCH exacto — 2026-11-25
+- **REA/Ghidra:** `procedure_pseudo_code`, `procedure_callers` (`0x80065940`) y `procedure_callees` (`SkidMark_AddQuad`, `Particle_SpawnColored`, `Particle_SpawnJitteredVel`, `rand`); reveló el doble bucle 6×`nParts`, los dos umbrales aleatorios (`0x6E` y `0x3C`), el caso especial de superficie `11 || 12` y la llamada a `SkidMark_AddQuad` seguida de copia de `lastPos`/`lastN` y `partA = 1`.
+- **Confirmado en ASM:** `$s0 = &D_80138AAC` sirve de base negativa para `gModels` (`-0x938`), `partB` (`-0x8F8`) y `partC` (`-0x8D4`), lo que exige declarar `gModels` como struct unificado `ModelAll_` (sin cast). El color `D_800F0220[surf]` se pasa como 3 escalares `s32` (`$s1/$s5/$s6`), y `b`/`surf` son `s32`.
+- **Hipótesis:**
+  1. Struct unificado `ModelAll_` + `Vec3f col`: 223/285 (1140/1140 B).
+  2. Color como 3 escalares `s32 c0, c1, c2` y `s32 b, surf`: 273/289 (recargaba `gModels.models[i]` y hoisteaba `20.0f` a `$f20`).
+  3. Puntero local `Model_ *m = gModels.models[i]` para el bloque `pos += m->mtx[0][2] * 20.0f`: **285/285**.
+  4. Al integrar en `src/unit_06050.c`, el cast `((ModelAll_ *)&gModels)` rompió el código (PATTERNS.md); cambiando `extern Model_ *gModels[6]` a `extern ModelAll_ gModels` y declarando `u32 j; u32 i;` (para fijar los spills `0x5C/0x64($sp)`): **285/285** y ROM OK.
+- **Cambios:** `src/unit_06050.c` (`ModelAll_ gModels`, `Model_UpdateWheelEffects`).
+- **Resultado objdiff:** MATCH exacto (cuenta), `make` OK, `verify_funcs.py` OK.
+- **Bytes recuperados:** 1140 B.
+
+## Ai_RestoreSlot (unit_22440, 2100 B / 525 instr, leaf) — MATCH exacto — 2026-11-25
+- **REA/Ghidra:** `procedure_pseudo_code`, `procedure_callers` (`0x800937e8`), sin callees (hoja); mostró la copia de struct de `0x88` bytes (`blk`), inicialización de `v94[0..3]`, matriz `m[3][3]`, dos bucles de 10 elementos (`h1`/`h2`) y puesta a cero de contadores/vectores.
+- **Confirmado en ASM:** todos los accesos recargan `car->id` y multiplican por `0x2A8` sobre `gAi` (sin puntero local ni cast sobre `gAi`).
+- **Hipótesis:**
+  1. Borrador directo usando `SlotD_` sobre `gAi[car->id]`: **525/525** al primer intento.
+  2. Al integrar en `src/unit_22440.c`, ni puntero local `ai` (`0x760`) ni cast `((SlotD_ *)gAi)` (`0x7E8`) igualaban; unificando los campos de `SlotD_` en `Slot85_` (unión en `+0x08` para `f24` y `blk`): **525/525** exacto (`0x834`).
+- **Cambios:** `src/unit_22440.c` (`Slot85_` unificado + `Ai_RestoreSlot`).
+- **Resultado objdiff:** MATCH exacto (cuenta), `make` OK, `verify_funcs.py` OK.
+- **Bytes recuperados:** 2100 B.
+
+## MenuCar_Draw (unit_53B30, 1608 B / 402 instr, frame 0x80) — MATCH exacto — 2026-11-25
+- **REA/Ghidra:** `procedure_pseudo_code`, `procedure_callers` (4), `procedure_callees` (`Menu_DeltaTenths`, `Menu_DeltaSeconds`, `Menu_InitViewMtx`, `cosf`, `sinf`); mostró el suavizado de ángulo/escala/posición y las dos rotaciones de matriz (`-80°` y `D_800F60B0[id]`) iguales a la hermana `Menu_DrawModel`.
+- **Confirmado en ASM:** `sw $a1..$a3` a `0x84..0x8C($sp)` confirma segundo parámetro `Vec3f off` por valor; `0x10($sp)` es `Vec3f d` declarado antes de `f32 m[3][4]` (`0x20($sp)`).
+- **Hipótesis:**
+  1. Primer borrador con `id != 0` en `Menu_DeltaTenths`/`Menu_DeltaSeconds`: 357/402 (`sltu` extra y `$s2`).
+  2. `if (id == 0) ... else ...` para ambas llamadas: 384/402 (tamaño exacto 1608/1608).
+  3. Local `f32 diff = D_800F60B8[id] - D_800F60B0[id]` (y análogo para `60A8/60A0`) para evaluar el destino antes del origen: **402/402**.
+  4. Al integrar en `src/unit_53B30.c`: declarados `sysModelRotateAllParts`/`sysModelDrawWithLookAt`, actualizados los 6 llamadores a `*(Vec3f *)&D_801240E8/F4`, y `Vec3f d` antes de `m[3][4]`: **402/402** y ROM OK.
+- **Cambios:** `src/unit_53B30.c` (`MenuCar_Draw` y prototipo/llamadores).
+- **Resultado objdiff:** MATCH exacto (cuenta), `make` OK, `verify_funcs.py` OK; **objdiff oficial: 80.01 % (442,280 / 552,756 B, 1,798 / 1,910 funciones, 174 / 221 unidades completas)**.
+- **Bytes recuperados:** 1608 B.
+
+## Borradores casi iguales de la sesión 47 (no integrados, 0 B oficiales)
+- **Hud_DrawTurbos (`unit_49CF0`, 1528 B):** `.scratch/s47/hd_f2.c` (**374/382**, 1524/1528 B, registros exactos, solo falta `addu $s4, $v0, $zero` en `0130`) y `.scratch/s47/hd_m2.c` (342/382, **1528/1528 B**, instrucciones exactas con rotación `$s4..$s7`).
+- **Coll_SyncObjects (`unit_39C90`, 1216 B):** `.scratch/s47/cs_for.c` (**277/304**, 1212/1216 B); resueltos `&` bit a bit en los umbrales de reposo, `!(x < 0.0f) && !(x > 0.0f)` y `static inline TransformShape_`; residual: `i = 0` se hoistea al delay slot de `004C` en vez de `0140`.
+- **Audio_Init (`unit_01050`, 1164 B):** `.scratch/s47/audio_init.c` (**273/291**, 1164/1164 B); struct `AudioGlobals_` iguala exactamente los dos bucles regresivos (`+0x28` y `+0x10C`) y 5 símbolos ROM separados fijan el tamaño exacto; residual: `sched` hoistea `lui $a0, PTR_ROM_START` a `00C8` en vez de `0338`.
+
+**Session 47 result:** 4 exact matches (`Bg_DrawImage` 1204 B, `Model_UpdateWheelEffects` 1140 B, `Ai_RestoreSlot` 2100 B, `MenuCar_Draw` 1608 B = **+6,052 B**); **objdiff 80.01 % (442,280 / 552,756 B, 1,798 / 1,910 functions, 174 / 221 complete units)**. No commit (below the 30-function threshold).
+
+# Session 48 (2026-11-25)
+
+## RaceAudio_Update (unit_2C6A0, 1400 B / 350 instr, frame 0xB8) — MATCH exacto — 2026-11-25
+- **REA/Ghidra:** `procedure_pseudo_code`, `procedure_callers` (`0x8008c548`), `procedure_callees` (`AnimTrack_GetPos`, `RaceCam_GetListener`, `Car_GetAudioInfo`); mostró el temporizador de voz (`D_80118534`), bucle de coches con clamp/rate-limit de RPM, loops A/B y bucle de fuentes animadas (`D_800F3704`).
+- **Confirmado en ASM:** Ghidra omitió el argumento de la llamada indirecta `audVoicePlayRandom(D_8011852C)` (`$a0` ya cargado antes de `bne $a0, 3`); el bloque de punteros de audio en `0x8014C0D0..0x8014C0F4` se direcciona desde una struct `AudLoop_` (`$s4`, `$s6`, `$s7`); `D_801184C0` es `u8` (`lbu`).
+- **Hipótesis:**
+  1. Borrador inicial con `AudLoop_` y `MIN/MAX`: 296/357 (1428/1400 B).
+  2. `slipB < slipA ? 0 : 1`, `if (hold <= dt)` primero, puntero `E10_ *p` con `p++, i++`, y `u32 *tp = &D_80118534`: 339/350 (1400/1400 B).
+  3. Añadido argumento `audVoicePlayRandom(D_8011852C)` y cambiado `D_801184C0` de `s8` a `u8` en `src/unit_2C6A0.c`: **350/350** exacto.
+- **Cambios:** `src/unit_2C6A0.c` (unificado `E10b_`, `D_801184C0` como `u8`, integrada `RaceAudio_Update`).
+- **Resultado objdiff:** MATCH exacto (cuenta), `make` OK (SHA-1 intacto), `verify_funcs.py` OK.
+- **Bytes recuperados:** 1400 B.
+
+## CollBox_EdgeSeparatingAxis (unit_39C90, 1220 B / 305 instr, leaf, frame 0x98) — MATCH exacto — 2026-11-25
+- **REA/Ghidra:** `procedure_pseudo_code`, `procedure_callers` (`0x800a25ec`), sin callees (hoja); mostró la transposición de la matriz 3×3 de `boxA`, transformación de `dir` y `b->pos - a->pos`, y las 7 pruebas SAT con salidas `1, 2, 3, 5, 7, 10, 13, 0` y escrituras en `D_8011B764[]`.
+- **Confirmado en ASM:** `Mat3T_MulVec_` inline con `Vec3f *` reproduce la copia de retorno por `0x58($sp)` a `0x00($sp)` y `0x48($sp)`; `if (v < 0.0f) v = -v;` evita `mov.s`; `f32 eps = 0.001f;` fija la carga en `0x170`.
+- **Hipótesis:**
+  1. Macro `ABSF` + paso por valor: 58/364 (1456/1220 B, evaluaba doble).
+  2. `Mat3T_MulVec_` por puntero + locales `tx/ty/tz/hx/hy/hz/len/dx/dy/dz` + `if (v < 0.0f) v = -v;`: 233/310.
+  3. Orden `tx..len..dx`, parentización `tx*dx + (ty*dy + tz*dz)` / `hx*ax + (hy*ay + hz*az)` y `f32 eps = 0.001f;`: **305/305** exacto.
+- **Cambios:** `src/unit_39C90.c` (`CollBox_EdgeSeparatingAxis`).
+- **Resultado objdiff:** MATCH exacto (cuenta), `make` OK, `verify_funcs.py` OK.
+- **Bytes recuperados:** 1220 B.
+
+## Cars_Init (unit_31E10, 2320 B / 580 instr, frame 0xD8) — MATCH exacto — 2026-11-25
+- **REA/Ghidra:** `procedure_pseudo_code`, `procedure_callers` (`0x8008baa0`), `procedure_callees` (`Coll_GetStartPos`, `Car_ComputeMass`, `RigidBody_Init`, `Quat_ToMtx3`, `Bld_GetStartPos`, `Ai_InitRacer`, `Coll_AddCar`, `Race_LoadProgressStep`, `memset`).
+- **Confirmado en ASM:** `RigidBody_Init` recibe 3 escalares `extent.x/y/z` + `Vec3f zero`; `svcModelLoadDefault`/`svcCarInfoLoadEx` en struct `SvcModel_`; `svcModelSetTransform` direcciona `&gCars[i].m2C + 0x94` (`$s7`); `switch (cfg->p[i].kind)` para flags 1/2; `gCars[i].k53C *= ...; gCars[i].k53C = MIN(..., 4.0f);` duplicado en ambas ramas del `if/else` humano/AI.
+- **Hipótesis:**
+  1. Borrador inicial con `Vec3f` en `RigidBody_Init`: 464/580.
+  2. 3 floats en `RigidBody_Init`, `switch (kind)`, `offset = gCars[i].center` copia de struct y `k53C` en ambas ramas: 557/581.
+  3. `(Mtx3f *)((u8 *)&gCars[i].m2C + 0x94)` en `svcModelSetTransform`: 575/580 (2320/2320 B).
+  4. `f32 ox = offset.x;` antes de `offset.z += h;` con multiplicación matriz-vector expandida: **580/580** exacto.
+- **Cambios:** `src/unit_31E10.c` (`#include "race.h"`, `Cars_Init`).
+- **Resultado objdiff:** MATCH exacto (cuenta), `make` OK, `verify_funcs.py` OK.
+- **Bytes recuperados:** 2320 B.
+
+## Model_SetPartRotation (unit_06050, 1276 B / 319 instr, frame 0xB0) — MATCH exacto — 2026-11-25
+- **REA/Ghidra:** `procedure_pseudo_code`, `procedure_callers` (5), `procedure_callees` (`cosf`, `sinf`); mostró la matriz 3×4 en pila (`piv`, `(0,0,ry)`, `RotateZ(-rx)`, `RotateX(-rz)`, `-piv`), recorrido de lista de hijos (`+0x50`/`+0x4C`), copia a `mtx[part + 1]` y escalado por `D_80138AB4`.
+- **Confirmado en ASM:** `Mtx34_Identity` con asignación encadenada `= 0.0f` (como `Model_SetTransform` en la misma unidad) emite `swc1 $fv0`; `D_80138AB4` recargado 9 veces porque pertenece a `D_80138190.partScale` (`MEM_IN_STRUCT_P`); rotaciones fila a fila con 2 temporales `a, b` (como `unit_53B30.c`).
+- **Hipótesis:**
+  1. Helpers `static inline` con 6 temporales + `D_80138AB4` suelto: 121/319 (1176/1276 B).
+  2. `D_80138190.partScale` + asignación encadenada `= 0.0f` + `m[r][3] += ...`: 215/319 (1248/1276 B).
+  3. `Mtx34_RotateZ_`/`Mtx34_RotateX_` fila a fila con 2 temporales `a, b`: **319/319** exacto.
+- **Cambios:** `src/unit_06050.c` (`MdlInst_.next`/`child`, `Model_.partPos[6]`, `Model_SetPartRotation`).
+- **Resultado objdiff:** MATCH exacto (cuenta), `make` OK, `verify_funcs.py` OK.
+- **Bytes recuperados:** 1276 B.
+
+## Clouds_Init (unit_0B140, 1268 B / 317 instr, frame 0xA0) — MATCH exacto — 2026-11-25
+- **REA/Ghidra:** `procedure_pseudo_code`, `procedure_callers` (`0x800655cc`), `procedure_callees` (`Rand_Range`, `sprintf`, `File_GetSize`, `Memory_Alloc`, `File_Load`); mostró los 5 dobles en `.rodata` (`21000.0`, `14000.0`, `4294967296.0`), rejilla hasta 6×6, relleno hasta 36 y carga de 3 texturas.
+- **Confirmado en ASM:** `vel` es struct `Vec2f_` copiado con `lw/sw`; `s32 rv = Rand_Range(100); vel.x = (f64)(rv % 7 - 3);` genera `addu $a1, $v0, $zero` antes de `mult`; `if (max->z + 1200.0f > 10000.0f)` mantiene `z` en `0x34($sp)`; `gCloudCount = nx * ny` antes de `D_80101EA0[1] = min->y`.
+- **Hipótesis:**
+  1. `vx`/`vy` separados y `i` reutilizado: 199/320 (1280/1268 B).
+  2. `Vec2f_ vel` + `s32 k` separado: 285/317 (1268/1268 B).
+  3. `c++, j++`, `c++, k++`, `if (max->z + 1200.0f > 10000.0f)`, `gCloudCount` antes de `D_80101EA0[1]`: 301/317.
+  4. Local `s32 rv = Rand_Range(100);`: **317/317** exacto.
+- **Cambios:** `src/unit_0B140.c` (`#include "math.h"`, `Clouds_Init`).
+- **Resultado objdiff:** MATCH exacto (cuenta), `make` OK, `verify_funcs.py` OK; **objdiff oficial: 81.37 % (449,764 / 552,756 B, 1,803 / 1,910 funciones, 174 / 221 unidades completas)**.
+- **Bytes recuperados:** 1268 B.
+
+## Borradores casi iguales de la sesión 48 (no integrados, 0 B oficiales)
+- **Hud_ShowTrick (`unit_49CF0`, 1984 B):** `.scratch/s48/ht5_cond_not1.c` (**491/497**, 1988/1984 B) y `.scratch/s48/ht4_if2.c` (**485/496**); resueltos `t0`/`t1`, orden `if (gHudPlayerCount != 2)`, `static inline MeasureText_` con `Font_GetKerning(0, *s++, *s)`; residual: 5 palabras en el `sprintf` de `turbos == 1` (GCC propaga `turbos` a `1` en `if/else` y hoistea `D_800F39F4` en ternario).
+- **SortQueue_Sort (`unit_20830`, 816 B):** `.scratch/s48/sq_v3.c` (66/204, 808/816 B, desplazamiento de 1 registro en `l`/`sp`/`r`).
+- **Hud_DrawTurbos (`unit_49CF0`, 1528 B):** `.scratch/s48/hd_v5.c` (342/382, 1528/1528 B exacto; `count = (D_800F3B18[idx].b = turbos - base);` iguala `0x12C..0x13C` pero rota `$s4..$s7`).
+
+**Session 48 result:** 5 exact matches (`RaceAudio_Update` 1400 B, `CollBox_EdgeSeparatingAxis` 1220 B, `Cars_Init` 2320 B, `Model_SetPartRotation` 1276 B, `Clouds_Init` 1268 B = **+7,484 B**); **objdiff 81.37 % (449,764 / 552,756 B, 1,803 / 1,910 functions, 174 / 221 complete units)**. No commit (below the 30-function threshold).
+
+# Session 49 (2026-11-25)
+
+## Input_Update (unit_0B140, 736 B / 184 instr, frame 0x28) — MATCH exacto — 2026-11-25
+- **REA/Ghidra:** `procedure_pseudo_code`, `procedure_callers` (indirecto vía `sysInputUpdate`), `procedure_callees` (`osGetCount`, `nuContDataGet`); mostró la estructura del bucle de 14 controles (8 analógicos con zona muerta `±7.0`, escala `±255.0 / 63.0`, y 6 digitales con umbral `±40`), clamping `[0, 255]` y guardado de `time`.
+- **Confirmado en ASM:** `D_800FEBB8..D_800FEBE0` en ROM son `4294967296.0, 7.0, 255.0, 63.0, -7.0, -255.0`; el despacho `0..7` vs `8..13` (`slti 8; beqz; bltz`) es un `switch (i)` (casos `0..7` + `default`), y el `switch (bind)` ordena casos `0x80000, 0x40000, 0x20000, 0x10000, 0, default`.
+- **Hipótesis:**
+  1. `if (i < 8 && i >= 0)` con `f64 dt`: 131/190 (`sltiu 8` en vez de `slti 8 + bltz`).
+  2. `switch (i)` + `switch (bind)` con casos en orden inverso y `u32 bind; s32 val;`: 178/184 (736/736 B).
+  3. `f32 dt2 = (f64)(u32)(t - gRumbleState[pad].time); if (dt2 < 0.0f) dt2 = 0.0f;` + `bind & cont.button`: 182/184.
+  4. `if (bind & cont.button) { val = 1; } else { val = 0; }` en el `default:` digital: **184/184** exacto.
+- **Cambios:** `src/unit_0B140.c` (`Input_Update`; completa `unit_0B140` al 100 %).
+- **Resultado objdiff:** MATCH exacto (cuenta), `make` OK (SHA-1 intacto), `verify_funcs.py` OK.
+- **Bytes recuperados:** 736 B.
+
+## Ai_InitRacer (unit_22440, 2700 B / 675 instr, frame 0x20) — MATCH exacto — 2026-11-25
+- **REA/Ghidra:** `procedure_pseudo_code`, `procedure_callers` (`Cars_Init`), `procedure_callees` (`Bld_InitRacer`, `RaceClock_Get`); mostró el lerp inicial de `D_80138D3E..3F`, copias de posición/matriz, puesta a cero de vectores, `Bld_InitRacer`, los dos bucles de 10 entradas (`h1`/`h2`), el LCG `D_80115854 * 0x19660D + 0x3C6EF35F % 201 - 100` y la conversión `u32 -> f64 -> f32` de `D_80115824 * D_80115820`.
+- **Confirmado en ASM:** igual que la hermana `Ai_RestoreSlot`, todos los accesos sobre `gAi[car->id]` usan `Slot85_` unificado sin puntero local; `divu` por `0xC9` (sin multiplicación mágica) proviene de una función `static inline u32 Ai_Rand_(u32 n)` (GCC 2.7.2 expande `% n` antes de inlinear la constante).
+- **Hipótesis:**
+  1. Borrador inicial con `% 201` directo y `Lerp85`: 640/681 (GCC emitió multiplicación mágica en vez de `divu`).
+  2. `static inline u32 Ai_Rand_(u32 n)` + lerp directo: 662/675 (2700/2700 B).
+  3. Moviendo `gAi[car->id].f1FC = (s32)Ai_Rand_(201) - 100;` tras `n1DC/z1F8/z200/z204 = 0;`: **675/675** exacto.
+- **Cambios:** `src/unit_22440.c` (unificados `ok`, `f1FC`, `f258..u264`, `s2A0..b2A5` en `Slot85_`, `Ai_Rand_`, `Ai_InitRacer`).
+- **Resultado objdiff:** MATCH exacto (cuenta), `make` OK, `verify_funcs.py` OK.
+- **Bytes recuperados:** 2700 B.
+
+## Car_AirControl (unit_31E10, 3120 B / 780 instr, frame 0x140) — MATCH exacto — 2026-11-25
+- **REA/Ghidra:** `procedure_pseudo_code`, `procedure_callers` (`Car_UpdatePhysics`), `procedure_callees` (`RigidBody_ConstrainSpin`); mostró la zona muerta `±0.2f`, amortiguación `0.98f` de `vE4`, selección de eje dominante (`yaw`/`roll`/`pitch`), pares de fuerzas opuestas en `center ± axis * scale` y `RigidBody_ConstrainSpin(..., 1/2/0)`.
+- **Confirmado en ASM:** usa los helpers inline `Vec3_Scale`/`Add`/`Sub`/`Neg` y `push_AC_` (análogo a `push_954` de `Car_SelfRight`), copia `Mtx34f m` en `0x40($sp)`, `sPitch = car->scale; sYaw = sPitch; sRoll = sPitch;` con `sPitch *= pitch;` primero, `Vec3_Neg_(&f)` después de `Vec3_Sub_`, y dos locales `tq1`/`tq2` en la rama `yaw` (`0xF0`/`0x100($sp)`) frente a `tq1` reutilizado en `roll`/`pitch` (fija marco `-0x140`).
+- **Hipótesis:**
+  1. Primer borrador con `f`/`pt` compartidos: 442/780 (3072/3120 B).
+  2. `Vec3_Scale_(&car->vE4, &car->vE4, 0.98f)`, `f1/f2/f3`, `pt1/pt2/pt3` y `sPitch *= pitch` primero antes de `center`: 688/780 (3120/3120 B).
+  3. Inercias antes de `center` + `Vec3_Neg_` tras `Vec3_Sub_` + `tq1`/`tq2` explícitos en `push_AC_`: **780/780** exacto y ROM OK.
+- **Cambios:** `src/unit_31E10.c` (`Car_AirControl` y prototipo `void Car_AirControl(Car *);`).
+- **Resultado objdiff:** MATCH exacto (cuenta), `make` OK, `verify_funcs.py` OK.
+- **Bytes recuperados:** 3120 B.
+
+## CollBox_FindSeparatingAxis (unit_39C90, 3176 B / 794 instr, leaf, frame 0xC0) — MATCH exacto — 2026-11-25
+- **REA/Ghidra:** `procedure_pseudo_code`, `procedure_callers` (`Coll_BroadPhase`, `Coll_ResolveBoxPair`), sin callees (hoja); mostró la matriz traspuesta `mt`, producto `R = mt * b->m`, vector `t = mt * (b->pos - a->pos)`, `abs(R) + 0.001f` y las 15 pruebas SAT guardando `D_8011B764[0..14]`.
+- **Confirmado en ASM:** hermano directo de `CollBox_EdgeSeparatingAxis`: `Mat3T_MulVec_FSA_` devolviendo `Vec3f` por valor, `f32 eps = 0.001f;`, `if (v < 0.0f) v = -v;` y sumas asociativas por la derecha (`a + (b + (c + d))`).
+- **Hipótesis:**
+  1. Borrador inicial con sumas asociativas por la izquierda: 587/794 (3132/3176 B; `0x000..0x264` exacto).
+  2. Parentización asociativa por la derecha en los 15 ejes SAT y 3 productos escalares: **794/794** exacto.
+- **Cambios:** `src/unit_39C90.c` (`Mat3T_MulVec_FSA_`, `CollBox_FindSeparatingAxis`).
+- **Resultado objdiff:** MATCH exacto (cuenta), `make` OK, `verify_funcs.py` OK.
+- **Bytes recuperados:** 3176 B.
+
+## SkidMark_AddQuad (unit_1CC80, 1188 B / 297 instr, frame 0xB0) — MATCH exacto — 2026-11-25
+- **REA/Ghidra:** `procedure_pseudo_code`, `procedure_callers` (`Model_UpdateWheelEffects`), `procedure_callees` (`sqrtf`); mostró la copia del quad plantilla `D_800F23C0`, el desplazamiento `z += 3.5` (`D_800FF9F8`), el cálculo del radio máximo y la inserción vía `ParticlePool_Push(&gParticlesAlt, &p)`.
+- **Confirmado en ASM:** 5 `Vec3f` pasados por valor (`p0..p3, center`) + `s32 alpha, s32 surf`; `surf = D_800F2634[surf];` reutiliza `$a0` (forzando `lui $at` en `gas`); orden de inicialización `flags, life, vx=vy=vz=0.0f, f58, alpha, alphaVel, r=g=b=0xFF, kind`; `static inline f32 maxf_sm_(a, b)` para los 4 máximos.
+- **Hipótesis:**
+  1. Borrador inicial con `p.vx/vy/vz` separados y `if`: 151/297 (1172/1188 B).
+  2. Encadenados `= 0.0f` y `= 0xFF` + `static inline maxf_sm_` + `p0..p3 -= center` antes de `+= 3.5`: 267/297 (1188/1188 B).
+  3. `surf = D_800F2634[surf];` al principio + `p.alphaVel = -0x40;` tras `p.alpha`: **297/297** exacto en `src/unit_1CC80.c`.
+- **Cambios:** `src/unit_1CC80.c` (`maxf_sm_`, `SkidMark_AddQuad`; completa `unit_1CC80` al 100 %).
+- **Resultado objdiff:** MATCH exacto (cuenta), `make` OK, `verify_funcs.py` OK, `check_no_asm.py` OK; **objdiff oficial: 84.37 % (466,380 / 552,756 B, 1,814 / 1,910 funciones, 176 / 221 unidades completas)**.
+- **Bytes recuperados:** 1188 B.
+
+## Borradores casi iguales de la sesión 49 (no integrados, 0 B oficiales)
+- **Mesh_GetMaterialList (`unit_19D40`, 392 B):** `.scratch/s49/mg8.c` (**91/98**, bucle 1 y cola exactos; residual: `$t0/$t1` intercambiados en bucle 2).
+- **SndSrc_Play (`unit_01050`, 420 B):** `.scratch/s49/sp5.c` (**96/105**, 416/420 B; `if (vol < 0.0f) vol = 0.0f;` mantiene `mul.s $fs0`; residual en offset `-0x378` y `busy == 0`).
+
+**Session 49 result:** 5 exact matches (`Input_Update` 736 B, `Ai_InitRacer` 2700 B, `Car_AirControl` 3120 B, `CollBox_FindSeparatingAxis` 3176 B, `SkidMark_AddQuad` 1188 B = **+10,920 B**; 2 units completed: `unit_0B140`, `unit_1CC80`); **objdiff 84.37 % (466,380 / 552,756 B, 1,814 / 1,910 functions, 176 / 221 complete units)**. No commit (20 functions gained since HEAD `51af82d`, below the ~30-function threshold).

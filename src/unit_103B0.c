@@ -499,9 +499,74 @@ void Camera_CalcFrustum(void) {
     D_800F2134 = D_800F212C * t;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_103B0", Gfx_SetViewport);
+typedef struct {
+    /* 0x00 */ s16 x;
+    /* 0x02 */ s16 y;
+    /* 0x04 */ u16 w;
+    /* 0x06 */ u16 h;
+    /* 0x08 */ f32 near;
+    /* 0x0C */ f32 far;
+    /* 0x10 */ u8 pad10[0x08];
+    /* 0x18 */ f32 fov;
+    /* 0x1C */ f32 aspect;
+    /* 0x20 */ u8 pad20[0x40];
+    /* 0x60 */ Mtx *projMtx;
+    /* 0x64 */ u32 pad64;
+    /* 0x68 */ Vp *vp;
+} CamGfx_;
+extern CamGfx_ D_800F2108;
 
-INCLUDE_ASM("asm/nonmatchings/unit_103B0", Gfx_SetPerspective);
+#define MTX_RESERVE(n) \
+    if ((u32)((Mtx *)gMtxHead + n) >= (u32)gMtxPools[gGfxPoolIndex].f4) { \
+        gMtxPools[gGfxPoolIndex].f0 = gMtxHead; \
+        MtxPool_Grow(&gMtxPools[gGfxPoolIndex], (n)); \
+        gMtxHead = gMtxPools[gGfxPoolIndex].f0; \
+    }
+
+void Gfx_SetViewport(void) {
+    MTX_RESERVE(1);
+    D_800F2108.vp = (Vp *)gMtxHead;
+    D_800F2108.vp->vp.vscale[0] = D_800F2108.w * 2;
+    D_800F2108.vp->vp.vscale[1] = D_800F2108.h * 2;
+    D_800F2108.vp->vp.vscale[2] = G_MAXZ / 2;
+    D_800F2108.vp->vp.vscale[3] = 0;
+    D_800F2108.vp->vp.vtrans[0] = (D_800F2108.x + (D_800F2108.w >> 1)) * 4;
+    D_800F2108.vp->vp.vtrans[1] = (D_800F2108.y + (D_800F2108.h >> 1)) * 4;
+    D_800F2108.vp->vp.vtrans[2] = G_MAXZ / 2;
+    D_800F2108.vp->vp.vtrans[3] = 0;
+    gMtxHead = (s32)((Mtx *)gMtxHead + 1);
+    GFX_RESERVE(3);
+    gDPPipeSync(gDisplayListHead++);
+    gDPSetScissor(gDisplayListHead++, G_SC_NON_INTERLACE,
+                  D_800F2108.x, D_800F2108.y,
+                  D_800F2108.x + D_800F2108.w - 1, D_800F2108.y + D_800F2108.h - 1);
+    gSPViewport(gDisplayListHead++, D_800F2108.vp);
+}
+
+void Gfx_SetPerspective(u8 clipFar) {
+    u16 perspNorm;
+    f32 far;
+    f32 near;
+
+    far = D_800F2108.far;
+    far *= 0.25f;
+    near = D_800F2108.near;
+    near *= 0.25f;
+    if (clipFar != 1) {
+        far = 32000.0f;
+    }
+    MTX_RESERVE(1);
+    D_800F2108.projMtx = (Mtx *)gMtxHead;
+    gMtxHead = (s32)((Mtx *)gMtxHead + 1);
+    guPerspective(D_800F2108.projMtx, &perspNorm,
+                  ((D_800F2108.fov / D_800F2108.aspect) * 180.0f) / 3.1415927f,
+                  D_800F2108.aspect, near, far + 500.0f, 6.0f);
+    GFX_RESERVE(6);
+    gSPMatrix(gDisplayListHead++, OS_K0_TO_PHYSICAL(D_800F2108.projMtx),
+              G_MTX_PROJECTION | G_MTX_LOAD | G_MTX_NOPUSH);
+    gSPPerspNormalize(gDisplayListHead++, perspNorm);
+    gSPClipRatio(gDisplayListHead++, FRUSTRATIO_1);
+}
 
 extern s32 D_800F2170; /* viewport already set for this frame */
 extern u8 D_800F20FE[3]; /* fog color r, g, b */

@@ -2,6 +2,7 @@
 #include "ultra64.h"
 #include "include_asm.h"
 #include "car.h"
+#include "math.h"
 extern s32 gCollFrame;
 extern s32 D_8011C820;
 extern s32 gCollLapLength;
@@ -910,7 +911,143 @@ void Coll_BroadPhase(void) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_39C90", CollBox_FindSeparatingAxis);
+extern f32 D_8011B764[];
+
+static inline Vec3f Mat3T_MulVec_FSA_(f32 m[3][3], Vec3f *v) {
+    Vec3f r;
+    r.x = m[0][0] * v->x + m[0][1] * v->y + m[0][2] * v->z;
+    r.y = m[1][0] * v->x + m[1][1] * v->y + m[1][2] * v->z;
+    r.z = m[2][0] * v->x + m[2][1] * v->y + m[2][2] * v->z;
+    return r;
+}
+
+u8 CollBox_FindSeparatingAxis(BoxC7_ *a, BoxC7_ *b) {
+    f32 mt[3][3];
+    f32 R[3][3];
+    Vec3f d;
+    Vec3f t;
+    f32 tx, ty, tz;
+    f32 ax, ay, az;
+    f32 bx, by, bz;
+    f32 r00, r01, r02, r10, r11, r12, r20, r21, r22;
+    f32 a00, a01, a02, a10, a11, a12, a20, a21, a22;
+    f32 v;
+    f32 sep;
+    f32 eps = 0.001f;
+
+    mt[0][0] = a->m[0][0]; mt[0][1] = a->m[1][0]; mt[0][2] = a->m[2][0];
+    mt[1][0] = a->m[0][1]; mt[1][1] = a->m[1][1]; mt[1][2] = a->m[2][1];
+    mt[2][0] = a->m[0][2]; mt[2][1] = a->m[1][2]; mt[2][2] = a->m[2][2];
+
+    R[0][0] = mt[0][0] * b->m[0][0] + mt[0][1] * b->m[1][0] + mt[0][2] * b->m[2][0];
+    R[0][1] = mt[0][0] * b->m[0][1] + mt[0][1] * b->m[1][1] + mt[0][2] * b->m[2][1];
+    R[0][2] = mt[0][0] * b->m[0][2] + mt[0][1] * b->m[1][2] + mt[0][2] * b->m[2][2];
+    R[1][0] = mt[1][0] * b->m[0][0] + mt[1][1] * b->m[1][0] + mt[1][2] * b->m[2][0];
+    R[1][1] = mt[1][0] * b->m[0][1] + mt[1][1] * b->m[1][1] + mt[1][2] * b->m[2][1];
+    R[1][2] = mt[1][0] * b->m[0][2] + mt[1][1] * b->m[1][2] + mt[1][2] * b->m[2][2];
+    R[2][0] = mt[2][0] * b->m[0][0] + mt[2][1] * b->m[1][0] + mt[2][2] * b->m[2][0];
+    R[2][1] = mt[2][0] * b->m[0][1] + mt[2][1] * b->m[1][1] + mt[2][2] * b->m[2][1];
+    R[2][2] = mt[2][0] * b->m[0][2] + mt[2][1] * b->m[1][2] + mt[2][2] * b->m[2][2];
+
+    d.x = b->pos.x - a->pos.x;
+    d.y = b->pos.y - a->pos.y;
+    d.z = b->pos.z - a->pos.z;
+    t = Mat3T_MulVec_FSA_(mt, &d);
+
+    tx = t.x; ty = t.y; tz = t.z;
+    ax = a->ext[0]; ay = a->ext[1]; az = a->ext[2];
+    bx = b->ext[0]; by = b->ext[1]; bz = b->ext[2];
+    r00 = R[0][0]; r01 = R[0][1]; r02 = R[0][2];
+    r10 = R[1][0]; r11 = R[1][1]; r12 = R[1][2];
+    r20 = R[2][0]; r21 = R[2][1]; r22 = R[2][2];
+
+    a00 = r00; if (a00 < 0.0f) a00 = -a00; a00 += eps;
+    a01 = r01; if (a01 < 0.0f) a01 = -a01; a01 += eps;
+    a02 = r02; if (a02 < 0.0f) a02 = -a02; a02 += eps;
+    a10 = r10; if (a10 < 0.0f) a10 = -a10; a10 += eps;
+    a11 = r11; if (a11 < 0.0f) a11 = -a11; a11 += eps;
+    a12 = r12; if (a12 < 0.0f) a12 = -a12; a12 += eps;
+    a20 = r20; if (a20 < 0.0f) a20 = -a20; a20 += eps;
+    a21 = r21; if (a21 < 0.0f) a21 = -a21; a21 += eps;
+    a22 = r22; if (a22 < 0.0f) a22 = -a22; a22 += eps;
+
+    v = tx; if (v < 0.0f) v = -v;
+    sep = v - (ax + (bx * a00 + (by * a01 + bz * a02)));
+    if (sep > 0.0f) return 1;
+    D_8011B764[0] = sep;
+
+    v = tx * r00 + (ty * r10 + tz * r20); if (v < 0.0f) v = -v;
+    sep = v - (bx + (ax * a00 + (ay * a10 + az * a20)));
+    if (sep > 0.0f) return 2;
+    D_8011B764[1] = sep;
+
+    v = ty; if (v < 0.0f) v = -v;
+    sep = v - (ay + (bx * a10 + (by * a11 + bz * a12)));
+    if (sep > 0.0f) return 3;
+    D_8011B764[2] = sep;
+
+    v = tx * r01 + (ty * r11 + tz * r21); if (v < 0.0f) v = -v;
+    sep = v - (by + (ax * a01 + (ay * a11 + az * a21)));
+    if (sep > 0.0f) return 4;
+    D_8011B764[3] = sep;
+
+    v = tz; if (v < 0.0f) v = -v;
+    sep = v - (az + (bx * a20 + (by * a21 + bz * a22)));
+    if (sep > 0.0f) return 5;
+    D_8011B764[4] = sep;
+
+    v = tx * r02 + (ty * r12 + tz * r22); if (v < 0.0f) v = -v;
+    sep = v - (bz + (ax * a02 + (ay * a12 + az * a22)));
+    if (sep > 0.0f) return 6;
+    D_8011B764[5] = sep;
+
+    v = tz * r10 - ty * r20; if (v < 0.0f) v = -v;
+    sep = v - (ay * a20 + (az * a10 + (by * a02 + bz * a01)));
+    if (sep > 0.0f) return 7;
+    D_8011B764[6] = sep;
+
+    v = tz * r11 - ty * r21; if (v < 0.0f) v = -v;
+    sep = v - (ay * a21 + (az * a11 + (bx * a02 + bz * a00)));
+    if (sep > 0.0f) return 8;
+    D_8011B764[7] = sep;
+
+    v = tz * r12 - ty * r22; if (v < 0.0f) v = -v;
+    sep = v - (ay * a22 + (az * a12 + (bx * a01 + by * a00)));
+    if (sep > 0.0f) return 9;
+    D_8011B764[8] = sep;
+
+    v = tx * r20 - tz * r00; if (v < 0.0f) v = -v;
+    sep = v - (ax * a20 + (az * a00 + (by * a12 + bz * a11)));
+    if (sep > 0.0f) return 10;
+    D_8011B764[9] = sep;
+
+    v = tx * r21 - tz * r01; if (v < 0.0f) v = -v;
+    sep = v - (ax * a21 + (az * a01 + (bx * a12 + bz * a10)));
+    if (sep > 0.0f) return 11;
+    D_8011B764[10] = sep;
+
+    v = tx * r22 - tz * r02; if (v < 0.0f) v = -v;
+    sep = v - (ax * a22 + (az * a02 + (bx * a11 + by * a10)));
+    if (sep > 0.0f) return 12;
+    D_8011B764[11] = sep;
+
+    v = ty * r00 - tx * r10; if (v < 0.0f) v = -v;
+    sep = v - (ax * a10 + (ay * a00 + (by * a22 + bz * a21)));
+    if (sep > 0.0f) return 13;
+    D_8011B764[12] = sep;
+
+    v = ty * r01 - tx * r11; if (v < 0.0f) v = -v;
+    sep = v - (ax * a11 + (ay * a01 + (bx * a22 + bz * a20)));
+    if (sep > 0.0f) return 14;
+    D_8011B764[13] = sep;
+
+    v = ty * r02 - tx * r12; if (v < 0.0f) v = -v;
+    sep = v - (ax * a12 + (ay * a02 + (bx * a21 + by * a20)));
+    if (sep > 0.0f) return 15;
+    D_8011B764[14] = sep;
+
+    return 0;
+}
 
 void Coll_ResolveBoxPair(ObjC7_ *a, ObjC7_ *b) {
     Vec3f t;
@@ -1284,7 +1421,249 @@ void Coll_UpdateRooms(void) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_39C90", Coll_ProbeWheels);
 
-INCLUDE_ASM("asm/nonmatchings/unit_39C90", Coll_FindGroundPlanes);
+typedef struct { Vec3f n; f32 d; s16 e; u16 f; } PlFGP_;
+typedef struct {
+    u8 p0[0x0C];
+    s16 x0, y0, z0;
+    s16 x1, y1, z1;
+    u8 p18[0x0C];
+    s16 x2, y2, z2;
+    s16 x3, y3, z3;
+} SegPairFGP_;
+typedef struct {
+    u8 contact;
+    u8 pad[3];
+    Vec3f normal;
+    Vec3f point;
+    u8 pad2[0x54];
+} WheelFGP_; /* 0x70 */
+typedef struct {
+    /* 0x000 */ u8 id;
+    /* 0x001 */ u8 p1[3];
+    /* 0x004 */ u32 flags;
+    /* 0x008 */ u8 p8[0x78];
+    /* 0x080 */ Vec3f grav;
+    /* 0x08C */ u8 p8C[0xE8];
+    /* 0x174 */ WheelFGP_ wheels[4];
+    /* 0x334 */ u8 p334[0xB0];
+    /* 0x3E4 */ u8 nWheels;
+    /* 0x3E5 */ u8 p3E5[0x32B];
+    /* 0x710 */ u8 hasUp;
+    /* 0x711 */ u8 p711[3];
+    /* 0x714 */ Vec3f upOrigin;
+    /* 0x720 */ Vec3f upNormal;
+    /* 0x72C */ f32 upD;
+    /* 0x730 */ u8 p730[0x14];
+    /* 0x744 */ u8 hasAll;
+    /* 0x745 */ u8 p745[3];
+    /* 0x748 */ Vec3f allNormal;
+    /* 0x754 */ f32 allD;
+} CarFGP_;
+typedef struct {
+    /* 0x00 */ s32 id;
+    /* 0x04 */ u8 p4[0x08];
+    /* 0x0C */ Vec3f pos;
+    /* 0x18 */ u8 p18[0x44];
+    /* 0x5C */ s32 type;
+    /* 0x60 */ Obj60_ *p60;
+    /* 0x64 */ CarFGP_ *car;
+    /* 0x68 */ u8 p68[8];
+    /* 0x70 */ Nd4_ *list;
+} RObjFGP_;
+typedef struct LnkFGP_ { RObjFGP_ *obj; s32 x; struct LnkFGP_ *next; } LnkFGP_;
+
+void Coll_FindGroundPlanes(void) {
+    Vec3f n;
+    Vec3f wn;
+    Vec3f a;
+    Vec3f b;
+    PlFGP_ pl;
+    Vec3f rpos;
+    Vec3f rel;
+    Vec3f p0;
+    Vec3f p1;
+    s32 needRoom[6];
+    LnkFGP_ *node;
+    RObjFGP_ *o;
+    CarFGP_ *car;
+    Nd4_ *rn;
+    Room_ *room;
+    Portal_ *pt;
+    s32 i;
+    f32 bestUp = 0.0f;
+    f32 bestAll = 0.0f;
+    f32 dist;
+
+    for (node = *(LnkFGP_ **)&gCollCars; node != NULL; node = node->next) {
+        o = node->obj;
+        if (o->p60->b110 == 0) {
+            u8 id;
+            car = o->car;
+            id = car->id;
+            car->hasUp = 0;
+            car->hasAll = 0;
+            needRoom[id] = 1;
+            if (o->type == 3) {
+                for (i = car->nWheels - 1; i >= 0; i--) {
+                    if (car->wheels[i].contact != 0) {
+                        wn = car->wheels[i].normal;
+                        car->hasAll = 1;
+                        car->allNormal = wn;
+                        car->allD = -(wn.x * car->wheels[i].point.x + wn.y * car->wheels[i].point.y + wn.z * car->wheels[i].point.z);
+                        if ((car->flags & 0x400) || wn.z > 0.5f) {
+                            car->hasUp = 1;
+                            car->upOrigin.x = 0.0f;
+                            car->upOrigin.y = 0.0f;
+                            car->upOrigin.z = 0.0f;
+                            car->upNormal = wn;
+                            car->upD = car->allD;
+                            if (car->flags & 0x400) {
+                                car->grav.x = -wn.x;
+                                car->grav.y = -wn.y;
+                                car->grav.z = -wn.z;
+                            }
+                            needRoom[id] = 0;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    for (node = *(LnkFGP_ **)&gCollCars; node != NULL; node = node->next) {
+        o = node->obj;
+        if (o->p60->b110 == 0) {
+            car = o->car;
+            if (needRoom[car->id] != 0) {
+                for (rn = o->list; rn != NULL; rn = rn->next) {
+                    room = &gCollLevel->rooms[rn->a];
+                    rpos.x = (f32)(room->x << 8);
+                    rpos.y = (f32)(room->y << 8);
+                    rpos.z = (f32)(room->z << 8);
+                    rel.x = o->pos.x - rpos.x;
+                    rel.y = o->pos.y - rpos.y;
+                    rel.z = o->pos.z - rpos.z;
+                    if (room->flags & 0x800) {
+                        f32 d0, d1, t, s, inv;
+                        SegPairFGP_ *seg;
+
+                        pl.n.x = gCollLevel->portals[room->firstPortal].nx / 4096.0f;
+                        pl.n.y = gCollLevel->portals[room->firstPortal].ny / 4096.0f;
+                        pl.n.z = gCollLevel->portals[room->firstPortal].nz / 4096.0f;
+                        pl.d = gCollLevel->portals[room->firstPortal].d;
+                        pl.e = gCollLevel->portals[room->firstPortal].flag;
+                        pl.f = gCollLevel->portals[room->firstPortal].to;
+                        d0 = rel.x * pl.n.x + rel.y * pl.n.y + rel.z * pl.n.z + pl.d;
+
+                        pl.n.x = gCollLevel->portals[room->firstPortal + 1].nx / 4096.0f;
+                        pl.n.y = gCollLevel->portals[room->firstPortal + 1].ny / 4096.0f;
+                        pl.n.z = gCollLevel->portals[room->firstPortal + 1].nz / 4096.0f;
+                        pl.d = gCollLevel->portals[room->firstPortal + 1].d;
+                        pl.e = gCollLevel->portals[room->firstPortal + 1].flag;
+                        pl.f = gCollLevel->portals[room->firstPortal + 1].to;
+                        d1 = rel.x * pl.n.x + rel.y * pl.n.y + rel.z * pl.n.z + pl.d;
+
+                        t = d1 / (d0 + d1);
+                        s = 1.0f - t;
+                        seg = (SegPairFGP_ *)(*(u8 **)&gCollLevel->pC4 + room->param.val * 0x18);
+                        a.x = seg->x0;
+                        a.y = seg->y0;
+                        a.z = seg->z0;
+                        b.x = seg->x2;
+                        b.y = seg->y2;
+                        b.z = seg->z2;
+                        p0.x = a.x * t + b.x * s;
+                        p0.y = a.y * t + b.y * s;
+                        p0.z = a.z * t + b.z * s;
+
+                        a.x = seg->x1;
+                        a.y = seg->y1;
+                        a.z = seg->z1;
+                        b.x = seg->x3;
+                        b.y = seg->y3;
+                        b.z = seg->z3;
+                        p1.x = a.x * t + b.x * s;
+                        p1.y = a.y * t + b.y * s;
+                        p1.z = a.z * t + b.z * s;
+
+                        n.x = p1.x - p0.x;
+                        n.y = p1.y - p0.y;
+                        n.z = p1.z - p0.z;
+                        inv = 1.0f / sqrtf(n.x * n.x + n.y * n.y + n.z * n.z);
+                        n.x *= inv;
+                        n.y *= inv;
+                        n.z *= inv;
+
+                        a.x = rel.x - p0.x;
+                        a.y = rel.y - p0.y;
+                        a.z = rel.z - p0.z;
+                        dist = n.x * a.x + n.y * a.y + n.z * a.z;
+
+                        if (car->hasAll == 0 || dist < bestAll) {
+                            car->hasAll = 1;
+                            car->allNormal = n;
+                            car->allD = -(p0.x * n.x + p0.y * n.y + p0.z * n.z);
+                            bestAll = dist;
+                        }
+                        if ((car->hasUp == 0 || dist < bestUp) &&
+                            -(n.x * car->grav.x + n.y * car->grav.y + n.z * car->grav.z) > 0.5f) {
+                            car->hasUp = 1;
+                            car->upOrigin = rpos;
+                            car->upNormal = n;
+                            car->upD = -(p0.x * n.x + p0.y * n.y + p0.z * n.z);
+                            bestUp = dist;
+                        }
+                        if (room->flags & 0x2000) {
+                            car->grav.x = -n.x;
+                            car->grav.y = -n.y;
+                            car->grav.z = -n.z;
+                        }
+                    } else {
+                        pt = &gCollLevel->portals[room->firstPortal];
+                        for (i = 0; i < room->nPortals; pt++, i++) {
+                            if (pt->flag != 0) {
+                                pl.n.x = pt->nx / 4096.0f;
+                                pl.n.y = pt->ny / 4096.0f;
+                                pl.n.z = pt->nz / 4096.0f;
+                                pl.d = pt->d;
+                                pl.e = pt->flag;
+                                pl.f = pt->to;
+                                dist = rel.x * pl.n.x + rel.y * pl.n.y + rel.z * pl.n.z + pl.d;
+                                if (pl.e != 1) {
+                                    if (car->hasAll == 0 || dist < bestAll) {
+                                        car->hasAll = 1;
+                                        car->allNormal = pl.n;
+                                        car->allD = pl.d;
+                                        bestAll = dist;
+                                    }
+                                    if ((car->hasUp == 0 || dist < bestUp) && pl.n.z > 0.5f) {
+                                        car->hasUp = 1;
+                                        car->upOrigin = rpos;
+                                        car->upNormal = pl.n;
+                                        car->upD = pl.d;
+                                        bestUp = dist;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    for (node = *(LnkFGP_ **)&gCollCars; node != NULL; node = node->next) {
+        o = node->obj;
+        if (o->p60->b110 == 0) {
+            car = o->car;
+            if (car->hasUp != 0 && car->hasAll != 0) {
+                car->allNormal = car->upNormal;
+                car->allD = car->upD - (car->upNormal.x * car->upOrigin.x + car->upNormal.y * car->upOrigin.y + car->upNormal.z * car->upOrigin.z);
+            }
+        }
+    }
+}
 
 INCLUDE_ASM("asm/nonmatchings/unit_39C90", Coll_PointsVsWorld);
 
@@ -1305,7 +1684,155 @@ void Coll_RacersVsWorldEdges(void) {
 
 INCLUDE_ASM("asm/nonmatchings/unit_39C90", Coll_BoxVsWorldEdges);
 
-INCLUDE_ASM("asm/nonmatchings/unit_39C90", CollBox_EdgeSeparatingAxis);
+typedef struct {
+    Vec3f pos;
+    Vec3f half;
+    f32 m[3][3];
+} CollBox_;
+
+typedef struct {
+    Vec3f pos;
+    Vec3f dir;
+    f32 pad18[3];
+    f32 len;
+} CollSeg_;
+
+extern f32 D_8011B764[];
+
+static inline Vec3f Mat3T_MulVec_(f32 m[3][3], Vec3f *v) {
+    Vec3f r;
+    r.x = m[0][0] * v->x + m[0][1] * v->y + m[0][2] * v->z;
+    r.y = m[1][0] * v->x + m[1][1] * v->y + m[1][2] * v->z;
+    r.z = m[2][0] * v->x + m[2][1] * v->y + m[2][2] * v->z;
+    return r;
+}
+
+s32 CollBox_EdgeSeparatingAxis(CollBox_ *a, CollSeg_ *b) {
+    Vec3f dir;
+    f32 mt[3][3];
+    Vec3f d;
+    Vec3f t;
+    f32 dx, dy, dz;
+    f32 tx, ty, tz;
+    f32 hx, hy, hz;
+    f32 len;
+    f32 ax, ay, az;
+    f32 v;
+    f32 sep;
+    f32 eps = 0.001f;
+
+    mt[0][0] = a->m[0][0]; mt[0][1] = a->m[1][0]; mt[0][2] = a->m[2][0];
+    mt[1][0] = a->m[0][1]; mt[1][1] = a->m[1][1]; mt[1][2] = a->m[2][1];
+    mt[2][0] = a->m[0][2]; mt[2][1] = a->m[1][2]; mt[2][2] = a->m[2][2];
+
+    dir = Mat3T_MulVec_(mt, &b->dir);
+
+    d.x = b->pos.x - a->pos.x;
+    d.y = b->pos.y - a->pos.y;
+    d.z = b->pos.z - a->pos.z;
+    t = Mat3T_MulVec_(mt, &d);
+
+    tx = t.x;
+    ty = t.y;
+    tz = t.z;
+    hx = a->half.x;
+    hy = a->half.y;
+    hz = a->half.z;
+    len = b->len;
+    dx = dir.x;
+    dy = dir.y;
+    dz = dir.z;
+
+    ax = dx;
+    if (ax < 0.0f) {
+        ax = -ax;
+    }
+    ax += eps;
+
+    ay = dy;
+    if (ay < 0.0f) {
+        ay = -ay;
+    }
+    ay += eps;
+
+    az = dz;
+    if (az < 0.0f) {
+        az = -az;
+    }
+    az += eps;
+
+    v = tx;
+    if (v < 0.0f) {
+        v = -v;
+    }
+    sep = v - (hx + len * ax);
+    if (sep > 0.0f) {
+        return 1;
+    }
+    D_8011B764[0] = sep;
+
+    v = tx * dx + (ty * dy + tz * dz);
+    if (v < 0.0f) {
+        v = -v;
+    }
+    sep = v - (len + (hx * ax + (hy * ay + hz * az)));
+    if (sep > 0.0f) {
+        return 2;
+    }
+    D_8011B764[1] = sep;
+
+    v = ty;
+    if (v < 0.0f) {
+        v = -v;
+    }
+    sep = v - (hy + len * ay);
+    if (sep > 0.0f) {
+        return 3;
+    }
+    D_8011B764[2] = sep;
+
+    v = tz;
+    if (v < 0.0f) {
+        v = -v;
+    }
+    sep = v - (hz + len * az);
+    if (sep > 0.0f) {
+        return 5;
+    }
+    D_8011B764[4] = sep;
+
+    v = tz * dy - ty * dz;
+    if (v < 0.0f) {
+        v = -v;
+    }
+    sep = v - (hy * az + hz * ay);
+    if (sep > 0.0f) {
+        return 7;
+    }
+    D_8011B764[6] = sep;
+
+    v = tx * dz - tz * dx;
+    if (v < 0.0f) {
+        v = -v;
+    }
+    sep = v - (hx * az + hz * ax);
+    if (sep > 0.0f) {
+        return 10;
+    }
+    D_8011B764[9] = sep;
+
+    v = ty * dx - tx * dy;
+    if (v < 0.0f) {
+        v = -v;
+    }
+    sep = v - (hx * ay + hy * ax);
+    if (sep > 0.0f) {
+        return 13;
+    }
+    D_8011B764[12] = sep;
+
+    return 0;
+}
 
 void Coll_ApplyRoomFlags(RObj_ *o, u16 idx, s32 arg2) {
     Room_ *r;
@@ -1757,7 +2284,178 @@ u8 Coll_ClipCamera(u8 id, Vec3f *pos) {
 #undef PLCONV
 #undef LERP
 
-INCLUDE_ASM("asm/nonmatchings/unit_39C90", Coll_GetRoomAxis);
+typedef struct {
+    /* 0x00 */ u8 p0[0x50];
+    /* 0x50 */ Vec3f *pos;
+    /* 0x54 */ u16 *rooms;
+} RObjA_;
+typedef struct { Vec3f n; f32 d; s16 e; u16 f; } PlFA_;
+
+static inline void Vec3_Norm_(Vec3f *v) {
+    f32 inv = 1.0f / sqrtf(v->x * v->x + v->y * v->y + v->z * v->z);
+    v->x *= inv;
+    v->y *= inv;
+    v->z *= inv;
+}
+
+s32 Coll_GetRoomAxis(u8 carIdx, Vec3f *outAxis, Vec3f *outUp) {
+    PlFA_ pl;
+    Vec3f n1;
+    Vec3f n2;
+    Vec3f org;
+    Vec3f d1;
+    Vec3f d2;
+    Vec3f sum;
+    Vec3f up;
+    RObjA_ *obj;
+    Room_ *r1;
+    Room_ *r2;
+    Portal_ *l;
+    u32 i;
+    u8 has1;
+    u8 has2;
+    f32 dist1;
+    f32 dist2;
+    f32 total;
+    f32 w;
+
+    dist2 = 0.0f;
+    dist1 = 0.0f;
+    obj = (RObjA_ *)Car_Get(carIdx)->roomObj;
+    r1 = &gCollLevel->rooms[obj->rooms[0]];
+    if ((r1->flags & 0x9000) != 0x9000) {
+        return 0;
+    }
+
+    org.x = r1->x << 8;
+    org.y = r1->y << 8;
+    org.z = r1->z << 8;
+    d1.x = obj->pos->x - org.x;
+    d1.y = obj->pos->y - org.y;
+    d1.z = obj->pos->z - org.z;
+
+    has1 = 0;
+    has2 = 0;
+    r2 = NULL;
+    l = &gCollLevel->portals[r1->firstPortal];
+    for (i = 0; i < r1->nPortals; l++, i++) {
+        if (l->flag == 0) {
+            pl.n.x = l->nx / 4096.0f;
+            pl.n.y = l->ny / 4096.0f;
+            pl.n.z = l->nz / 4096.0f;
+            pl.d = l->d;
+            pl.e = l->flag;
+            pl.f = l->to;
+            if ((pl.n.z < 0.0f ? -pl.n.z : pl.n.z) < 0.5f) {
+                if (!has1) {
+                    dist1 = d1.x * pl.n.x + d1.y * pl.n.y + d1.z * pl.n.z + pl.d;
+                    n1 = pl.n;
+                    has1 = 1;
+                } else if (!has2) {
+                    dist2 = d1.x * pl.n.x + d1.y * pl.n.y + d1.z * pl.n.z + pl.d;
+                    n2 = pl.n;
+                    n2.x = -n2.x;
+                    n2.y = -n2.y;
+                    n2.z = -n2.z;
+                    has2 = 1;
+                }
+            } else {
+                r2 = &gCollLevel->rooms[pl.f];
+            }
+        }
+    }
+
+    dist1 = dist2 / (dist1 + dist2);
+    n1.x *= dist1;
+    n1.y *= dist1;
+    n1.z *= dist1;
+    dist2 = 1.0f - dist1;
+    n2.x *= dist2;
+    n2.y *= dist2;
+    n2.z *= dist2;
+    sum.x = n1.x + n2.x;
+    sum.y = n1.y + n2.y;
+    sum.z = n1.z + n2.z;
+    Vec3_Norm_(&sum);
+    *outAxis = sum;
+
+    org.x = r2->x << 8;
+    org.y = r2->y << 8;
+    org.z = r2->z << 8;
+    d2.x = obj->pos->x - org.x;
+    d2.y = obj->pos->y - org.y;
+    d2.z = obj->pos->z - org.z;
+
+    total = 0.0f;
+    l = &gCollLevel->portals[r1->firstPortal];
+    for (i = 0; i < r1->nPortals; l++, i++) {
+        if (l->flag != 0) {
+            pl.n.x = l->nx / 4096.0f;
+            pl.n.y = l->ny / 4096.0f;
+            pl.n.z = l->nz / 4096.0f;
+            pl.d = l->d;
+            pl.e = l->flag;
+            pl.f = l->to;
+            total += d1.x * pl.n.x + d1.y * pl.n.y + d1.z * pl.n.z + pl.d;
+        }
+    }
+    l = &gCollLevel->portals[r2->firstPortal];
+    for (i = 0; i < r2->nPortals; l++, i++) {
+        if (l->flag != 0) {
+            pl.n.x = l->nx / 4096.0f;
+            pl.n.y = l->ny / 4096.0f;
+            pl.n.z = l->nz / 4096.0f;
+            pl.d = l->d;
+            pl.e = l->flag;
+            pl.f = l->to;
+            total += d2.x * pl.n.x + d2.y * pl.n.y + d2.z * pl.n.z + pl.d;
+        }
+    }
+
+    up.x = 0.0f;
+    up.y = 0.0f;
+    up.z = 0.0f;
+    l = &gCollLevel->portals[r1->firstPortal];
+    for (i = 0; i < r1->nPortals; l++, i++) {
+        if (l->flag != 0) {
+            pl.n.x = l->nx / 4096.0f;
+            pl.n.y = l->ny / 4096.0f;
+            pl.n.z = l->nz / 4096.0f;
+            pl.d = l->d;
+            pl.e = l->flag;
+            pl.f = l->to;
+            w = 1.0f - (d1.x * pl.n.x + d1.y * pl.n.y + d1.z * pl.n.z + pl.d) / total;
+            sum.x = pl.n.x * w;
+            sum.y = pl.n.y * w;
+            sum.z = pl.n.z * w;
+            up.x += sum.x;
+            up.y += sum.y;
+            up.z += sum.z;
+        }
+    }
+    l = &gCollLevel->portals[r2->firstPortal];
+    for (i = 0; i < r2->nPortals; l++, i++) {
+        if (l->flag != 0) {
+            pl.n.x = l->nx / 4096.0f;
+            pl.n.y = l->ny / 4096.0f;
+            pl.n.z = l->nz / 4096.0f;
+            pl.d = l->d;
+            pl.e = l->flag;
+            pl.f = l->to;
+            w = 1.0f - (d2.x * pl.n.x + d2.y * pl.n.y + d2.z * pl.n.z + pl.d) / total;
+            sum.x = pl.n.x * w;
+            sum.y = pl.n.y * w;
+            sum.z = pl.n.z * w;
+            up.x += sum.x;
+            up.y += sum.y;
+            up.z += sum.z;
+        }
+    }
+
+    Vec3_Norm_(&up);
+    *outUp = up;
+    return 1;
+}
 
 s32 Coll_GetSpawnCount(void) {
     return gCollLevel->nSpawns;
