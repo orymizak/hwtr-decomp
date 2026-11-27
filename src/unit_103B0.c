@@ -2,7 +2,6 @@
 #include "ultra64.h"
 #include "nusys.h"
 #include "gfx.h"
-#include "include_asm.h"
 typedef struct { s8 a; s8 b; s8 c; u8 pad[0xD]; } Ent6F_;
 extern Ent6F_ gLightDirs[];
 extern u8 gLightsDirty;
@@ -70,7 +69,7 @@ void nuGfxThreadStart(void);
 void nuGfxSetCfb(void *, s32);
 void nuGfxSwapCfbFuncSet(void *);
 void nuGfxSwapCfb(void);
-extern u8 gNumLights;
+extern u8 gNumLights[];
 extern f32 D_800F2114;
 extern f32 D_800F2118;
 extern f32 D_800F211C;
@@ -237,7 +236,7 @@ void Light_SetCount(s32 a) {
     if (a == 0) {
         a = 1;
     }
-    p = &gNumLights;
+    p = gNumLights;
     if ((*p != a) | (gLightsDirty == 1)) {
         *p = a;
         gLightsDirty = 1;
@@ -356,15 +355,11 @@ void Gfx_SetAllLightColors(s32 a, s32 b, s32 c) {
     gSPLightColor(gDisplayListHead++, LIGHT_6, color);
 }
 
-/* TODO(match-debt): 146/169 words vs original (REA/Ghidra session 2026-11-24, see MATCH_LOG.md).
- * Structure and constants confirmed: gSPLight x(n+1), gSPNumLights; residual diff is register allocation
- * (original keeps &gNumLights in $s1, lights block in $s0, plus a second pointer copy for the loop test). */
-#ifdef NON_MATCHING
 typedef struct { s32 w[30]; } LightBlk_;
+typedef struct { u8 v; } LightFlag_;
 void Gfx_UpdateLights(void) {
-    s32 lights;
+    Lights7 *lights;
     s32 i;
-    u8 *n;
 
     if (gLightsDirty) {
         if ((u32)(gMtxHead + 0x80) >= (u32)gMtxPools[gGfxPoolIndex].f4) {
@@ -372,25 +367,21 @@ void Gfx_UpdateLights(void) {
             MtxPool_Grow(&gMtxPools[gGfxPoolIndex], 2);
             gMtxHead = gMtxPools[gGfxPoolIndex].f0;
         }
-        lights = gMtxHead;
-        gMtxHead = lights + 0x80;
+        lights = (Lights7 *)gMtxHead;
+        gMtxHead = (s32)lights + 0x80;
         *(LightBlk_ *)lights = *(LightBlk_ *)&D_800F1DE0;
-        n = &gNumLights;
-        GFX_RESERVE(*n + 2);
-        for (i = 0; i < *n; i++) {
-            gSPLight(gDisplayListHead++, lights + i * 16 + 8, i + 1);
+        GFX_RESERVE(gNumLights[0] + 2);
+        for (i = 0; i < gNumLights[0]; i++) {
+            gSPLight(gDisplayListHead++, &lights->l[i], i + 1);
         }
-        gSPLight(gDisplayListHead++, lights, *n + 1);
-        gSPNumLights(gDisplayListHead++, *n);
-        gLightsDirty = 0;
+        gSPLight(gDisplayListHead++, &lights->a, gNumLights[0] + 1);
+        gSPNumLights(gDisplayListHead++, gNumLights[0]);
+        ((LightFlag_ *)&gLightsDirty)->v = 0;
     }
 }
-#else
-INCLUDE_ASM("asm/nonmatchings/unit_103B0", Gfx_UpdateLights);
-#endif
 
 void Gfx_SetNumLights(void) {
-    u8 n = gNumLights;
+    u8 n = gNumLights[0];
 
     GFX_RESERVE(1);
     gSPNumLights(gDisplayListHead++, n);

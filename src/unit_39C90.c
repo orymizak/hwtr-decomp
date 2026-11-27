@@ -30,7 +30,7 @@ typedef struct { u8 pad[8]; s32 w8; } Obj70_;
 typedef struct { u8 pad[0x60]; Obj60_ *p60; u8 pad2[0xC]; Obj70_ *p70; } ObjA2_;
 typedef struct LnkA2_ { ObjA2_ *obj; s32 x; struct LnkA2_ *next; } LnkA2_;
 extern LnkA2_ *gCollRacers;
-void Coll_BoxVsWorldEdges(ObjA2_ *);
+void Coll_BoxVsWorldEdges(void *);
 typedef struct { u8 pad[0x40]; void *a; void *b; void *c; } Res40_;
 void Memory_Free(void *);
 typedef struct Nd3_ { s32 a; struct Nd3_ *prev; struct Nd3_ *next; } Nd3_;
@@ -101,12 +101,11 @@ void CollShape_InitCar(u8 *n, Car *o);
 extern void *gCollNodeFree;
 extern Level_ *gCollLevel;
 
-/* 155/159 words (628/636 B): original reloads gCollLevel twice at 0x80099110 (into $a0 and $v1) before adding 0xD8. */
-#ifdef NON_MATCHING
 typedef struct { u16 idx; u16 h4; u16 h6; u16 val; u8 pad[0x14 - 10]; } Sub90_;
 typedef struct { u16 flags; Sub90_ s; } Ent90_;
 typedef struct { u16 flags; u16 h2; u16 h4; u8 pad[6]; } Ev90_;
 typedef struct { s32 n0; s32 n4; s32 n8; s32 nC; s32 n10; u8 pad[0xC0 - 0x14]; Ent90_ *c0; u8 *c4; u8 *c8; u8 *cc; Ev90_ *d0; u8 *d4; } Hdr90_;
+typedef struct { void *p; } CollPtr_;
 extern u32 D_8011C82C[];
 extern char D_801009A0[];
 extern s32 (*svcFileGetSize)(char *);
@@ -136,7 +135,8 @@ u8 Coll_LoadLevel(u8 *o) {
         return 0;
     }
 
-    ((Hdr90_ *)gCollLevel)->c0 = (Ent90_ *)((u8 *)gCollLevel + 0xD8);
+    /* TODO(match-debt): MEM_IN_STRUCT_P keeps the second gCollLevel load into $v1 before +0xD8. */
+    ((Hdr90_ *)gCollLevel)->c0 = (Ent90_ *)((u8 *)((CollPtr_ *)&gCollLevel)->p + 0xD8);
     ((Hdr90_ *)gCollLevel)->c4 = (u8 *)((Hdr90_ *)gCollLevel)->c0 + ((Hdr90_ *)gCollLevel)->n0 * 0x14;
     ((Hdr90_ *)gCollLevel)->c8 = ((Hdr90_ *)gCollLevel)->c4 + ((Hdr90_ *)gCollLevel)->n4 * 0x18;
     ((Hdr90_ *)gCollLevel)->cc = ((Hdr90_ *)gCollLevel)->c8 + ((Hdr90_ *)gCollLevel)->n8 * 0xC;
@@ -178,9 +178,6 @@ u8 Coll_LoadLevel(u8 *o) {
     }
     return 1;
 }
-#else
-INCLUDE_ASM("asm/nonmatchings/unit_39C90", Coll_LoadLevel);
-#endif
 
 s32 Coll_Init(u8 *o) {
     s32 v = *(s32 *)(o + 0x1C);
@@ -827,7 +824,146 @@ void Coll_Update(void) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_39C90", Coll_SyncObjects);
+typedef struct {
+    /* 0x000 */ u8 p0[0x60];
+    /* 0x060 */ Vec3f pos;
+    /* 0x06C */ Vec3f offset;
+    /* 0x078 */ u8 p78[0x18];
+    /* 0x090 */ f32 speed;
+    /* 0x094 */ f32 rot[9];
+    /* 0x0B8 */ u8 pB8[0x3C];
+    /* 0x0F4 */ f32 angSpeed;
+    /* 0x0F8 */ u8 pF8[0x18];
+    /* 0x110 */ u8 asleep;
+    /* 0x111 */ u8 p111[3];
+    /* 0x114 */ u32 sleepTimer;
+} BodySync_;
+
+typedef struct {
+    /* 0x000 */ u8 p0[0x14];
+    /* 0x014 */ f32 f14;
+    /* 0x018 */ f32 f18;
+    /* 0x01C */ u8 p1C[0x3C8];
+    /* 0x3E4 */ u8 b3E4;
+    /* 0x3E5 */ u8 p3E5[2];
+    /* 0x3E7 */ u8 b3E7;
+} CarSync_;
+
+typedef struct {
+    /* 0x00 */ Vec3f pos;
+    /* 0x0C */ u8 pC[0xC];
+    /* 0x18 */ f32 rot[9];
+    /* 0x3C */ u8 nVerts;
+    /* 0x3D */ u8 p3D[3];
+    /* 0x40 */ Vec3f *localVerts;
+    /* 0x44 */ Vec3f *worldVerts;
+} ShapeSync_;
+
+typedef struct {
+    /* 0x00 */ u8 p0[0xC];
+    /* 0x0C */ ShapeSync_ shape;
+    /* 0x54 */ u8 p54[8];
+    /* 0x5C */ s32 type;
+    /* 0x60 */ BodySync_ *body;
+    /* 0x64 */ CarSync_ *car;
+} ObjSync_;
+
+typedef struct LnkSync_ {
+    ObjSync_ *obj;
+    s32 x;
+    struct LnkSync_ *next;
+} LnkSync_;
+
+#define TRANSFORM_SHAPE_(sp) { \
+    s = (sp); \
+    m[0] = s->rot[0]; \
+    m[1] = s->rot[1]; \
+    m[2] = s->rot[2]; \
+    m[3] = s->pos.x; \
+    m[4] = s->rot[3]; \
+    m[5] = s->rot[4]; \
+    m[6] = s->rot[5]; \
+    m[7] = s->pos.y; \
+    m[8] = s->rot[6]; \
+    m[9] = s->rot[7]; \
+    m[10] = s->rot[8]; \
+    m[11] = s->pos.z; \
+    for (i = 0, src = s->localVerts, dst = s->worldVerts; i < s->nVerts; src++, dst++, i++) { \
+        f32 x = src->x; \
+        f32 y = src->y; \
+        f32 z = src->z; \
+        dst->x = m[0] * x + m[1] * y + m[2] * z + m[3]; \
+        dst->y = m[4] * x + m[5] * y + m[6] * z + m[7]; \
+        dst->z = m[8] * x + m[9] * y + m[10] * z + m[11]; \
+    } \
+}
+
+void Coll_SyncObjects(void) {
+    LnkSync_ *it;
+    ObjSync_ *o;
+    BodySync_ *b;
+    CarSync_ *c;
+    ShapeSync_ *s;
+    f32 m[12];
+    u8 i;
+    Vec3f *src;
+    Vec3f *dst;
+
+    for (it = (LnkSync_ *)gCollAll; it != NULL; it = it->next) {
+        o = it->obj;
+        if (o->type != 0 && o->type != 2 && o->type != 5) {
+            b = o->body;
+            if (!b->asleep) {
+                f32 speed;
+                f32 angSpeed;
+
+                o->shape.pos.x = b->offset.x + b->pos.x;
+                o->shape.pos.y = b->offset.y + b->pos.y;
+                o->shape.pos.z = b->offset.z + b->pos.z;
+                o->shape.rot[0] = b->rot[0];
+                o->shape.rot[1] = b->rot[1];
+                o->shape.rot[2] = b->rot[2];
+                o->shape.rot[3] = b->rot[3];
+                o->shape.rot[4] = b->rot[4];
+                o->shape.rot[5] = b->rot[5];
+                o->shape.rot[6] = b->rot[6];
+                o->shape.rot[7] = b->rot[7];
+                o->shape.rot[8] = b->rot[8];
+
+                TRANSFORM_SHAPE_(&o->shape);
+
+                speed = b->speed;
+                angSpeed = b->angSpeed;
+                if (o->type == 3) {
+                    c = o->car;
+                    if (c->b3E7 == c->b3E4) {
+                        if (((speed < 24.0f) & (angSpeed < 0.17453279f)) &&
+                            !(c->f14 < 0.0f) && !(c->f14 > 0.0f) &&
+                            !(c->f18 < 0.0f) && !(c->f18 > 0.0f)) {
+                            b->sleepTimer++;
+                            if (b->sleepTimer >= 40) {
+                                b->asleep = 1;
+                            }
+                        } else {
+                            b->sleepTimer = 0;
+                        }
+                    }
+                } else {
+                    if ((speed < 96.0f) & (angSpeed < 1.570795f)) {
+                        b->sleepTimer++;
+                        if (b->sleepTimer >= 100) {
+                            b->asleep = 1;
+                        }
+                    } else {
+                        b->sleepTimer = 0;
+                    }
+                }
+            }
+        } else if (o->type == 2) {
+            TRANSFORM_SHAPE_(&o->shape);
+        }
+    }
+}
 
 void Coll_ResolveBoxPair(ObjC7_ *a, ObjC7_ *b);
 #define ABS_56C(v) ((v) < 0.0f ? -(v) : (v))
@@ -1419,7 +1555,345 @@ void Coll_UpdateRooms(void) {
     }
 }
 
+/* TODO(match-debt): 899/1061 words (4244/4244 B exact, s67, up from 887/1061 in s63 via DotPW_(&carUp[id], &tmp)
+ * and `dist = ...; if (dist < o->b.rad)` in Pass 3). Passes 1 (87/90) and 4 (162/164) match structurally 100%;
+ * residual is frame 0x3F0 vs 0x400 (in Pass 2, GCC loop.c runs out of hoisting threshold 1 insn before moving
+ * `id*12` out of the `rn` loop and `$sp+0x10` out of the `node` loop, keeping `($sp+0x10)+id*24` in $fp instead
+ * of spilling to 0x394($sp) and forcing $fp/$s7->$t8 across passes). */
+#ifdef NON_MATCHING
+typedef struct {
+    /* 0x00 */ f32 f154;
+    /* 0x04 */ u8 flags;
+    /* 0x05 */ u8 pad159[0x1B];
+    /* 0x20 */ u8 contact;
+    /* 0x21 */ u8 surfType;
+    /* 0x22 */ u8 pad176[2];
+    /* 0x24 */ Vec3f normal;
+    /* 0x30 */ Vec3f point;
+    /* 0x3C */ u8 pad190[0x0C];
+    /* 0x48 */ f32 grip;
+    /* 0x4C */ f32 force;
+    /* 0x50 */ u8 pad1A4[4];
+    /* 0x54 */ f32 compression;
+    /* 0x58 */ u8 pad1AC[0x18];
+} WheelPW_;
+
+typedef struct {
+    /* 0x000 */ u8 id;
+    /* 0x001 */ u8 pad1[0xC7];
+    /* 0x0C8 */ f32 fC8;
+    /* 0x0CC */ u8 padCC[8];
+    /* 0x0D4 */ f32 fD4;
+    /* 0x0D8 */ u8 padD8[8];
+    /* 0x0E0 */ f32 fE0;
+    /* 0x0E4 */ u8 padE4[0x58];
+    /* 0x13C */ u8 b13C;
+    /* 0x13D */ u8 pad13D[0x17];
+    /* 0x154 */ WheelPW_ wheels[4];
+    /* 0x314 */ u8 pad314[0xD0];
+    /* 0x3E4 */ u8 nWheels;
+    /* 0x3E5 */ u8 pad3E5[0xD3];
+    /* 0x4B8 */ u8 b4B8;
+    /* 0x4B9 */ u8 pad4B9[0x3F];
+    /* 0x4F8 */ f32 f4F8;
+    /* 0x4FC */ u8 pad4FC[4];
+    /* 0x500 */ f32 f500;
+    /* 0x504 */ u8 pad504[0x0C];
+    /* 0x510 */ f32 f510;
+    /* 0x514 */ u8 pad514[4];
+    /* 0x518 */ f32 f518;
+    /* 0x51C */ u8 pad51C[0xD8];
+    /* 0x5F4 */ f32 f5F4;
+    /* 0x5F8 */ f32 f5F8;
+    /* 0x5FC */ f32 f5FC;
+} CarPW_;
+
+typedef struct {
+    /* 0x00 */ Vec3f pos;
+    /* 0x0C */ u8 pad0C[0x38];
+    /* 0x44 */ Vec3f *pts;
+    /* 0x48 */ u16 *rooms;
+    /* 0x4C */ f32 rad;
+} BodyPW_;
+
+typedef struct {
+    /* 0x00 */ s32 id;
+    /* 0x04 */ u8 pad4[8];
+    /* 0x0C */ BodyPW_ b;
+    /* 0x5C */ s32 type;
+    /* 0x60 */ void *p60;
+    /* 0x64 */ CarPW_ *car;
+    /* 0x68 */ u8 pad68[8];
+    /* 0x70 */ Nd4_ *list;
+} RObjPW_;
+
+typedef struct LnkPW_ {
+    RObjPW_ *obj;
+    s32 x;
+    struct LnkPW_ *next;
+} LnkPW_;
+
+typedef struct {
+    s16 x0, y0, z0;
+    u8 p6[6];
+    s16 x1, y1, z1;
+    u8 p12[6];
+} SegPW_;
+
+typedef struct { Vec3f n; f32 d; u16 e; u16 f; } PlPW_;
+
+static inline f32 DotPW_(Vec3f *a, Vec3f *b) {
+    return a->x * b->x + a->y * b->y + a->z * b->z;
+}
+
+void Coll_ProbeWheels(void) {
+    Vec3f tmp;
+    Vec3f q0;
+    Vec3f q1;
+    Vec3f q2;
+    Vec3f q3;
+    Vec3f u;
+    PlPW_ pl;
+    Vec3f rpos;
+    Vec3f wpos;
+    Vec3f rel;
+    Vec3f p0;
+    Vec3f p1;
+    Vec3f v;
+    f32 bestDist[2][6];
+    f32 minDist[2][6];
+    f32 maxDist[2][6];
+    u32 surfType[2][6];
+    u32 surfGrip[2][6];
+    Vec3f hitNormal[2][6];
+    f32 wheelRad[2][6];
+    Vec3f carUp[2];
+    Vec3f n0;
+    Vec3f n1;
+    LnkPW_ *node;
+    RObjPW_ *o;
+    CarPW_ *car;
+    BodyPW_ *b;
+    Nd4_ *rn;
+    Room_ *room;
+    Portal_ *pt;
+    SegPW_ *seg;
+    u32 id;
+    u32 nWheels;
+    u32 i;
+    u32 j;
+    u32 roomIdx;
+    f32 d0, d1, t, s, inv, dist, dotN, pen, force, k;
+
+    for (node = (LnkPW_ *)gCollRacers; node != NULL; node = node->next) {
+        o = node->obj;
+        car = o->car;
+        if (car->b13C == 0 && car->b4B8 == 0) {
+            id = car->id;
+            nWheels = car->nWheels;
+            carUp[id].x = car->fC8;
+            carUp[id].y = car->fD4;
+            carUp[id].z = car->fE0;
+            for (i = 0; i < nWheels; i++) {
+                minDist[id][i] = (car->wheels[i].flags & 1) ? car->f5FC : car->f5F8;
+                maxDist[id][i] = (car->wheels[i].flags & 1) ? car->f518 : car->f500;
+                bestDist[id][i] = -minDist[id][i];
+                wheelRad[id][i] = car->wheels[i].f154 * 0.5f;
+            }
+        }
+    }
+
+    for (node = (LnkPW_ *)gCollRacers; node != NULL; node = node->next) {
+        o = node->obj;
+        car = o->car;
+        if (car->b13C == 0 && car->b4B8 == 0) {
+            b = &o->b;
+            nWheels = car->nWheels;
+            id = car->id;
+            for (rn = o->list; rn != NULL; rn = rn->next) {
+                roomIdx = rn->a;
+                room = &gCollLevel->rooms[roomIdx];
+                if (room->flags & 0x800) {
+                    f32 pd0, pd1;
+                    rpos.x = (f32)(room->x << 8);
+                    rpos.y = (f32)(room->y << 8);
+                    rpos.z = (f32)(room->z << 8);
+                    pt = &gCollLevel->portals[room->firstPortal];
+                    n0.x = pt->nx / 4096.0f;
+                    n0.y = pt->ny / 4096.0f;
+                    n0.z = pt->nz / 4096.0f;
+                    pd0 = pt->d;
+                    pt++;
+                    n1.x = pt->nx / 4096.0f;
+                    n1.y = pt->ny / 4096.0f;
+                    n1.z = pt->nz / 4096.0f;
+                    pd1 = pt->d;
+                    seg = (SegPW_ *)(*(u8 **)&gCollLevel->pC4 + room->param.val * 0x18);
+                    q0.x = seg->x0;
+                    q0.y = seg->y0;
+                    q0.z = seg->z0;
+                    q1.x = seg->x1;
+                    q1.y = seg->y1;
+                    q1.z = seg->z1;
+                    seg++;
+                    q2.x = seg->x0;
+                    q2.y = seg->y0;
+                    q2.z = seg->z0;
+                    q3.x = seg->x1;
+                    q3.y = seg->y1;
+                    q3.z = seg->z1;
+                    for (j = 0; j < nWheels; j++) {
+                        if (b->rooms[j] == roomIdx) {
+                            wpos.x = b->pts[j].x - rpos.x;
+                            wpos.y = b->pts[j].y - rpos.y;
+                            wpos.z = b->pts[j].z - rpos.z;
+                            d0 = wpos.x * n0.x + wpos.y * n0.y + wpos.z * n0.z + pd0;
+                            d1 = wpos.x * n1.x + wpos.y * n1.y + wpos.z * n1.z + pd1;
+                            t = d1 / (d0 + d1);
+                            s = 1.0f - t;
+                            p0.x = q0.x * t + q2.x * s;
+                            p0.y = q0.y * t + q2.y * s;
+                            p0.z = q0.z * t + q2.z * s;
+                            p1.x = q3.x * s + q1.x * t;
+                            p1.y = q3.y * s + q1.y * t;
+                            p1.z = q3.z * s + q1.z * t;
+                            u.x = (p1.x - p0.x) * 0.01f;
+                            u.y = (p1.y - p0.y) * 0.01f;
+                            u.z = (p1.z - p0.z) * 0.01f;
+                            tmp.x = wpos.x - p0.x;
+                            tmp.y = wpos.y - p0.y;
+                            tmp.z = wpos.z - p0.z;
+                            d0 = u.x * tmp.x + u.y * tmp.y + u.z * tmp.z;
+                            tmp.x = p1.x - wpos.x;
+                            tmp.y = p1.y - wpos.y;
+                            tmp.z = p1.z - wpos.z;
+                            d1 = u.x * tmp.x + u.y * tmp.y + u.z * tmp.z;
+                            t = d0 / (d0 + d1);
+                            s = 1.0f - t;
+                            v.x = (q2.x - q0.x) * s + (q3.x - q1.x) * t;
+                            v.y = (q2.y - q0.y) * s + (q3.y - q1.y) * t;
+                            v.z = (q2.z - q0.z) * s + (q3.z - q1.z) * t;
+                            tmp.x = u.y * v.z - v.y * u.z;
+                            tmp.y = v.x * u.z - u.x * v.z;
+                            tmp.z = u.x * v.y - v.x * u.y;
+                            inv = 1.0f / sqrtf(tmp.x * tmp.x + tmp.y * tmp.y + tmp.z * tmp.z);
+                            tmp.x *= inv;
+                            tmp.y *= inv;
+                            tmp.z *= inv;
+                            u.x = wpos.x - p0.x;
+                            u.y = wpos.y - p0.y;
+                            u.z = wpos.z - p0.z;
+                            dist = tmp.x * u.x + tmp.y * u.y + tmp.z * u.z;
+                            dotN = DotPW_(&carUp[id], &tmp);
+                            if (dotN > 0.9f) {
+                                pen = -((dist - wheelRad[id][j]) / dotN);
+                                if (pen > bestDist[id][j]) {
+                                    bestDist[id][j] = pen;
+                                    hitNormal[id][j] = tmp;
+                                    surfType[id][j] = room->b4;
+                                    surfGrip[id][j] = D_800F38E4[room->b4];
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    for (node = (LnkPW_ *)gCollRacers; node != NULL; node = node->next) {
+        o = node->obj;
+        car = o->car;
+        if (car->b13C == 0 && car->b4B8 == 0) {
+            b = &o->b;
+            nWheels = car->nWheels;
+            id = car->id;
+            for (rn = o->list; rn != NULL; rn = rn->next) {
+                roomIdx = rn->a;
+                room = &gCollLevel->rooms[roomIdx];
+                if (!(room->flags & 0x800)) {
+                    rpos.x = (f32)(room->x << 8);
+                    rpos.y = (f32)(room->y << 8);
+                    rpos.z = (f32)(room->z << 8);
+                    rel.x = o->b.pos.x - rpos.x;
+                    rel.y = o->b.pos.y - rpos.y;
+                    rel.z = o->b.pos.z - rpos.z;
+                    pt = &gCollLevel->portals[room->firstPortal];
+                    for (i = 0; i < room->nPortals; pt++, i++) {
+                        if (pt->flag != 0 && pt->flag != 1 && pt->flag != 3 && pt->flag != 4) {
+                            pl.n.x = pt->nx / 4096.0f;
+                            pl.n.y = pt->ny / 4096.0f;
+                            pl.n.z = pt->nz / 4096.0f;
+                            pl.d = pt->d;
+                            pl.e = pt->flag;
+                            pl.f = pt->to;
+                            dist = rel.x * pl.n.x + rel.y * pl.n.y + rel.z * pl.n.z + pl.d;
+                            if (dist < o->b.rad) {
+                                for (j = 0; j < nWheels; j++) {
+                                    if (b->rooms[j] == roomIdx) {
+                                        wpos.x = b->pts[j].x - rpos.x;
+                                        wpos.y = b->pts[j].y - rpos.y;
+                                        wpos.z = b->pts[j].z - rpos.z;
+                                        dist = wpos.x * pl.n.x + wpos.y * pl.n.y + wpos.z * pl.n.z + pl.d;
+                                        dotN = carUp[id].x * pl.n.x + carUp[id].y * pl.n.y + carUp[id].z * pl.n.z;
+                                        if (dotN > 0.9f) {
+                                            pen = -((dist - car->wheels[j].f154 * 0.5f) / dotN);
+                                            if (pen > bestDist[id][j]) {
+                                                bestDist[id][j] = pen;
+                                                hitNormal[id][j] = pl.n;
+                                                surfType[id][j] = pl.e;
+                                                surfGrip[id][j] = D_800F38E4[pl.e];
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    for (node = (LnkPW_ *)gCollRacers; node != NULL; node = node->next) {
+        o = node->obj;
+        car = o->car;
+        if (car->b13C == 0 && car->b4B8 == 0) {
+            b = &o->b;
+            nWheels = car->nWheels;
+            id = car->id;
+            for (i = 0; i < nWheels; i++) {
+                if (bestDist[id][i] > -minDist[id][i]) {
+                    bestDist[id][i] = (bestDist[id][i] < maxDist[id][i]) ? bestDist[id][i] : maxDist[id][i];
+                    if (car->wheels[i].flags & 1) {
+                        k = car->f510;
+                    } else {
+                        k = car->f4F8;
+                    }
+                    force = car->f5F4 + bestDist[id][i] * k;
+                    force = (force < 0.0f) ? 0.0f : force;
+                    car->wheels[i].contact = 1;
+                    car->wheels[i].surfType = surfType[id][i];
+                    car->wheels[i].normal = hitNormal[id][i];
+                    car->wheels[i].grip = (f32)surfGrip[id][i] / 100.0f;
+                    car->wheels[i].force = force;
+                    tmp.x = hitNormal[id][i].x * (car->wheels[i].f154 * -0.5f);
+                    tmp.y = hitNormal[id][i].y * (car->wheels[i].f154 * -0.5f);
+                    tmp.z = hitNormal[id][i].z * (car->wheels[i].f154 * -0.5f);
+                    car->wheels[i].point.x = b->pts[i].x + tmp.x;
+                    car->wheels[i].point.y = b->pts[i].y + tmp.y;
+                    car->wheels[i].point.z = b->pts[i].z + tmp.z;
+                } else {
+                    car->wheels[i].contact = 0;
+                }
+                car->wheels[i].compression = bestDist[id][i];
+            }
+        }
+    }
+}
+#else
 INCLUDE_ASM("asm/nonmatchings/unit_39C90", Coll_ProbeWheels);
+#endif
 
 typedef struct { Vec3f n; f32 d; s16 e; u16 f; } PlFGP_;
 typedef struct {
@@ -1665,9 +2139,796 @@ void Coll_FindGroundPlanes(void) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_39C90", Coll_PointsVsWorld);
+typedef struct {
+    u8 p0[0x60];
+    Vec3f pos;
+    Vec3f offset;
+    u8 p78[0xC];
+    Vec3f vel;
+    u8 p90[0x58];
+    Vec3f angVel;
+    u8 pF4[0x1C];
+    u8 asleep;
+    u8 p111[3];
+} BodyPvw_;
 
-INCLUDE_ASM("asm/nonmatchings/unit_39C90", Coll_BoxCornersVsWorld);
+typedef struct {
+    u8 p0[4];
+    u32 flags;
+    u8 p8[0x3DC];
+    u8 b3E4;
+    u8 p3E5[3];
+} CarPvw_;
+
+typedef struct LnkRoomPvw_ {
+    u32 roomIdx;
+    s32 w4;
+    struct LnkRoomPvw_ *next;
+} LnkRoomPvw_;
+
+typedef struct {
+    Vec3f pos;
+    u8 pC[0x30];
+    u8 nVerts;
+    u8 p3D[7];
+    Vec3f *worldVerts;
+    u16 *vertRooms;
+} ShapePvw_;
+
+typedef struct {
+    u8 p0[0xC];
+    ShapePvw_ shape;
+    f32 radius;
+    s32 type;
+    BodyPvw_ *body;
+    CarPvw_ *car;
+    u8 p68[8];
+    LnkRoomPvw_ *rooms;
+} ObjPvw_;
+
+typedef struct LnkBodyPvw_ {
+    ObjPvw_ *obj;
+    s32 w4;
+    struct LnkBodyPvw_ *next;
+} LnkBodyPvw_;
+
+typedef struct {
+    u16 flags;
+    u16 quadIdx;
+    u8 b4;
+    s8 ox, oy, oz;
+    u16 u8;
+    u8 planeCount;
+    u8 edgeCount;
+    u16 planeStart;
+    u16 edgeStart;
+    u8 p10[4];
+} RoomPvw_;
+
+typedef struct {
+    s16 nx, ny, nz;
+    s16 d;
+    u16 to;
+    u8 surf;
+    u8 bB;
+} PlanePvw_;
+
+typedef struct {
+    Vec3f n;
+    f32 d;
+    s16 e;
+    u16 f;
+} PlFPvw_;
+
+typedef struct {
+    s16 v[4][3];
+} QuadPvw_;
+
+typedef struct {
+    u8 p0[0xC0];
+    RoomPvw_ *rooms;
+    QuadPvw_ *quads;
+    PlanePvw_ *planes;
+} LevelPvw_;
+
+typedef struct {
+    ObjPvw_ *obj;
+    Vec3f pos;
+    Vec3f norm;
+    u8 type;
+    u8 pad[3];
+} ContactPvw_;
+
+static inline void Vec3_Add_P_(Vec3f *dst, Vec3f *a, Vec3f *b) {
+    dst->x = a->x + b->x;
+    dst->y = a->y + b->y;
+    dst->z = a->z + b->z;
+}
+
+static inline void Vec3_Sub_P_(Vec3f *dst, Vec3f *a, Vec3f *b) {
+    dst->x = a->x - b->x;
+    dst->y = a->y - b->y;
+    dst->z = a->z - b->z;
+}
+
+static inline void Vec3_Scale_P_(Vec3f *dst, Vec3f *v, f32 s) {
+    dst->x = v->x * s;
+    dst->y = v->y * s;
+    dst->z = v->z * s;
+}
+
+static inline f32 Vec3_Dot_P_(Vec3f *a, Vec3f *b) {
+    return a->x * b->x + a->y * b->y + a->z * b->z;
+}
+
+static inline void Vec3_Cross_P_(Vec3f *dst, Vec3f *a, Vec3f *b) {
+    dst->x = a->y * b->z - b->y * a->z;
+    dst->y = b->x * a->z - a->x * b->z;
+    dst->z = a->x * b->y - b->x * a->y;
+}
+
+#define VEC3_SCALE_M(dst, v, s) \
+    { \
+        (dst).x = (v).x * (s); \
+        (dst).y = (v).y * (s); \
+        (dst).z = (v).z * (s); \
+    }
+
+#define CHECK_WALL_PVW(idx, ca, cb) \
+    { \
+        Vec3_Sub_P_(&wn, &(cb), &(ca)); \
+        Vec3_Sub_P_(&wv, &rel, &(ca)); \
+        wd[idx] = Vec3_Dot_P_(&wn, &wv); \
+        if (!(wd[idx] > 0.0f) || obj->type == 6) { \
+            f32 inv = 1.0f / sqrtf(Vec3_Dot_P_(&wn, &wn)); \
+            Vec3_Scale_P_(&wn, &wn, inv); \
+            wd[idx] = Vec3_Dot_P_(&wn, &wv); \
+            wnorm[idx] = wn; \
+            if (obj->type == 6) { \
+                wd[idx] -= obj->radius; \
+            } \
+        } \
+    }
+
+void Coll_PointsVsWorld(void) {
+    Vec3f push;
+    Vec3f wn;
+    Vec3f wv;
+    PlFPvw_ pl;
+    Vec3f origin;
+    Vec3f rel;
+    Vec3f objRel;
+    Vec3f c0, c1, c2, c3;
+    f32 wd[4];
+    Vec3f wnorm[4];
+    Vec3f pt;
+    Vec3f q0_0, q1_0, q0_2, q1_2, q0_1, q1_1, q0_3, q1_3;
+    Vec3f pn0;
+    s16 pd0s;
+    u16 to0;
+    Vec3f pn1;
+    s16 pd1s;
+    u16 to1;
+    Vec3f r1;
+    Vec3f vrot1;
+    Vec3f vrot2;
+    f32 pd0;
+    s16 pe0;
+    u16 pf0;
+    f32 pd1;
+    s16 pe1;
+    u16 pf1;
+    LnkBodyPvw_ *bnode;
+    ObjPvw_ *obj;
+    BodyPvw_ *body;
+    ShapePvw_ *shape;
+    CarPvw_ *car;
+    u32 startVert;
+    Vec3f *vp;
+    LnkRoomPvw_ *rnode;
+    RoomPvw_ *room;
+    PlanePvw_ *plane;
+    QuadPvw_ *quad;
+    u32 roomIdx;
+    u32 i, j;
+    f32 dist;
+    f32 vn;
+    ContactPvw_ *c;
+
+    for (bnode = (LnkBodyPvw_ *)gCollBodies; bnode != NULL; bnode = bnode->next) {
+        obj = bnode->obj;
+        body = obj->body;
+        if (body->asleep) {
+            continue;
+        }
+        shape = &obj->shape;
+        if (obj->type == 3) {
+            car = obj->car;
+            startVert = car->b3E4;
+        } else {
+            car = NULL;
+            startVert = 0;
+        }
+        for (rnode = obj->rooms; rnode != NULL; rnode = rnode->next) {
+            roomIdx = rnode->roomIdx;
+            room = &((LevelPvw_ *)gCollLevel)->rooms[roomIdx];
+            if (room->flags & 0x800) {
+                continue;
+            }
+            origin.x = (f32)(room->ox << 8);
+            origin.y = (f32)(room->oy << 8);
+            origin.z = (f32)(room->oz << 8);
+            Vec3_Sub_P_(&objRel, &shape->pos, &origin);
+            plane = &((LevelPvw_ *)gCollLevel)->planes[room->planeStart];
+            for (i = 0; i < room->planeCount; plane++, i++) {
+                if (plane->surf != 0) {
+                    pl.n.x = (f32)plane->nx / 4096.0f;
+                    pl.n.y = (f32)plane->ny / 4096.0f;
+                    pl.n.z = (f32)plane->nz / 4096.0f;
+                    pl.d = (f32)plane->d;
+                    pl.e = plane->surf;
+                    pl.f = plane->to;
+                    dist = Vec3_Dot_P_(&objRel, &pl.n) + pl.d;
+                    if (dist < obj->radius) {
+                        vp = &shape->worldVerts[startVert];
+                        for (j = startVert; j < shape->nVerts; vp++, j++) {
+                            if (shape->vertRooms[j] == roomIdx) {
+                                pt = *vp;
+                                if (obj->type == 6) {
+                                    VEC3_SCALE_M(wn, pl.n, obj->radius);
+                                    Vec3_Sub_P_(&pt, &pt, &wn);
+                                }
+                                Vec3_Sub_P_(&wn, &pt, &origin);
+                                dist = Vec3_Dot_P_(&wn, &pl.n) + pl.d;
+                                if (!(dist > 0.0f)) {
+                                    if (((u16)pl.e == 3) & (car != NULL)) {
+                                        car->flags |= 0x2000;
+                                    }
+                                    if (((u16)pl.e == 4) & (car != NULL)) {
+                                        car->flags |= 0x1000;
+                                    }
+                                    Vec3_Sub_P_(&r1, &pt, &body->offset);
+                                    Vec3_Cross_P_(&vrot1, &body->angVel, &r1);
+                                    Vec3_Add_P_(&wn, &body->vel, &vrot1);
+                                    vn = Vec3_Dot_P_(&wn, &pl.n);
+                                    if (vn < 0.0f) {
+                                        if (gCollContactCount < 16) {
+                                            c = &((ContactPvw_ *)gCollContacts)[gCollContactCount];
+                                            c->obj = obj;
+                                            c->pos = pt;
+                                            c->norm = pl.n;
+                                            c->type = pl.e;
+                                            gCollContactCount++;
+                                        }
+                                    }
+                                    if (-dist > 50.0f) {
+                                        if (car != NULL) {
+                                            car->flags |= 0x800;
+                                        } else {
+                                            body->asleep = 1;
+                                        }
+                                    } else {
+                                        VEC3_SCALE_M(push, pl.n, -dist);
+                                        Vec3_Add_P_(&body->offset, &body->offset, &push);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    for (bnode = (LnkBodyPvw_ *)gCollBodies; bnode != NULL; bnode = bnode->next) {
+        obj = bnode->obj;
+        body = obj->body;
+        if (body->asleep) {
+            continue;
+        }
+        shape = &obj->shape;
+        if (obj->type == 3) {
+            car = obj->car;
+            startVert = car->b3E4;
+        } else {
+            car = NULL;
+            startVert = 0;
+        }
+        for (rnode = obj->rooms; rnode != NULL; rnode = rnode->next) {
+            roomIdx = rnode->roomIdx;
+            room = &((LevelPvw_ *)gCollLevel)->rooms[roomIdx];
+            if (!(room->flags & 0x800)) {
+                continue;
+            }
+            origin.x = (f32)(room->ox << 8);
+            origin.y = (f32)(room->oy << 8);
+            origin.z = (f32)(room->oz << 8);
+            plane = &((LevelPvw_ *)gCollLevel)->planes[room->planeStart];
+            pn0.x = (f32)plane->nx / 4096.0f;
+            pn0.y = (f32)plane->ny / 4096.0f;
+            pn0.z = (f32)plane->nz / 4096.0f;
+            pd0 = (f32)plane->d;
+            pe0 = plane->surf;
+            pf0 = plane->to;
+            plane++;
+            pn1.x = (f32)plane->nx / 4096.0f;
+            pn1.y = (f32)plane->ny / 4096.0f;
+            pn1.z = (f32)plane->nz / 4096.0f;
+            pd1 = (f32)plane->d;
+            pe1 = plane->surf;
+            pf1 = plane->to;
+
+            quad = &((LevelPvw_ *)gCollLevel)->quads[room->quadIdx];
+            q0_0.x = (f32)quad->v[0][0]; q0_0.y = (f32)quad->v[0][1]; q0_0.z = (f32)quad->v[0][2];
+            q0_2.x = (f32)quad->v[2][0]; q0_2.y = (f32)quad->v[2][1]; q0_2.z = (f32)quad->v[2][2];
+            q0_1.x = (f32)quad->v[1][0]; q0_1.y = (f32)quad->v[1][1]; q0_1.z = (f32)quad->v[1][2];
+            q0_3.x = (f32)quad->v[3][0]; q0_3.y = (f32)quad->v[3][1]; q0_3.z = (f32)quad->v[3][2];
+            quad++;
+            q1_0.x = (f32)quad->v[0][0]; q1_0.y = (f32)quad->v[0][1]; q1_0.z = (f32)quad->v[0][2];
+            q1_2.x = (f32)quad->v[2][0]; q1_2.y = (f32)quad->v[2][1]; q1_2.z = (f32)quad->v[2][2];
+            q1_1.x = (f32)quad->v[1][0]; q1_1.y = (f32)quad->v[1][1]; q1_1.z = (f32)quad->v[1][2];
+            q1_3.x = (f32)quad->v[3][0]; q1_3.y = (f32)quad->v[3][1]; q1_3.z = (f32)quad->v[3][2];
+
+            {
+                vp = &shape->worldVerts[startVert];
+                for (i = startVert; i < shape->nVerts; vp++, i++) {
+                    if (shape->vertRooms[i] == roomIdx) {
+                        f32 d0, d1, t;
+
+                        Vec3_Sub_P_(&rel, vp, &origin);
+                        d0 = Vec3_Dot_P_(&rel, &pn0) + pd0;
+                        d1 = Vec3_Dot_P_(&rel, &pn1) + pd1;
+                        t = d1 / (d0 + d1);
+
+                        c0.x = q0_0.x * t + q1_0.x * (1.0f - t);
+                        c0.y = q0_0.y * t + q1_0.y * (1.0f - t);
+                        c0.z = q0_0.z * t + q1_0.z * (1.0f - t);
+                        c2.x = q0_2.x * t + q1_2.x * (1.0f - t);
+                        c2.y = q0_2.y * t + q1_2.y * (1.0f - t);
+                        c2.z = q0_2.z * t + q1_2.z * (1.0f - t);
+                        c1.x = q0_1.x * t + q1_1.x * (1.0f - t);
+                        c1.y = q0_1.y * t + q1_1.y * (1.0f - t);
+                        c1.z = q0_1.z * t + q1_1.z * (1.0f - t);
+                        c3.x = q0_3.x * t + q1_3.x * (1.0f - t);
+                        c3.y = q0_3.y * t + q1_3.y * (1.0f - t);
+                        c3.z = q0_3.z * t + q1_3.z * (1.0f - t);
+
+                        CHECK_WALL_PVW(0, c2, c3);
+                        CHECK_WALL_PVW(1, c0, c2);
+                        CHECK_WALL_PVW(2, c1, c0);
+                        CHECK_WALL_PVW(3, c3, c1);
+
+                        for (j = 0; j < 4; j++) {
+                            if (!(wd[j] > 0.0f)) {
+                                pt = *vp;
+                                if (obj->type == 6) {
+                                    VEC3_SCALE_M(wn, wnorm[j], obj->radius);
+                                    Vec3_Sub_P_(&pt, &pt, &wn);
+                                }
+                                Vec3_Sub_P_(&r1, &pt, &body->offset);
+                                Vec3_Cross_P_(&vrot2, &body->angVel, &r1);
+                                Vec3_Add_P_(&wn, &body->vel, &vrot2);
+                                vn = wn.x * wnorm[j].x + wn.y * wnorm[j].y + wn.z * wnorm[j].z;
+                                if (vn < 0.0f) {
+                                    if (gCollContactCount < 16) {
+                                        c = &((ContactPvw_ *)gCollContacts)[gCollContactCount];
+                                        c->obj = obj;
+                                        c->pos = pt;
+                                        c->norm = wnorm[j];
+                                        if (j != 0) {
+                                            c->type = 1;
+                                        } else {
+                                            c->type = 2;
+                                        }
+                                        gCollContactCount++;
+                                    }
+                                }
+                                if (-wd[j] > 50.0f) {
+                                    if (car != NULL) {
+                                        car->flags |= 0x800;
+                                    } else {
+                                        body->asleep = 1;
+                                    }
+                                } else {
+                                    Vec3_Add_P_(&wn, &body->offset, &body->pos);
+                                    VEC3_SCALE_M(push, wnorm[j], -wd[j]);
+                                    Vec3_Add_P_(&wn, &wn, &push);
+                                    Vec3_Sub_P_(&body->offset, &wn, &body->pos);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+#undef VEC3_SCALE_M
+#undef CHECK_WALL_PVW
+
+typedef struct {
+    u8 p0[0x60];
+    Vec3f pos;
+    Vec3f offset;
+    u8 p78[0xC];
+    Vec3f vel;
+    u8 p90[0x58];
+    Vec3f angVel;
+    u8 pF4[0x1C];
+    u8 asleep;
+} BodyBcw_;
+
+typedef struct {
+    u8 p0[0x4];
+    u32 flags;
+    u8 p8[0xB8];
+    f32 m[3][3];
+    u8 pE4[0x397];
+    u8 b47B;
+    u8 p47C[0x3C];
+    u8 b4B8;
+    u8 p4B9[0x12B];
+    f32 f5E4;
+} CarBcw_;
+
+typedef struct {
+    Vec3f pos;
+    f32 hx;
+    f32 hy;
+} ShapeBcw_;
+
+typedef struct {
+    u8 p0[0xC];
+    ShapeBcw_ shape;
+    u8 p20[0x34];
+    u16 *p54;
+    u8 p58[0x8];
+    BodyBcw_ *body;
+    CarBcw_ *car;
+} ObjBcw_;
+
+typedef struct LnkBcw_ {
+    ObjBcw_ *obj;
+    s32 w4;
+    struct LnkBcw_ *next;
+} LnkBcw_;
+
+typedef struct {
+    u16 flags;
+    u16 quadIdx;
+    u8 b4;
+    s8 ox, oy, oz;
+    u8 b8, b9;
+    u8 planeCount;
+    u8 bB;
+    u16 planeStart;
+    u8 pE[6];
+} RoomBcw_;
+
+typedef struct {
+    s16 nx, ny, nz;
+    s16 d;
+    u16 to;
+    u8 surf;
+    u8 pad;
+} PlaneBcw_;
+
+typedef struct {
+    s16 v[4][3];
+} QuadBcw_;
+
+typedef struct {
+    u8 p0[0xC0];
+    RoomBcw_ *rooms;
+    QuadBcw_ *quads;
+    PlaneBcw_ *planes;
+} LevelBcw_;
+
+typedef struct {
+    Vec3f n;
+    f32 d;
+    u16 e;
+    u16 f;
+} PlFBcw_;
+
+typedef struct {
+    ObjBcw_ *obj;
+    Vec3f pos;
+    Vec3f norm;
+    u8 type;
+    u8 pad[3];
+} ContactBcw_;
+
+static inline void Vec3_Add_B_(Vec3f *dst, Vec3f *a, Vec3f *b) {
+    dst->x = a->x + b->x;
+    dst->y = a->y + b->y;
+    dst->z = a->z + b->z;
+}
+
+static inline void Vec3_Sub_B_(Vec3f *dst, Vec3f *a, Vec3f *b) {
+    dst->x = a->x - b->x;
+    dst->y = a->y - b->y;
+    dst->z = a->z - b->z;
+}
+
+static inline void Vec3_Scale_B_(Vec3f *dst, Vec3f *a, f32 s) {
+    dst->x = a->x * s;
+    dst->y = a->y * s;
+    dst->z = a->z * s;
+}
+
+static inline void Vec3_Neg_B_(Vec3f *dst, Vec3f *a) {
+    dst->x = -a->x;
+    dst->y = -a->y;
+    dst->z = -a->z;
+}
+
+static inline f32 Vec3_Dot_B_(Vec3f *a, Vec3f *b) {
+    return a->x * b->x + a->y * b->y + a->z * b->z;
+}
+
+static inline void Vec3_Cross_B_(Vec3f *dst, Vec3f *a, Vec3f *b) {
+    dst->x = a->y * b->z - b->y * a->z;
+    dst->y = b->x * a->z - a->x * b->z;
+    dst->z = a->x * b->y - b->x * a->y;
+}
+
+#define VEC3_SCALE_M(dst, v, s) \
+    { \
+        (dst).x = (v).x * (s); \
+        (dst).y = (v).y * (s); \
+        (dst).z = (v).z * (s); \
+    }
+
+static inline f32 SubAbs_B_(f32 d, f32 p) {
+    if (p < 0.0f) {
+        return d + p;
+    }
+    return d - p;
+}
+
+#define CHECK_WALL_BCW(idx, ca, cb) \
+    { \
+        f32 inv; \
+        Vec3_Sub_B_(&wn, &(cb), &(ca)); \
+        Vec3_Sub_B_(&wv, &rel, &(ca)); \
+        inv = 1.0f / sqrtf(Vec3_Dot_B_(&wn, &wn)); \
+        Vec3_Scale_B_(&wn, &wn, inv); \
+        wd[idx] = Vec3_Dot_B_(&wn, &wv); \
+        wd[idx] = SubAbs_B_(wd[idx], Vec3_Dot_B_(&wn, &ax0)); \
+        wd[idx] = SubAbs_B_(wd[idx], Vec3_Dot_B_(&wn, &ax1)); \
+        wd[idx] = SubAbs_B_(wd[idx], Vec3_Dot_B_(&wn, &ax2)); \
+        wnorm[idx] = wn; \
+    }
+
+void Coll_BoxCornersVsWorld(void) {
+    Vec3f push;
+    Vec3f wn;
+    Vec3f wv;
+    PlFBcw_ pl;
+    Vec3f origin;
+    Vec3f rel;
+    Vec3f c0, c1, c2, c3;
+    f32 wd[4];
+    Vec3f wnorm[4];
+    Vec3f pt;
+    Vec3f q0_0, q1_0, q0_2, q1_2, q0_1, q1_1, q0_3, q1_3;
+    Vec3f pn0;
+    Vec3f pn1;
+    Vec3f ax0, ax1, ax2;
+    Vec3f r1;
+    Vec3f vrot1;
+    Vec3f vrot2;
+    LnkBcw_ *bnode;
+    ObjBcw_ *obj;
+    BodyBcw_ *body;
+    ShapeBcw_ *shape;
+    CarBcw_ *car;
+    RoomBcw_ *room;
+    PlaneBcw_ *plane;
+    QuadBcw_ *quad;
+    u32 i, k;
+    f32 dist;
+    f32 vn;
+    ContactBcw_ *c;
+
+    for (bnode = (LnkBcw_ *)gCollPathCars; bnode != NULL; bnode = bnode->next) {
+        obj = bnode->obj;
+        body = obj->body;
+        if (body->asleep) {
+            continue;
+        }
+        car = obj->car;
+        shape = &obj->shape;
+        if (!car->b4B8 && !car->b47B) {
+            continue;
+        }
+        room = &((LevelBcw_ *)gCollLevel)->rooms[*obj->p54];
+        if (room->flags & 0x800) {
+            continue;
+        }
+        ax0.x = car->m[0][0]; ax0.y = car->m[1][0]; ax0.z = car->m[2][0];
+        ax1.x = car->m[0][1]; ax1.y = car->m[1][1]; ax1.z = car->m[2][1];
+        ax2.x = car->m[0][2]; ax2.y = car->m[1][2]; ax2.z = car->m[2][2];
+        VEC3_SCALE_M(ax0, ax0, obj->shape.hx);
+        VEC3_SCALE_M(ax1, ax1, obj->shape.hy);
+        VEC3_SCALE_M(ax2, ax2, car->f5E4);
+        origin.x = (f32)(room->ox << 8);
+        origin.y = (f32)(room->oy << 8);
+        origin.z = (f32)(room->oz << 8);
+        plane = &((LevelBcw_ *)gCollLevel)->planes[room->planeStart];
+        for (i = 0; i < room->planeCount; plane++, i++) {
+            if (plane->surf != 0) {
+                pl.n.x = (f32)plane->nx / 4096.0f;
+                pl.n.y = (f32)plane->ny / 4096.0f;
+                pl.n.z = (f32)plane->nz / 4096.0f;
+                pl.d = (f32)plane->d;
+                pl.e = plane->surf;
+                pl.f = plane->to;
+                pt = shape->pos;
+                if (Vec3_Dot_B_(&pl.n, &ax0) > 0.0f) { Vec3_Neg_B_(&ax0, &ax0); }
+                if (Vec3_Dot_B_(&pl.n, &ax1) > 0.0f) { Vec3_Neg_B_(&ax1, &ax1); }
+                if (Vec3_Dot_B_(&pl.n, &ax2) > 0.0f) { Vec3_Neg_B_(&ax2, &ax2); }
+                Vec3_Add_B_(&pt, &pt, &ax0);
+                Vec3_Add_B_(&pt, &pt, &ax1);
+                Vec3_Add_B_(&pt, &pt, &ax2);
+                Vec3_Sub_B_(&rel, &pt, &origin);
+                dist = Vec3_Dot_B_(&rel, &pl.n) + pl.d;
+                if (!(dist > 0.0f)) {
+                    if (pl.e == 3) {
+                        car->flags |= 0x2000;
+                    }
+                    if (pl.e == 4) {
+                        car->flags |= 0x1000;
+                    }
+                    Vec3_Sub_B_(&r1, &pt, &body->offset);
+                    Vec3_Cross_B_(&vrot1, &body->angVel, &r1);
+                    Vec3_Add_B_(&wn, &body->vel, &vrot1);
+                    vn = Vec3_Dot_B_(&wn, &pl.n);
+                    if (vn < 0.0f) {
+                        if (gCollContactCount < 16) {
+                            c = &((ContactBcw_ *)gCollContacts)[gCollContactCount];
+                            c->obj = obj;
+                            c->pos = pt;
+                            c->norm = pl.n;
+                            c->type = pl.e;
+                            gCollContactCount++;
+                        }
+                    }
+                    if (-dist > 50.0f) {
+                        if (car != NULL) {
+                            car->flags |= 0x800;
+                        } else {
+                            body->asleep = 1;
+                        }
+                    } else {
+                        VEC3_SCALE_M(push, pl.n, -dist);
+                        Vec3_Add_B_(&body->offset, &body->offset, &push);
+                    }
+                }
+            }
+        }
+    }
+
+    for (bnode = (LnkBcw_ *)gCollPathCars; bnode != NULL; bnode = bnode->next) {
+        s32 pd0s, pd1s;
+        f32 d0, d1, t, s;
+
+        obj = bnode->obj;
+        body = obj->body;
+        if (body->asleep) {
+            continue;
+        }
+        car = obj->car;
+        shape = &obj->shape;
+        if (!car->b4B8 && !car->b47B) {
+            continue;
+        }
+        room = &((LevelBcw_ *)gCollLevel)->rooms[*obj->p54];
+        if (!(room->flags & 0x800)) {
+            continue;
+        }
+        ax0.x = car->m[0][0]; ax0.y = car->m[1][0]; ax0.z = car->m[2][0];
+        ax1.x = car->m[0][1]; ax1.y = car->m[1][1]; ax1.z = car->m[2][1];
+        ax2.x = car->m[0][2]; ax2.y = car->m[1][2]; ax2.z = car->m[2][2];
+        VEC3_SCALE_M(ax0, ax0, obj->shape.hx);
+        VEC3_SCALE_M(ax1, ax1, obj->shape.hy);
+        VEC3_SCALE_M(ax2, ax2, car->f5E4);
+        pt = shape->pos;
+        origin.x = (f32)(room->ox << 8);
+        origin.y = (f32)(room->oy << 8);
+        origin.z = (f32)(room->oz << 8);
+        Vec3_Sub_B_(&rel, &pt, &origin);
+        plane = &((LevelBcw_ *)gCollLevel)->planes[room->planeStart];
+        pn0.x = (f32)plane->nx / 4096.0f;
+        pn0.y = (f32)plane->ny / 4096.0f;
+        pn0.z = (f32)plane->nz / 4096.0f;
+        pd0s = plane->d;
+        plane++;
+        pn1.x = (f32)plane->nx / 4096.0f;
+        pn1.y = (f32)plane->ny / 4096.0f;
+        pn1.z = (f32)plane->nz / 4096.0f;
+        pd1s = plane->d;
+
+        quad = &((LevelBcw_ *)gCollLevel)->quads[room->quadIdx];
+        q0_0.x = (f32)quad->v[0][0]; q0_0.y = (f32)quad->v[0][1]; q0_0.z = (f32)quad->v[0][2];
+        q0_2.x = (f32)quad->v[2][0]; q0_2.y = (f32)quad->v[2][1]; q0_2.z = (f32)quad->v[2][2];
+        q0_1.x = (f32)quad->v[1][0]; q0_1.y = (f32)quad->v[1][1]; q0_1.z = (f32)quad->v[1][2];
+        q0_3.x = (f32)quad->v[3][0]; q0_3.y = (f32)quad->v[3][1]; q0_3.z = (f32)quad->v[3][2];
+        quad++;
+        q1_0.x = (f32)quad->v[0][0]; q1_0.y = (f32)quad->v[0][1]; q1_0.z = (f32)quad->v[0][2];
+        q1_2.x = (f32)quad->v[2][0]; q1_2.y = (f32)quad->v[2][1]; q1_2.z = (f32)quad->v[2][2];
+        q1_1.x = (f32)quad->v[1][0]; q1_1.y = (f32)quad->v[1][1]; q1_1.z = (f32)quad->v[1][2];
+        q1_3.x = (f32)quad->v[3][0]; q1_3.y = (f32)quad->v[3][1]; q1_3.z = (f32)quad->v[3][2];
+
+        d0 = Vec3_Dot_B_(&rel, &pn0) + (f32)pd0s;
+        d1 = Vec3_Dot_B_(&rel, &pn1) + (f32)pd1s;
+        t = d1 / (d0 + d1);
+        s = 1.0f - t;
+
+        c0.x = q0_0.x * t + q1_0.x * s;
+        c0.y = q0_0.y * t + q1_0.y * s;
+        c0.z = q0_0.z * t + q1_0.z * s;
+        c2.x = q0_2.x * t + q1_2.x * s;
+        c2.y = q0_2.y * t + q1_2.y * s;
+        c2.z = q0_2.z * t + q1_2.z * s;
+        c3.x = q0_3.x * t + q1_3.x * s;
+        c3.y = q0_3.y * t + q1_3.y * s;
+        c3.z = q0_3.z * t + q1_3.z * s;
+        c1.x = q0_1.x * t + q1_1.x * s;
+        c1.y = q0_1.y * t + q1_1.y * s;
+        c1.z = q0_1.z * t + q1_1.z * s;
+
+        CHECK_WALL_BCW(0, c2, c3);
+        CHECK_WALL_BCW(1, c0, c2);
+        CHECK_WALL_BCW(2, c1, c0);
+        CHECK_WALL_BCW(3, c3, c1);
+
+        for (k = 0; k < 4; k++) {
+            if (!(wd[k] > 0.0f)) {
+                pt = shape->pos;
+                if (wnorm[k].x * ax0.x + wnorm[k].y * ax0.y + wnorm[k].z * ax0.z > 0.0f) { Vec3_Neg_B_(&ax0, &ax0); }
+                if (wnorm[k].x * ax1.x + wnorm[k].y * ax1.y + wnorm[k].z * ax1.z > 0.0f) { Vec3_Neg_B_(&ax1, &ax1); }
+                if (wnorm[k].x * ax2.x + wnorm[k].y * ax2.y + wnorm[k].z * ax2.z > 0.0f) { Vec3_Neg_B_(&ax2, &ax2); }
+                Vec3_Add_B_(&pt, &pt, &ax0);
+                Vec3_Add_B_(&pt, &pt, &ax1);
+                Vec3_Add_B_(&pt, &pt, &ax2);
+                Vec3_Sub_B_(&r1, &pt, &body->offset);
+                Vec3_Cross_B_(&vrot2, &body->angVel, &r1);
+                Vec3_Add_B_(&wn, &body->vel, &vrot2);
+                vn = wn.x * wnorm[k].x + wn.y * wnorm[k].y + wn.z * wnorm[k].z;
+                if (vn < 0.0f) {
+                    if (gCollContactCount < 16) {
+                        c = &((ContactBcw_ *)gCollContacts)[gCollContactCount];
+                        c->obj = obj;
+                        c->pos = pt;
+                        c->norm = wnorm[k];
+                        if (k != 0) {
+                            c->type = 1;
+                        } else {
+                            c->type = 2;
+                        }
+                        gCollContactCount++;
+                    }
+                }
+                if (-wd[k] > 50.0f) {
+                    if (car != NULL) {
+                        car->flags |= 0x800;
+                    } else {
+                        body->asleep = 1;
+                    }
+                } else {
+                    Vec3_Add_B_(&wn, &body->offset, &body->pos);
+                    VEC3_SCALE_M(push, wnorm[k], -wd[k]);
+                    Vec3_Add_B_(&wn, &wn, &push);
+                    Vec3_Sub_B_(&body->offset, &wn, &body->pos);
+                }
+            }
+        }
+    }
+}
+#undef VEC3_SCALE_M
+#undef CHECK_WALL_BCW
 
 void Coll_RacersVsWorldEdges(void) {
     LnkA2_ *n;
@@ -1682,8 +2943,6 @@ void Coll_RacersVsWorldEdges(void) {
 }
 
 
-INCLUDE_ASM("asm/nonmatchings/unit_39C90", Coll_BoxVsWorldEdges);
-
 typedef struct {
     Vec3f pos;
     Vec3f half;
@@ -1693,9 +2952,301 @@ typedef struct {
 typedef struct {
     Vec3f pos;
     Vec3f dir;
-    f32 pad18[3];
+    Vec3f norm;
     f32 len;
 } CollSeg_;
+
+typedef struct {
+    u8 p0[0x60];
+    Vec3f pos;
+    Vec3f offset;
+    u8 p78[0xC];
+    Vec3f vel;
+    u8 p90[4];
+    f32 m[3][3];
+} BodyBwe_;
+
+typedef struct LnkTriBwe_ {
+    s32 triIdx;
+    s32 w4;
+    struct LnkTriBwe_ *next;
+} LnkTriBwe_;
+
+typedef struct {
+    u8 p0[0xC];
+    CollBox_ box;
+    u8 p48[0x18];
+    BodyBwe_ *body;
+    u8 p64[0xC];
+    LnkTriBwe_ *tris;
+} ObjBwe_;
+
+typedef struct {
+    u8 p0[0xB];
+    u8 edgeCount;
+    u16 uC;
+    u16 edgeStart;
+    u8 p10[4];
+} TriBwe_;
+
+typedef struct {
+    s16 px, py, pz;
+    s16 dx, dy, dz;
+    s16 nx, ny, nz;
+    s16 len;
+} EdgeBwe_;
+
+typedef struct {
+    u8 p0[0xC0];
+    TriBwe_ *tris;
+    u8 pC4[8];
+    EdgeBwe_ *edges;
+} LevelBwe_;
+
+typedef struct {
+    ObjBwe_ *obj;
+    Vec3f pos;
+    Vec3f norm;
+    u8 type;
+    u8 pad[3];
+} ContactBwe_;
+
+u8 CollBox_EdgeSeparatingAxis(CollBox_ *a, CollSeg_ *b);
+
+static inline Vec3f Mat3_MulVec_Bwe_(f32 m[3][3], Vec3f *v) {
+    Vec3f r;
+    r.x = m[0][0] * v->x + m[0][1] * v->y + m[0][2] * v->z;
+    r.y = m[1][0] * v->x + m[1][1] * v->y + m[1][2] * v->z;
+    r.z = m[2][0] * v->x + m[2][1] * v->y + m[2][2] * v->z;
+    return r;
+}
+
+static inline void Vec3_Add_Bwe_(Vec3f *dst, Vec3f *a, Vec3f *b) {
+    dst->x = a->x + b->x;
+    dst->y = a->y + b->y;
+    dst->z = a->z + b->z;
+}
+
+static inline void Vec3_Sub_Bwe_(Vec3f *dst, Vec3f *a, Vec3f *b) {
+    dst->x = a->x - b->x;
+    dst->y = a->y - b->y;
+    dst->z = a->z - b->z;
+}
+
+static inline void Vec3_Scale_Bwe_(Vec3f *dst, Vec3f *v, f32 s) {
+    dst->x = v->x * s;
+    dst->y = v->y * s;
+    dst->z = v->z * s;
+}
+
+static inline f32 Vec3_Dot_Bwe_(Vec3f *a, Vec3f *b) {
+    return a->x * b->x + a->y * b->y + a->z * b->z;
+}
+
+static inline f32 MinF_Bwe_(f32 a, f32 b) {
+    return (a < b) ? a : b;
+}
+
+void Coll_BoxVsWorldEdges(void *objPtr) {
+    ObjBwe_ *obj = (ObjBwe_ *)objPtr;
+    CollSeg_ seg;
+    Vec3f tmp;
+    Vec3f lpos;
+    Vec3f ldir;
+    Vec3f push;
+    Vec3f p0;
+    Vec3f p1;
+    f32 mt[3][3];
+    LnkTriBwe_ *node;
+    BodyBwe_ *body;
+    CollBox_ *box;
+    TriBwe_ *tri;
+    EdgeBwe_ *edge;
+    u32 i;
+
+    node = obj->tris;
+    if (node->next == NULL) {
+        return;
+    }
+    body = obj->body;
+    box = &obj->box;
+    while (node != NULL) {
+        tri = &((LevelBwe_ *)gCollLevel)->tris[node->triIdx];
+        edge = &((LevelBwe_ *)gCollLevel)->edges[tri->edgeStart];
+        for (i = 0; i < tri->edgeCount; i++) {
+            seg.pos.x = (f32)edge->px;
+            seg.pos.y = (f32)edge->py;
+            seg.pos.z = (f32)edge->pz;
+            seg.dir.x = (f32)edge->dx / 4096.0f;
+            seg.dir.y = (f32)edge->dy / 4096.0f;
+            seg.dir.z = (f32)edge->dz / 4096.0f;
+            seg.norm.x = (f32)edge->nx / 4096.0f;
+            seg.norm.y = (f32)edge->ny / 4096.0f;
+            seg.norm.z = (f32)edge->nz / 4096.0f;
+            seg.len = (f32)edge->len;
+            if (!CollBox_EdgeSeparatingAxis(box, &seg)) {
+                f32 hx, hy, hz;
+                f32 dxp, dxm, dyp, dym, dzp, dzm;
+                f32 dx, dy, dz;
+                f32 t;
+                s32 axis;
+
+                mt[0][0] = box->m[0][0]; mt[0][1] = box->m[1][0]; mt[0][2] = box->m[2][0];
+                mt[1][0] = box->m[0][1]; mt[1][1] = box->m[1][1]; mt[1][2] = box->m[2][1];
+                mt[2][0] = box->m[0][2]; mt[2][1] = box->m[1][2]; mt[2][2] = box->m[2][2];
+
+                Vec3_Sub_Bwe_(&tmp, &seg.pos, &box->pos);
+                lpos = Mat3_MulVec_Bwe_(mt, &tmp);
+                ldir = Mat3_MulVec_Bwe_(mt, &seg.dir);
+                push = Mat3_MulVec_Bwe_(mt, &seg.norm);
+
+                tmp.x = ldir.x * seg.len;
+                tmp.y = ldir.y * seg.len;
+                tmp.z = ldir.z * seg.len;
+                Vec3_Add_Bwe_(&p0, &lpos, &tmp);
+                Vec3_Sub_Bwe_(&p1, &lpos, &tmp);
+
+                hx = box->half.x;
+                hy = box->half.y;
+                hz = box->half.z;
+
+                {
+                    u8 a, b;
+
+                    a = (p0.x < hx);
+                    b = (p1.x < hx);
+                    if (a != b) {
+                        t = (hx - lpos.x) / ldir.x;
+                        Vec3_Scale_Bwe_(&tmp, &ldir, t);
+                        Vec3_Add_Bwe_(&tmp, &lpos, &tmp);
+                        if (!a) {
+                            p0 = tmp;
+                        } else {
+                            p1 = tmp;
+                        }
+                    }
+                    a = (p0.x > -hx);
+                    b = (p1.x > -hx);
+                    if (a != b) {
+                        t = (-hx - lpos.x) / ldir.x;
+                        Vec3_Scale_Bwe_(&tmp, &ldir, t);
+                        Vec3_Add_Bwe_(&tmp, &lpos, &tmp);
+                        if (!a) {
+                            p0 = tmp;
+                        } else {
+                            p1 = tmp;
+                        }
+                    }
+                    a = (p0.y < hy);
+                    b = (p1.y < hy);
+                    if (a != b) {
+                        t = (hy - lpos.y) / ldir.y;
+                        Vec3_Scale_Bwe_(&tmp, &ldir, t);
+                        Vec3_Add_Bwe_(&tmp, &lpos, &tmp);
+                        if (!a) {
+                            p0 = tmp;
+                        } else {
+                            p1 = tmp;
+                        }
+                    }
+                    a = (p0.y > -hy);
+                    b = (p1.y > -hy);
+                    if (a != b) {
+                        t = (-hy - lpos.y) / ldir.y;
+                        Vec3_Scale_Bwe_(&tmp, &ldir, t);
+                        Vec3_Add_Bwe_(&tmp, &lpos, &tmp);
+                        if (!a) {
+                            p0 = tmp;
+                        } else {
+                            p1 = tmp;
+                        }
+                    }
+                    a = (p0.z < hz);
+                    b = (p1.z < hz);
+                    if (a != b) {
+                        t = (hz - lpos.z) / ldir.z;
+                        Vec3_Scale_Bwe_(&tmp, &ldir, t);
+                        Vec3_Add_Bwe_(&tmp, &lpos, &tmp);
+                        if (!a) {
+                            p0 = tmp;
+                        } else {
+                            p1 = tmp;
+                        }
+                    }
+                    a = (p0.z > -hz);
+                    b = (p1.z > -hz);
+                    if (a != b) {
+                        t = (-hz - lpos.z) / ldir.z;
+                        Vec3_Scale_Bwe_(&tmp, &ldir, t);
+                        Vec3_Add_Bwe_(&tmp, &lpos, &tmp);
+                        if (!a) {
+                            p0 = tmp;
+                        } else {
+                            p1 = tmp;
+                        }
+                    }
+                }
+
+                dxp = hx - ((p0.x < p1.x) ? p0.x : p1.x);
+                dxm = ((p0.x > p1.x) ? p0.x : p1.x) - (-hx);
+                dyp = hy - ((p0.y < p1.y) ? p0.y : p1.y);
+                dym = ((p0.y > p1.y) ? p0.y : p1.y) - (-hy);
+                dzp = hz - ((p0.z < p1.z) ? p0.z : p1.z);
+                dzm = ((p0.z > p1.z) ? p0.z : p1.z) - (-hz);
+
+                dx = MinF_Bwe_(dxp, dxm);
+                dy = MinF_Bwe_(dyp, dym);
+                dz = MinF_Bwe_(dzp, dzm);
+
+                if (dx > 0.0f && dy > 0.0f && dz > 0.0f) {
+                    if (dx < dy && dx < dz) {
+                        axis = 0;
+                        t = (dxp < dxm) ? -dxp : dxm;
+                    } else if (dy < dz) {
+                        axis = 1;
+                        t = (dyp < dym) ? -dyp : dym;
+                    } else {
+                        axis = 2;
+                        t = (dzp < dzm) ? -dzp : dzm;
+                    }
+                    push.x = body->m[0][axis];
+                    push.y = body->m[1][axis];
+                    push.z = body->m[2][axis];
+                    Vec3_Scale_Bwe_(&push, &push, t);
+                    Vec3_Add_Bwe_(&tmp, &body->offset, &body->pos);
+                    Vec3_Add_Bwe_(&tmp, &tmp, &push);
+                    Vec3_Sub_Bwe_(&body->offset, &tmp, &body->pos);
+
+                    t = Vec3_Dot_Bwe_(&seg.norm, &body->vel);
+                    if (t < 0.0f) {
+                        tmp = Mat3_MulVec_Bwe_(box->m, &p0);
+                        Vec3_Add_Bwe_(&p0, &tmp, &box->pos);
+                        tmp = Mat3_MulVec_Bwe_(box->m, &p1);
+                        Vec3_Add_Bwe_(&p1, &tmp, &box->pos);
+                        if (gCollContactCount < 16) {
+                            ContactBwe_ *c = &((ContactBwe_ *)gCollContacts)[gCollContactCount];
+                            c->obj = obj;
+                            c->pos = p0;
+                            c->norm = seg.norm;
+                            c->type = 1;
+                            gCollContactCount++;
+                            if (gCollContactCount < 16) {
+                                c = &((ContactBwe_ *)gCollContacts)[gCollContactCount];
+                                c->obj = obj;
+                                c->pos = p1;
+                                c->norm = seg.norm;
+                                c->type = 1;
+                                gCollContactCount++;
+                            }
+                        }
+                    }
+                }
+            }
+            edge++;
+        }
+        node = node->next;
+    }
+}
 
 extern f32 D_8011B764[];
 
@@ -1707,7 +3258,7 @@ static inline Vec3f Mat3T_MulVec_(f32 m[3][3], Vec3f *v) {
     return r;
 }
 
-s32 CollBox_EdgeSeparatingAxis(CollBox_ *a, CollSeg_ *b) {
+u8 CollBox_EdgeSeparatingAxis(CollBox_ *a, CollSeg_ *b) {
     Vec3f dir;
     f32 mt[3][3];
     Vec3f d;

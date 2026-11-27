@@ -22,7 +22,7 @@
           "game"
         ],
         "source_path": "src/unit_01050.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_01050.o"
     },
@@ -46,7 +46,7 @@
           "game"
         ],
         "source_path": "src/unit_06050.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_06050.o"
     },
@@ -106,7 +106,7 @@
           "game"
         ],
         "source_path": "src/unit_103B0.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_103B0.o"
     },
@@ -118,7 +118,7 @@
           "game"
         ],
         "source_path": "src/gfx_pools.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/gfx_pools.o"
     },
@@ -130,7 +130,7 @@
           "game"
         ],
         "source_path": "src/unit_13490.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_13490.o"
     },
@@ -250,7 +250,7 @@
           "game"
         ],
         "source_path": "src/unit_20830.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_20830.o"
     },
@@ -310,7 +310,7 @@
           "game"
         ],
         "source_path": "src/unit_27A40.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_27A40.o"
     },
@@ -598,7 +598,7 @@
           "game"
         ],
         "source_path": "src/unit_6AE90.c",
-        "complete": false
+        "complete": true
       },
       "base_path": "build/base/src/unit_6AE90.o"
     },

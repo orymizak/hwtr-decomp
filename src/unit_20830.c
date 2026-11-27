@@ -40,7 +40,97 @@ void SortQueue_AddTo(void *arg0, s32 a, s32 b, f32 c) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_20830", SortQueue_Sort);
+#define SORTQ_SWAP(i, j) { \
+    ta = q->a[i]; q->a[i] = q->a[j]; q->a[j] = ta; \
+    tk = q->c[i]; q->c[i] = q->c[j]; q->c[j] = tk; \
+    tb = q->b[i]; q->b[i] = q->b[j]; q->b[j] = tb; \
+}
+
+typedef struct {
+    s32 f0;
+    s32 start;
+    s32 end;
+    s32 fC;
+    s32 a[600];
+    s32 b[600];
+    f32 c[600];
+} SortQueue_;
+
+void SortQueue_Sort(void *arg0) {
+    SortQueue_ *q = arg0;
+    s32 stack[50];
+    s32 *sp;
+    s32 l;
+    s32 r;
+    s32 i;
+    s32 j;
+    s32 ta;
+    s32 tb;
+    f32 tk;
+    f32 pivot;
+
+    l = q->start;
+    r = q->end - 1;
+    if (r - l < 2) {
+        return;
+    }
+    sp = stack;
+    for (;;) {
+        if (r - l < 7) {
+            for (j = l + 1; j <= r; j++) {
+                pivot = q->c[j];
+                for (i = j - 1; i >= l; i--) {
+                    if (q->c[i] <= pivot) {
+                        break;
+                    }
+                    SORTQ_SWAP(i, i + 1);
+                }
+            }
+            if (sp == stack) {
+                break;
+            }
+            r = *sp--;
+            l = *sp--;
+        } else {
+            SORTQ_SWAP(l, (l + r) >> 1);
+            if (q->c[l + 1] > q->c[r]) {
+                SORTQ_SWAP(r, l + 1);
+            }
+            if (q->c[l] > q->c[r]) {
+                SORTQ_SWAP(r, l);
+            }
+            if (q->c[l + 1] > q->c[l]) {
+                SORTQ_SWAP(l, l + 1);
+            }
+            i = l + 1;
+            j = r;
+            pivot = q->c[l];
+            for (;;) {
+                do {
+                    i++;
+                } while (q->c[i] < pivot);
+                do {
+                    j--;
+                } while (q->c[j] > pivot);
+                if (j < i) {
+                    break;
+                }
+                SORTQ_SWAP(j, i);
+            }
+            SORTQ_SWAP(j, l);
+            sp += 2;
+            if (r - i + 1 >= j - l) {
+                sp[0] = r;
+                sp[-1] = i;
+                r = j - 1;
+            } else {
+                sp[0] = j - 1;
+                sp[-1] = l;
+                l = i;
+            }
+        }
+    }
+}
 
 typedef struct { s32 f0; s32 f4; u8 p8[0x208]; s32 f210; s32 f214; u8 p218[0xFC]; s32 f314; s32 f318; u8 p31C[0x4]; } S_D_8014C740;
 typedef struct { u32 w0; u32 w1; } G9_;

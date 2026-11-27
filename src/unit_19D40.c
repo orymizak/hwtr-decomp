@@ -22,7 +22,282 @@ s32 Memory_Alloc(s32);
 f32 Math_Atan2(f32, f32);
 extern s32 D_8014551C;
 
+/* TODO(match-debt): 591/677 words (2708/2708 B, s52). 0 opcode/scheduling diffs;
+ * residual is pure $s0..$s6 rotation (curTex gets $s6 instead of $s0 in GCC 2.7.2 global.c). */
+#ifdef NON_MATCHING
+typedef struct {
+    u8 p0[2];
+    u16 cmdCount;
+    u8 p4[4];
+    u8 alpha;
+    u8 p9[7];
+    s32 triCount;
+    u8 p14[4];
+    u8 *cmds;
+} MeshDl_;
+
+typedef struct {
+    void *tex;
+    u8 *pal;
+} TexEnt_;
+
+typedef struct {
+    s32 triCount;
+} MeshStats_;
+
+extern MeshStats_ D_800F2180;
+extern struct { u8 v; } gLowRes;
+Gfx *Gfx_LoadTexture(Gfx *dl, TexEnt_ *tex);
+
+static inline u32 DecodeGeomMode_(u32 bits) {
+    u32 mode;
+
+    mode = (bits & 1) ? G_SHADE : 0;
+    if (bits & 2) {
+        mode |= G_SHADING_SMOOTH;
+    }
+    if (bits & 4) {
+        mode |= G_LIGHTING;
+    }
+    if (bits & 8) {
+        mode |= G_FOG;
+    }
+    if (bits & 0x10) {
+        mode |= G_TEXTURE_GEN;
+    }
+    if (bits & 0x20) {
+        mode |= G_CULL_BACK;
+    }
+    if (bits & 0x40) {
+        mode |= G_ZBUFFER;
+    }
+    return mode;
+}
+
+static inline u32 FlipCull_(u32 mode) {
+    u32 m2 = mode & ~(G_CULL_FRONT | G_CULL_BACK);
+    u32 f = mode & G_CULL_FRONT;
+    u32 b = mode & G_CULL_BACK;
+    if (f) {
+        m2 |= G_CULL_BACK;
+    }
+    if (b) {
+        m2 |= G_CULL_FRONT;
+    }
+    return m2;
+}
+
+void Mesh_BuildDisplayList(MeshDl_ *mesh, Vtx *vtx, Gfx *dl, TexEnt_ *texs, s32 flipCull) {
+    u32 cmdCount;
+    u32 curTex;
+    u8 *p;
+    s32 pendingTri;
+    s32 v0, v1, v2;
+    s32 pv0, pv1, pv2;
+    u32 mode;
+
+    if (dl == NULL) {
+        return;
+    }
+    if (vtx == NULL) {
+        gSPEndDisplayList(dl++);
+        return;
+    }
+    cmdCount = mesh->cmdCount;
+    if (cmdCount == 0) {
+        return;
+    }
+    curTex = 0;
+    p = mesh->cmds;
+    pendingTri = 0;
+    v0 = -1;
+    pv0 = -1;
+    v1 = -1;
+    pv1 = -1;
+    v2 = -1;
+    pv2 = -1;
+
+    gDPPipeSync(dl++);
+    gDPSetCycleType(dl++, G_CYC_2CYCLE);
+    gSPGeometryMode(dl++, 0xFFFFFF, 0);
+    D_800F2180.triCount += mesh->triCount;
+
+    do {
+        switch (*p >> 4) {
+        case 0:
+            v0 = p[1];
+            v1 = p[2];
+            v2 = p[3];
+            if (!pendingTri) {
+                gSP1Triangle(dl++, v0, v1, v2, 0);
+            } else {
+                dl--;
+                gSP2Triangles(dl++, pv0, pv1, pv2, 0, v0, v1, v2, 0);
+            }
+            pendingTri ^= 1;
+            p += 4;
+            break;
+
+        case 1:
+            v0 = p[0] & 0xF;
+            v1 = p[1] >> 4;
+            v2 = p[1] & 0xF;
+            if (!pendingTri) {
+                gSP1Triangle(dl++, v0, v1, v2, 0);
+            } else {
+                dl--;
+                gSP2Triangles(dl++, pv0, pv1, pv2, 0, v0, v1, v2, 0);
+            }
+            pendingTri ^= 1;
+            p += 2;
+            break;
+
+        case 2:
+            v1 += ((p[0] >> 2) & 3) + 1;
+            v2 += (p[0] & 3) + 1;
+            if (!pendingTri) {
+                gSP1Triangle(dl++, v0, v1, v2, 0);
+            } else {
+                dl--;
+                gSP2Triangles(dl++, pv0, pv1, pv2, 0, v0, v1, v2, 0);
+            }
+            pendingTri ^= 1;
+            p += 1;
+            break;
+
+        case 3:
+            curTex = p[0];
+            curTex &= 0xF;
+            curTex += p[1] << 4;
+            p += 2;
+            dl = Gfx_LoadTexture(dl, &texs[curTex]);
+            pendingTri = 0;
+            break;
+
+        case 4:
+            gSPTexture(dl++, (p[1] << 9) - 1, (p[2] << 9) - 1, 0, G_TX_RENDERTILE, (p[0] & 0xF) ? G_ON : G_OFF);
+            pendingTri = 0;
+            p += 3;
+            break;
+
+        case 5:
+            if (gLowRes.v == 1) {
+                if (mesh->alpha == 0xFF) {
+                    switch (p[0] & 0xF) {
+                    case 0: { Gfx *_g = dl++; _g->words.w0 = 0xE200001C; _g->words.w1 = 0xC8112078; } break;
+                    case 1: { Gfx *_g = dl++; _g->words.w0 = 0xE200001C; _g->words.w1 = 0xC8104DD8; } break;
+                    case 2: { Gfx *_g = dl++; _g->words.w0 = 0xE200001C; _g->words.w1 = 0xC8112048; } break;
+                    }
+                } else {
+                    Gfx *_g = dl++;
+                    _g->words.w0 = 0xE200001C;
+                    _g->words.w1 = 0xC81049D8;
+                }
+            } else {
+                if (mesh->alpha == 0xFF) {
+                    switch (p[0] & 0xF) {
+                    case 0: { Gfx *_g = dl++; _g->words.w0 = 0xE200001C; _g->words.w1 = 0xC8112230; } break;
+                    case 1: { Gfx *_g = dl++; _g->words.w0 = 0xE200001C; _g->words.w1 = 0xC8104E50; } break;
+                    case 2: { Gfx *_g = dl++; _g->words.w0 = 0xE200001C; _g->words.w1 = 0xCB024000; } break;
+                    }
+                } else {
+                    Gfx *_g = dl++;
+                    _g->words.w0 = 0xE200001C;
+                    _g->words.w1 = 0xC8104E50;
+                }
+            }
+            pendingTri = 0;
+            p += 1;
+            break;
+
+        case 6:
+            if (mesh->alpha == 0xFF) {
+                switch (p[0] & 0xF) {
+                case 0: { Gfx *_g = dl++; _g->words.w0 = 0xFC327FFF; _g->words.w1 = 0xFFFFF638; } break;
+                case 1: { Gfx *_g = dl++; _g->words.w0 = 0xFC1219FF; _g->words.w1 = 0xFFFFFE38; } break;
+                case 2: { Gfx *_g = dl++; _g->words.w0 = 0xFC30FFFF; _g->words.w1 = 0xFFFFF238; } break;
+                case 3: { Gfx *_g = dl++; _g->words.w0 = 0xFCFFFFFF; _g->words.w1 = 0xFFFE7838; } break;
+                case 4: { Gfx *_g = dl++; _g->words.w0 = 0xFCFFFFFF; _g->words.w1 = 0xFFFCF638; } break;
+                }
+            } else {
+                switch (p[0] & 0xF) {
+                case 0: { Gfx *_g = dl++; _g->words.w0 = 0xFC327FFF; _g->words.w1 = 0xFFFFF638; } break;
+                case 1: { Gfx *_g = dl++; _g->words.w0 = 0xFC1217FF; _g->words.w1 = 0xFFFFFE38; } break;
+                case 2: { Gfx *_g = dl++; _g->words.w0 = 0xFC30FFFF; _g->words.w1 = 0xFFFFF238; } break;
+                case 3: { Gfx *_g = dl++; _g->words.w0 = 0xFCFFFFFF; _g->words.w1 = 0xFFFE7838; } break;
+                case 4: { Gfx *_g = dl++; _g->words.w0 = 0xFCFFFFFF; _g->words.w1 = 0xFFFCF638; } break;
+                }
+            }
+            pendingTri = 0;
+            p += 1;
+            break;
+
+        case 7:
+            if (mesh->alpha == 0xFF) {
+                gDPSetPrimColor(dl++, 0, 0, p[1], p[2], p[3], ((p[0] & 0xF) << 4) | 0xF);
+            } else {
+                gDPSetPrimColor(dl++, 0, 0, p[1], p[2], p[3], (mesh->alpha < (((p[0] & 0xF) << 4) | 0xF)) ? mesh->alpha : (((p[0] & 0xF) << 4) | 0xF));
+            }
+            pendingTri = 0;
+            p += 4;
+            break;
+
+        case 8: {
+            mode = (p[0] & 0xF) + (p[1] << 4);
+            mode = DecodeGeomMode_(mode);
+            if (flipCull) {
+                mode = FlipCull_(mode);
+            }
+            gSPSetGeometryMode(dl++, mode);
+            pendingTri = 0;
+            p += 2;
+            break;
+        }
+
+        case 9: {
+            mode = (p[0] & 0xF) + (p[1] << 4);
+            mode = DecodeGeomMode_(mode);
+            if (flipCull) {
+                mode = FlipCull_(mode);
+            }
+            gSPClearGeometryMode(dl++, mode);
+            pendingTri = 0;
+            p += 2;
+            break;
+        }
+
+        case 10:
+            gDPPipeSync(dl++);
+            pendingTri = 0;
+            p += 1;
+            break;
+
+        case 11:
+            gSPVertex(dl++, &vtx[p[2] + (p[3] << 8)], p[1] + 1, 0);
+            pendingTri = 0;
+            p += 4;
+            break;
+
+        case 12:
+            if ((p[0] & 0xF) == 0) {
+                gDPSetTextureLUT(dl++, G_TT_NONE);
+            } else {
+                gDPSetTextureLUT(dl++, G_TT_RGBA16);
+                gDPLoadTLUT_pal256(dl++, texs[curTex].pal + 8);
+            }
+            p += 1;
+            break;
+        }
+        pv0 = v0;
+        pv1 = v1;
+        pv2 = v2;
+    } while (--cmdCount != 0);
+
+    gSPEndDisplayList(dl++);
+}
+#else
 INCLUDE_ASM("asm/nonmatchings/unit_19D40", Mesh_BuildDisplayList);
+#endif
 
 typedef struct { u16 end; u16 posOff; u16 uvOff; u16 colOff; } MeshChunk_;
 typedef struct { s16 x; s16 y; s16 z; } Pos3s_;
@@ -307,7 +582,108 @@ void Mesh_BuildMaterialDL(SubMesh_ *sub, Tex8_ *tex, u8 alpha) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_19D40", Mesh_GetMaterialList);
+typedef struct {
+    u8 p0[2];
+    u8 type;
+    u8 p3[5];
+} Mat8_;
+
+typedef struct {
+    u16 count;
+    u8 p2[10];
+    u8 *data;
+} SubMeshMat_;
+
+typedef struct {
+    u16 magic;
+    u16 cmdCount;
+    u8 p4[0x10];
+    SubMeshMat_ *sub;
+    u8 *cmds;
+} Mesh19_;
+
+void Mesh_GetMaterialList(Mesh19_ *mesh, Mat8_ *mats, u32 *out, u32 max) {
+    u32 count;
+    u32 i;
+    u8 *p;
+    u32 m;
+    SubMeshMat_ *sub;
+
+    count = 0;
+    out[0] = 0;
+    if (mesh != NULL) {
+        p = mesh->cmds;
+        i = mesh->cmdCount;
+        if (i != 0) {
+            do {
+                switch (*p >> 4) {
+                    case 0:
+                        p += 4;
+                        break;
+                    case 1:
+                        p += 2;
+                        break;
+                    case 2:
+                        p += 1;
+                        break;
+                    case 3:
+                        m = (*p & 0xF) + (p[1] << 4);
+                        if (mats[m].type != 4 && m != 0) {
+                            out[count++] = m;
+                            if (count == max) {
+                                return;
+                            }
+                        }
+                        p += 2;
+                        break;
+                    case 4:
+                        p += 3;
+                        break;
+                    case 5:
+                        p += 1;
+                        break;
+                    case 6:
+                        p += 1;
+                        break;
+                    case 7:
+                        p += 4;
+                        break;
+                    case 8:
+                        p += 2;
+                        break;
+                    case 9:
+                        p += 2;
+                        break;
+                    case 10:
+                        p += 1;
+                        break;
+                    case 11:
+                        p += 4;
+                        break;
+                    case 12:
+                        p += 1;
+                        break;
+                }
+            } while (--i != 0);
+        }
+        sub = mesh->sub;
+        if (sub != NULL) {
+            for (i = 0; i != sub->count; i++) {
+                m = (sub->data[i * 3 + 2] << 8) | sub->data[i * 3 + 1];
+                if (mats[m].type != 4 && m != 0) {
+                    out[count++] = m;
+                    if (count == max) {
+                        return;
+                    }
+                }
+            }
+        }
+    }
+    count += (count == 0);
+    for (i = count; i < max; i++) {
+        out[i] = out[i - count];
+    }
+}
 
 static inline void V3o_Normalize(Vec3f *v) {
     f32 inv = 1.0f / sqrtf(v->x * v->x + v->y * v->y + v->z * v->z);

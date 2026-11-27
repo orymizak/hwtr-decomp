@@ -97,6 +97,12 @@ extern s32 audVoicePlayRandom;
 extern S_D_800EFC78 gSongTable[];
 s32 Snd_Play(s32, s32,s32,s32, s32);
 extern s32 gMusicHandle;
+typedef struct {
+    s32 extra[9][8];
+    u8 pad[0x378 - 9 * 8 * 4];
+    N64c_ *sndSrcList;
+} AudioBlock_;
+extern AudioBlock_ D_800EFD88;
 extern f32 gMusicVolume;
 extern u8 D_800EFF60;
 extern u8 D_800EFF4C;
@@ -478,7 +484,154 @@ void Audio_InitDriver(void) {
     AudioTask_Init(&gSndConfig);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", Audio_Init);
+void AudioTask_HandleEvent(void);
+void Audio_LoadWaveBank();
+void Audio_LoadSfxBank();
+extern u8 rom_files_CCCSND_PTR_ROM_START[];
+extern u8 rom_files_CCCSND_PTR_ROM_END[];
+extern u8 rom_files_CCCSND_WBK_ROM_START[];
+extern u8 rom_files_CCCSND_BFX_ROM_START[];
+extern u8 rom_files_CCCSND_BFX_ROM_END[];
+
+typedef struct {
+    /* 0x000 */ s32 musicHandle;
+    /* 0x004 */ f32 musicVolume;
+    /* 0x008 */ f32 sfxVolume;
+    /* 0x00C */ s32 padC;
+    /* 0x010 */ s32 songTable[7];
+    /* 0x02C */ s32 sfxTable[61];
+} AudioGlobals_;
+
+#define gAudio (*(AudioGlobals_ *)&gMusicHandle)
+
+s32 Audio_Init(void) {
+    s32 i;
+
+    Snd_AllocGlobal(0x4000);
+    AudioTask_SetCallback(AudioTask_HandleEvent);
+    gAudio.musicHandle = 0;
+    gAudio.sfxVolume = 1.0f;
+    gAudio.musicVolume = 1.0f;
+    {
+        s32 *p;
+        for (i = 6, p = &gAudio.songTable[6]; i >= 0; i--) {
+            *p-- = 0;
+        }
+    }
+    {
+        s32 *st = gAudio.songTable;
+        s32 *p;
+        st[0] = 0x35;
+        st[1] = 0x31;
+        st[2] = 0x33;
+        st[3] = 0x32;
+        st[4] = 0x30;
+        st[5] = 0x2F;
+        st[6] = 0x2D;
+        for (i = 60, p = &st[67]; i >= 0; i--) {
+            *p-- = 0;
+        }
+    }
+    gAudio.sfxTable[0] = 0;
+    gAudio.sfxTable[1] = 0x22;
+    gAudio.sfxTable[2] = 0x51;
+    gAudio.sfxTable[3] = 0x53;
+    gAudio.sfxTable[4] = 0x55;
+    gAudio.sfxTable[5] = 0x37;
+    gAudio.sfxTable[6] = 0x73;
+    gAudio.sfxTable[7] = 0x74;
+    gAudio.sfxTable[8] = 0x75;
+    gAudio.sfxTable[9] = 0x76;
+    gAudio.sfxTable[11] = 0x83;
+    gAudio.sfxTable[10] = 0x1C;
+    gAudio.sfxTable[12] = 0x3A;
+    gAudio.sfxTable[13] = 0x49;
+    gAudio.sfxTable[14] = 0x25;
+    gAudio.sfxTable[16] = 0x29;
+    gAudio.sfxTable[18] = 0x27;
+    gAudio.sfxTable[19] = 0x28;
+    gAudio.sfxTable[21] = 0x26;
+    gAudio.sfxTable[23] = 0x2A;
+    gAudio.sfxTable[24] = 0x57;
+    gAudio.sfxTable[29] = 0x39;
+    gAudio.sfxTable[31] = 0x42;
+    gAudio.sfxTable[32] = 0x46;
+    gAudio.sfxTable[33] = 0x45;
+    gAudio.sfxTable[34] = 0x47;
+    gAudio.sfxTable[46] = 0x60;
+    gAudio.sfxTable[47] = 0x5F;
+    gAudio.sfxTable[48] = 0x81;
+    gAudio.sfxTable[49] = 0x82;
+    gAudio.sfxTable[50] = 0x5D;
+    gAudio.sfxTable[51] = 0x58;
+    gAudio.sfxTable[52] = 0x5B;
+    gAudio.sfxTable[53] = 0x5A;
+    gAudio.sfxTable[54] = 0x84;
+    gAudio.sfxTable[55] = 0x78;
+    gAudio.sfxTable[35] = 0x17;
+    gAudio.sfxTable[36] = 0x18;
+    gAudio.sfxTable[37] = 0x19;
+    gAudio.sfxTable[38] = 0x1A;
+    gAudio.sfxTable[39] = 0x1B;
+    gAudio.sfxTable[40] = 0x1D;
+    gAudio.sfxTable[41] = 0x1E;
+    gAudio.sfxTable[42] = 0x1F;
+    gAudio.sfxTable[43] = 0x20;
+    gAudio.sfxTable[44] = 0x80;
+    gAudio.sfxTable[28] = 0x23;
+    gAudio.sfxTable[45] = 0x23;
+    gAudio.sfxTable[57] = 0x77;
+    gAudio.sfxTable[58] = 0x79;
+    gAudio.sfxTable[59] = 0x7A;
+    gAudio.sfxTable[56] = 0x84;
+    gAudio.sfxTable[60] = 0x7B;
+    /* TODO(match-debt): empty loop acts as a GCC 2.7.2 scheduling barrier between sfxTable and D_800EFD88. */
+    do { } while (0);
+
+    {
+        u32 ptrStart = (u32)rom_files_CCCSND_PTR_ROM_START;
+        u32 ptrEnd = (u32)rom_files_CCCSND_PTR_ROM_END;
+
+        D_800EFD88.extra[0][0] = 0x4D;
+        D_800EFD88.extra[0][1] = 0x4A;
+        D_800EFD88.extra[0][2] = 0x50;
+        D_800EFD88.extra[0][3] = 0x4F;
+
+        D_800EFD88.extra[1][0] = 0x3F;
+        D_800EFD88.extra[1][1] = 0x4A;
+        D_800EFD88.extra[1][2] = 0x4B;
+
+        D_800EFD88.extra[2][0] = 0x3D;
+        D_800EFD88.extra[2][1] = 0x50;
+        D_800EFD88.extra[2][2] = 0x4B;
+
+        D_800EFD88.extra[3][0] = 0x3E;
+        D_800EFD88.extra[3][1] = 0x40;
+
+        D_800EFD88.extra[4][0] = 0x36;
+        D_800EFD88.extra[4][1] = 0x3E;
+        D_800EFD88.extra[4][2] = 0x3C;
+        D_800EFD88.extra[4][3] = 0x48;
+
+        D_800EFD88.extra[5][0] = 0x41;
+        D_800EFD88.extra[5][1] = 0x3E;
+        D_800EFD88.extra[5][2] = 0x48;
+        D_800EFD88.extra[5][3] = 0x36;
+
+        D_800EFD88.extra[7][0] = 0x7C;
+        D_800EFD88.extra[7][1] = 0x4A;
+        D_800EFD88.extra[7][2] = 0x4E;
+
+        D_800EFD88.extra[8][0] = 0x7D;
+
+        Audio_LoadWaveBank(ptrStart, ptrEnd - ptrStart, (s32)rom_files_CCCSND_WBK_ROM_START);
+    }
+    Audio_LoadSfxBank((s32)rom_files_CCCSND_BFX_ROM_START,
+                      (u32)(rom_files_CCCSND_BFX_ROM_END - rom_files_CCCSND_BFX_ROM_START));
+    Snd_SetMasterVolume(3, 0x5FFF);
+    return 1;
+}
+#undef gAudio
 
 void CarSnd_Init(s32 unused, u8 count, u8 *info);
 s32 CarSnd_Shutdown();
@@ -809,7 +962,257 @@ s32 Voice_PlayRandom(s32 kind) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", CarSnd_Update);
+extern f32 gSfxVolume;
+f32 Vec3_DistSq(Vec3f *, Vec3f *);
+f32 Snd3D_GetVolume(void *);
+
+s32 CarSnd_Update(void) {
+    s32 p0;
+    s32 p1;
+    s32 p2;
+    s32 p3;
+    s32 p4;
+    s32 p5;
+    s32 i;
+    s32 v;
+    s32 pan;
+    f32 vol;
+    f32 x;
+    f32 doppler;
+    s32 type;
+    f32 pitch;
+    N64c_ **pList = (N64c_ **)&gSndSrcList;
+    N64c_ *n = *pList;
+    Vec3f zeroVel = { 0.0f, 0.0f, 0.0f };
+
+    i = 0;
+    if (Vec3_DistSq((Vec3f *)((u8 *)pList - 0x19C), (Vec3f *)((u8 *)pList - 0x1F8)) < 5760000.0) {
+        p1 = Snd_IsPlaying(gCarSnd[0].h[1]);
+        p0 = Snd_IsPlaying(gCarSnd[0].h[0]);
+        p2 = Snd_IsPlaying(gCarSnd[0].h[2]);
+        p3 = Snd_IsPlaying(gCarSnd[0].h[3]);
+        p4 = Snd_IsPlaying(gCarSnd[0].h[4]);
+        p5 = Snd_IsPlaying(gCarSnd[0].h[5]);
+        if (p0 || p2 || p3 || p4 || p5 || p1) {
+            vol = Snd3D_GetVolume(&gCarSnd[i].pos) * gSfxVolume;
+            pan = Snd3D_GetPan(&gCarSnd[i].pos);
+            doppler = Snd3D_GetDoppler(&gCarSnd[i].pos, &gCarSnd[i].vel);
+            x = gCarSnd[i].f1C;
+            if (doppler > 12.0) {
+                doppler = 12.0f;
+            }
+            if (p1) {
+                type = gCarSnd[i].b45;
+                pitch = (type == 13) ? 0.0f : (gCarSnd[i].rpm - 1000.0f) * 0.0021818182f + -17.0f;
+                pitch = pitch + doppler;
+                if (pitch > 12.0) {
+                    pitch = 12.0f;
+                }
+                v = vol * 128.0f * (1.0 - x);
+                if (v == 0) {
+                    v = 1;
+                }
+                Snd_SetVolume(gCarSnd[i].h[1], v);
+                Snd_SetPan(gCarSnd[i].h[1], pan);
+                Snd_SetPitch(gCarSnd[i].h[1], pitch);
+            }
+            if (p0) {
+                type = gCarSnd[i].b44;
+                pitch = (type != 14) ? (gCarSnd[i].rpm - 1000.0f) * 0.0021818182f + -17.0f : 0.0f;
+                pitch = pitch + doppler;
+                if (pitch > 12.0) {
+                    pitch = 12.0f;
+                }
+                v = vol * 128.0f * x;
+                if (v == 0) {
+                    v = 1;
+                }
+                Snd_SetVolume(gCarSnd[i].h[0], v);
+                Snd_SetPan(gCarSnd[i].h[0], pan);
+                Snd_SetPitch(gCarSnd[i].h[0], pitch);
+            }
+            if (p2) {
+                v = gCarSnd[i].f20 * 128.0f * vol;
+                if (v == 0) {
+                    v = 1;
+                }
+                Snd_SetVolume(gCarSnd[i].h[2], v);
+                Snd_SetPan(gCarSnd[i].h[2], pan);
+                Snd_SetPitch(gCarSnd[i].h[2], doppler);
+            }
+            if (p3) {
+                v = gCarSnd[i].f24 * 128.0f * vol;
+                if (v == 0) {
+                    v = 1;
+                }
+                Snd_SetVolume(gCarSnd[i].h[3], v);
+                Snd_SetPan(gCarSnd[i].h[3], pan);
+                Snd_SetPitch(gCarSnd[i].h[3], doppler);
+            }
+            if (p4) {
+                v = vol * 128.0f;
+                if (v == 0) {
+                    v = 1;
+                }
+                Snd_SetVolume(gCarSnd[i].h[4], v);
+                Snd_SetPan(gCarSnd[i].h[4], pan);
+                Snd_SetPitch(gCarSnd[i].h[4], doppler);
+            }
+            if (p5) {
+                v = gCarSnd[i].f28 * 128.0f * vol;
+                if (v == 0) {
+                    v = 1;
+                }
+                Snd_SetVolume(gCarSnd[i].h[5], v);
+                Snd_SetPan(gCarSnd[i].h[5], pan);
+                Snd_SetPitch(gCarSnd[i].h[5], doppler);
+            }
+        }
+    } else {
+        if (gCarSnd[0].h[1] != 0) {
+            Snd_SetVolume(gCarSnd[0].h[1], 1);
+        }
+        if (gCarSnd[0].h[0] != 0) {
+            Snd_SetVolume(gCarSnd[0].h[0], 1);
+        }
+        if (gCarSnd[0].h[2] != 0) {
+            Snd_SetVolume(gCarSnd[0].h[2], 1);
+        }
+        if (gCarSnd[0].h[3] != 0) {
+            Snd_SetVolume(gCarSnd[0].h[3], 1);
+        }
+        if (gCarSnd[0].h[4] != 0) {
+            Snd_SetVolume(gCarSnd[0].h[4], 1);
+        }
+        if (gCarSnd[0].h[5] != 0) {
+            Snd_SetVolume(gCarSnd[0].h[5], 1);
+        }
+    }
+
+    for (i = 1; i < 6; i++) {
+        if (Vec3_DistSq(&gCarSnd[i].pos, (Vec3f *)((u8 *)&gCarSnd[0].pos - 0x5C)) < 5760000.0) {
+            p1 = Snd_IsPlaying(gCarSnd[i].h[1]);
+            p0 = Snd_IsPlaying(gCarSnd[i].h[0]);
+            p3 = Snd_IsPlaying(gCarSnd[i].h[3]);
+            p4 = Snd_IsPlaying(gCarSnd[i].h[4]);
+            if (p0 || p3 || p4 || p1 || D_800EFF7C[i].flag) {
+                vol = Snd3D_GetVolume(&gCarSnd[i].pos) * gSfxVolume;
+                pan = Snd3D_GetPan(&gCarSnd[i].pos);
+                doppler = Snd3D_GetDoppler(&gCarSnd[i].pos, &gCarSnd[i].vel);
+                x = gCarSnd[i].f1C;
+                if (doppler > 12.0) {
+                    doppler = 12.0f;
+                }
+                if (p1) {
+                    pitch = (gCarSnd[i].b45 != 13) ? (gCarSnd[i].rpm - 1000.0f) * 0.0021818182f + -17.0f : 0.0f;
+                    pitch = pitch + doppler;
+                    if (pitch > 12.0) {
+                        pitch = 12.0f;
+                    }
+                    v = vol * 128.0f * (1.0 - x);
+                    if (v == 0) {
+                        v = 1;
+                    }
+                    Snd_SetVolume(gCarSnd[i].h[1], v);
+                    Snd_SetPan(gCarSnd[i].h[1], pan);
+                    Snd_SetPitch(gCarSnd[i].h[1], pitch);
+                }
+                if (p0) {
+                    pitch = (gCarSnd[i].b44 != 14) ? (gCarSnd[i].rpm - 1000.0f) * 0.0021818182f + -17.0f : 0.0f;
+                    pitch = pitch + doppler;
+                    if (pitch > 12.0) {
+                        pitch = 12.0f;
+                    }
+                    v = vol * 128.0f * x;
+                    if (v == 0) {
+                        v = 1;
+                    }
+                    Snd_SetVolume(gCarSnd[i].h[0], v);
+                    Snd_SetPan(gCarSnd[i].h[0], pan);
+                    Snd_SetPitch(gCarSnd[i].h[0], pitch);
+                }
+                if (D_800EFF7C[i].flag && !p1 && !p0) {
+                    gCarSnd[i].h[1] = Snd_Play(gCarSnd[i].b45, 1, 0x80, 0, 0x80);
+                    gCarSnd[i].h[0] = Snd_Play(gCarSnd[i].b44, 1, 0x80, 0, 0x80);
+                }
+                if (p3) {
+                    v = gCarSnd[i].f24 * 128.0f * vol;
+                    if (v == 0) {
+                        v = 1;
+                    }
+                    Snd_SetVolume(gCarSnd[i].h[3], v);
+                    Snd_SetPan(gCarSnd[i].h[3], pan);
+                    Snd_SetPitch(gCarSnd[i].h[3], doppler);
+                }
+                if (p4) {
+                    v = vol * 128.0f;
+                    if (v == 0) {
+                        v = 1;
+                    }
+                    Snd_SetVolume(gCarSnd[i].h[4], v);
+                    Snd_SetPan(gCarSnd[i].h[4], pan);
+                    Snd_SetPitch(gCarSnd[i].h[4], doppler);
+                }
+            }
+        } else {
+            if (gCarSnd[i].h[1] != 0) {
+                Snd_Stop(gCarSnd[i].h[1], 1);
+                gCarSnd[i].h[1] = 0;
+            }
+            if (gCarSnd[i].h[0] != 0) {
+                Snd_Stop(gCarSnd[i].h[0], 1);
+                gCarSnd[i].h[0] = 0;
+            }
+            if (gCarSnd[i].h[3] != 0) {
+                Snd_SetVolume(gCarSnd[i].h[3], 1);
+            }
+            if (gCarSnd[i].h[4] != 0) {
+                Snd_SetVolume(gCarSnd[i].h[4], 1);
+            }
+        }
+    }
+
+    if (n != NULL) {
+        void *lp = (u8 *)&gCarSnd[0].h[4] - 0x40;
+        do {
+            if (Vec3_DistSq((Vec3f *)&n->x, (Vec3f *)lp) < 5760000.0) {
+                if (n->b19) {
+                    vol = Snd3D_GetVolume(&n->x) * gSfxVolume;
+                    pan = Snd3D_GetPan(&n->x);
+                    doppler = Snd3D_GetDoppler(&n->x, &zeroVel);
+                    if (doppler > 12.0) {
+                        doppler = 12.0f;
+                    }
+                    v = n->v * 128.0f * vol;
+                    if (v != 0) {
+                        if (Snd_IsPlaying(n->f10)) {
+                            Snd_SetVolume(n->f10, v);
+                            Snd_SetPan(n->f10, pan);
+                            Snd_SetPitch(n->f10, doppler);
+                        } else if (n->b18) {
+                            n->f10 = Snd_Play(n->b1B, 1, pan, 0, 0x50);
+                            Snd_SetPitch(n->f10, doppler);
+                        } else {
+                            n->b19 = 0;
+                        }
+                    } else {
+                        if (n->f10 != 0) {
+                            Snd_Stop(n->f10, 1);
+                            n->f10 = 0;
+                        }
+                    }
+                }
+            } else if (n->b19) {
+                if (n->f10 != 0) {
+                    Snd_Stop(n->f10, 1);
+                    n->f10 = 0;
+                }
+            }
+            n = n->next;
+        } while (n != NULL);
+    }
+    return 1;
+}
 
 s32 CarSnd_UpdateSplit(void) {
     s32 p0;
@@ -1391,7 +1794,74 @@ s32 SndSrc_Destroy(u8 id) {
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_01050", SndSrc_Play);
+s32 SndSrc_Play(u8 id, u32 sndType, s32 unused, u8 flag) {
+    N64c_ *s = D_800EFD88.sndSrcList;
+    Vec3f zero = D_800FE7B8;
+    s32 sfx;
+    f32 vol;
+    s32 pan;
+    f32 doppler;
+    s32 busy;
+
+    if (sndType < 10) {
+        sfx = D_800EFD88.extra[gTrackSndIndex][sndType];
+    } else {
+        switch (sndType) {
+            case 10:
+                sfx = 0x21;
+                break;
+            case 11:
+                sfx = 0x38;
+                break;
+            case 12:
+                sfx = 0x37;
+                break;
+            case 14:
+                sfx = 0x7E;
+                break;
+            case 15:
+                sfx = 0x52;
+                break;
+            case 13:
+            case 16:
+                sfx = 0x7F;
+                break;
+            default:
+                sfx = 0;
+                break;
+        }
+    }
+
+    if (sfx == 0) {
+        return 0;
+    }
+    while (s != NULL && s->id != id) {
+        s = s->next;
+    }
+    if (s != NULL) {
+        s->b19 = 1;
+        s->b18 = flag;
+        s->b1B = sfx;
+        vol = Snd3D_GetVolume(s) * gSfxVolume;
+        pan = Snd3D_GetPan(s);
+        doppler = Snd3D_GetDoppler(s, &zero);
+        busy = Snd_IsPlaying(s->f10);
+        {
+            s32 v = s->v * 128.0f * vol;
+            if (v == 0) {
+                v = 1;
+            }
+        }
+        if (busy != 0) {
+            return 0;
+        }
+    } else {
+        return 0;
+    }
+    s->f10 = Snd_Play(sfx, 1, pan, 0, 0x50);
+    Snd_SetPitch(s->f10, doppler);
+    return 1;
+}
 
 s32 SndSrc_Stop(u8 id) {
     Node64_ *p = gSndSrcList;

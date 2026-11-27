@@ -8,10 +8,11 @@ extern u16 gHudFlags[];
 extern u16 D_800F3B38[];
 typedef struct { u8 a[32]; } E32_;
 typedef struct { E32_ e[7]; u8 pad[16]; } E240_;
-typedef struct { s32 t; u8 a; u8 b; s8 c; u8 d; s32 pad; } E0Cb_;
+typedef struct { s32 t; u8 a; u8 b; s8 c; u8 d; u8 e; u8 pad[3]; } E0Cb_;
 typedef struct { s16 x0; s16 x1; s16 x; u16 y; s16 h8; u16 w; u8 bC; u8 bD; u8 gap; u8 pF; } El10_;
+typedef struct { El10_ a; El10_ b; } ElPair_;
 typedef struct { u8 on; u8 p1[0x27]; } Blk28_;
-typedef struct { s32 t; s32 w4; s32 w8; u8 pC[4]; El10_ el[6]; Blk28_ blk[3]; u8 pE8; u8 flag; u8 bEA; u8 bEB; u8 pEC[4]; } HudF0_;
+typedef struct { s32 t; s32 w4; s32 w8; s32 wC; ElPair_ el[3]; Blk28_ blk[3]; u8 pE8; u8 flag; u8 bEA; u8 bEB; u8 pEC[4]; } HudF0_;
 extern u8 gHudRacerCount;
 extern char D_80100A94[];
 extern HudF0_ D_800F3934[];
@@ -482,7 +483,117 @@ void Hud_DrawLaps(u8 idx, u8 flag) {
     }
 }
 
+/* TODO(match-debt): 382/382 masked (377/382 exact bytes, 1528/1528 B exact, s58). All opcodes, registers, and scheduling
+ * match 100%; residual is only the stack offset of the spilled `turbos` slot (0x37($sp) vs 0x1F($sp) at 5 instructions)
+ * because `u8 buf[24]` is allocated in expand before reload allocates the spill slot. */
+#ifdef NON_MATCHING
+typedef struct { u8 r; u8 g; u8 b; } Rgb3_49CF0_;
+extern Rgb3_49CF0_ D_800F3B5C[];
+extern s32 (*audSfxPlay)(s32, s32, f32, f32);
+
+void Hud_DrawTurbos(u8 idx, u8 two) {
+    u8 buf[24];
+    Car *car;
+    u16 x;
+    u16 y;
+    u8 base;
+    u8 count;
+    s8 pos;
+    u8 turbos;
+    u8 i;
+
+    car = Car_Get((&gHudRacer)[idx]);
+    svcDraw2DSetColor(0xFF, 0xFF, 0xFF);
+    if (!two) {
+        x = 0x1E;
+        y = 0x9F;
+    } else {
+        x = 0x1E;
+        if (idx == 0) {
+            y = 0x43;
+        } else {
+            y = 0xAF;
+        }
+    }
+    svcFontDrawChar(1, 0x3C, x, y, 3);
+    x = 0x1E;
+
+    pos = D_800F3B18[idx].c;
+    base = D_800F3B18[idx].a;
+    count = D_800F3B18[idx].b;
+    turbos = car->turbos;
+    if (pos != -1 && turbos <= base + count) {
+        if (count == 0 || turbos - base <= 0) {
+            D_800F3B18[idx].c = -1;
+            goto reset;
+        }
+        if (turbos < base + count) {
+            count = (D_800F3B18[idx].b = turbos - base);
+        }
+        pos -= ((u32)(((s32 (*)(void))RaceClock_Get)() - D_800F3B18[idx].t) / 100) % 10;
+        if (pos <= base) {
+            D_800F3B18[idx].c = -1;
+            base = turbos;
+            count = 0;
+            pos = 0;
+        }
+    } else {
+    reset:
+        base = turbos;
+        count = 0;
+        pos = 0;
+    }
+    for (i = 0; i < base && i < 10; i++) {
+        if (!two) {
+            y = D_800F3B3E[gHudPlayerCount][i] + 0x9F;
+        } else if (idx == 0) {
+            y = D_800F3B3E[gHudPlayerCount][i] + 0x43;
+        } else {
+            y = D_800F3B3E[gHudPlayerCount][i] + 0xAF;
+        }
+        svcDraw2DSetColor(D_800F3B5C[i].r, D_800F3B5C[i].g, D_800F3B5C[i].b);
+        svcFontDrawChar(1, (u8)(i + 0x3D), x, y, 2);
+    }
+
+    for (i = 0; i < count && i + pos < 10; i++) {
+        if (!two) {
+            y = D_800F3B3E[gHudPlayerCount][i + pos] + 0x9F;
+        } else if (idx == 0) {
+            y = D_800F3B3E[gHudPlayerCount][i + pos] + 0x43;
+        } else {
+            y = D_800F3B3E[gHudPlayerCount][i + pos] + 0xAF;
+        }
+        svcDraw2DSetColor(D_800F3B5C[i + pos].r, D_800F3B5C[i + pos].g, D_800F3B5C[i + pos].b);
+        svcFontDrawChar(1, (u8)(i + (pos + 0x3D)), x, y, 2);
+    }
+
+    if (!two) {
+        x = 0x16;
+        y = 0x9F;
+    } else {
+        x = 0x16;
+        if (idx == 0) {
+            y = 0x43;
+        } else {
+            y = 0xAF;
+        }
+    }
+    svcDraw2DSetColor(0xFF, 0xFF, 0xFF);
+    if ((turbos == 10 || (D_800F3B18[idx].d && (u32)(((s32 (*)(void))RaceClock_Get)() - D_800F3B18[idx].t) < 1000)) &&
+        (((u32)(((s32 (*)(void))RaceClock_Get)() - D_800F3B18[idx].t) / 250) & 1) == 0) {
+        if (turbos == 10 && D_800F3B18[idx].e == 0) {
+            audSfxPlay(0x3C, 1, 1.0f, 1.0f);
+        }
+        svcFontDrawChar(1, 0x48, x, y, 1);
+        D_800F3B18[idx].e = 1;
+    } else {
+        svcFontDrawChar(1, 0x47, x, y, 1);
+        D_800F3B18[idx].e = 0;
+    }
+}
+#else
 INCLUDE_ASM("asm/nonmatchings/unit_49CF0", Hud_DrawTurbos);
+#endif
 
 /* Draws the HUD elements enabled in gHudFlags[idx] for player idx. */
 s32 Hud_DrawPlayer(u8 idx) {
@@ -539,29 +650,34 @@ s32 Hud_DrawPlayer(u8 idx) {
     return 1;
 }
 
-/* TODO(match-debt): functionally equivalent; only the swap of $s1/$s2 (string/element pointers) differs from the target
- * (s40: register/decl/copy variants had no effect). The `pad` is the 8 bytes of extra frame in the target. See MATCH_LOG.md. */
-#ifdef NON_MATCHING
-extern s32 (*svcFontGetCharWidth)(s32, s32);
+extern s32 (*svcFontGetCharWidth)(s32, u8);
 
-void Hud_DrawSlideFromLeft(u8 *s, El10_ *e, u8 mod, u8 cnt) {
+void Hud_DrawSlideFromLeft(u8 *arg0, El10_ *e, u8 mod, u8 cnt) {
+    u8 *s = arg0;
     u16 x = e->x;
+    u8 c = cnt;
     u16 y = e->y;
-    u8 pad[8];
+    u8 pad[8]; /* TODO(match-debt): reserves 8 bytes of unused stack frame (0x40 vs 0x38). */
     s32 w;
 
     while (*s != 0) {
         if ((s16)x > e->x1) {
             break;
         }
-        cnt++;
-        if ((s16)x >= e->x0 && (u8)cnt % mod == 0) {
-            w = svcFontDrawChar(0, *s, x, y, 1);
+        c++;
+        if ((s16)x >= e->x0) {
+            if ((u8)c % mod == 0) {
+                w = svcFontDrawChar(0, *s, x, y, 1);
+            } else {
+                w = svcFontGetCharWidth(0, *s);
+            }
         } else {
             w = svcFontGetCharWidth(0, *s);
         }
         x += w;
-        x += Font_GetKerning(0, *s++, *s) - e->gap;
+        x += -e->gap + Font_GetKerning(0, *s++, *s);
+        /* TODO(match-debt): empty loop acts as a GCC 2.7.2 scheduling barrier between subu and lbu *s. */
+        while (0) {}
     }
     if ((s16)x <= e->x0) {
         e->bD = 1;
@@ -576,22 +692,29 @@ void Hud_DrawSlideFromLeft(u8 *s, El10_ *e, u8 mod, u8 cnt) {
 void Hud_DrawSlideFromRight(Blk28_ *b, El10_ *e, u8 mod, u8 cnt) {
     u8 *s = (u8 *)b;
     u16 x = e->x;
+    u8 c = cnt;
     u16 y = e->y;
-    u8 pad[8];
+    u8 pad[8]; /* TODO(match-debt): reserves 8 bytes of unused stack frame (0x40 vs 0x38). */
     s32 w;
 
     while (*s != 0) {
         if ((s16)x > e->x1) {
             break;
         }
-        cnt++;
-        if ((s16)x >= e->x0 && (u8)cnt % mod == 0) {
-            w = svcFontDrawChar(0, *s, x, y, 1);
+        c++;
+        if ((s16)x >= e->x0) {
+            if ((u8)c % mod == 0) {
+                w = svcFontDrawChar(0, *s, x, y, 1);
+            } else {
+                w = svcFontGetCharWidth(0, *s);
+            }
         } else {
             w = svcFontGetCharWidth(0, *s);
         }
         x += w;
-        x += Font_GetKerning(0, *s++, *s) - e->gap;
+        x += -e->gap + Font_GetKerning(0, *s++, *s);
+        /* TODO(match-debt): empty loop acts as a GCC 2.7.2 scheduling barrier between subu and lbu *s. */
+        while (0) {}
     }
     if (e->x >= e->x1) {
         e->bD = 1;
@@ -602,11 +725,6 @@ void Hud_DrawSlideFromRight(Blk28_ *b, El10_ *e, u8 mod, u8 cnt) {
         e->x = e->x - e->h8;
     }
 }
-#else
-INCLUDE_ASM("asm/nonmatchings/unit_49CF0", Hud_DrawSlideFromLeft);
-
-INCLUDE_ASM("asm/nonmatchings/unit_49CF0", Hud_DrawSlideFromRight);
-#endif
 
 extern char D_80100ABC[];
 extern char D_80100AC0[];
@@ -828,7 +946,7 @@ void Hud_DrawTrickPopup(u8 p) {
     El10_ *e4;
     El10_ *e5;
 
-    e0 = &D_800F3934[p].el[0];
+    e0 = &D_800F3934[p].el[0].a;
     e1 = e0 + 1;
     e2 = e0 + 2;
     e3 = e0 + 3;
@@ -965,7 +1083,151 @@ void Hud_ShowLapTime(u8 i, s32 v, s8 b) {
     D_800F3934[i].w8 = RaceClock_Get(i);
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_49CF0", Hud_ShowTrick);
+extern s32 (*svcFontGetCharWidth)(s32, u8);
+typedef struct { u8 a[3]; } Order3_49CF0_;
+extern Order3_49CF0_ D_80100AC4;
+extern char D_80100AC8[];
+extern char D_80100AD0[];
+extern char *D_80141444;
+extern char *D_80141570;
+extern char *D_80141574;
+void Trick_GetName(u16 id, u8 *buf);
+char *strcpy(char *dst, const char *src);
+
+static inline u16 MeasureText_49CF0_(u8 *s, u8 gap) {
+    u16 w = 0;
+    while (*s != '\0') {
+        w += svcFontGetCharWidth(0, *s);
+        w += Font_GetKerning(0, *s++, *s) - gap;
+    }
+    return w;
+}
+
+void Hud_ShowTrick(u8 idx, s32 pts, u16 trickId, u8 turbos) {
+    u8 order[3];
+    u8 noPts;
+    u8 i;
+    u8 swapped;
+    u8 tmp;
+    u8 *t0;
+    u8 *t1;
+
+    *(Order3_49CF0_ *)order = D_80100AC4;
+
+    t0 = &D_800F3934[idx].blk[0].on;
+    t1 = &D_800F3934[idx].blk[1].on;
+    noPts = (pts == 0);
+    D_800F3B18[idx].t = ((s32 (*)(void))RaceClock_Get)();
+    D_800F3B18[idx].a = Car_Get((&gHudRacer)[idx])->turbos;
+    D_800F3B18[idx].b = turbos;
+    if (D_800F3B18[idx].a + turbos > 10) {
+        D_800F3B18[idx].b = 10 - D_800F3B18[idx].a;
+    }
+    D_800F3B18[idx].c = 9;
+    D_800F3B18[idx].d = 1;
+    D_800F3B18[idx].e = 0;
+
+    memset(t0, 0, 0x28);
+    memset(t1, 0, 0x28);
+    memset(t0 + 0x50, 0, 0x28);
+
+    D_800F3934[idx].flag = 1;
+    D_800F3934[idx].el[0].a.bC = 0;
+    D_800F3934[idx].el[0].a.bD = 0;
+    D_800F3934[idx].el[0].a.gap = 0;
+    D_800F3934[idx].el[1].a.bC = 0;
+    D_800F3934[idx].el[1].a.bD = 0;
+    D_800F3934[idx].el[1].a.gap = 0;
+    D_800F3934[idx].el[2].a.bC = 0;
+    D_800F3934[idx].el[2].a.bD = 0;
+    D_800F3934[idx].el[2].a.gap = 0;
+
+    D_800F3934[idx].el[0].a.h8 = -20;
+    D_800F3934[idx].el[1].a.h8 = -20;
+    D_800F3934[idx].el[2].a.h8 = -20;
+    D_800F3934[idx].wC = pts;
+    D_800F3934[idx].t = 0;
+
+    if (gHudPlayerCount != 2) {
+        D_800F3934[idx].el[0].a.x0 = 0x41;
+        D_800F3934[idx].el[0].a.x1 = 0xE4;
+        D_800F3934[idx].el[0].a.x = 0xE4;
+        D_800F3934[idx].el[0].a.y = 0xA0;
+        D_800F3934[idx].el[1].a.x0 = 0x41;
+        D_800F3934[idx].el[1].a.x1 = 0xE4;
+        D_800F3934[idx].el[1].a.x = 0xE4;
+        D_800F3934[idx].el[1].a.y = 0xB4;
+        D_800F3934[idx].el[2].a.x0 = 0x41;
+        D_800F3934[idx].el[2].a.x1 = 0xE4;
+        D_800F3934[idx].el[2].a.x = 0xE4;
+        D_800F3934[idx].el[2].a.y = 0xC8;
+    } else {
+        D_800F3934[idx].el[0].a.x0 = 0x41;
+        D_800F3934[idx].el[0].a.x1 = 0xE4;
+        D_800F3934[idx].el[0].a.x = 0xE4;
+        D_800F3934[idx].el[1].a.x0 = 0x41;
+        D_800F3934[idx].el[1].a.x1 = 0xE4;
+        D_800F3934[idx].el[1].a.x = 0xE4;
+        D_800F3934[idx].el[2].a.x0 = 0x41;
+        D_800F3934[idx].el[2].a.x1 = 0xE4;
+        D_800F3934[idx].el[2].a.x = 0xE4;
+        if (idx == 0) {
+            D_800F3934[0].el[0].a.y = 0x36;
+            D_800F3934[0].el[1].a.y = 0x4A;
+            D_800F3934[0].el[2].a.y = 0x5E;
+        } else {
+            D_800F3934[idx].el[0].a.y = 0xA0;
+            D_800F3934[idx].el[1].a.y = 0xB4;
+            D_800F3934[idx].el[2].a.y = 0xC8;
+        }
+    }
+
+    Trick_GetName(trickId, t1);
+    if (D_800F3934[idx].blk[2].on != '\0') {
+        strcpy((char *)&D_800F3934[idx].blk[0].on, (char *)&D_800F3934[idx].blk[1].on);
+        strcpy((char *)&D_800F3934[idx].blk[1].on, (char *)&D_800F3934[idx].blk[2].on);
+    }
+    if (!noPts) {
+        sprintf((char *)&D_800F3934[idx].blk[2].on, D_80100AC8, (s16)pts, D_80141444);
+    } else if (turbos == 1) {
+        sprintf((char *)&D_800F3934[idx].blk[2].on, D_80100AD0, (s16)turbos, D_80141570);
+    } else {
+        sprintf((char *)&D_800F3934[idx].blk[2].on, D_80100AD0, (s16)turbos, D_80141574);
+    }
+
+    for (i = 0; i < 3; i++) {
+        D_800F3934[idx].el[i].a.w = MeasureText_49CF0_(&D_800F3934[idx].blk[i].on, D_800F3934[idx].el[i].a.gap);
+    }
+
+    do {
+        swapped = 0;
+        for (i = 0; i < 2; i++) {
+            if (D_800F3934[idx].el[order[i]].a.w < D_800F3934[idx].el[order[i + 1]].a.w) {
+                swapped = 1;
+                tmp = order[i];
+                order[i] = order[i + 1];
+                order[i + 1] = tmp;
+            }
+        }
+    } while (swapped);
+
+    D_800F3934[idx].el[order[1]].a.x += (s32)(D_800F3934[idx].el[order[0]].a.w - D_800F3934[idx].el[order[1]].a.w) / 2;
+    D_800F3934[idx].el[order[2]].a.x += (s32)(D_800F3934[idx].el[order[0]].a.w - D_800F3934[idx].el[order[2]].a.w) / 2;
+
+    for (i = 0; i < 3; i++) {
+        D_800F3934[idx].el[i].b = D_800F3934[idx].el[i].a;
+        D_800F3934[idx].el[i].b.x = (D_800F3934[idx].el[i].a.x0 - D_800F3934[idx].el[i].a.w) -
+                                    (D_800F3934[idx].el[i].a.x - D_800F3934[idx].el[i].a.x1);
+    }
+
+    if (gHudPlayerCount == 2) {
+        D_800F3934[idx].blk[0].on = '\0';
+        D_800F3934[idx].blk[1].on = '\0';
+        if (noPts) {
+            D_800F3934[idx].blk[2].on = '\0';
+        }
+    }
+}
 
 void Hud_ShowTurbosGained(u8 i, s32 n) {
     if (i < gHudPlayerCount) {

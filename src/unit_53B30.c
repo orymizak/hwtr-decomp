@@ -2341,11 +2341,11 @@ u16 Time_Minutes(u32 ms) {
     return s / 60;
 }
 
-u32 Time_Seconds(u32 ms) {
+u16 Time_Seconds(u32 ms) {
     return (u16)((ms / 1000) % 60);
 }
 
-u32 Time_Hundredths(u32 ms) {
+u16 Time_Hundredths(u32 ms) {
     return (u16)((ms % 1000) / 10);
 }
 
@@ -3348,7 +3348,7 @@ void Championship_UpdateArrows(void) {
 
 /* Race position of a player (0 = first), by score with ties broken by index.
  * TODO(match-debt): the comma expression and the dead 'j = 0' only exist to match. */
-s32 Cup_GetPosition(s32 player) {
+u8 Cup_GetPosition(u8 player) {
     s32 rank;
     s32 i;
     u32 p;
@@ -3549,7 +3549,55 @@ void Championship_Nop(void) {
 typedef struct { s32 lap[9]; s32 f24; u8 p28[2]; u8 f2A; u8 p2B; } CupRec_;
 extern CupRec_ D_80123F60[];
 
+/* TODO(match-debt): 126/127 words (508/508 B exact, s59). `cup == 2` branch matches 100% (`((CupRace_ *)&D_80123EC1)->race` sets MEM_IN_STRUCT_P=1 so the lap store forces the $a0 reload, and duplicating `D_80123F60[2].lap[...] = 0` inside both arms matches the tail merge). Residual: 1-instruction scheduling diff in `else` loop (`subu $v1, $v1, $a0` at 0x1A8 vs 0x1B0 after `lbu D_80123EC1`). */
+#ifdef NON_MATCHING
+typedef struct { u8 b[5]; } Cup5_;
+typedef struct { u8 race; } CupRace_;
+extern Cup5_ D_80100E98;
+extern Cup5_ D_80100EA0;
+static inline u8 *CupSetup_AddOff_(u8 *p, s32 off) { return p + off; }
+
+void Cup_SetupRace(void) {
+    u8 pts[5];
+    u8 used[5];
+    u8 i;
+    u8 r;
+    s32 ofs;
+
+    *(Cup5_ *)pts = D_80100E98;
+    *(Cup5_ *)used = D_80100EA0;
+    if (gProfileP1->cup == 2) {
+        D_80123F60[0].f2A = 7;
+        if (sysRandRange(5) != 0) {
+            D_80123F60[1].f2A = 10;
+            D_80123F60[1].lap[((CupRace_ *)&D_80123EC1)->race] = 0;
+            D_80123F60[2].f2A = 8;
+            D_80123F60[2].lap[((CupRace_ *)&D_80123EC1)->race] = 0;
+        } else {
+            D_80123F60[1].f2A = 8;
+            D_80123F60[1].lap[((CupRace_ *)&D_80123EC1)->race] = 0;
+            D_80123F60[2].f2A = 10;
+            D_80123F60[2].lap[((CupRace_ *)&D_80123EC1)->race] = 0;
+        }
+        D_80123F60[3].f2A = 0;
+        D_80123F60[4].f2A = 0;
+        D_80123F60[5].f2A = 0;
+    } else {
+        D_80123F60[0].f2A = 4;
+        for (i = 1; i < 6; i++) {
+            do {
+                r = sysRandRange(5);
+                D_80123F60[i].f2A = pts[r];
+            } while (used[r] != 0);
+            used[r] = 1;
+            ofs = i * sizeof(CupRec_);
+            *(s32 *)CupSetup_AddOff_((u8 *)&D_80123F60[0].lap[((CupRace_ *)&D_80123EC1)->race], ofs) = 0;
+        }
+    }
+}
+#else
 INCLUDE_ASM("asm/nonmatchings/unit_53B30", Cup_SetupRace);
+#endif
 
 extern u8 D_80100EA8;
 extern s32 D_801414E8;
@@ -3842,7 +3890,69 @@ void CupResults_Enter(void) {
     Menu_StartFadeIn();
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", CupResults_SetupTexts);
+extern s32 *D_80141500;
+extern u8 D_80100EE0;
+extern u8 D_80100EE8;
+extern u8 D_80100EEC;
+
+static inline u8 *Cup_AddOff_(u8 *b, u32 o) {
+    return b + o;
+}
+
+void CupResults_SetupTexts(void) {
+    char buf1[0x20];
+    char buf2[0x40];
+    u8 i;
+    u8 pos;
+
+    for (i = 0; i < 6; i++) {
+        gProfileP1->cupPoints[i] += D_80123F60[i].f2A;
+        {
+            s32 *d = D_800F60E8;
+            u8 *lap = &D_80123EC1;
+            d[i] += *(s32 *)Cup_AddOff_(*lap * 4 + (u8 *)D_80123F60, i * sizeof(CupRec_));
+        }
+    }
+    if (gProfileP1->cup == 2) {
+        s32 y;
+        for (i = 0; i < 3; i++) {
+            if (i == 0) {
+                sprintf(buf1, (char *)&D_80100CA0, gProfileP1->name);
+            } else {
+                sprintf(buf1, (char *)&D_80100CA0, D_800FA180[gRaceSetup.p[i].car]);
+            }
+            pos = Cup_GetPosition(i);
+            sprintf(buf2, (char *)&D_80100EE0, Cup_GetPositionNoTies(i) + 1, buf1);
+            Menu_SetText((*(Ls2C_ **)&D_800F5F34), pos, buf2, 100, y = pos * 0x19 + 0xF0, 0, 0, 0, 1, 255, 255, 255);
+            sprintf(buf2, (char *)&D_80100EE8, gProfileP1->cupPoints[i]);
+            Menu_SetText((*(Ls2C_ **)&D_800F5F34), pos + 6, buf2, 0x113, y, 0, 0, 0, 1, 255, 255, 255);
+            sprintf(buf2, (char *)&D_80100EEC, Time_Minutes(D_800F60E8[i]), Time_Seconds(D_800F60E8[i]), Time_Hundredths(D_800F60E8[i]));
+            Menu_SetText((*(Ls2C_ **)&D_800F5F34), pos + 0xC, buf2, 0x15E, y, 0, 0, 0, 1, 255, 255, 255);
+        }
+        for (i = 3; i < 6; i++) {
+            Menu_SetText((*(Ls2C_ **)&D_800F5F34), i, (s32 *)&D_80100CC8, 100, pos * 0x19 + 0xF0, 0, 0, 0, 1, 255, 255, 255);
+            Menu_SetText((*(Ls2C_ **)&D_800F5F34), i + 6, (s32 *)&D_80100CC8, 0x113, pos * 0x19 + 0xF0, 0, 0, 0, 1, 255, 255, 255);
+            Menu_SetText((*(Ls2C_ **)&D_800F5F34), i + 0xC, (s32 *)&D_80100CC8, 0x15E, pos * 0x19 + 0xF0, 0, 0, 0, 1, 255, 255, 255);
+        }
+    } else {
+        for (i = 0; i < 6; i++) {
+            s32 y2;
+            if (i == 0) {
+                sprintf(buf1, (char *)&D_80100CA0, gProfileP1->name);
+            } else {
+                sprintf(buf1, (char *)&D_80100CA0, D_800FA180[gRaceSetup.p[i].car]);
+            }
+            pos = Cup_GetPosition(i);
+            sprintf(buf2, (char *)&D_80100EE0, Cup_GetPositionNoTies(i) + 1, buf1);
+            Menu_SetText((*(Ls2C_ **)&D_800F5F34), pos, buf2, 100, y2 = pos * 0x19 + 0xF0, 0, 0, 0, 1, 255, 255, 255);
+            sprintf(buf2, (char *)&D_80100EE8, gProfileP1->cupPoints[i]);
+            Menu_SetText((*(Ls2C_ **)&D_800F5F34), pos + 6, buf2, 0x113, y2, 0, 0, 0, 1, 255, 255, 255);
+            sprintf(buf2, (char *)&D_80100EEC, Time_Minutes(D_800F60E8[i]), Time_Seconds(D_800F60E8[i]), Time_Hundredths(D_800F60E8[i]));
+            Menu_SetText((*(Ls2C_ **)&D_800F5F34), pos + 0xC, buf2, 0x15E, y2, 0, 0, 0, 1, 255, 255, 255);
+        }
+    }
+    Menu_SetText((*(Ls2C_ **)&D_800F5F34), 0x12, D_80141500, 200, 200, 0, 0, 1, 1, 255, 255, 255);
+}
 
 void CupResults_ResetTexts(void) {
     Menu_ResetTexts(D_800F5F34);
@@ -4285,7 +4395,113 @@ void Garage_Animate(void) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_53B30", Garage_SetupTexts);
+extern s32 *D_80141264;
+extern s32 *D_800FA180[];
+
+void Garage_SetupTexts(void) {
+    u8 cur;
+    u8 i;
+    u8 prev;
+    u8 next;
+    u8 new_var;
+    s32 *tPrev;
+    s32 *tCur;
+    s32 *tNext;
+    u8 ok;
+    u8 dim = 100;
+
+    if (gGarageReadyP1 != 0) {
+        Menu_SetText(*((Ls2C_ **)(&D_800F5F40)), 0, (s32 *)(&D_80100CC8), 0xCC, 0x168, 0, 0, 1, 1, dim, dim, dim);
+        Menu_SetText(*((Ls2C_ **)(&D_800F5F40)), 1, (s32 *)gCarNames[gGarageCarP1].s[0], 0xCC, 0x181, 0, 0, 1, 1, 255, 255, 255);
+        Menu_SetText(*((Ls2C_ **)(&D_800F5F40)), 2, (s32 *)(&D_80100CC8), 0xCC, 0x19A, 0, 0, 1, 1, dim, dim, dim);
+    } else if (*(u8 *)&gGarageDirtyP1 != 0) {
+        i = gGarageCarP1;
+        gGarageDirtyP1 = 0;
+        if ((i - 1) < 0) {
+            prev = 0x28;
+            cur = i;
+            next = cur + 1;
+        } else if ((i + 1) >= 0x29) {
+            prev = i - 1;
+            cur = i;
+            next = 0;
+        } else {
+            prev = i - 1;
+            cur = i;
+            next = cur + 1;
+        }
+        ok = Car_IsUnlocked(prev, gProfileP1);
+        if (ok == 0) {
+            tPrev = D_80141264;
+        } else {
+            tPrev = D_800FA180[prev];
+        }
+        ok = Car_IsUnlocked(cur, gProfileP1);
+        if (ok == 0) {
+            tCur = D_80141264;
+        } else {
+            tCur = D_800FA180[cur];
+        }
+        ok = Car_IsUnlocked(next, gProfileP1);
+        if (ok == 0) {
+            tNext = D_80141264;
+        } else {
+            tNext = D_800FA180[next];
+        }
+        Menu_SetText(*((Ls2C_ **)(&D_800F5F40)), 0, tPrev, 0xCC, 0x168, 0, 0, 1, 1, dim, dim, dim);
+        Menu_SetText(*((Ls2C_ **)(&D_800F5F40)), 1, tCur, 0xCC, 0x181, 0, 0, 1, 1, 255, 255, 255);
+        Menu_SetText(*((Ls2C_ **)(&D_800F5F40)), 2, tNext, 0xCC, 0x19A, 0, 0, 1, 1, dim, dim, dim);
+    }
+    if (gNumPlayers != 2) {
+        return;
+    }
+    if (gGarageReadyP2 != 0) {
+        Menu_SetText(*((Ls2C_ **)(&D_800F5F44)), 0, (s32 *)(&D_80100CC8), 0x1BC, 0x168, 0, 0, 1, 1, dim, dim, dim);
+        Menu_SetText(*((Ls2C_ **)(&D_800F5F44)), 1, (s32 *)gCarNames[gGarageCarP2].s[0], 0x1BC, 0x181, 0, 0, 1, 1, 255, 255, 255);
+        Menu_SetText(*((Ls2C_ **)(&D_800F5F44)), 2, (s32 *)(&D_80100CC8), 0x1BC, 0x19A, 0, 0, 1, 1, dim, dim, dim);
+        return;
+    }
+    if (*(u8 *)&gGarageDirtyP2 == 0) {
+        return;
+    }
+    i = gGarageCarP2;
+    new_var = i;
+    gGarageDirtyP2 = 0;
+    if ((i - 1) < 0) {
+        prev = 0x28;
+        cur = new_var;
+        next = cur + 1;
+    } else if ((new_var + 1) >= 0x29) {
+        prev = new_var - 1;
+        cur = new_var;
+        next = 0;
+    } else {
+        prev = new_var - 1;
+        cur = new_var;
+        next = cur + 1;
+    }
+    ok = Car_IsUnlocked(prev, gProfileP2);
+    if (ok == 0) {
+        tPrev = D_80141264;
+    } else {
+        tPrev = D_800FA180[prev];
+    }
+    ok = Car_IsUnlocked(cur, gProfileP2);
+    if (ok == 0) {
+        tCur = D_80141264;
+    } else {
+        tCur = D_800FA180[cur];
+    }
+    ok = Car_IsUnlocked(next, gProfileP2);
+    if (ok == 0) {
+        tNext = D_80141264;
+    } else {
+        tNext = D_800FA180[next];
+    }
+    Menu_SetText(*((Ls2C_ **)(&D_800F5F44)), 0, tPrev, 0x1BC, 0x168, 0, 0, 1, 1, dim, dim, dim);
+    Menu_SetText(*((Ls2C_ **)(&D_800F5F44)), 1, tCur, 0x1BC, 0x181, 0, 0, 1, 1, 255, 255, 255);
+    Menu_SetText(*((Ls2C_ **)(&D_800F5F44)), 2, tNext, 0x1BC, 0x19A, 0, 0, 1, 1, dim, dim, dim);
+}
 
 extern s32 D_80100F68;
 extern f32 D_800F6494;

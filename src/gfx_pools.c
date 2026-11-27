@@ -36,10 +36,10 @@ s32 Screen_FlushFrame(void);
 
 inline void GfxPool_Init(GfxPool *pool, u32 capacity, Gfx *buffer) {
     pool->capacity = capacity;
-    pool->chunkCount = 1;
     pool->chunks[0] = buffer;
     pool->chunks[1] = NULL;
     pool->end = pool->chunks[0] + pool->capacity;
+    pool->chunkCount = 1;
     pool->ptr = pool->chunks[0];
 }
 
@@ -97,10 +97,10 @@ inline void GfxPool_Submit(GfxPool *pool, s32 arg) {
 
 inline void VtxPool_Init(VtxPool *pool, u32 capacity, Vtx *buffer) {
     pool->capacity = capacity;
-    pool->chunkCount = 1;
     pool->chunks[0] = buffer;
     pool->chunks[1] = NULL;
     pool->end = pool->chunks[0] + pool->capacity;
+    pool->chunkCount = 1;
     pool->ptr = pool->chunks[0];
 }
 
@@ -141,10 +141,10 @@ inline void VtxPool_Reset(VtxPool *pool) {
 
 inline void MtxPool_Init(MtxPool *pool, u32 capacity, Mtx *buffer) {
     pool->capacity = capacity;
-    pool->chunkCount = 1;
     pool->chunks[0] = buffer;
     pool->chunks[1] = NULL;
     pool->end = pool->chunks[0] + pool->capacity;
+    pool->chunkCount = 1;
     pool->ptr = pool->chunks[0];
 }
 
@@ -180,7 +180,18 @@ inline void MtxPool_Reset(MtxPool *pool) {
     pool->end = pool->chunks[0] + pool->capacity;
 }
 
-INCLUDE_ASM("asm/nonmatchings/gfx_pools", GfxPools_Init);
+void GfxPools_Init(void) {
+    GfxPool_Init(&gGfxPools[0], 0x300, D_80134FD0[0]);
+    GfxPool_Init(&gGfxPools[1], 0x300, D_80134FD0[1]);
+    VtxPool_Init(&gVtxPools[0], 0x40, D_801347C0[0]);
+    VtxPool_Init(&gVtxPools[1], 0x40, D_801347C0[1]);
+    MtxPool_Init(&gMtxPools[0], 0x80, D_801480A0[0]);
+    MtxPool_Init(&gMtxPools[1], 0x80, D_801480A0[1]);
+    gGfxPoolIndex = 0;
+    gDisplayListHead = gGfxPools[0].ptr;
+    gVtxHead = gVtxPools[0].ptr;
+    gMtxHead = gMtxPools[0].ptr;
+}
 
 void GfxPools_ReserveVtx(u32 required) {
     VtxPool *pool = &gVtxPools[gGfxPoolIndex];

@@ -3,72 +3,57 @@
 ## Trigger: "continúa la decomp de HWTR" (o similar)
 Cuando el usuario indique "continúa la decomp de HWTR" o pida continuar con el proceso de decompilación:
 
-### 1. Metodología de Análisis Obligatoria (4 Pasos)
-1. **Analizar el ASM objetivo (y REA/Ghidra cuando aporte contexto):** Examinar stack frame (tamaño, registros callee-saved preservados), argumentos de entrada en registros y stack del llamador, llamadas a funciones y estructura de saltos/bloques. Para obtener pseudocódigo tipado, callers/callees y referencias cruzadas (`xrefs`) de globales/structs, usar `python3 tools/rea/rea_query.py <Func> [--xrefs <sym/addr>]` (tras `python3 tools/rea/prepare_elf.py`; ver `tools/rea/README.md`).
-2. **Comparar contra ASM actual / Diff:** Identificar la causa raíz más probable de las diferencias (tipos con/sin signo, layout de structs/offsets, orden de expresiones, ramas, o patrones de asignación de registros de GCC 2.7.2). Contrastar siempre el pseudocódigo de Ghidra con el ASM original (Ghidra fusiona colas de bloques que en GCC 2.7.2 provienen de ternarios o ramas duplicadas).
-3. **Proponer cambios incrementales y concretos en C:** Ajustar el código en C explicando con precisión qué cambia y por qué afecta a esas instrucciones específicas.
-4. **Falta de contexto:** Si falta contexto para decidir entre dos formas equivalentes en C (p. ej. definición de struct, tipo de retorno o campos/argumentos no usados), añadir un comentario `/* TODO ... */` documentando brevemente la situación antes de aplicar una solución a ciegas.
+### 1. Arranque Rápido (evitar recorridos innecesarios)
+* Leer **solo** la última sesión de `SESSION.md` (~30 líneas) y ejecutar `python3 tools/inventory.py` (o buscar `TODO(match-debt)` en `src/`).
+* **No** leer enteros `MATCH_LOG.md`, `SESSION.md` ni `tools/match/PATTERNS.md` al inicio; consultarlos solo de forma puntual si hace falta contexto de una función o patrón concreto.
+* **Comprobar REA antes de nada** (una vez por sesión, ver §2.0). Si falla, **parar y avisar al usuario**.
+* Elegir **2–3 funciones objetivo** concretas y trabajarlas **en profundidad** (no repartir 3 hipótesis superficiales entre 10+ funciones: eso no ha cerrado matches en las últimas sesiones).
 
-### 1b. Metodología REA + Ghidra (parte activa de cada función candidata)
-REA + Ghidra no son un último recurso: se usan desde el principio para descubrir pseudocódigo y estructura lógica, tipos de argumentos/variables
-(p. ej. `u8` vs `int`), callers/callees, referencias cruzadas, globals/structs/offsets/strides y relaciones entre funciones que comparten datos o patrones.
-Preparación (una vez por sesión): `python3 tools/rea/prepare_elf.py`; consulta: `python3 tools/rea/rea_query.py <Func>... [--xrefs <sym/addr>...]` (ver `tools/rea/README.md`).
+### 2. Metodología de Análisis (ASM + REA/Ghidra)
+0. **Arranque de REA (obligatorio, una vez por sesión):**
+   * Ejecutar `python3 tools/rea/rea_query.py <Func1> <Func2> <Func3> [--xrefs <sym>...]` con **todas** las funciones objetivo en **una sola llamada** (cada llamada reimporta el ELF en Ghidra).
+   * `rea` se instala con nvm y **no está en el PATH de shells no interactivos**; `rea_query.py` ya lo localiza solo (`PATH`, `REA_BIN` o `~/.nvm/versions/node/*/bin/rea`). No invocar `rea` directamente.
+   * Ejecutarlo **fuera del sandbox de terminal** (necesita abrir el socket Unix de Ghidra headless) y con timeout ≥ 3 min: la primera consulta tarda ~30–100 s en importar el ELF; **no abortarla**.
+   * Si `rea_query.py` termina con error, **detenerse y avisar al usuario** con el mensaje exacto. **No** continuar "solo con ASM" ni anotarlo como "no disponible" sin avisar.
+   * `Callers`/`Callees` vacíos no son un fallo: las llamadas indirectas (punteros a función como `sysRandRange`, tablas) no se listan.
+1. **Analizar el ASM objetivo:** examinar stack frame, registros callee-saved, argumentos en registros/stack, llamadas y estructura de saltos/bloques.
+2. **Uso de REA + Ghidra:** consultar REA para **cualquier** función objetivo **antes de escribir o ajustar C** (`procedure_pseudo_code`, callers/callees, `xrefs` de globals/campos tocados) para descubrir estructura, tipos (`u8` vs `int`), offsets y strides. Volver a lanzarlo al retomar una función pendiente o cuando el diff se estanque por estructura/tipos.
+   * **Para qué sirve REA:** estructura de control, tipos, offsets, strides, layout de structs compartidos (clave en `Ai_Step` y `Coll_*`).
+   * **Para qué NO sirve:** diferencias de asignación de registros, orden de bloques, scheduling de delay slots o `beql`/`bnel` de GCC 2.7.2. Para esos residuos usar los permutadores (§3).
+3. **Contrastar con ASM y GCC 2.7.2:** el pseudocódigo de Ghidra es una pista (perfil de 32 bits, colas fusionadas, sin `include/*.h`); **el ASM manda siempre**. Formular hipótesis concretas indicando qué instrucciones deben cambiar y por qué.
+4. **Cambios incrementales y dudas:** ajustar C de forma incremental. Si falta contexto para decidir entre dos formas equivalentes (struct, retorno, campo), dejar un comentario `/* TODO ... */` antes de adivinar a ciegas.
 
-1. **Analizar el ASM original** (paso 1 de arriba).
-2. **Consultar REA/Ghidra** antes de escribir C: `procedure_pseudo_code`, `procedure_callers`/`procedure_callees`, `xrefs` de cada global/campo tocado y
-   funciones hermanas ya igualadas. No hace falta ejecutar todas las consultas en cada función, pero omitir una consulta relevante exige una
-   **justificación técnica** anotada en `MATCH_LOG.md` (p. ej. «sin globals ni llamadas»); «prefiero solo ASM» no es justificación.
-3. **Contrastar el pseudocódigo con las instrucciones MIPS y GCC 2.7.2** (paso 2): el pseudocódigo es una pista, nunca la fuente de verdad (perfil de 32 bits,
-   colas de bloques fusionadas, sin `include/*.h`); el ASM manda.
-4. **Formular hipótesis concretas** sobre firma, tipos, registros, structs/offsets y orden de operaciones, indicando qué instrucciones deberían cambiar (pasos 3 y 4).
-5. **Probar cambios incrementales y medir** con comparación por palabras/`try.py`, `make` (SHA-1) + `verify_funcs.py` y `tools/objdiff_report.py` (número oficial).
-6. **Sin progreso:** investigar hipótesis nuevas o funciones relacionadas (otros callers, xrefs, hermanas, `tools/match/PATTERNS.md`) antes de repetir intentos; se aplica el límite de la sección 2.
+### 3. Prioridad de Selección, Presupuesto y `NON_MATCHING`
+* **Fuera de alcance:** funciones de ensamblador puro de libc/libultra sin `INCLUDE_ASM` (`bcopy`, `bcmp`, `__osException`, `__osDispatchThread`, `strcmp`, `__sincos`, `lldiv`, `func_800E7xxx`…): **no trabajarlas** (libultra no se toca). El techo realista de `objdiff` es < 100 %.
+* **Prioridad 1 — casi-matches:** `NON_MATCHING` a < 10 palabras (p. ej. `Hud_DrawTurbos` 377/382, residual solo en offsets de spill por `u8 buf[24]`). Si el residual es solo de registros/stack, ir directo a permutadores:
+  1. `python3 tools/match/declperm.py <lote.c> <func>` (orden de declaraciones locales; GCC 2.7.2 asigna registros en parte por ese orden).
+  2. `tools/match/dperm.py` (decomp-permuter) para residuales pequeños; limpiar su salida y dejar como `TODO(match-debt)` los trucos sin alternativa legible.
+* **Prioridad 2 — bytes grandes con REA:** `Ai_Step` (13 KB) y `Coll_BoxCornersVsWorld` / `Coll_PointsVsWorld` / `Coll_ProbeWheels` / `Coll_SyncObjects` (~17 KB): usar `--xrefs` para recuperar los structs compartidos en `include/*.h` antes de escribir C; trabajar una a la vez.
+* **Prioridad 3:** resto de `INCLUDE_ASM` ordenadas por **bytes recuperables × probabilidad de match** (`python3 tools/inventory.py`).
+* **Presupuesto intra-sesión:** máximo **5–6 intentos sin reducir el diff** (o sin hipótesis nueva comprobable). Al agotarlo, congelar/actualizar la función bajo `#ifdef NON_MATCHING` con `TODO(match-debt)` + diff residual y pasar a la siguiente función.
+* **Límite entre sesiones:** máximo **2 sesiones** por función sin progreso medible (salvo hipótesis nueva o nueva pasada con REA/Ghidra).
+* **Reglas estrictas:**
+  * Nunca descartar un borrador `NON_MATCHING`; se conserva bajo `#ifdef NON_MATCHING` / `#else INCLUDE_ASM(...) #endif` y **no cuenta como ByteMatch (0 B oficiales)**.
+  * Prohibido para igualar: `asm()`, nops/`.space`, stubs o tocar la ROM (`tools/check_no_asm.py`).
 
-**Ejemplos reales** (detalle en `MATCH_LOG.md`; solo los match exactos cuentan como ByteMatch recuperado):
-| Función | Resultado | ByteMatch recuperado | Aporte de REA/Ghidra |
-|---|---|---|---|
-| `Ai_ApplyImpulse` | **MATCH exacto**, 272/272, 1.088 B | 1.088 B | pseudocódigo + xrefs de `D_80114A7C/80/84`; contrastado con el ASM: `ctlTimer = 2` dentro de cada rama y comparaciones `val > min` |
-| `LZ_AdvanceBits` | **MATCH exacto**, 42/42 palabras | 168 B | Ghidra tipó el argumento como `char` (u8) en vez de `int n`: pista decisiva |
-| `Model_SwapPalette` | NON_MATCHING 72/81 | 0 B | estructura (`Model.palIdx`, `pals[].colors`); residual: orden de 3 `sll` |
-| `SndCmd_SetEnvelopePreset` | NON_MATCHING 79/83 | 0 B | varint y tabla de 7 bytes; residual: copia del puntero en `$a3` |
-| `PauseUi_DrawText` | NON_MATCHING ~71/88 | 0 B | dos recorridos (medir/dibujar), kerning; residual: cabecera de bucle y prólogo |
+### 4. Verificación (rápida en bucle, completa solo al cierre)
+* **Durante la iteración:** usar solo comparación rápida (`tools/match/try.py` o compilación aislada del `.o`). No correr `make`, `verify_funcs.py` ni `objdiff_report.py` en cada variante.
+* **Al integrar un `MATCH exacto` en `src/`:** ejecutar `make` incremental para comprobar compilación y enlace.
+* **Una sola vez al final de la sesión** (o antes de preparar commit):
+  1. `make` incremental y verificar SHA-1 de la ROM (`94913a07e49005ffd43dfdfa16ff5862bdb93748`).
+  2. `python3 tools/match/verify_funcs.py` y `python3 tools/check_no_asm.py`.
+  3. `python3 tools/objdiff_report.py` y comprobar que `report/us/report.json` coincide con `build/us/report.json`.
+* **Compilaciones completas (`make clean`):** solo las hace el usuario. El agente nunca ejecuta `make clean` ni `make clean && make`.
 
-Los resultados parciales (NON_MATCHING) se conservan bajo `#ifdef NON_MATCHING` con `INCLUDE_ASM` en el `#else` y **no** se presentan como ByteMatch recuperado.
+### 5. Integración y Commits
+* Al lograr coincidencia exacta (100 %), reemplazar `INCLUDE_ASM` en su archivo `src/unit_*.c`.
+* **Política de commits agrupados (recta final >90 %):** objetivo de **~10 funciones con MATCH exacto** por commit (o cierre de una unidad grande / +5–10 KB). Las funciones `NON_MATCHING` no cuentan.
+* Antes de preparar commit: revisar `git status`/`git diff --stat` y **preservar cualquier WIP ajeno** (incluidos los `TODO` del usuario en `src/`): nunca revertir ni mezclar cambios no relacionados sin avisar.
+* Usar `./tools/match/commit_unit.sh [--commit] [--force] "<mensaje>" <archivos>`:
+  * Sin `--commit` (por defecto): verifica (`make` incremental, SHA-1, `verify_funcs.py`, `objdiff_report.py`), cuenta funciones ganadas respecto a `HEAD`, lista archivos y **se detiene**.
+  * El usuario revisa, hace su `make clean && make` y solo entonces se ejecuta con `--commit` (`--force` salta el mínimo de funciones o el intervalo de 5 min).
 
-### 2. Regla de Reintentos y NON_MATCHING (criterios de 2026-11-24)
-* Límite: **2 sesiones** por función sin progreso medible (diff que baja o hipótesis nueva comprobable). Con avance real o hipótesis nueva, una ronda más.
-* Una reconstrucción C casi exacta se conserva en `src/` así, y **no cuenta como ByteMatch**:
-  `#ifdef NON_MATCHING` (C) `#else` `INCLUDE_ASM(...)` `#endif`, con comentario `TODO(match-debt)` y el diff residual. La ruta normal de build sigue siendo `INCLUDE_ASM`; SHA-1 intacto.
-* Nunca se descarta una función provisional; se retoma cuando aparezcan patrones nuevos.
-* Prohibido para igualar: `asm()`, nops/`.space`, stubs, tocar la ROM (`tools/check_no_asm.py`).
-* Documentar en `## Casi iguales, sin convertir` de `tools/match/PATTERNS.md` con diff y causa.
-* Prioridad: bytes recuperables x probabilidad de match; aprovechar para descubrir structs/tipos/prototipos compartidos. Completar unidades solo si ayuda a resolver dependencias.
-* Inventario de referencia: `python3 tools/inventory.py [--top N] [--mid]` (tras `make`).
-
-### 3. Criterio de Selección de Funciones
-* Priorizar y cerrar los candidatos ya iniciados en el directorio raíz (`cand_*.c`: `cand_wheel.c`, `cand_quat.c`, `cand_scroller.c`, `cand_lap.c`, etc.).
-* Continuar con las funciones listadas en `python3 tools/match/targets.py` en orden de menor a mayor complejidad/tamaño.
-
-### 4. Integración y Commits al lograr Match (100%)
-* Al lograr coincidencia exacta, integrar la función en su archivo correspondiente en `src/unit_*.c`.
-* **Política de commits agrupados:** no se hace un commit por función. El objetivo es **un commit cada ~30 funciones con MATCH exacto**.
-  * Las funciones `NON_MATCHING` (reconstrucciones bajo `#ifdef NON_MATCHING`) **no cuentan** para las 30.
-  * Agrupar funciones relacionadas (misma unidad, mismos structs/patrones) cuando sea conveniente.
-  * Si se completa una unidad lógica importante antes de llegar a 30, puede evaluarse como punto de commit.
-  * Antes de cada commit, listar los archivos que se incluirán (`git status`/`git diff --stat`) y **preservar cualquier WIP ajeno a la tarea**
-    (incluidos los TODOs que el usuario añade en `src/`): no revertirlo ni mezclar cambios no relacionados sin avisar.
-* **Compilaciones completas: solo las hace el usuario.** El agente nunca ejecuta `make clean` ni `make clean && make`; usa `make` incremental
-  para comprobar la ROM. `commit_unit.sh` tampoco las ejecuta.
-* Preparar/confirmar con `./tools/match/commit_unit.sh [--commit] [--force] "<mensaje>" <archivos>`:
-  * **Sin `--commit` (por defecto)** el script solo prepara y **se detiene antes del commit**: `make` incremental, SHA-1 de la ROM
-    (`94913a07e49005ffd43dfdfa16ff5862bdb93748`), `verify_funcs.py`, `tools/objdiff_report.py` + comprobación de que `report/us/report.json`
-    coincide con `build/us/report.json`, recuento de funciones con MATCH exacto ganadas respecto a HEAD, y lista de archivos a incluir.
-  * El usuario revisa, hace su `make clean && make` y solo entonces se ejecuta con `--commit`, que repite SHA-1 y `verify_funcs.py` (sin `make clean`).
-  * Con `--commit` no confirma si hay menos de ~30 funciones nuevas (`TARGET_FUNCS`) ni antes de 5 minutos desde el último commit;
-    `--force` salta ambas condiciones (cierre de unidad lógica o de tanda).
-* Antes de cada commit, verificar el resultado contra objdiff (lo hace el script) y registrar el porcentaje en `METRICS.md`/`SESSION.md`.
-
-### 5. Registro en `MATCH_LOG.md` (obligatorio por función)
-Cada entrada separa con subtítulos: **REA/Ghidra** (qué consultas y qué dijeron), **Confirmado en ASM** (qué se verificó contra el `.s`),
-**Hipótesis**, **Cambios**, **Resultado objdiff** y **Bytes recuperados**. Distinguir siempre «MATCH exacto» (cuenta en objdiff) de
-«NON_MATCHING» (reconstrucción casi exacta bajo `#ifdef NON_MATCHING`, **0 B** oficiales). Los porcentajes se citan solo de objdiff (`METRICS.md`).
+### 6. Registro Conciso (al cierre de la sesión)
+* **`MATCH_LOG.md`:** entrada breve por función (3–5 líneas): resultado (`MATCH exacto` | `NON_MATCHING x/n`), **línea `REA:` obligatoria** con lo concreto que aportó (tipo, offset, stride, xref o estructura; o "sin aporte: residual de registros"), hipótesis ganadora o causa del residual, y **Bytes recuperados** (`0 B` si `NON_MATCHING`). Una entrada sin línea `REA:` indica que no se consultó.
+* **`SESSION.md` y `METRICS.md`:** actualizar con el resumen de la sesión y el porcentaje oficial de `objdiff` (única fuente de porcentajes).
+* **`tools/match/PATTERNS.md`:** actualizar solo si aparece un patrón reutilizable nuevo de GCC 2.7.2 o un casi-match relevante.

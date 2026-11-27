@@ -194,7 +194,7 @@ void SceneNode_Show(Node72_ *n) {
     n->flags |= 0x40;
 }
 
-s32 SceneNode_DrawSingle(u8 *a0, s32 a1, s32 a2, s32 a3, s32 a4) {
+inline s32 SceneNode_DrawSingle(u8 *a0, s32 a1, s32 a2, s32 a3, s32 a4) {
     u8 buf[0x30];
 
     if ((Frustum_TestSphere(a1, a2, *(s32 *)(a0 + 0x38)) & 0xFF) != 1) {
@@ -680,7 +680,7 @@ MdlData_ *ModelData_Load(MdlData_ *m) {
     return m;
 }
 
-void ModelData_SetVariant(List74_ *l, u8 v) {
+inline void ModelData_SetVariant(List74_ *l, u8 v) {
     u32 i;
     Obj74_ *o;
 
@@ -720,7 +720,321 @@ s32 ModelData_FreeCaches(ItemListB_ *l) {
     }
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_13490", ModelData_Draw);
+typedef struct MdlNodeMd_ {
+    /* 0x00 */ f32 m[3][4];
+    /* 0x30 */ s32 flags;
+    /* 0x34 */ s32 id;
+    /* 0x38 */ f32 rad;
+    /* 0x3C */ MeshN_ *mesh;
+    /* 0x40 */ s32 p40;
+    /* 0x44 */ s32 p44;
+    /* 0x48 */ s32 p48;
+    /* 0x4C */ struct MdlNodeMd_ *next;
+    /* 0x50 */ struct MdlNodeMd_ *child;
+} MdlNodeMd_; /* 0x54 */
+
+typedef struct {
+    /* 0x000 */ u16 nNodes;
+    /* 0x002 */ u8 p2[6];
+    /* 0x008 */ u16 nLods;
+    /* 0x00A */ u8 pA[0x22];
+    /* 0x02C */ MdlNodeMd_ *nodes;
+    /* 0x030 */ s32 p30;
+    /* 0x034 */ s32 tex;
+    /* 0x038 */ u8 p38[0x10];
+    /* 0x048 */ Vec3f pos48[6];
+    /* 0x090 */ Vec3f dim90[6];
+    /* 0x0D8 */ u8 pD8[0x24];
+    /* 0x0FC */ u8 idxFC;
+    /* 0x0FD */ u8 curLod;
+    /* 0x0FE */ s8 light;
+    /* 0x0FF */ u8 nA;
+    /* 0x100 */ u8 alphaA;
+    /* 0x101 */ u8 p101[4];
+    /* 0x105 */ u8 alphaEnv;
+    /* 0x106 */ u8 p106[2];
+    /* 0x108 */ Vtx *envVtx;
+    /* 0x10C */ u8 nB;
+    /* 0x10D */ u8 scaleB;
+    /* 0x10E */ u8 p10E[2];
+    /* 0x110 */ Vtx *vtxA;
+    /* 0x114 */ Vtx *vtxB;
+    /* 0x118 */ Vtx *quad;
+    /* 0x11C */ u8 p11C[0xC];
+    /* 0x128 */ Vec3f *p128;
+    /* 0x12C */ MdlPartDL_ *dlA;
+    /* 0x130 */ MdlPartDL_ *dlB;
+    /* 0x134 */ s32 shadow;
+    /* 0x138 */ MdlDL_ *env;
+    /* 0x13C */ u8 p13C[0x24];
+    /* 0x160 */ f32 mtx160[3][4];
+    /* 0x190 */ f32 childMtx[4][3][4];
+} MdlDraw_;
+
+extern f32 D_800F1F50[5];
+extern f32 gLodDist0;
+extern f32 gLodDist1;
+extern f32 gLodDist2;
+extern f32 gLodDist3;
+s32 rand(void);
+void Particle_SpawnColored(Vec3f, s32, s32, s32, s32, s32);
+void SortQueue_Add();
+void ModelData_DrawShadow();
+
+void ModelData_Draw(MdlDraw_ *m, void *cam, s32 id, s32 maxLod, s32 minLod, u8 arg5, u8 arg6) {
+    f32 viewMtx[3][4];
+    f32 worldMtx[3][4];
+    f32 tmpMtx[3][4];
+    Vec3f vB0;
+    Vec3f vC0;
+    s32 lod;
+    s32 i;
+    s32 j;
+    MdlNodeMd_ *node;
+    MdlNodeMd_ *child;
+    s32 mtx;
+    f32 dist;
+    f32 t;
+    f32 t0;
+    f32 (*pMtx)[4];
+    void *a0Mtx;
+    void *a1Mtx;
+    Vtx *ev;
+    f32 dx;
+    f32 dz;
+    s32 ix;
+    s32 iz;
+    s32 iy;
+    MdlDL_ *env;
+
+    if (m == NULL || !(m->nodes->flags & 0x40)) {
+        return;
+    }
+    if (m->nodes->mesh->b8 != m->nodes->mesh->p9[0]) {
+        ModelData_SetVariant((List74_ *)m, m->nodes->mesh->p9[0]);
+    }
+    node = &m->nodes[m->curLod];
+    Mtx34_Mul((s32)node, (s32)m->mtx160, worldMtx);
+    if (m->alphaA != 0) {
+        t = (f32)m->alphaA / 255.0f;
+        for (i = 0; i < m->nA; i++) {
+            for (lod = 0; lod < 5; lod++) {
+                ev = &m->vtxA[i * 5 + lod];
+                ev->v.cn[3] = t * D_800F1F50[lod];
+            }
+        }
+    }
+    if ((Frustum_TestSphere((s32)cam, (s32)worldMtx, *(s32 *)&node->rad) & 0xFF) != 1) {
+        if (arg5 == 0 && m->alphaA != 0) {
+            if ((((s32 (*)(void *, void *, f32))Frustum_TestSphere)(cam, worldMtx, node->rad + 2400.0f) & 0xFF) == 1) {
+                Mtx34_Mul((s32)cam, (s32)worldMtx, viewMtx);
+                mtx = Mtx_New(viewMtx);
+                dist = -viewMtx[2][3] + viewMtx[2][1] * 1200.0f;
+                for (i = 0; i < m->nA; i++) {
+                    ((void (*)(void *, s32, f32))SortQueue_Add)(&m->dlA[i], mtx, dist);
+                }
+            }
+        }
+        if (node->id != id) {
+            node->flags &= ~0x80;
+        }
+        m->curLod = 0;
+        return;
+    }
+    Mtx34_Mul((s32)cam, (s32)worldMtx, viewMtx);
+    mtx = Mtx_New(viewMtx);
+    dist = -viewMtx[2][3];
+    if (dist <= gLodDist0) {
+        i = 0;
+    } else if (dist <= gLodDist1) {
+        i = 1;
+    } else if (dist <= gLodDist2) {
+        i = 2;
+    } else if (dist <= gLodDist3) {
+        i = 3;
+    } else {
+        i = m->nLods - 1;
+    }
+    if (i < minLod) {
+        i = minLod;
+    }
+    if (maxLod < i) {
+        i = maxLod;
+    }
+    if (i >= m->nLods) {
+        i = m->nLods - 1;
+    }
+    if (i != m->curLod) {
+        m->curLod = i;
+        node = &m->nodes[i & 0xFF];
+        Mtx34_Mul((s32)node, (s32)m->mtx160, worldMtx);
+        Mtx34_Mul((s32)cam, (s32)worldMtx, viewMtx);
+        dist = -viewMtx[2][3];
+    }
+    SceneNode_DrawMesh((Node72_ *)node, viewMtx, mtx, id, m->tex);
+    if (arg5 == 0 && m->alphaA != 0) {
+        dist = -viewMtx[2][3] + viewMtx[2][1] * 1200.0f;
+        for (i = 0; i < m->nA; i++) {
+            ((void (*)(void *, s32, f32))SortQueue_Add)(&m->dlA[i], mtx, dist);
+        }
+    }
+    if (m->nodes[1].flags & 0x40) {
+        node = node->child;
+        pMtx = m->childMtx[0];
+        while (node != NULL) {
+            if (arg5 != 1) {
+                Mtx34_Mul((s32)worldMtx, (s32)pMtx, viewMtx);
+                tmpMtx[0][0] = viewMtx[0][0];
+                tmpMtx[0][1] = viewMtx[0][1];
+                tmpMtx[0][2] = viewMtx[0][2];
+                tmpMtx[0][3] = viewMtx[0][3];
+                tmpMtx[1][0] = viewMtx[1][0];
+                tmpMtx[1][1] = viewMtx[1][1];
+                tmpMtx[1][2] = viewMtx[1][2];
+                tmpMtx[1][3] = viewMtx[1][3];
+                tmpMtx[2][0] = viewMtx[2][0];
+                tmpMtx[2][1] = viewMtx[2][1];
+                tmpMtx[2][2] = viewMtx[2][2];
+                tmpMtx[2][3] = viewMtx[2][3];
+                Mtx34_Mul((s32)tmpMtx, (s32)node, viewMtx);
+            } else {
+                tmpMtx[0][0] = node->m[0][0];
+                tmpMtx[0][1] = node->m[0][1];
+                tmpMtx[0][2] = node->m[0][2];
+                tmpMtx[0][3] = node->m[0][3];
+                tmpMtx[1][0] = node->m[1][0];
+                tmpMtx[1][1] = node->m[1][1];
+                tmpMtx[1][2] = node->m[1][2];
+                tmpMtx[1][3] = node->m[1][3];
+                tmpMtx[2][0] = node->m[2][0];
+                tmpMtx[2][1] = node->m[2][1];
+                tmpMtx[2][2] = node->m[2][2];
+                tmpMtx[2][3] = node->m[2][3];
+                tmpMtx[0][3] = tmpMtx[1][3] = tmpMtx[2][3] = 0.0f;
+                Mtx34_Mul((s32)pMtx, (s32)tmpMtx, viewMtx);
+            }
+            SceneNode_DrawSingle((u8 *)node, (s32)cam, (s32)viewMtx, id, m->tex);
+            node = node->next;
+            pMtx += 3;
+        }
+    }
+    if (arg5 == 0 && m->scaleB != 0) {
+        for (i = 0; i < m->nB; i++) {
+            j = 0;
+            if (arg6 != 0) {
+                j = rand();
+            }
+            dist = (((f32)(j & 0x1FF) / 511.0f) * (f32)m->scaleB) / 180.0f;
+            {
+                Vec3f *pPos = &m->p128[i * 2];
+                Vec3f *pVel = &m->p128[i * 2 + 1];
+                m->vtxB[i * 7].v.ob[0] = dist * pVel->x + pPos->x;
+                m->vtxB[i * 7].v.ob[1] = dist * pVel->y + pPos->y;
+                m->vtxB[i * 7].v.ob[2] = dist * pVel->z + pPos->z;
+                ((Vtx *)((s32)i * 0x70 + (s32)m->vtxB))->v.cn[2] = dist;
+                ((void (*)(void *, s32, f32))SortQueue_Add)(&m->dlB[i], mtx, dist);
+            }
+        }
+    }
+    if (m->alphaEnv != 0) {
+        f32 hy;
+        env = m->env;
+        env->dl[0].words.w0 = 0xE7000000;
+        env->dl[0].words.w1 = 0;
+        env->dl[1].words.w0 = 0xFA000000;
+        env->dl[1].words.w1 = m->alphaEnv | 0xFFFFFF00;
+        {
+            s32 ofs = m->idxFC * 0xC;
+            vB0 = *(Vec3f *)((u8 *)m + ofs + 0x48);
+            ofs = m->idxFC * 0xC;
+            vC0 = *(Vec3f *)((u8 *)m + ofs + 0x90);
+        }
+        hy = vC0.y / 2.0f;
+        dz = vC0.z / 2.2f;
+        dx = vC0.x * 0.8f;
+        ev = m->envVtx;
+        vB0.y -= hy;
+        lod = dx;
+        iz = dz;
+        if (arg6 != 0) {
+            iy = (rand() & 0x3F) + 0x41;
+        } else {
+            iy = 0x5A;
+        }
+        ev[0].v.ob[0] = (s32)vB0.x + lod;
+        ev[0].v.ob[1] = (s32)vB0.y;
+        ev[0].v.ob[2] = (s32)vB0.z - iz;
+        ev[1].v.ob[0] = (s32)vB0.x + lod;
+        ev[1].v.ob[1] = (s32)vB0.y;
+        ev[1].v.ob[2] = (s32)vB0.z + iz;
+        ev[2].v.ob[0] = (s32)vB0.x;
+        ev[2].v.ob[1] = (s32)vB0.y - iy;
+        ev[2].v.ob[2] = (s32)vB0.z + iz / 2;
+        ev[3].v.ob[0] = (s32)vB0.x;
+        ev[3].v.ob[1] = (s32)vB0.y - iy;
+        ev[3].v.ob[2] = (s32)vB0.z - iz / 2;
+        ev[4].v.ob[0] = (s32)vB0.x;
+        ev[4].v.ob[1] = (s32)vB0.y;
+        ev[4].v.ob[2] = (s32)vB0.z;
+        ev[5].v.ob[0] = (s32)vB0.x + lod;
+        ev[5].v.ob[1] = (s32)vB0.y;
+        ev[5].v.ob[2] = (s32)vB0.z;
+        ev[6].v.ob[0] = (s32)vB0.x + lod / 2;
+        ev[6].v.ob[1] = (s32)vB0.y - iy;
+        ev[6].v.ob[2] = (s32)vB0.z;
+        ev[7].v.ob[0] = (s32)vB0.x;
+        ev[7].v.ob[1] = (s32)vB0.y - iy;
+        ev[7].v.ob[2] = (s32)vB0.z;
+        if (arg6 != 0) {
+            iy = (rand() & 0x3F) + 0x41;
+        }
+        ev[8].v.ob[0] = -ev[0].v.ob[0];
+        ev[8].v.ob[1] = ev[0].v.ob[1];
+        ev[8].v.ob[2] = ev[0].v.ob[2];
+        ev[9].v.ob[0] = -ev[1].v.ob[0];
+        ev[9].v.ob[1] = ev[1].v.ob[1];
+        ev[9].v.ob[2] = ev[1].v.ob[2];
+        ev[10].v.ob[0] = -ev[2].v.ob[0];
+        ev[10].v.ob[1] = (s32)vB0.y - iy;
+        ev[10].v.ob[2] = ev[2].v.ob[2];
+        ev[11].v.ob[0] = -ev[3].v.ob[0];
+        ev[11].v.ob[1] = (s32)vB0.y - iy;
+        ev[11].v.ob[2] = ev[3].v.ob[2];
+        ev[12].v.ob[0] = -ev[4].v.ob[0];
+        ev[12].v.ob[1] = ev[4].v.ob[1];
+        ev[12].v.ob[2] = ev[4].v.ob[2];
+        ev[13].v.ob[0] = -ev[5].v.ob[0];
+        ev[13].v.ob[1] = ev[5].v.ob[1];
+        ev[13].v.ob[2] = ev[5].v.ob[2];
+        ev[14].v.ob[0] = -ev[6].v.ob[0];
+        ev[14].v.ob[1] = (s32)vB0.y - iy;
+        ev[14].v.ob[2] = ev[6].v.ob[2];
+        ev[15].v.ob[0] = -ev[7].v.ob[0];
+        ev[15].v.ob[1] = (s32)vB0.y - iy;
+        ev[15].v.ob[2] = ev[7].v.ob[2];
+        ((void (*)(void *, s32, f32))SortQueue_Add)(m->env, mtx, dist);
+    }
+    if ((arg6 != 0) & (arg5 == 1)) {
+        for (i = 0; i < m->idxFC; i++) {
+            f32 x;
+            f32 y;
+            f32 z;
+            vB0 = m->pos48[i + 1];
+            x = vB0.x;
+            y = vB0.y;
+            z = vB0.z;
+            vC0.x = worldMtx[0][0] * x + worldMtx[0][1] * y + worldMtx[0][2] * z + worldMtx[0][3];
+            vC0.y = worldMtx[1][0] * x + worldMtx[1][1] * y + worldMtx[1][2] * z + worldMtx[1][3];
+            vC0.z = worldMtx[2][0] * x + worldMtx[2][1] * y + worldMtx[2][2] * z + worldMtx[2][3];
+            if (rand() & 1) {
+                Particle_SpawnColored(vC0, 0x46, 2, 0xFF, 0xFF, 0xFF);
+            } else {
+                Particle_SpawnColored(vC0, 0x46, 1, 0x14, 0x14, 0x14);
+            }
+        }
+    }
+    ((void (*)(void *, void *, void *))ModelData_DrawShadow)(m, cam, worldMtx);
+}
 
 typedef struct { f32 x, y, z; } V3_75;
 typedef struct { f32 a, b, c, d; } Pl_75;
@@ -733,7 +1047,6 @@ typedef struct {
 } O_75;
 extern V3_75 D_800FF7C0;
 extern V3_75 D_800F1F64[4];
-void SortQueue_Add(s32, s32, s32);
 /* Projects the shadow quad of model o onto its ground plane and queues it (view matrix arg1). */
 void ModelData_DrawShadow(O_75 *o, s32 arg1) {
     V3_75 pts[4];

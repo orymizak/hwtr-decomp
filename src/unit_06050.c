@@ -616,9 +616,6 @@ inline void Color_Unpack5551(u32 color, void *r, void *g, void *b) {
     *(u8 *)b = cb;
 }
 
-/* TODO(match-debt): 5 words left (s46): the order of the three `sll` in the pack and the `$v0`/`$v1` swap of the
- * palette pointer and its offset. `u32 k` (sltiu) and `k = palIdx` (shares `$t3`) are confirmed in the ASM. */
-#ifdef NON_MATCHING
 void Model_SwapPalette(u8 i, u8 mode) {
     u16 *dst;
     u32 k;
@@ -627,7 +624,7 @@ void Model_SwapPalette(u8 i, u8 mode) {
     if (gModels.models[i] != NULL && gModels.models[i]->palIdx != 0 && D_80138190.palette[i] != mode) {
         D_80138190.palette[i] = mode;
         k = gModels.models[i]->palIdx;
-        dst = gModels.models[i]->pals[k].colors;
+        dst = *(u16 **)((u8 *)gModels.models[i]->pals + (k << 3) + 4);
         dst += 4;
         if (mode == 1) {
             for (k = 0; k < 7; k++) {
@@ -640,14 +637,19 @@ void Model_SwapPalette(u8 i, u8 mode) {
                 r >>= 1;
                 g >>= 1;
                 b >>= 1;
-                { u32 hi = r >> 3; u32 mid = g >> 3; u32 lo = b >> 3; dst[k] = (lo << 1) | ((hi << 11) | (mid << 6)) | 1; }
+                {
+                    u32 hi = r >> 3;
+                    u32 mid = g >> 3;
+                    u32 lo = b >> 3;
+                    u32 a = hi << 11;
+                    u32 c = mid << 6;
+                    u32 d = lo << 1;
+                    dst[k] = d | (a | c) | 1;
+                }
             }
         }
     }
 }
-#else
-INCLUDE_ASM("asm/nonmatchings/unit_06050", Model_SwapPalette);
-#endif
 
 void Model_FlashOff(u8 i) {
     gModels.models[i]->b105 = 0;

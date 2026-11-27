@@ -6,7 +6,7 @@ typedef struct { Kern2_ *list; u8 n; u8 ch; u8 has; u8 pad; } Kern1_;
 typedef struct { Kern1_ *tbl; u16 n; u8 pad[2]; } KernFont_;
 typedef struct { u8 flag; u8 p1[3]; char *str; } Ln74_;
 typedef struct { Ln74_ *lines; s32 a4; s32 a8; s32 top; s32 bottom; s32 start; f32 pos; s32 count; } Scr74_;
-void Scroller_DrawLine(char *, s32, s32, s32, s32);
+void Scroller_DrawLine(u8 *, s32, s32, s32, u8);
 f32 Menu_DeltaSeconds(u8);
 extern u8 D_80116C70[];
 extern s32 (*sysFileLoad)(char *, void *);
@@ -171,7 +171,37 @@ s32 Font_ScaleKerning(u8 font, u8 a, u8 pct) {
     return 1;
 }
 
-INCLUDE_ASM("asm/nonmatchings/unit_27A40", Scroller_DrawLine);
+extern s32 (*sysFontGetCharWidth)(s32, u8);
+void Menu_DrawChar(u8, s32, s32, s32, u8, u8, u8, u8);
+
+void Scroller_DrawLine(u8 *str, s32 x0, s32 x1, s32 y, u8 bright) {
+    u32 x = 0;
+    u8 *p = str;
+    u8 r, g, b;
+
+    if (bright != 0) {
+        r = 0xFF;
+        g = 0xFF;
+        b = 0xFF;
+    } else {
+        r = 0xAA;
+        g = 0xAA;
+        b = 0xAA;
+    }
+    while (p[1] != 0) {
+        x += sysFontGetCharWidth(0, *p) + Font_GetKerning(0, *p, p[1]);
+        p++;
+    }
+    x += sysFontGetCharWidth(0, *p);
+    x = (x0 + x1) / 2 - (x >> 1);
+    p = str;
+    while (p[1] != 0) {
+        Menu_DrawChar(*p, 1, x, y, bright, r, g, b);
+        x += sysFontGetCharWidth(0, *p) + Font_GetKerning(0, *p, p[1]);
+        p++;
+    }
+    Menu_DrawChar(*p, 1, x, y, bright, r, g, b);
+}
 
 void Scroller_Reset(Scr74_ *s) {
     s->pos = s->start;

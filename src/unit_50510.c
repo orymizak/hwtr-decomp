@@ -16,7 +16,7 @@ extern u8 gNameListCount;
 extern void *gNameList[];
 extern u8 D_80100BB0;
 void NameList_Clear(void);
-typedef struct { u8 d[0x140]; } E140_;
+typedef struct { s32 id; u8 d[0x13C]; } E140_;
 typedef struct { u8 a; u8 pad; u16 x; u16 y; u16 x2; u16 y2; } E0A2_;
 typedef struct { u8 pad[2]; u8 n; u8 pad2; E0A2_ *arr; u8 pad3[0xB]; u8 mode; } T0A2_;
 typedef struct { s16 x; s16 y; } P16b_;
@@ -176,10 +176,6 @@ s32 Save_CreateOnPak(u32 i) {
     return ok;
 }
 
-/* TODO(match-debt): 772/776 B, same structure as the target (s40). Residual: the target hoists &sysSaveRead into $fp
- * (uses [0] and [-1] = sysPakGetState) and keeps &gSaveSlots un-hoisted per inner loop; ours hoists gSaveSlots into $s8
- * and loads sysSaveRead with lui/lw. Pointer copy, register, decl order and byte-offset forms had no effect. */
-#ifdef NON_MATCHING
 extern void *sysSaveRead[];
 
 u8 Save_ReadAll(void) {
@@ -206,8 +202,7 @@ u8 Save_ReadAll(void) {
         if (((s32 (*)(u32, u8 *))sysSaveRead[0])(i, buf) != 0) {
             sum = 0;
             c = buf;
-            n = 0xD90;
-            for (k = 0; k < n; k++) {
+            for (k = 0, n = 0xD90; k < n; k++) {
                 sum += *c++;
             }
             if (*(u32 *)(buf + 0xD90) != sum) {
@@ -220,7 +215,7 @@ u8 Save_ReadAll(void) {
                 gSaveSlotCount[i] = buf[0x88C];
                 for (j = 0; j < buf[0x88C]; j++) {
                     *(Blk140_ *)&gSaveSlots[i][j] = *(Blk140_ *)(buf + 0x890 + j * 0x140);
-                    *(s32 *)&gSaveSlots[i][j] = gSaveIds[i];
+                    gSaveSlots[i][j].id = gSaveIds[i];
                 }
                 D_80123D28[i] = 1;
             }
@@ -236,9 +231,6 @@ u8 Save_ReadAll(void) {
     }
     return r;
 }
-#else
-INCLUDE_ASM("asm/nonmatchings/unit_50510", Save_ReadAll);
-#endif
 
 void Save_NewId(void);
 s32 Save_Commit(void) {
@@ -429,10 +421,6 @@ inline void Unlocks_SetMask(Bits5_ *b, u32 mask) {
     }
 }
 
-/* TODO(match-debt): 782/800 words (s39, REA pseudocode as base; Unlocks_GetMask is now `inline`, which reproduces the
- * stack-resident mask). Residual: gcc swaps the registers of bi/r ($a2/$a3) and schedules the out[k] store differently.
- * The swap loop needs a local `j2 = i * 2` (otherwise gcc hoists the table addresses). See MATCH_LOG.md. */
-#ifdef NON_MATCHING
 typedef struct { u8 pad[0x14]; u32 lo; u32 hi; u32 w1C; u8 p20[2]; u8 b22; u8 b23; s32 w24; s32 w28; s32 w2C; s32 w30; s32 w34; s32 w38; } PwSrc_;
 extern u8 gPasswordChars[];
 extern u8 D_800F6028[];
@@ -445,11 +433,9 @@ s32 Password_Encode(p, out)
 {
     u8 buf[12];
     u32 mask;
-    u8 i;
     u8 bi;
-    u8 r;
     u8 k;
-    s32 v;
+    u8 r;
     u32 sum;
     u8 t;
     s32 j2;
@@ -468,17 +454,17 @@ s32 Password_Encode(p, out)
     buf[10] = (p->w38 & 0x7F) | ((u8)(p->b23 << 4) & 0x80);
     buf[11] = 0;
     D_80123D2C = 0;
-    r = 0;
-    k = 0;
     bi = 0;
+    k = 0;
+    r = 0;
     do {
         if (r < 4) {
-            v = (((buf[bi] >> r) & 0x1F) + D_80123D2C) % 32;
+            D_80123D2C = (((buf[bi] >> r) & 0x1F) + D_80123D2C) % 32;
+            out[k] = gPasswordChars[D_80123D2C];
         } else {
-            v = ((((buf[bi] >> r) | ((buf[bi + 1] & D_800F6028[r]) << (8 - r))) & 0x1F) + D_80123D2C) % 32;
+            D_80123D2C = ((((buf[bi] >> r) | ((buf[bi + 1] & D_800F6028[r]) << (8 - r))) & 0x1F) + D_80123D2C) % 32;
+            out[k] = gPasswordChars[D_80123D2C];
         }
-        D_80123D2C = v;
-        out[k] = gPasswordChars[(u8)v];
         k++;
         r += 5;
         if (r >= 8) {
@@ -487,27 +473,23 @@ s32 Password_Encode(p, out)
         }
     } while (k < 18);
     sum = 0;
-    for (i = 0; i < 18; i++) {
-        sum += out[i];
+    for (bi = 0; bi < 18; bi++) {
+        sum += out[bi];
     }
     out[18] = gPasswordChars[sum & 0x1F];
     out[19] = gPasswordChars[31 - (sum & 0x1F)];
     out[20] = 0;
-    for (i = 0; i < 6; i++) {
-        j2 = i * 2;
+    for (bi = 0; bi < 6; bi++) {
+        j2 = bi * 2;
         t = out[D_800F601C[j2]];
         out[D_800F601C[j2]] = out[D_800F601D[j2]];
         out[D_800F601D[j2]] = t;
     }
 }
-#else
-INCLUDE_ASM("asm/nonmatchings/unit_50510", Password_Encode);
-#endif
 
-/* TODO(match-debt): 239/328 words (s39, REA pseudocode as base). Structure and constants confirmed (cheat table
- * {name, unlock mask, w1C bits}, checksum bytes 18/19, 5-bit packing). Residual: register allocation (the original keeps
- * the name index in $s1, we use $a3) and the char-search loop shape. The pair-swap loop needs `j2 = i * 2` and two
- * distinct table symbols (D_800F601C / D_800F601D) to stop gcc hoisting the table addresses. */
+/* TODO(match-debt): 324/326 words (1304/1304 B exact, s62). Wrap32_ helper closes bnel/bltz/addiu;
+ * residual is 2 words: andi $v0, 0xFF at 0x2CC vs 0x2D4 (before vs after sb D_80123D2C) and
+ * delay slot at 0x2E8 (andi $a3, $v0, 0xFF threaded vs addu $v0, $v1, $zero). */
 #ifdef NON_MATCHING
 typedef struct { char s[20]; } Cdt20_;
 typedef struct { char *name; u32 mask; u32 w1C; } Cheat_;
@@ -518,24 +500,59 @@ extern u8 D_800F601D[];
 extern u8 D_800F5FC7[];
 extern char D_80100BA4[];
 extern Cheat_ D_800F5FC8[];
+
+static inline void Password_Unscramble_(u8 *p) {
+    u8 i;
+    u8 t;
+    s32 j2;
+
+    i = 6;
+    do {
+        i--;
+        j2 = i * 2;
+        t = p[D_800F601C[j2]];
+        p[D_800F601C[j2]] = p[D_800F601D[j2]];
+        p[D_800F601D[j2]] = t;
+    } while (i != 0);
+}
+
+static inline u8 Password_FindChar_(u8 ch) {
+    u8 i;
+
+    for (i = 0; i < 32; i++) {
+        if (gPasswordChars[i] == ch) {
+            return i;
+        }
+    }
+    return 0xFF;
+}
+
+static inline u8 Password_Wrap32_(s32 d) {
+    if (d >= 0) {
+        return d;
+    }
+    return d + 32;
+}
+
+static inline u8 Password_DecodeChar_(u8 ch) {
+    s32 v = Password_FindChar_(ch);
+    u8 prev = D_80123D2C;
+
+    D_80123D2C = v;
+    return Password_Wrap32_((u8)v - prev);
+}
+
 s32 Password_Decode(in, dst)
     char *in;
     PwSrc_ *dst;
 {
     u8 buf[11];
     u8 name[21];
-    u8 i;
-    u8 k;
     u8 bi;
+    u8 k;
     u8 r;
-    u8 j;
-    u8 n;
-    u8 t;
     u32 sum;
-    s32 d;
-    s32 prev;
-    s32 v;
-    s32 j2;
+    s32 val;
 
     *(Cdt20_ *)name = *(Cdt20_ *)in;
     name[20] = 0;
@@ -543,72 +560,45 @@ s32 Password_Decode(in, dst)
         dst->hi |= 0x20;
         return 0;
     }
-    for (k = 0; k < 7; k++) {
-        if (strcmp(D_800F5FC8[k].name, (char *)name) == 0) {
-            Unlocks_SetMask((Bits5_ *)dst, D_800F5FC8[k].mask);
-            dst->w1C |= D_800F5FC8[k].w1C;
+    for (bi = 0; bi < 7; bi++) {
+        if (strcmp(D_800F5FC8[bi].name, (char *)name) == 0) {
+            Unlocks_SetMask((Bits5_ *)dst, D_800F5FC8[bi].mask);
+            dst->w1C |= D_800F5FC8[bi].w1C;
             return 0;
         }
     }
-    i = 6;
-    do {
-        i--;
-        j2 = i * 2;
-        t = name[D_800F601C[j2]];
-        name[D_800F601C[j2]] = name[D_800F601D[j2]];
-        name[D_800F601D[j2]] = t;
-    } while (i != 0);
+    Password_Unscramble_(name);
     sum = 0;
-    for (i = 0; i < 18; i++) {
-        sum += name[i];
+    for (bi = 0; bi < 18; bi++) {
+        sum += name[bi];
     }
     if (name[18] != gPasswordChars[sum & 0x1F] || name[19] != D_800F5FC7[-(sum & 0x1F)]) {
         return 1;
     }
-    for (i = 0; i < 11; i++) {
-        buf[i] = 0;
+    for (bi = 0; bi < 11; bi++) {
+        buf[bi] = 0;
     }
     D_80123D2C = 0;
     bi = 0;
     k = 0;
     r = 0;
     do {
-        n = 0;
-        j = 0;
-        for (;;) {
-            if (gPasswordChars[j] == name[k]) {
-                v = j;
-                break;
-            }
-            n++;
-            if (n >= 32) {
-                v = 0xFF;
-                break;
-            }
-            j = n;
-        }
-        prev = D_80123D2C;
-        D_80123D2C = v;
-        d = (u8)v - prev;
-        if (d < 0) {
-            d += 32;
-        }
-        d = (u8)d;
+        val = Password_DecodeChar_(name[k]);
         if (r < 4) {
-            buf[bi] |= (d & 0x1F) << r;
+            buf[bi] |= (val & 0x1F) << r;
         } else {
-            buf[bi] |= (d & 0xFF) << r;
-            buf[bi + 1] |= D_800F6030[r] & ((d & 0xFF) >> (8 - r));
+            buf[bi] |= val << r;
+            buf[bi + 1] |= D_800F6030[r] & (val >> (8 - r));
         }
         k++;
         r += 5;
         if (r >= 8) {
-            bi++;
             r -= 8;
+            bi++;
         }
     } while (k < 18);
     Unlocks_SetMask((Bits5_ *)dst, buf[0] | (buf[1] << 8) | (buf[2] << 16));
-    dst->w1C |= (buf[4] << 8) | buf[3];
+    dst->w1C |= buf[3] | (buf[4] << 8);
     dst->w24 = buf[5] & 0x7F;
     dst->w28 = buf[6] & 0x7F;
     dst->w2C = buf[7] & 0x7F;

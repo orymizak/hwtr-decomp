@@ -402,37 +402,33 @@ void PauseUi_DrawMenu(PauseMenu *m, u8 sel) {
     }
 }
 
-/* ~71/88 words: same registers for cx/y/r/g/b ($s4/$fp/$s5/$s6/$s7); the original tests the first character through
- * `text` ($s3) in $v0 and schedules the prologue moves differently. From REA/Ghidra: s16 centering, kerning(0, s[0], s[1])
- * guarded by s[1] != 0, two identical walks (measure, draw). */
-#ifdef NON_MATCHING
-void PauseUi_DrawText(u8 *text, s32 cx, u16 y, u8 r, u8 g, u8 b) {
-    u8 *s = text;
-    s32 w = 0;
-    s32 t;
-    s32 x;
-    s32 c = cx;
+static inline s16 PauseUi_MeasureText_(u8 *s) {
+    s16 w = 0;
 
     while (*s != 0) {
-        t = w + svcFontGetCharWidth(0, *s);
-        w = t;
+        w += svcFontGetCharWidth(0, *s);
         if (s[1] != 0) {
-            w = Font_GetKerning(0, *s, s[1]) + t;
+            w += Font_GetKerning(0, *s, s[1]);
         }
         s++;
     }
-    x = c - ((s16)w / 2);
-    svcDraw2DSetColor(r, g, b);
+    return w;
+}
+
+void PauseUi_DrawText(u8 *text, u16 cx, u16 y, u8 r, u8 g, u8 b) {
+    u8 *s;
+    s16 w;
+    s16 x;
+
+    w = PauseUi_MeasureText_(text);
+    x = cx - (w / 2);
     s = text;
+    svcDraw2DSetColor(r, g, b);
     while (*s != 0) {
-        t = x + svcFontDrawChar(0, *s, (u16)x, y, 0);
-        x = t;
+        x += svcFontDrawChar(0, *s, x, y, 0);
         if (s[1] != 0) {
-            x = Font_GetKerning(0, *s, s[1]) + t;
+            x += Font_GetKerning(0, *s, s[1]);
         }
         s++;
     }
 }
-#else
-INCLUDE_ASM("asm/nonmatchings/unit_6AE90", PauseUi_DrawText);
-#endif

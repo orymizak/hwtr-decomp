@@ -1,5 +1,150 @@
 # Sesión de Decompilación HWTR
 
+## Sesión 64 (2026-11-26) — REA + Ghidra + C + ASM: 2 nuevos MATCH exactos (`Hud_DrawSlideFromLeft` +452 B, `Hud_DrawSlideFromRight` +440 B; **+892 B**) + mejora `Password_Decode` (`324/326`) → **91.70 % objdiff**
+- **Métrica oficial objdiff:** **91.70 %** (**506,872 / 552,756 B**), **1,842 / 1,910 funciones (96.44 %)**, **187 / 221 unidades completas** (`report/us/report.json == build/us/report.json`).
+- **ROM:** SHA-1 `94913a07e49005ffd43dfdfa16ff5862bdb93748` (OK). `verify_funcs.py` y `check_no_asm.py`: OK.
+- **Entorno:** `rea_query.py` OK (una sola consulta para `Hud_DrawSlideFromLeft`, `Hud_DrawSlideFromRight`, `Password_Decode` y `Mesh_BuildDisplayList`).
+- Sin commit (el árbol de trabajo acumula **21 funciones exactas ganadas desde HEAD `8df6220`** — listo para revisión y `make clean && make` del usuario si desea commitear).
+
+| Función | Unidad / tamaño | Resultado | Detalle clave |
+|---|---|---|---|
+| `Hud_DrawSlideFromLeft` | `src/unit_49CF0.c`, 452 B | **MATCH 113/113** (+452 B) | `if` anidado con doble `svcFontGetCharWidth` da a `s` la ref extra para `$s1`/`$s2`; `u8 *s = arg0; u8 c = cnt;` fija prólogo; `-e->gap + Font_GetKerning(...)` + `while (0) {}` cierra la última palabra |
+| `Hud_DrawSlideFromRight` | `src/unit_49CF0.c`, 440 B | **MATCH 110/110** (+440 B) | Mismo patrón que `Hud_DrawSlideFromLeft` (`if` anidado, `u8 c = cnt;`, `-e->gap + Font_GetKerning(...)`, `while (0) {}`) |
+| `Password_Decode` | `src/unit_50510.c`, 1,304 B | `NON_MATCHING` **324/326** (mejorada desde 318/326, 0 B) | `static inline u8 Password_Wrap32_(s32 d)` cierra `bnel`, `bltz` y `addiu`; solo quedan 2 palabras (`andi` en `0x2CC` vs `0x2D4`, y delay slot `0x2E8`) |
+| `Mesh_BuildDisplayList` | `src/unit_19D40.c`, 2,708 B | `NON_MATCHING` **591/677** (sin cambio, 0 B) | `-df`/`-dg` confirma rotación pura `$s0..$s6` (`curTex` 15 usos vs `p+3` 89 usos en `allocno_compare`) |
+
+---
+
+## Sesión 61 (2026-11-26) — REA + Ghidra + C + ASM: 1 nuevo MATCH exacto (`Save_ReadAll`, +776 B) → **91.25 % objdiff**
+- **Métrica oficial objdiff:** **91.25 %** (**504,372 / 552,756 B**), **1,838 / 1,910 funciones (96.23 %)**, **187 / 221 unidades completas** (`report/us/report.json == build/us/report.json`).
+- **ROM:** SHA-1 `94913a07e49005ffd43dfdfa16ff5862bdb93748` (OK). `verify_funcs.py` y `check_no_asm.py`: OK.
+- **Entorno:** `rea_query.py` OK (una sola consulta para `Hud_DrawTurbos`, `Save_ReadAll`, `Cup_SetupRace` y `Coll_SyncObjects`).
+- Sin commit (el árbol de trabajo acumula ya **17 funciones exactas ganadas desde HEAD `8df6220`** — listo para revisión y `make clean && make` del usuario si desea commitear).
+
+| Función | Unidad / tamaño | Resultado | Detalle clave |
+|---|---|---|---|
+| `Save_ReadAll` | `src/unit_50510.c`, 776 B | **MATCH 194/194** (+776 B) | Tipar `E140_` con `s32 id; u8 d[0x13C];` y escribir `gSaveSlots[i][j].id = gSaveIds[i]` evita subir `&gSaveSlots` a `$fp` y libera `$fp` para `&sysSaveRead`; `for (k = 0, n = 0xD90; k < n; k++)` cierra la última palabra |
+| `Cup_SetupRace` | `src/unit_53B30.c`, 508 B | `NON_MATCHING` **126/127** (sin cambio, 0 B) | Variantes de `ofs`, `D_80123EC1`, barreras y `decomp-permuter` 25 s no movieron `subu $v1, $v1, $a0` de `0x1B0` a `0x1A8` |
+| `Hud_DrawTurbos` | `src/unit_49CF0.c`, 1,528 B | `NON_MATCHING` **382/382 masked / 377/382 exactas** (sin cambio, 0 B) | Límite de sesiones alcanzado sobre el offset de spill `0x37($sp)` vs `0x1F($sp)` |
+| `Coll_SyncObjects` | `src/unit_39C90.c`, 1,216 B | `NON_MATCHING` **277/304** (sin cambio, 0 B) | Variantes de `TransformShape_` (macros, helpers, permutaciones de locales); cargar `src`/`dst` antes de `m` iguala tamaño (`1216/1216 B`) pero desplaza loads (274/304) |
+
+---
+
+## Sesión 57 (2026-11-26) — C + ASM: mejora estructural `NON_MATCHING` en `SndSrc_Play` (residual reducido a 1 instr) → **90.61 % objdiff**
+- **Métrica oficial objdiff:** **90.61 %** (**500,844 / 552,756 B**), **1,834 / 1,910 funciones (96.02 %)**, **185 / 221 unidades completas** (`report/us/report.json == build/us/report.json`).
+- **ROM:** SHA-1 `94913a07e49005ffd43dfdfa16ff5862bdb93748` (OK). `verify_funcs.py` y `check_no_asm.py`: OK.
+- **Entorno:** `rea` no estaba disponible en `PATH` (análisis por ASM y código hermano en `src/`).
+- Sin commit (0 funciones exactas ganadas en esta sesión; siguen **13 funciones exactas ganadas desde HEAD `8df6220`** — listo para revisión y `make clean && make` del usuario si desea commitear).
+
+| Función | Unidad / tamaño | Resultado | Detalle clave |
+|---|---|---|---|
+| `SndSrc_Play` | `src/unit_01050.c`, 420 B | `NON_MATCHING` **100/105** (mejorada, **104/105** salvo 1 instr / 3 offsets, 0 B) | `if (s != NULL) { ... if (busy != 0) return 0; } else { return 0; }` cierra el 100 % del flujo de control (`0xF8`, `0x150` `return 0`, `0x180` `return 1` fallthrough); solo falta `addu $a0, $v0, $zero` antes de `beqz $a0` |
+| `Race_ReadPlayerControls` | `src/unit_2C6A0.c`, 844 B | `NON_MATCHING` **194/211** (sin cambio, 0 B) | Anidado `if (!(t < 0.0f)) { if (!(t > 1.0f)) ... }` corrige el 2.º `bc1tl`, pero persisten el 3.º y la asignación `$f0/$f6` para `1.0f` |
+| `n_alFxPull` | `src/unit_74AB0.c`, 784 B | `NON_MATCHING` **195/196** (sin cambio, 0 B) | Variantes de `aDMEMMove`, `static inline` y barreras no movieron `addiu $v0, $t0, 0x8` de `0x2D4` a `0x2C8` |
+| `Mesh_GetMaterialList` | `src/unit_19D40.c`, 392 B | `NON_MATCHING` **91/98** (sin cambio, 0 B) | Variantes de puntero `dst`, `m` compartido y `do-while` no resolvieron el intercambio `$t0`/`$t1` en el bucle de submesh |
+
+---
+
+## Sesión 56 (2026-11-26) — C + ASM: 1 nueva reconstrucción grande `NON_MATCHING` (`Coll_ProbeWheels`, 4,244 B) → **90.61 % objdiff** (detenida por 3 `NON_MATCHING` seguidas sin ganar bytes)
+- **Métrica oficial objdiff:** **90.61 %** (**500,844 / 552,756 B**), **1,834 / 1,910 funciones (96.02 %)**, **185 / 221 unidades completas** (`report/us/report.json == build/us/report.json`).
+- **ROM:** SHA-1 `94913a07e49005ffd43dfdfa16ff5862bdb93748` (OK). `verify_funcs.py`: 1,814 funciones en C, 483,472 B, todas en su dirección final. `check_no_asm.py`: OK.
+- **Entorno:** `rea` no estaba en `PATH` (`prepare_elf.py` OK; análisis por ASM + funciones hermanas en `src/`).
+- Sin commit (0 funciones exactas ganadas en esta sesión; siguen **13 funciones exactas ganadas desde HEAD `8df6220`**).
+
+| Función | Unidad / tamaño | Resultado | Detalle clave |
+|---|---|---|---|
+| `CupResults_SetupTexts` | `src/unit_53B30.c`, 1,516 B | `NON_MATCHING` **378/379** (sin cambio, 0 B) | `CupRec_ *recs` local corrige el orden de `addu $v0, $v0, $t0` pero rota `$t0/$t1/$t2` (+1 instr) |
+| `Password_Decode` | `src/unit_50510.c`, 1,304 B | `NON_MATCHING` **318/326** (sin cambio, 0 B) | Variantes `u8`/`s32` en `Password_DecodeChar_`/`Password_FindChar_` y `if/else` vs ternario no cerraron `0x2B8..0x2F8` |
+| `Coll_ProbeWheels` | `src/unit_39C90.c`, 4,244 B | `NON_MATCHING` **835/1061** (nueva, **4240/4244 B**, **1023/1061 opcode-only**, 0 B) | Reconstrucción completa de 4 pasadas (`P1: 87/90`, `P4: 162/164`, `P3: 203/246`); residual en marco `0x3F0` vs `0x400` (`$s7` retenido para `($sp+0x10)+id*24` en vez de spill a `0x394($sp)`) |
+
+También exploradas brevemente sin cambio en `src/`: `n_alFxPull` (195/196), `SndSrc_Play` (100/105), `Mesh_GetMaterialList` (91/98), `Hud_DrawSlideFromRight` (80/110).
+
+---
+
+## Sesión 55 (2026-11-26) — REA + Ghidra + C + ASM: 1 nuevo MATCH exacto (+1,164 B) + 4 mejoras `NON_MATCHING` → **90.61 % objdiff**
+- **Métrica oficial objdiff:** **90.61 %** (**500,844 / 552,756 B** — **¡superados los 500 KB!**), **1,834 / 1,910 funciones (96.02 %)**, **185 / 221 unidades completas** (`report/us/report.json == build/us/report.json`).
+- **ROM:** SHA-1 `94913a07e49005ffd43dfdfa16ff5862bdb93748` (OK). `verify_funcs.py`: 1,813 funciones en C, 479,228 B, todas en su dirección final. `check_no_asm.py`: OK.
+- Sin commit aún (**13 funciones exactas ganadas desde HEAD `8df6220`** — listo para revisión y `make clean && make` del usuario si desea commitear).
+
+| Función | Unidad / tamaño | Resultado | Detalle clave |
+|---|---|---|---|
+| `Audio_Init` | `src/unit_01050.c`, 1,164 B | **MATCH 291/291** (+1,164 B) | Separar `D_800EFD88[9][8]` de `gAudio`, barrera `do { } while (0);` tras `sfxTable[60]`, locales `ptrStart`/`ptrEnd` con símbolos `rom_files_CCCSND_*` y punteros `p` en ambos bucles de puesta a cero |
+| `CupResults_SetupTexts` | `src/unit_53B30.c`, 1,516 B | `NON_MATCHING` **378/379** (subido desde 377/379, 0 B) | Usar `pos * 0x19 + 0xF0` en el bucle `3..5` elimina `yBlank` y cierra toda la segunda mitad al 100 %; solo queda el orden de `addu` en `0x0094` |
+| `n_alFxPull` | `src/unit_74AB0.c`, 784 B | `NON_MATCHING` **195/196** (subido desde 190/196, 0 B) | Precalcular `w1` antes de `do { } while (0);` en el `aDMEMMove` final; solo queda la posición de `addiu $v0, $t0, 0x8` (`0x2D4` vs `0x2C8`) |
+| `SndSrc_Play` | `src/unit_01050.c`, 420 B | `NON_MATCHING` **100/105** (subido desde 96/105, 0 B) | Struct `AudioBlock_` (`extra[9][8]` + `sndSrcList` en `+0x378`) iguala `0x000..0x0F4` al 100 %; residual de 5 palabras en `Snd_IsPlaying` |
+| `SortQueue_Sort` | `src/unit_20830.c`, 816 B | `NON_MATCHING` **179/204** (subido desde 158/204, 0 B) | Mover `sp += 2` dentro de ambas ramas del push resuelve el intercambio `$t3/$t4` en toda la función; residual en `move $4,$9` (`0x12C`) |
+
+Otras funciones investigadas con REA/Ghidra y ASM sin cambio en `src/`: `Password_Decode` (318/326), `Mesh_GetMaterialList` (91/98), `Race_ReadPlayerControls` (194/211), `Mesh_BuildDisplayList` (591/677).
+
+---
+
+## Sesión 54 (2026-11-26) — REA + Ghidra + C + ASM: 2 nuevos MATCH exactos (+1,312 B, 1 unidad completa) → **90.40 % objdiff**
+- **Métrica oficial objdiff:** **90.40 %** (**499,680 / 552,756 B**), **1,833 / 1,910 funciones (95.97 %)**, **185 / 221 unidades completas** (`report/us/report.json == build/us/report.json`).
+- **ROM:** SHA-1 `94913a07e49005ffd43dfdfa16ff5862bdb93748` (OK). `verify_funcs.py`: 1,813 funciones en C, 479,228 B, todas en su dirección final. `check_no_asm.py`: OK.
+- Sin commit aún (**12 funciones exactas ganadas desde HEAD `8df6220`** — listo para revisión y `make clean && make` del usuario si desea commitear).
+
+| Función | Unidad / tamaño | Resultado | Detalle clave |
+|---|---|---|---|
+| `Gfx_UpdateLights` | `src/unit_103B0.c`, 676 B | **MATCH 169/169** (completa `unit_103B0` 100 %) | `extern u8 gNumLights[]` + `Lights7 *lights` (`&lights->l[i]`, `&lights->a`) + `((LightFlag_ *)&gLightsDirty)->v = 0` (`MEM_IN_STRUCT_P` impide el hoist de `sb` sobre `sw 0xC($a0)` sin alterar `Light_SetColor`) |
+| `Coll_LoadLevel` | `src/unit_39C90.c`, 636 B | **MATCH 159/159** | `((CollPtr_ *)&gCollLevel)->p + 0xD8` (`MEM_IN_STRUCT_P` mantiene la segunda carga `lui/lw` de `gCollLevel` en `$v1` antes de `+ 0xD8`) |
+
+Otras funciones investigadas sin cambio en `src/` (presupuesto agotado): `n_alFxPull` (190/196), `Race_ReadPlayerControls` (192/211), `Password_Decode` (318/326), `Mesh_GetMaterialList` (91/98), `Cup_SetupRace` (hipótesis probada a 112/127 con `lap[2]` duplicado y `D_80123EC1[]`), `Hud_DrawSlideFromLeft`/`Right` (84/113, 80/110), `Coll_SyncObjects` (277/304), `SndSrc_Play` (96/105).
+
+---
+
+## Sesión 53 (2026-11-26) — C + ASM: 4 nuevos MATCH exactos (+4,464 B, 3 unidades completas) + 1 `NON_MATCHING` → **90.16 % objdiff**
+- **Métrica oficial objdiff:** **90.16 %** (**498,368 / 552,756 B**), **1,831 / 1,910 funciones (95.86 %)**, **184 / 221 unidades completas** (`report/us/report.json == build/us/report.json`) — **¡superado el 90 %!**
+- **ROM:** SHA-1 `94913a07e49005ffd43dfdfa16ff5862bdb93748` (OK). `verify_funcs.py`: 1,813 funciones en C, 479,228 B, todas en su dirección final. `check_no_asm.py`: OK.
+- Sin commit aún (10 funciones exactas ganadas desde HEAD `8df6220`, en espera de ~30 funciones o confirmación del usuario con `make clean && make`).
+
+| Función | Unidad / tamaño | Resultado | Detalle clave |
+|---|---|---|---|
+| `Model_SwapPalette` | `src/unit_06050.c`, 324 B | **MATCH 80/80** (completa `unit_06050` 100 %) | `(u8 *)pals + (k << 3) + 4` fija `$v0/$v1`; temporales `a/c/d` para `<< 11`/`<< 6`/`<< 1` antes de `d \| (a \| c) \| 1` |
+| `Scroller_DrawLine` | `src/unit_27A40.c`, 492 B | **MATCH 123/123** (completa `unit_27A40` 100 %) | `u32 x = 0; u8 *p = str;` antes de `if (bright != 0)` + `x += sysFontGetCharWidth(0, *p) + Font_GetKerning(0, *p, p[1])` |
+| `PauseUi_DrawText` | `src/unit_6AE90.c`, 352 B | **MATCH 88/88** (completa `unit_6AE90` 100 %) | `static inline s16 PauseUi_MeasureText_(u8 *s)`, `u16 cx`, `s16 w/x`, `s = text` antes de `svcDraw2DSetColor` |
+| `CarSnd_Update` | `src/unit_01050.c`, 3,296 B | **MATCH 824/824** | Variable `s32 type;` compartida en `if (p1)` y `if (p0)` del coche 0 (sin cruzar llamadas → `$v1`, evita hoist de `li 13` al delay slot de `beqz $s7`) |
+
+Reconstrucción `NON_MATCHING` añadida en `src/` bajo `#ifdef NON_MATCHING` (0 B oficiales):
+- `SortQueue_Sort` (`src/unit_20830.c`, 816 B): **158/204** palabras, tamaño exacto **816/816 B** (quicksort iterativo + insertion sort `M=7`; residual: intercambio `$t3/$t4` entre `sp`/`q` y `move $4, $9`).
+
+---
+
+## Sesión 52 (2026-11-26) — C + ASM: 1 nuevo MATCH exacto (+416 B, completa `gfx_pools` 100 %) + 4 mejoras `NON_MATCHING` → **89.35 % objdiff**
+- **Métrica oficial objdiff:** **89.35 %** (**493,904 / 552,756 B**), **1,827 / 1,910 funciones (95.65 %)**, **181 / 221 unidades completas** (`report/us/report.json == build/us/report.json`).
+- **ROM:** SHA-1 `94913a07e49005ffd43dfdfa16ff5862bdb93748` (OK). `verify_funcs.py`: 1,811 funciones en C, 477,920 B, todas en su dirección final. `check_no_asm.py`: OK.
+- Sin commit aún (6 funciones exactas ganadas desde HEAD `8df6220`, en espera de ~30 funciones o confirmación del usuario con `make clean && make`).
+
+| Función | Unidad / tamaño | Resultado | Detalle clave |
+|---|---|---|---|
+| `GfxPools_Init` | `src/gfx_pools.c`, 416 B | **MATCH 104/104** (completa `gfx_pools` 100 %) | Reordenado de `chunkCount = 1` tras `end` en `GfxPool_Init`/`VtxPool_Init`/`MtxPool_Init` (`0x300` en `$a0`, `1` en `$a2`) |
+
+Reconstrucciones `NON_MATCHING` añadidas/mejoradas en `src/` bajo `#ifdef NON_MATCHING` (0 B oficiales):
+- `Mesh_BuildDisplayList` (`src/unit_19D40.c`, 2,708 B): **591/677** palabras, tamaño exacto **2,708/2,708 B**, 0 diffs de opcodes/scheduling (residual: rotación pura `$s0..$s6` con `curTex` en `$s6` vs `$s0`).
+- `Password_Decode` (`src/unit_50510.c`, 1,304 B): **318/326** palabras (subido desde 239/328), tamaño exacto **1,304/1,304 B**.
+- `n_alFxPull` (`src/unit_74AB0.c`, 784 B): **190/196** palabras, tamaño exacto **784/784 B** (`0x000..0x2BC` idéntico).
+- `Coll_BoxCornersVsWorld` (`src/unit_39C90.c`, 6,472 B): **992/1,618** palabras (6,408/6,472 B, frame `0x278` y offsets de pila exactos).
+
+---
+
+## Sesión 51 (2026-11-25) — REA + Ghidra + C: 5 nuevos MATCH exactos (+11,528 B, 1 unidad completa) → **89.28 % objdiff**
+- **Métrica oficial objdiff:** **89.28 %** (**493,488 / 552,756 B**), **1,826 / 1,910 funciones (95.60 %)**, **180 / 221 unidades completas** (`report/us/report.json == build/us/report.json`).
+- **ROM:** SHA-1 `94913a07e49005ffd43dfdfa16ff5862bdb93748` (OK). `verify_funcs.py`: 1,807 funciones en C, 470,248 B, todas en su dirección final. `check_no_asm.py`: OK.
+- Sin commit aún (5 funciones exactas ganadas desde HEAD `8df6220`, en espera de ~30 funciones o confirmación del usuario con `make clean && make`).
+
+| Función | Unidad / tamaño | Resultado | Detalle clave |
+|---|---|---|---|
+| `Hud_ShowTrick` | `src/unit_49CF0.c`, 1,984 B | **MATCH 496/496** | `(s16)turbos` en `sprintf` (evita `li $a2, 1` y permite cross-jump de `D_80100AD0` + `andi $a2, $s5, 0xFF`), `Order3_49CF0_` (`D_80100AC4`), `ElPair_ el[3]` en `HudF0_` |
+| `Garage_SetupTexts` | `src/unit_53B30.c`, 1,388 B | **MATCH 347/347** | `else if (i + 1 >= 0x29)` duplicando `prev = i - 1;` en ambas ramas para que `prev` no cruce `slti` y se aloje en `$v0` (P1 y P2) |
+| `Coll_BoxVsWorldEdges` | `src/unit_39C90.c`, 3,784 B | **MATCH 946/946** | `u8 CollBox_EdgeSeparatingAxis`, `u8 a, b; if (!a)` en los 6 recortes, `f32 t` compartida con `depth`/`dot` (`$fa1`), ternarios `dxp..dzm` con `neg.s`+`sub.s`, `ldir * seg.len` directo |
+| `ModelData_Draw` | `src/unit_13490.c`, 3,572 B | **MATCH 893/893** (completa `unit_13490` 100 %) | `inline SceneNode_DrawSingle`/`ModelData_SetVariant`, `a0Mtx`/`a1Mtx` para la evaluación de `Mtx34_Mul` en hijos (`child->child`), `ev = m->envVtx` y bucle `rand() & 1` de partículas |
+| `Password_Encode` | `src/unit_50510.c`, 800 B | **MATCH 200/200** | Promovido de `NON_MATCHING`: asignación directa a `D_80123D2C` y `out[k] = gPasswordChars[D_80123D2C]` dentro de ambas ramas `if (r < 4) / else`, reutilizando `bi` en los bucles de suma y permutación |
+
+Reconstrucciones `NON_MATCHING` congeladas/conservadas en `src/` bajo `#ifdef NON_MATCHING` (0 B oficiales):
+- Congeladas tras pasada de permuter: `CarSnd_Update` (`src/unit_01050.c`, **819/824**, 3,296/3,296 B), `Hud_DrawTurbos` (`src/unit_49CF0.c`, **374/382**, 1,524/1,528 B), `Coll_PointsVsWorld` (`src/unit_39C90.c`, **969/1311**, 5,244/5,232 B).
+- Trabajadas en esta sesión (con tope de 5 variantes sin subida): `CupResults_SetupTexts` (`src/unit_53B30.c`, **377/379**, 1,516/1,516 B exacto, subido desde 306/380), `Coll_SyncObjects` (`src/unit_39C90.c`, **277/304**, 1,212/1,216 B), `Audio_Init` (`src/unit_01050.c`, **273/291**, 1,164/1,164 B exacto), `Cup_SetupRace` (`src/unit_53B30.c`, **96/127**, 496/508 B, subido desde 88/127), `SndSrc_Play` (`src/unit_01050.c`, **96/105**, 416/420 B), `Mesh_GetMaterialList` (`src/unit_19D40.c`, **91/98**, 388/392 B). Detalle completo en `MATCH_LOG.md`.
+
+---
+
 ## Sesión 49 (2026-11-25) — REA + Ghidra + C: 5 nuevos MATCH exactos (+10,920 B, 2 unidades completas) → **84.37 % objdiff**
 - **Métrica oficial objdiff:** **84.37 %** (**466,380 / 552,756 B**), **1,814 / 1,910 funciones (94.97 %)**, **176 / 221 unidades completas** (`report/us/report.json == build/us/report.json`).
 - **ROM:** SHA-1 `94913a07e49005ffd43dfdfa16ff5862bdb93748` (OK). `verify_funcs.py`: 1,788 funciones en C, 431,544 B, todas en su dirección final. `check_no_asm.py`: OK.
@@ -276,3 +421,113 @@ De acuerdo con la regla de 3 intentos máximos por función de `AGENTS.md`, las 
    - Confirmar commits únicamente con `./tools/match/commit_unit.sh "<mensaje>" <archivos>` respetando la verificación automática del SHA-1 y `verify_funcs.py`.
    - No realizar `git push`.
    - Mantener el código legible y semánticamente correcto sin trampas, inline asm simulado ni fake matches.
+
+---
+
+## Sesión 58 (2026-11-26)
+
+- **Progreso oficial (`objdiff`):** **90.96 %** (`502,780 / 552,756 B`, `1,836 / 1,910` funciones, `186 / 221` unidades completas; **+1,936 B**, +2 funciones exactas, +1 unidad cerrada: `unit_01050`).
+- **REA/Ghidra:** `prepare_elf.py` OK, binario `rea` no disponible en `PATH`; análisis en ASM + `src/`.
+- **Matches exactos integrados:**
+  1. `SndSrc_Play` (`src/unit_01050.c`, **+420 B**, cierra `unit_01050.c`): cálculo muerto `s32 v = s->v * 128.0f * vol; if (v == 0) v = 1;` entre `Snd_IsPlaying` y `if (busy != 0)` + `extern AudioBlock_ D_800EFD88;`.
+  2. `CupResults_SetupTexts` (`src/unit_53B30.c`, **+1,516 B**): `static inline u8 *Cup_AddOff_` evita la reasociación en `D_80123F60[i].lap[D_80123EC1]`, `s32 *d = D_800F60E8; u8 *lap = &D_80123EC1;` fija el hoisting `$t2/$t1/$t0`, y firmas reales `u16 Time_Seconds/Time_Hundredths` y `u8 Cup_GetPosition`.
+- **Avance `NON_MATCHING`:** `Hud_DrawTurbos` (`src/unit_49CF0.c`, 1,528 B) pasa de 374/382 (1,524 B) a **382/382 enmascaradas / 377/382 exactas** (1,528/1,528 B); único residual: 5 offsets de spill de `turbos` (`0x37($sp)` vs `0x1F($sp)` por `u8 buf[24]`).
+- **Verificación:** `make`, SHA-1 `94913a07e49005ffd43dfdfa16ff5862bdb93748`, `verify_funcs.py` (1,814 funciones OK), `check_no_asm.py` y `objdiff_report.py` (`report/us/report.json == build/us/report.json`) OK.
+
+---
+
+## Sesión 59 (2026-11-26)
+
+- **Progreso oficial (`objdiff`):** **90.96 %** (`502,780 / 552,756 B`, `1,836 / 1,910` funciones, `186 / 221` unidades completas; sin cambio oficial en bytes).
+- **REA/Ghidra:** Activo vía `tools/rea/rea_query.py` (`~/.nvm/versions/node/v24.13.0/bin/rea`); consultado para todas las funciones objetivo (`Hud_DrawTurbos`, `Hud_DrawSlideFromLeft`/`Right`, `Password_Decode`, `Mesh_BuildDisplayList`, `Cup_SetupRace`).
+- **Avance `NON_MATCHING`:**
+  - `Cup_SetupRace` (`src/unit_53B30.c`, 508 B): pasa de `96/127` (`496/508 B`) a **126/127 (508/508 B exactos)** mediante `((CupRace_ *)&D_80123EC1)->race` (`MEM_IN_STRUCT_P = 1` para el reload en `$a0`), duplicación de `D_80123F60[2].lap[...] = 0` en ambas ramas de `cup == 2`, y `ofs = i * sizeof(CupRec_)` + `CupSetup_AddOff_` en `else`. Único residual: 1 posición de scheduling (`subu $v1, $v1, $a0` en `0x1A8` vs `0x1B0`).
+- **Diagnósticos RTL/permuter sin cambio en `src/`:** `Hud_DrawTurbos` (382/382 enmascaradas, 377/382 exactas), `Hud_DrawSlideFromLeft`/`Right` (84/113 y 80/110), `Password_Decode` (318/326, + rejilla 20 variantes + permuter 35 s), `Mesh_BuildDisplayList` (591/677).
+- **Verificación:** `make`, SHA-1 `94913a07e49005ffd43dfdfa16ff5862bdb93748`, `verify_funcs.py` (1,814 funciones OK), `check_no_asm.py` y `objdiff_report.py` (`report/us/report.json == build/us/report.json`) OK.
+
+---
+
+## Sesión 60 (2026-11-26)
+
+- **Progreso oficial (`objdiff`):** **91.11 %** (`503,596 / 552,756 B`, `1,837 / 1,910` funciones, `187 / 221` unidades completas; **+816 B**, +1 función exacta, +1 unidad cerrada: `unit_20830`).
+- **REA/Ghidra:** Activo vía `tools/rea/rea_query.py` (`~/.nvm/versions/node/v24.13.0/bin/rea`); consultado en una sola llamada para `Cup_SetupRace`, `Hud_DrawTurbos` y `SortQueue_Sort`.
+- **Match exacto integrado:**
+  1. `SortQueue_Sort` (`src/unit_20830.c`, **+816 B**, cierra `unit_20830.c`): quitar `do { ... } while (0)` de `#define SORTQ_SWAP(i, j)` (evita `NOTE_INSN_LOOP_BEG`/`END` en GCC 2.7.2 que creaban `move $4, $9` y frenaban `addiu $t0, -1`), mover `sp += 2;` antes del `if (r - i + 1 >= j - l)` y ordenar `i = l + 1; j = r; pivot = q->c[l];`.
+- **Diagnósticos sin cambio en `src/`:** `Cup_SetupRace` (`126/127`, variantes `i * 11` / casts / permuter 30 s sin mover `subu` de `0x1B0` a `0x1A8`), `Hud_DrawTurbos` (`377/382` exactas, `382/382` enmascaradas; confirmado que cualquier `buf[>=8]` desplaza `0x1F($sp)`).
+- **Verificación:** `make`, SHA-1 `94913a07e49005ffd43dfdfa16ff5862bdb93748`, `verify_funcs.py` (1,814 funciones OK), `check_no_asm.py` y `objdiff_report.py` (`report/us/report.json == build/us/report.json`) OK.
+
+---
+
+## Sesión 62 (2026-11-26)
+
+- **Progreso oficial (`objdiff`):** **91.54 %** (`505,980 / 552,756 B`, `1,840 / 1,910` funciones, `187 / 221` unidades completas; **+1,608 B** en esta sesión, +2 funciones exactas).
+- **REA/Ghidra:** Activo vía `tools/rea/rea_query.py` (`~/.nvm/versions/node/v24.13.0/bin/rea`); consultado en una sola llamada para `Race_ReadPlayerControls`, `Mesh_GetMaterialList` y `Coll_SyncObjects`.
+- **Matches exactos integrados:**
+  1. `Mesh_GetMaterialList` (`src/unit_19D40.c`, **+392 B**): `u32 m;` compartido entre ambos bucles + separación de `case 0:`..`case 12:` en el `switch` (aumenta refs de `p` antes de `jump2` para que `p` gane `$t0`, `m` quede en `$t1` y `out + count` reciba `$t0` en el segundo bucle).
+  2. `Coll_SyncObjects` (`src/unit_39C90.c`, **+1,216 B**): reemplazar `static inline TransformShape_` por `#define TRANSFORM_SHAPE_(sp) { ... }` sin `do { ... } while (0)` compartiendo `s`, `m[12]`, `i`, `src`, `dst` a ámbito de función (**304/304 exacto**).
+- **Diagnóstico sin cambio en `src/`:** `Race_ReadPlayerControls` (`src/unit_2C6A0.c`, `194/211`, `844/844 B`); agotado presupuesto (variantes de clamp/helpers + `greg` + permuter 25 s; `b` toma preferencia `$f0` y desplaza `1.0f` a `$f6`).
+- **Verificación:** `make`, SHA-1 `94913a07e49005ffd43dfdfa16ff5862bdb93748`, `verify_funcs.py` (1,814 funciones OK), `check_no_asm.py` y `objdiff_report.py` (`report/us/report.json == build/us/report.json`) OK.
+
+---
+
+## Sesión 63 (2026-11-26)
+
+- **Progreso oficial (`objdiff`):** **91.54 %** (`505,980 / 552,756 B`, `1,840 / 1,910` funciones, `187 / 221` unidades completas; sin cambio oficial en bytes).
+- **REA/Ghidra:** Activo vía `tools/rea/rea_query.py` (`~/.nvm/versions/node/v24.13.0/bin/rea`); consultado en una sola llamada para `Hud_DrawSlideFromLeft`, `Hud_DrawSlideFromRight`, `Mesh_BuildDisplayList` y `Coll_ProbeWheels`.
+- **Avance `NON_MATCHING`:**
+  - `Coll_ProbeWheels` (`src/unit_39C90.c`, 4,244 B): sube de `835/1061` a **887/1061** (+52 palabras) al corregir `p0 = q0*t + q2*s` y `p1 = q3*s + q1*t`. El volcado `-dL` (`loop.c`) identifica la causa exacta del residual (`0x3F0` vs `0x400`): en Pass 2, `loop.c` agota el presupuesto de hoisting 1 instrucción antes de sacar `id*12` (`Loop 319`) y `$sp+0x10` (`Loop 279`), dejando `($sp+0x10)+id*24` en `$s7` en vez de hacer spill a `0x394($sp)`.
+- **Diagnósticos sin cambio en `src/`:**
+  - `Mesh_BuildDisplayList` (`src/unit_19D40.c`, `591/677`, `2708/2708 B`): confirmado por remapeo que las **677/677** instrucciones son exactas salvo la rotación `$s0..$s6` (`curTex` en `$s0` vs `$s6`); variantes de tipo/bucle/`register` sin efecto.
+  - `Hud_DrawSlideFromLeft`/`Right` (`src/unit_49CF0.c`, `84/113` y `80/110`): `-df`/`-dg` confirma que `e` (`24 refs / 126 insns`) supera a `s` (`14 refs / 71 insns`) en `global_alloc`, invirtiendo `$s1/$s2`.
+- **Verificación:** `make`, SHA-1 `94913a07e49005ffd43dfdfa16ff5862bdb93748`, `verify_funcs.py`, `check_no_asm.py` y `objdiff_report.py` (`report/us/report.json == build/us/report.json`) OK.
+
+---
+
+## Sesión 65 (2026-11-26)
+
+- **Progreso oficial (`objdiff`):** **91.70 %** (`506,872 / 552,756 B`, `1,842 / 1,910` funciones, `187 / 221` unidades completas; sin cambio oficial en bytes).
+- **REA/Ghidra:** Activo vía `tools/rea/rea_query.py` (`~/.nvm/versions/node/v24.13.0/bin/rea`); consultado en una sola llamada para `Coll_ProbeWheels`, `Coll_PointsVsWorld` y `Coll_BoxCornersVsWorld`.
+- **Avances `NON_MATCHING` (`src/unit_39C90.c`):**
+  - `Coll_PointsVsWorld` (5,232 B): sube de `969/1311` (5,244 B) a **1258/1308 (5,232/5,232 B exactos, +289 palabras)** quitando `do { ... } while (0)` de `VEC3_SCALE_M`/`CHECK_WALL_PVW`, compartiendo `i`/`vp`/`c`, corrigiendo el orden de operandos de `Vec3_Cross_P_`, usando `if (k != 0)` y producto punto directo en `wn * wnorm[k]`. Residual: 50 palabras puramente de asignación de registros (`startVert`/`roomIdx` `$fp`↔`$t4`, `$fv0/$fv1` y `$ft1/$ft3`).
+  - `Coll_BoxCornersVsWorld` (6,472 B): sube de `992/1618` (6,408 B) a **1481/1618 (6,472/6472 B exactos, +489 palabras)** quitando `do { ... } while (0)`, cambiando `pd0s`/`pd1s` a `s32`, compartiendo `c` y usando `for (k = 0; k < 4; k++)` con productos punto directos sobre `wnorm[k]` + `if (k != 0)`. `0x0000..0x04C4` y `0x058C..0x0E0C` coinciden al 100 %; residual de 137 palabras puramente de asignación FPR.
+- **Diagnóstico sin cambio en `src/`:** `Coll_ProbeWheels` (`887/1061`, 4,228/4,244 B; `DotPW_(&carUp[id], &tmp)` iguala 4,244/4,244 B y cierra Pass 1 al 100 % + hoist de `&carUp[0]`, pero queda en `886/1061`).
+- **Verificación:** `make`, SHA-1 `94913a07e49005ffd43dfdfa16ff5862bdb93748`, `verify_funcs.py`, `check_no_asm.py` y `objdiff_report.py` (`report/us/report.json == build/us/report.json`) OK.
+
+---
+
+## Sesión 66 (2026-11-26)
+
+- **Progreso oficial (`objdiff`):** **92.65 %** (`512,104 / 552,756 B`, `1,843 / 1,910` funciones, `187 / 221` unidades completas; **+5,232 B**, +1 función exacta).
+- **REA/Ghidra:** Activo vía `tools/rea/rea_query.py` (`~/.nvm/versions/node/v24.13.0/bin/rea`); consultado en una sola llamada para `Coll_PointsVsWorld`, `Coll_BoxCornersVsWorld` y `Password_Decode`.
+- **Match exacto integrado:**
+  1. `Coll_PointsVsWorld` (`src/unit_39C90.c`, **+5,232 B**, `1308/1308` exacto): `dist = Vec3_Dot_P_(&objRel, &pl.n) + pl.d; if (dist < obj->radius)` cierra `0x194..0x20C`, `f32 vn;` compartido entre ambos bucles cierra `vrot2` (`0x1190..0x1254`), y reutilizar `j` en vez de `k` en `for (j = 0; j < 4; j++)` conserva `sltu $v0, $t2, $v0` en `0x22C` e intercambia `roomIdx`/`startVert` (`$fp`↔`$t4`).
+- **Avance `NON_MATCHING`:**
+  - `Coll_BoxCornersVsWorld` (`src/unit_39C90.c`, 6,472 B): sube de `1481/1618` a **1566/1618** (+85 palabras, `6472/6472 B` exactos) compartiendo `f32 vn;` entre ambos bucles (cierra `vrot1`/`vrot2` al 100 %) y usando `static inline f32 SubAbs_B_` con `wd[idx] = SubAbs_B_(d, Vec3_Dot_B_(&wn, &ax2))` (cierra `ax1`, `ax2` y `0xF1C..0xF24` al 100 %; residual: solo 13 palabras × 4 paredes en `ax0` de `CHECK_WALL_BCW`).
+- **Diagnóstico sin cambio en `src/`:** `Password_Decode` (`src/unit_50510.c`, `324/326`; variantes de tipo/retorno/CSE en `Password_FindChar_`/`Password_DecodeChar_`/`Password_Wrap32_` no reducen las 2 palabras residuales).
+- **Verificación:** `make`, SHA-1 `94913a07e49005ffd43dfdfa16ff5862bdb93748`, `verify_funcs.py` (1,814 funciones OK), `check_no_asm.py` y `objdiff_report.py` (`report/us/report.json == build/us/report.json`) OK.
+
+---
+
+## Sesión 67 (2026-11-26)
+
+- **Progreso oficial (`objdiff`):** **93.82 %** (`518,576 / 552,756 B`, `1,844 / 1,910` funciones, `187 / 221` unidades completas; **+6,472 B**, +1 función exacta).
+- **REA/Ghidra:** Activo vía `tools/rea/rea_query.py` (`~/.nvm/versions/node/v24.13.0/bin/rea`); consultado en una sola llamada para `Coll_BoxCornersVsWorld`, `Coll_ProbeWheels` y `Ai_Step`.
+- **Match exacto integrado:**
+  1. `Coll_BoxCornersVsWorld` (`src/unit_39C90.c`, **+6,472 B**, `1618/1618` exacto): quitar el temporal `f32 d;` de `CHECK_WALL_BCW` y asignar directamente `wd[idx] = Vec3_Dot_B_(&wn, &wv); wd[idx] = SubAbs_B_(wd[idx], ...)` cierra las 52 palabras residuales (13 palabras × 4 paredes en `ax0`).
+- **Avances `NON_MATCHING`:**
+  - `Coll_ProbeWheels` (`src/unit_39C90.c`, 4,244 B): sube de `887/1061` (`4228/4244 B`) a **899/1061** (`4244/4244 B` exactos) combinando `DotPW_(&carUp[id], &tmp)` en Pass 2 con `dist = ...; if (dist < o->b.rad)` en Pass 3.
+  - `Ai_Step` (`src/unit_22440.c`, 13,120 B): borrador inicial completo bajo `#ifdef NON_MATCHING` recuperado con REA/Ghidra (**2512/3280 palabras**, `12712/13120 B`, frame `0x3C8` exacto; 21 bucles sobre `gAi[6]`).
+- **Verificación:** `make`, SHA-1 `94913a07e49005ffd43dfdfa16ff5862bdb93748`, `verify_funcs.py` (1,815 funciones OK), `check_no_asm.py` y `objdiff_report.py` (`report/us/report.json == build/us/report.json`) OK.
+
+---
+
+## Sesión 68 (2026-11-26)
+
+- **Progreso oficial (`objdiff`):** **93.82 %** (`518,576 / 552,756 B`, `1,844 / 1,910` funciones, `187 / 221` unidades completas; sin cambio oficial en bytes).
+- **REA/Ghidra:** Activo vía `tools/rea/rea_query.py` (`~/.nvm/versions/node/v24.13.0/bin/rea`); consultado en una sola llamada para `Ai_Step`, `Hud_DrawTurbos`, `Coll_ProbeWheels` y `Cup_SetupRace`.
+- **Avance `NON_MATCHING`:**
+  - `Ai_Step` (`src/unit_22440.c`, 13,120 B): sube de `2512/3280` (`12712/13120 B`, `-408 B`) a **3037/3280** (**+525 palabras**, `13072/13120 B`, delta `-48 B`, frame `0x3C8` exacto). Claves: `gAi[i]` directo, firma `u8 Bld_StepRacer(..., PlaneAi_)` (16 B), struct `AiCfg_` (`D_80138D51..D_80138D57`), macro ternaria `FABS_`, `< 0.0f || > 0.0f` en Bucle 14, ramas invertidas en Bucles 4/13/18/20, `u8 willCrash` + `rate != 0.0f` por rama en Bucle 18 y `continue;` en Bucle 21. Bucles 1–2, 5–16 y 20–21 ya coinciden casi al 100 %.
+- **Diagnósticos sin cambio en `src/`:**
+  - `Hud_DrawTurbos` (`src/unit_49CF0.c`, `377/382`): confirmado que sin `u8 buf[24]` `turbos` cae en `0x1F($sp)` exacto (`-0x50`), mientras que cualquier array de 24 B en `expand` desplaza `$s0` y `turbos` juntos (`+0x18`).
+  - `Cup_SetupRace` (`src/unit_53B30.c`, `126/127`): 14 variantes en el bucle `else` no mueven `subu $v1, $v1, $a0` de `0x1B0` a `0x1A8`.
+- **Verificación:** `make`, SHA-1 `94913a07e49005ffd43dfdfa16ff5862bdb93748`, `verify_funcs.py`, `check_no_asm.py` y `objdiff_report.py` (`report/us/report.json == build/us/report.json`) OK.
