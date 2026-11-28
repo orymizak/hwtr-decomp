@@ -1,6 +1,10 @@
 # Hot Wheels Turbo Racing (N64, USA): decompilación
 
-[English](README.md) | **Español**
+[English](README.md) | **Español** | [Português (Brasil)](README.pt-BR.md)
+
+[![Progreso](https://bytematch.dev/orymizak/hwtr-decomp.svg)](https://bytematch.dev/orymizak/hwtr-decomp)
+
+[<img src="report/us/units.svg" width="1024" height="320" alt="Mapa de progreso: un bloque por función, agrupado por unidad; verde es C emparejado, gris sigue en ensamblador">](https://bytematch.dev/orymizak/hwtr-decomp)
 
 Reconstrucción en C del código de *Hot Wheels Turbo Racing* para Nintendo 64. El objetivo es que el
 código compile a una ROM idéntica byte a byte a la original.
@@ -8,6 +12,33 @@ código compile a una ROM idéntica byte a byte a la original.
 **Este repositorio no contiene la ROM, assets ni código del juego ya compilado.** Necesitas tu propia
 copia legal de la ROM: de ella se extrae todo lo demás en tu equipo. No compartas la ROM, `assets/`,
 `asm/` ni `build/`.
+
+## Estado
+
+La ROM se reconstruye idéntica; el código restante sigue en ensamblador generado.
+
+<!-- progress -->
+| Zona | Funciones | Bytes de código | Avance |
+|---|---|---|---|
+| total | 1850/1915 | 520160/554576 | 93.79 % |
+| juego | 1366/1373 | 422640/446896 | 94.57 % |
+| audio | 187/188 | 31824/32608 | 97.60 % |
+| sistema | 87/87 | 10064/10064 | 100.00 % |
+| libultra | 210/242 | 55632/60640 | 91.74 % |
+| libc | 0/25 | 0/4368 | 0.00 % |
+<!-- /progress -->
+
+`make progress` actualiza esta tabla.
+
+- **Compilador:** un GCC 2.7.2 compatible con KMC reproduce exactamente las funciones probadas. Las opciones
+  de optimización varían por archivo (`-O2`, `-O3` en la mayor parte de libultra, `-O0` en algunos sitios).
+- **Librerías:** libultra (SDK 2.0K/L), libc y un driver de audio están separados del juego en el mapa de la ROM.
+  Las funciones de libultra y libaudio se identificaron compilando [ultralib](https://github.com/decompals/ultralib)
+  y comparando. ultralib no está incluida: `make toolchain` la clona en `tools/ultralib` y el código C
+  usa sus cabeceras del SDK (`PR/ultratypes.h`, …).
+- **.rodata:** empieza en la ROM en `0x9F3B0` y está dividida por unidad en `asm/data/`. `tools/cc.py`
+  hace que el código C use esos símbolos en lugar de emitir duplicados.
+- **Por hacer:** el resto del código del juego y el driver de audio.
 
 ## ROM requerida
 
@@ -60,32 +91,9 @@ make extract
 | `hotwheelsturbo.yaml` | mapa de la ROM para [splat](https://github.com/ethteck/splat) |
 | `symbol_addrs.txt` | símbolos identificados |
 | `tools/extract_files.py` | extractor y descompresor de archivos |
+| `tools/match/` | herramientas de matching (ver su README) |
 
 `make split` genera a partir de tu ROM `asm/`, `assets/` y el script de enlazado. Nada de eso se versiona.
-
-## Estado
-
-La ROM se reconstruye idéntica, pero casi todo el código sigue en ensamblador generado.
-
-<!-- progress -->
-| Zona | Funciones | Bytes de código | Avance |
-|---|---|---|---|
-| total | 964/1917 | 112264/554576 | 20.24 % |
-| juego | 590/1373 | 46644/446896 | 10.44 % |
-| audio | 118/188 | 8128/32608 | 24.93 % |
-| sistema | 46/87 | 2436/10064 | 24.21 % |
-| libultra | 210/244 | 55056/60640 | 90.79 % |
-| libc | 0/25 | 0/4368 | 0.00 % |
-<!-- /progress -->
-
-`make progress` actualiza esta tabla.
-
-- **Compilador:** GCC 2.7.2 compatible con KMC reproduce exactamente las funciones probadas. Las opciones
-  de compilación aún son provisionales, y varían por archivo (`-O2` y `-O0`).
-- **Librerías:** libultra (probablemente SDK 2.0J), libc y un driver de audio están separados del juego en
-  el mapa de la ROM. Los nombres de libultra se asignaron por análisis del código.
-- **.rodata:** empieza en la ROM en `0x9F3B0` y está dividida por unidad en `asm/data/`. `tools/cc.py` hace que el C use esos símbolos en lugar de duplicarlos.
-- **Por hacer:** el resto del código, y la comparación del SHA-1 contra No-Intro.
 
 ## Licencia
 

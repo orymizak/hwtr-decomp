@@ -42,9 +42,11 @@ def main():
             symbols.append((int(parts[0], 16), parts[2]))
 
     done = c_functions()
-    table = ["| Zona | Funciones | Bytes de código | Avance |", "|---|---|---|---|"]
+    table_es = ["| Zona | Funciones | Bytes de código | Avance |", "|---|---|---|---|"]
     table_en = ["| Area | Functions | Code bytes | Progress |", "|---|---|---|---|"]
+    table_pt = ["| Área | Funções | Bytes de código | Progresso |", "|---|---|---|---|"]
     english = {"juego": "game", "sistema": "system"}
+    portuguese = {"juego": "jogo"}
     print(f"{'zona':10} {'funciones':>13} {'bytes':>17} {'avance':>8}")
     rows = [("total", CODE_START, CODE_END)] + ZONES
     for name, start, end in rows:
@@ -58,12 +60,12 @@ def main():
                     c_bytes += next_addr - addr
         size = end - start
         print(f"{name:10} {c_funcs:5}/{funcs:<7} {c_bytes:8}/{size:<8} {c_bytes / size * 100:7.2f}%")
-        table.append(f"| {name} | {c_funcs}/{funcs} | {c_bytes}/{size} | {c_bytes / size * 100:.2f} % |")
+        table_es.append(f"| {name} | {c_funcs}/{funcs} | {c_bytes}/{size} | {c_bytes / size * 100:.2f} % |")
         table_en.append(f"| {english.get(name, name)} | {c_funcs}/{funcs} | {c_bytes}/{size} | {c_bytes / size * 100:.2f}% |")
+        table_pt.append(f"| {portuguese.get(name, name)} | {c_funcs}/{funcs} | {c_bytes}/{size} | {c_bytes / size * 100:.2f}% |")
 
     if "--readme" in sys.argv:
-        # Only the English README is kept up to date; README.es.md is updated by hand at the end.
-        for path, rows_ in (("README.md", table_en),):
+        for path, rows_ in (("README.md", table_en), ("README.es.md", table_es), ("README.pt-BR.md", table_pt)):
             readme = Path(path)
             if not readme.exists():
                 continue

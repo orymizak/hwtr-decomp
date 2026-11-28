@@ -1,6 +1,6 @@
 # Hot Wheels Turbo Racing (N64, USA): decompilation
 
-**English** | [Español](README.es.md)
+**English** | [Español](README.es.md) | [Português (Brasil)](README.pt-BR.md)
 
 [![Progress](https://bytematch.dev/orymizak/hwtr-decomp.svg)](https://bytematch.dev/orymizak/hwtr-decomp)
 
